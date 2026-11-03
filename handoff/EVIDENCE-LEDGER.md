@@ -31,7 +31,7 @@ Use an append-only entry for every meaningful result. Never substitute README cl
 
 - **Scope:** GitHub SOURCE / documentation-only.
 - **Branch base:** `feature/recipe-wizard-handoff` created from `b0aa8b77604139557169387b2fa8386355d8b651`.
-- **Result:** Docs creation to be verified by GitHub branch readback and draft PR. **No CPU, CI, GPU or service tests run.** This entry does not qualify any runtime.
+- **Result:** `PASS_SOURCE/GITHUB`: 10-file commit `76cd8dae16b0f34e47c353b56b6e9dbcc5fcde25` confirmed by branch readback and compare with `main`; draft PR [#1](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/pull/1) opened against `main`, unmerged. `NO_CHECKS_REPORTED` for that original commit (0 check-runs, 0 PR workflow runs). **No CPU, CI, GPU or service tests run.** This entry does not qualify any runtime.
 - **Artifacts:** `docs/MODEL-RECIPE-WIZARD-PLAN.md`, `docs/MANIFEST-CONTRACTS.md`, `handoff/*`.
 - **Limits:** Manifest examples, wizard commands and state machines are designs, not implemented software.
 

@@ -14,7 +14,8 @@
 | Parallel Orcarouter design | `docs/MODEL-CATALOG-AND-ORCAROUTER-ADOPTION.md` on the parallel branch |
 | Old Preview repository | `kjlee-inlct/Qwen3.8-Flash-Next-NVFP4-BF16PLE-DGX-Spark`; frozen preservation, historic `feature/blazux-phase6-runtime-gates@2e6a5794b0fe282ae4bf6f4852acd919fea6d55a` |
 | New branch exact HEAD | **Read actual GitHub branch HEAD**. Do not embed a file's own eventual HEAD as authoritative; the branch commit changes when this file changes |
-| PR / CI | To be filled from GitHub after initial documentation commit/PR creation |
+| Draft PR | [#1 — recipe wizard roadmap and handoff](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/pull/1) against `main`; open, not merged |
+| PR CI (latest checked) | `NO_CHECKS_REPORTED`: zero check-runs, zero PR workflow runs for first doc commit; **not** PASS |
 
 ## Operational environment — protect; verify fresh
 
@@ -58,7 +59,7 @@ The existing user-operated service is **Orcarouter**. Historical prior-session v
 
 ## Immediate next actions
 
-1. Finish initial documentation commit + draft PR; refresh actual PR/CI fields here.
+1. Review draft PR [#1](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/pull/1); keep it open until actual implementation and tests are reviewed; **do not merge documents as runtime proof**.
 2. Implement **P0 read-only inventory + manifest schema validators + protection and dry-run guards**, with CPU tests. No GPUs.
 3. Inspect 27B vLLM 0.32 interfaces (source-only) and draft separate 27B recipe; record `GO/BLOCKED` evidence before GPU work.
 

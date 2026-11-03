@@ -27,7 +27,7 @@ model:
   tokenizer_repo_id: null
   architecture: UNVERIFIED_27B_VLLM032
   quantization: nvfp4
-  ple: none  # 27B is not the Flash-Next 95.37 GiB BF16 PLE recipe
+  ple: UNVERIFIED_FOR_27B  # verify architecture-specific PLE; do not reuse Flash-Next BF16 PLE
   mtp: {enabled: false}
 service:
   served_model_name: qwen3.8-27b

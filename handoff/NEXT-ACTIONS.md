@@ -1,6 +1,6 @@
 # Next actions — ordered work queue
 
-> Updated 2026-11-04 KST. Status terms are scoped. Tasks are not achieved merely because listed in a plan.
+> Updated 2026-11-04 KST. **Draft PR [#1](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/pull/1) open; no CI checks reported at initial documentation commit.** Status terms are scoped. Tasks are not achieved merely because listed in a plan.
 
 ## NOW — P0, read-only/source-safe
 

@@ -1,5 +1,13 @@
 # Handoff changelog (append-only)
 
+## 2026-11-04 — H-002 — Documentation committed and draft PR opened
+
+- Verified the new planning branch was 1 commit ahead of `main`, 10 tracked doc files, all under `docs/` and `handoff/`.
+- Commit `76cd8dae16b0f34e47c353b56b6e9dbcc5fcde25` created the initial document set.
+- Opened [Draft PR #1](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/pull/1); no merge. At original commit check, GitHub showed 0 check-runs/0 PR workflow runs; **not CI PASS**.
+- Corrected illustrative 27B recipe to keep PLE semantics `UNVERIFIED_FOR_27B` rather than assuming no PLE; still no runtime/CPU tests.
+- Updated live handoff state, next actions and evidence. All work was GitHub-only.
+
 ## 2026-11-04 — H-001 — Recipe/Wizard migration planning initialized
 
 - Confirmed user preference: **vLLM 0.32 only**, no SGLang, one large target at a time by default.
