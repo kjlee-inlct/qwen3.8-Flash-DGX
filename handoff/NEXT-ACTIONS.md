@@ -1,10 +1,13 @@
 # Next actions — ordered work queue
 
-> Updated 2026-11-04 KST. **Draft PR [#1](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/pull/1) open; no CI checks reported at initial documentation commit.** Status terms are scoped. Tasks are not achieved merely because listed in a plan.
+> Updated 2026-11-04 KST. **Draft PR [#1](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/pull/1) open; zero CI checks on the initial documentation commit; verify current checks after N1 commit.** Status terms are scoped. Tasks are not achieved merely because listed in a plan.
 
 ## NOW — P0, read-only/source-safe
 
-- [ ] **N1 — Make manifest schema machine-checkable.** Add `recipes/` and `schemas/` proposals implemented with validated, explicit repo revision, digest and immutable targets; a sample 27B placeholder must fail closed. CPU tests cover malformed manifest and unsupported engine.
+**N1 completed SOURCE/CPU only (2026-11-04):** JSON Schema Draft 2020-12, safe YAML loader, bounded guards and 15 isolated CPU tests PASS. 27B candidate intentionally FAIL (exit 2); synthetic valid fixture is not deployable. New PR CI requires GitHub readback at the actual commit SHA. No DGX/GPU/API execution.
+
+
+- [x] **N1 — Make manifest schema machine-checkable.** Add `recipes/` and `schemas/` proposals implemented with validated, explicit repo revision, digest and immutable targets; a sample 27B placeholder must fail closed. CPU tests cover malformed manifest and unsupported engine.
 - [ ] **N2 — Implement read-only storage/Docker inventory.** Gather capacity and model references without changing caches, engines or services. Detect protected live service name/image/mount/port and disallow unsafe paths/names. Add `--dry-run` and deterministic plan output.
 - [ ] **N3 — Implement wizard orchestration skeleton.** Shared Python manager plus small interactive/noninteractive shell wrappers; confirm no default launch, download, restart or deletion. Add error-path tests.
 - [ ] **N4 — vLLM 0.32 27B source feasibility audit.** Determine exact architecture mapping, NVFP4 quantized output head, vision input, GDN, kernel/sm_121 constraints, context, MTP OFF baseline and DFlash2 scope. Record precise pinning and file/line evidence; **do not copy SGLang launcher**.

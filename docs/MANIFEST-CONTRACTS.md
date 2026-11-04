@@ -1,6 +1,6 @@
 # Manifest contracts, service orchestration and storage safety
 
-**State: DESIGN CONTRACT ONLY.** No manifests, wizard executables, gateway, or new runtime have been implemented by this documentation commit.
+**State: P0 N1 RECIPE SOURCE CONTRACT IMPLEMENTED; runtime and N2+ NOT IMPLEMENTED.** Source schema/validator and intentionally invalid 27B candidate exist; no launchable runtime, gateway or wizard.
 
 ## A. Five concerns with different ownership
 
@@ -14,35 +14,15 @@
 
 Secrets, HF read tokens, API keys and host-private raw paths are **never** committed.
 
-## B. Proposed minimal recipe YAML (illustrative, NOT executable)
+## B. N1 recipe source contract — implemented subset
 
-```yaml
-schema_version: 1
-recipe_id: qwen38-27b-nvfp4
-engine: vllm
-runtime_ref: vllm032-gb10
-model:
-  repo_id: RadixArk/Qwen3.8-27B-NVFP4
-  revision: REPLACE_WITH_VERIFIED_FULL_SHA
-  tokenizer_repo_id: null
-  architecture: UNVERIFIED_27B_VLLM032
-  quantization: nvfp4
-  ple: UNVERIFIED_FOR_27B  # verify architecture-specific PLE; do not reuse Flash-Next BF16 PLE
-  mtp: {enabled: false}
-service:
-  served_model_name: qwen3.8-27b
-  port: null  # assigned by manager; not the protected live :8000 port
-  container_name: null
-checks:
-  require_exact_revision: true
-  require_ready_health: true
-  allow_launch_without_gpu_approval: false
-lifecycle:
-  protected: false
-  allow_delete_without_approval: false
-```
+The source-only schema lives at [schemas/recipe.schema.json](../schemas/recipe.schema.json), validator at [scripts/manager/manifest.py](../scripts/manager/manifest.py), and intentionally **invalid** 27B example at [recipes/qwen38-27b.candidate.yaml](../recipes/qwen38-27b.candidate.yaml). JSON Schema Draft 2020-12 requires vLLM 0.32.0/linux-arm64, explicit model and runtime full commit SHAs, digest-pinned Docker image matching a separate SHA256 field, stated architecture/quantization/PLE/MTP, bounded service name/port and hardcoded no-bypass approval fields. The YAML parser rejects unsafe tags, anchors/aliases and duplicate keys.
 
-Never fill placeholders by inference. Use validated checkpoint metadata and fail closed if `model.architecture`, quant method, tensor names, module mappings or revisions differ from validated assumptions. Flash-Next and Orcarouter require their own `PLE/MTP` specifications.
+Run (isolated CPU, no Docker/GPU):
+- python3 -m unittest discover -s tests -p 'test_manager_manifest_cpu.py' -v
+- python3 -m scripts.manager.manifest validate recipes/qwen38-27b.candidate.yaml
+
+27B example MUST fail (exit 2), because actual repo revision, image digest, source SHA, architecture and PLE are unknown. Only the **synthetic** test fixture is schema-valid; its SHA values are not real pins. Schema success NEVER means image/checkpoint existence or permission to serve, download, stop or delete. Current protected name/port checks are historical only: N2 must reconcile fresh actual Docker, port, mounts and canonical paths before any planning action.
 
 ## C. Safety-first commands and state machine (proposed)
 

@@ -1,6 +1,6 @@
 # Blazux vLLM 0.32 — Recipe/Wizard Master Plan
 
-> Status: **PLAN ONLY / NOT IMPLEMENTED** · Date: 2026-11-04 (KST) · Owner repo: `kjlee-inlct/qwen3.8-Flash-DGX`
+> Status: **P0 N1 SOURCE IMPLEMENTED; N2+ PLAN ONLY / NO GPU VALIDATION** · Date: 2026-11-04 (KST) · Owner repo: `kjlee-inlct/qwen3.8-Flash-DGX`
 >
 > Base: `main@b0aa8b77604139557169387b2fa8386355d8b651`; planning branch: `feature/recipe-wizard-handoff`. Source evidence is not a DGX runtime validation.
 
@@ -60,7 +60,7 @@ wizard CLI/TUI -> plan + dry-run + confirmations
 
 **Reuse** existing `flash`, `profiles/`, `scripts/`, `bench/`, `tests/` instead of replacing them. Keep NVIDIA/RadixArk defaults intact; model-specific adapters are opt-in and fail closed if checkpoint assumptions do not match. The gateway routes to **one active target**. It does not magically make two huge models resident simultaneously.
 
-Proposed paths, NOT YET CREATED beyond the documents:
+Proposed full file tree (N1 subset now exists for schema, validator and intentionally invalid 27B recipe; the rest is planned):
 ```text
 recipes/{flash-next-nvidia,flash-next-radixark,qwen38-27b,orcarouter-bf16-mtp}.yaml
 wizard/{00-doctor,10-plan,20-prepare,30-verify,40-benchmark,50-switch,60-retire,70-rollback}.sh
@@ -68,7 +68,7 @@ scripts/manager/{manifest,inventory,approval,service,switch,cleanup,benchmark}.p
 schemas/{recipe,runtime,service,inventory,benchmark}.schema.json
 handoff/{README,CURRENT-STATE,OPERATING-RULES,NEXT-ACTIONS,EVIDENCE-LEDGER,DECISIONS,CHANGELOG,SESSION-START-PROMPT}.md
 ```
-CLI naming/file layout are design targets, not established interfaces. Prefer shared Python core with thin shell wrappers over duplicated business logic.
+N1 implemented schemas/recipe.schema.json, scripts/manager/manifest.py, requirements-manager.txt and a deliberately invalid 27B candidate under recipes/. The associated CPU test fixture is synthetic. Other CLI naming/file layout are design targets, not established interfaces. Prefer shared Python core with thin shell wrappers over duplicated business logic.
 
 ## 5. Operations boundaries
 

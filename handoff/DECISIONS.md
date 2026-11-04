@@ -14,9 +14,11 @@ Record what has been **decided** and what still needs approval. Proposals in doc
 | D-008 | 2026-11-04 | Single large active GPU model by default; stable gateway later, not at the expense of operating port `:8000` | DESIGN ASSUMPTION pending capacity/operations tests |
 | D-009 | 2026-11-04 | Existing numerical strict `1e-4` Orcarouter release gate remains unresolved; no implied release PASS | DECIDED / release block |
 
+| D-010 | 2026-11-04 | Implement N1 recipe with YAML + JSON Schema Draft 2020-12, CPU PyYAML/jsonschema verifier, required full pinned source/model SHA and Docker image digest, vLLM 0.32 only, and no launch/deletion approval bypass. 27B candidate stays invalid. | DECIDED / SOURCE_ONLY; not runtime authorization |
+
 ### Design choices not yet finalized
 
-- YAML/JSON schema details, file tree and wizard command flags.
+- Remaining runtime/service/inventory contract fields and wizard flags. The source-only N1 recipe schema has been implemented.
 - Whether 27B NVFP4/BF16-head vLLM 0.32 support can use stock backend or requires an opt-in patch; exact checkpoint and draft engine mode.
 - Proxy/gateway implementation and host port layout; any port or model alias changes require operational approval.
 - GPU benchmark thresholds, allowable downtimes, retention policies and available disk capacity.

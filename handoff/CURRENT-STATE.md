@@ -1,6 +1,6 @@
 # Current state — active snapshot
 
-**Snapshot written:** 2026-11-04 (KST) · **Status:** `P0_PLANNING` · **Implementation:** docs only · **GPU:** `NOT_RUN`.
+**Snapshot written:** 2026-11-04 (KST) · **Status:** `P0_N1_SOURCE_IMPLEMENTED` · **Implementation:** N1 manifest validator and CPU tests; N2+ pending · **GPU:** `NOT_RUN`.
 
 ## Repository/branch tracking
 
@@ -15,7 +15,7 @@
 | Old Preview repository | `kjlee-inlct/Qwen3.8-Flash-Next-NVFP4-BF16PLE-DGX-Spark`; frozen preservation, historic `feature/blazux-phase6-runtime-gates@2e6a5794b0fe282ae4bf6f4852acd919fea6d55a` |
 | New branch exact HEAD | **Read actual GitHub branch HEAD**. Do not embed a file's own eventual HEAD as authoritative; the branch commit changes when this file changes |
 | Draft PR | [#1 — recipe wizard roadmap and handoff](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/pull/1) against `main`; open, not merged |
-| PR CI (latest checked) | `NO_CHECKS_REPORTED`: zero check-runs, zero PR workflow runs for first doc commit; **not** PASS |
+| PR CI | Original documentation commit had no checks; N1 CPU workflow now proposed, check **actual PR HEAD** for result. Not implied PASS. |
 
 ## Operational environment — protect; verify fresh
 
@@ -32,7 +32,7 @@ The existing user-operated service is **Orcarouter**. Historical prior-session v
 
 | Stage | Source/plan | CPU/CI | DGX/GPU | Release |
 |---|---|---|---|---|
-| P0 inventory + recipe/wizard architecture | `PLAN_IN_PROGRESS` | `NOT_RUN` | `NOT_RUN` | `NOT_APPLICABLE` |
+| P0 inventory + recipe/wizard architecture | `N1_SCHEMA_SOURCE_PASS`; N2+ pending | `N1_CPU_PASS (15 isolated tests)`; CI verify latest | `NOT_RUN` | `NOT_APPLICABLE` |
 | P1 Flash-Next baseline | `PLANNED` | `NOT_RUN` | `NOT_RUN` | `BLOCKED` |
 | P2 27B vLLM 0.32 | `PLANNED/COMPAT_UNKNOWN` | `NOT_RUN` | `NOT_RUN` | `BLOCKED` |
 | P3 Flash-Next ↔ 27B switching | `PLANNED` | `NOT_RUN` | `NOT_RUN` | `BLOCKED` |
@@ -48,7 +48,8 @@ The existing user-operated service is **Orcarouter**. Historical prior-session v
 - `docs/MODEL-RECIPE-WIZARD-PLAN.md` — stage roadmap and architecture.
 - `docs/MANIFEST-CONTRACTS.md` — manifest schema intent, switch/rollback/deletion gates.
 - `handoff/*` — persistent entrypoint, rules, decisions, evidence, action list and starter prompt.
-- **No actual recipes, wizard scripts, API gateway, service manager or 27B adapter in this branch yet.**
+- N1 SOURCE IMPLEMENTED: schema, bounded YAML validator, intentionally invalid 27B candidate, synthetic fixture, 15 CPU tests, new GitHub Actions CPU workflow. See schemas/recipe.schema.json, scripts/manager/manifest.py, recipes/, tests/test_manager_manifest_cpu.py.
+- No launchable production recipe, inventory manager, wizard, API gateway, service manager or 27B runtime adapter exists yet. The only schema-valid fixture contains **fake synthetic SHA values**.
 
 ## Blockers / approvals
 
@@ -59,8 +60,8 @@ The existing user-operated service is **Orcarouter**. Historical prior-session v
 
 ## Immediate next actions
 
-1. Review draft PR [#1](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/pull/1); keep it open until actual implementation and tests are reviewed; **do not merge documents as runtime proof**.
-2. Implement **P0 read-only inventory + manifest schema validators + protection and dry-run guards**, with CPU tests. No GPUs.
-3. Inspect 27B vLLM 0.32 interfaces (source-only) and draft separate 27B recipe; record `GO/BLOCKED` evidence before GPU work.
+1. N2: implement read-only storage/Docker inventory, canonical paths, protected runtime collision guards, deterministic dry-run, synthetic CPU tests.
+2. N3: add wizard source-only command orchestration, no launch, download, restart, switch or delete.
+3. N4: source-audit 27B vLLM 0.32 and obtain pin/architecture evidence; do not resolve candidate placeholders speculatively.
 
 See [NEXT-ACTIONS.md](NEXT-ACTIONS.md), [EVIDENCE-LEDGER.md](EVIDENCE-LEDGER.md) and [../docs/MODEL-RECIPE-WIZARD-PLAN.md](../docs/MODEL-RECIPE-WIZARD-PLAN.md).
