@@ -1,3 +1,9 @@
+## 2026-11-06 — Separate dedicated Flash-Next/27B server entrypoints
+
+Moved existing Flash-Next launch implementation into executable `scripts/serve_flash-next.sh` and routed `./flash serve` directly to it. Replaced `scripts/serve.sh` with compatible default Flash-Next dispatcher and explicit 27B selection; added executable `scripts/serve_27b.sh` exposing only `--plan`/`--status` (read-only) while GPU start/switch remains blocked. Added 10 CPU regressions, executable-mode checks and CI workflow coverage for both new files. Source CI `67a54afc`: 325/325 PASS. No inference service changes, commits/merges to main or 27B GPU launch.
+
+---
+
 ## 2026-11-06 — Operator DGX 27B source PASS and separate blocked launch-preview
 
 Recorded actual exact pinned ModelOpt layer counts FP8 208 + NVFP4 193, and installed image source 4/4 checks true from CPU-only runc. Added `scripts/manager/p2_27b_launch_preview.py` + 12 CPU tests and `--launch-preview` Wizard CLI, returning proposed explicit `modelopt_mixed` vLLM argv and source/API fingerprints. This is not approval/execution, includes immutable pinned revision, prohibits Flash-Next PLE/MTP inheritance, and keeps transition/rollback/GPU gates closed. CI `ae4490d6` 315/315 PASS. No DGX GPU or inference service mutation performed.

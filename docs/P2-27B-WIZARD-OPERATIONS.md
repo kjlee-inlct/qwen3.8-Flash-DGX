@@ -1,3 +1,29 @@
+## 2026-11-06 — Separate serving script layout
+
+The model-specific server entrypoints are now:
+
+```text
+scripts/
+  serve.sh                 # compatibility dispatcher; default REAL Flash-Next start
+  serve_flash-next.sh      # original Flash-Next executable logic (PLE/MTP/QSA)
+  serve_27b.sh             # NVIDIA pinned 27B (currently read-only plan/status only)
+```
+
+`./flash serve` continues to call the Flash-Next-specific implementation and should never be used as a 27B launcher. The direct old `scripts/serve.sh` CLI remains valid for existing Flash-Next deployments; `scripts/serve.sh 27b --plan` dispatches only to the guarded P2 preview.
+
+After clean fast-forward in DGX (without interrupting original API), safe NVIDIA 27B commands:
+
+```bash
+./scripts/serve_27b.sh --status
+./scripts/serve_27b.sh --plan
+# equivalent:
+./scripts/serve.sh --model 27b --plan
+```
+
+The first prints immutable P2 metadata/source status, the second inspects **read-only** 27B dedicated launch candidate and the current Flash-Next localhost API identity. Plan JSON must remain `status=BLOCKED`, `plan_id=null`, `operations_enabled=false`; it is **not** a valid approval to execute `command_preview`. `./scripts/serve_27b.sh --execute` is explicitly refused until a GPU-qualified P2 runner with per-action exact approvals and tested recovery exists. The 27B candidate retains pinned NVIDIA ModelOpt `MIXED_PRECISION` FP8/NVFP4, no Flash-Next PLE/MTP inheritance, and one GPU serving model at a time. No DGX 27B load/benchmark/rollback has yet been run.
+
+---
+
 ## 2026-11-06 — DGX source evidence and dedicated 27B startup preview
 
 DGX operator verified exactly pinned modelopt `MIXED_PRECISION`: **208 FP8 + 193 NVFP4 = 401** quantized layers, all metadata checks clear. The installed Docker image's registry/Qwen3.5 class/ModelOpt AST check reported **4/4 true**, static scope `SOURCE_SURFACES_PRESENT_UNQUALIFIED`. Neither result is a GPU kernel or model-loading verification. Existing Flash-Next remains the sole inference service at host port 8000.

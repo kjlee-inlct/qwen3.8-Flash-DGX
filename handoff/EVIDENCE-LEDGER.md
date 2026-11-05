@@ -1,3 +1,9 @@
+## E-20261106-SERVE-SPLIT-CI — dedicated model serve entrypoints
+
+GitHub source branch `feature/recipe-wizard-handoff`, commit `67a54afc615e51f207f12238e8473200c62a1aad`, Actions run `42111216055` **SUCCESS 325/325 CPU tests, 16 suites**, including 10 new `tests/test_serve_split_cpu.py` tests. Modified `flash` to invoke copied original `scripts/serve_flash-next.sh`, preserving P1 options, legacy `scripts/serve.sh` as a thin dispatcher, and source-only `scripts/serve_27b.sh` with no Docker run/stop. Existing `tests/test_flash_launch.py` continued PASS with synthetic Docker. No actual DGX process or GPU service execution occurred as part of this source edit. Latest real DGX 27B pinned ModelOpt metadata and image static source proof are in earlier E-20261106 entries.
+
+---
+
 ## E-20261106-P2-DGX-STATIC — exact pinned 27B CPU source proof from operator
 
 Operator supplied actual DGX outputs (2026-11-06 KST):

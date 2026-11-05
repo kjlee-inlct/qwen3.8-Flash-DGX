@@ -1,3 +1,9 @@
+## D-026 — 2026-11-06 — Serving scripts split per model, preserve legacy call path
+
+Choose model-specific serving entrypoints: `scripts/serve_flash-next.sh` contains original Flash-Next PLE/MTP/QSA implementation; `scripts/serve_27b.sh` is an independent NVIDIA ModelOpt entrypoint (initially plan/status only); `scripts/serve.sh` remains default-compatible Flash-Next dispatcher with optional explicit `27b` selection. `./flash serve` retains existing Flash-Next behavior and tests. Do not inherit Flash-Next-only PLE/MTP/hybrid settings into 27B and never allow 27B to start/switch without separately approved, exact-plan executor with tested old-service restore. `serve.sh` with no args is **not** a harmless preview: it keeps legacy Flash-Next start behavior. Prefer explicit `scripts/serve_27b.sh --plan` for P2 read-only evidence.
+
+---
+
 ## D-025 — 2026-11-06 — P2 27B dedicated initial-run preview without implicit transition
 
 Once operator-supplied 27B pinned source metadata (FP8 208/NVFP4 193) and installed vLLM 0.32 source registry/ModelOpt AST checks pass, develop a **separate 27B runner** instead of reusing Flash-Next `scripts/serve.sh` (PLE/MTP/QSA defaults). The new `model 27b plan --for-action start --launch-preview` returns a **non-executable, unapproved** argv with exact local image ID, pinned snapshot path, `modelopt_mixed`, conservative *unvalidated* 8192 context/1 sequence/0.70 GPU memory/eager. Preview inspects original Flash-Next container image and localhost API identity but never calls Docker run/stop. No `plan_id`, no `--execute` override, no `operations_enabled`. A registry digest/validated recipe, GPU memory/kernels, exact source recovery and separate stop-before-start approval are still required. A preview command displayed in JSON must **never be copied to the shell**.

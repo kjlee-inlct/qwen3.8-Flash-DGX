@@ -1,3 +1,13 @@
+## 2026-11-06 — Model-specific serving scripts delivered
+
+- [x] Split legacy `scripts/serve.sh` into default-compatible dispatcher + `scripts/serve_flash-next.sh` (existing executable) + `scripts/serve_27b.sh` (read-only plan/status). `./flash serve` explicitly uses Flash-Next file.
+- [x] Preserve old startup behavior/test fixtures and add 10 new CPU tests covering permissions, shell syntax, dispatcher, direct Flash-Next invocation, NVIDIA 27B environment override rejection and absence of a 27B start bypass. CI `67a54afc`: 325/325 PASS.
+- [ ] After clean `git pull --ff-only`, operator may run **only read-only 27B** `./scripts/serve_27b.sh --plan` or `--status`; this returns `status=BLOCKED` even when metadata/source PASS. Avoid running `scripts/serve.sh` or `./flash serve` without realizing those default to an actual Flash-Next start, and **do not manually run the returned command_preview**.
+- [ ] Review actual P2 source image provenance, ModelOpt vLLM/GPU import/weight load, 27B memory/context, original Flash-Next recovery/rollback, approved DGX transition scope; only then implement a guarded executable `serve_27b.sh` backend with complete start/wait/verify/benchmark and safe recovery.
+- [ ] Preserve single active GPU model and `:8000/v1`. Keep PR #1 Draft until evidence/approval gates pass.
+
+---
+
 ## 2026-11-06 — P2 dedicated 27B launch preview; GPU acceptance still blocked
 
 - [x] Actual pinned DGX quant audit: modelopt `MIXED_PRECISION`, FP8 **208**, NVFP4 **193**, total **401**, no metadata issues.

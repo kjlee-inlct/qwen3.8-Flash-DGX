@@ -1,3 +1,13 @@
+## 2026-11-06 — Model-specific serve entrypoints separated (Flash-Next behavior preserved)
+
+Operator requested model-specific serving files rather than maintaining Flash-Next and 27B launch details in one `serve.sh`.
+
+**Implemented**: the original full Flash-Next implementation lives at `scripts/serve_flash-next.sh` (same configuration/modes/guards and default behavior). `flash` directly calls this file. `scripts/serve.sh` is now a thin backward-compatible dispatcher: no args -> Flash-Next, explicit `flash-next` -> Flash-Next, `27b --plan` (or `--model 27b --plan`) -> `scripts/serve_27b.sh` with source-only preview. `scripts/serve_27b.sh` owns the P2 model-specific entrypoint but **only supports read-only plan/status**; direct GPU --execute/start/switch remains blocked until a verified separate approved runtime transaction. The Flash-Next runner refuses an attempted NVIDIA 27B checkpoint override, so PLE/MTP presets never silently reach 27B.
+
+**CI:** source commit `67a54afc615e51f207f12238e8473200c62a1aad` GitHub Actions run `42111216055` SUCCESS, **325/325 CPU tests PASS** across 16 suites. Original Flash-Next live DGX service was not modified in this development step; no 27B GPU run, service stop/switch or rollback performed. New documentation commit CI to be verified.
+
+---
+
 ## 2026-11-06 — DGX pinned 27B quant + image AST PASS; dedicated launch *preview* added
 
 **New actual operator DGX evidence supersedes old checklists:**
