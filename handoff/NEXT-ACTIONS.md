@@ -1,5 +1,20 @@
 # Next actions — ordered work queue
 
+## 2026-11-05 — Restore default Blazux P1 acceptance semantics
+
+**Latest operator DGX result (2026-11-05):** `/home/inlc/blazux-p1-reports/20261105T103738Z-c4eb4031/result.json` summary from `--auto-gpu` at `805f8e3e`: source checkpoint and Hybrid are both READY, `source_issues=[]`, `hybrid_issues=[]`, 11 indexed source and Hybrid shards resolved, `api_model_ids=["qwen3.8-flash-next"]`, verify and benchmark plans each READY, yet **verify action returned FAIL** and benchmark BLOCKED by verification gate. Original console suppressed the Wizard's failure evidence location because it parsed the JSON outcome only on returncode 0, even though Wizard writes evidence for returncode 2. This is an actual attempted API/GPU verification with FAIL outcome, not evidence of a broken default Blazux model. Exact failing subprobe/error still unconfirmed until raw report is examined.
+
+**Correct architecture:** Wizard must not substitute a new collection of optional assumptions for the default Blazux execution criterion. The original Blazux smoke `scripts/smoke-test.sh` exercises basic `/v1/completions` coherence and standard chat (with `/no_think`), plus other measurements. Previous Wizard `verify_api` instead required chat text within 48 tokens, a `tool_choice=required` response and a tiny synthetic vision input in one all-or-nothing call. Any one failed the entire P1 verify and hid the precise failure. That is a Wizard test-design/diagnostic flaw; it is NOT proven to be the particular observed failure cause. New source commit `391a2844f4c8549e282eae3e266806c89801ad1a` checks a Blazux-shaped ordinary completions baseline and standard chat separately, with up to 256 tokens and `/no_think`, while optional tool/vision probes return independent statuses. Baseline PASS+extensions FAIL ⇒ verify PARTIAL, but a bounded benchmark is still allowed and P1 full acceptance remains PARTIAL. Baseline FAIL ⇒ benchmark BLOCKED. Nonzero Wizard returncode no longer loses evidence/path/status. Bounded benchmark prompts now include `/no_think` to avoid reasoning-only 64-token output.
+
+**SOURCE/CI validation (not DGX):** `391a2844f4c8549e282eae3e266806c89801ad1a`, GitHub push and PR checks 2/2 SUCCESS, each 15 manifest + 10 inventory + 13 launcher + 1 mode + 102 P1 + 32 router = **173/173 CPU tests PASS**. Real DGX execution against this fix has NOT_RUN; prior verify FAIL remains unresolved until this new code runs.
+
+- [x] Source: split standard /v1/completions + chat baseline from optional tool/vision probes, preserve exact per-probe failure classes and HTTP status without raw outputs, retain Wizard evidence on rc=2; let baseline PASS through to the short benchmark even if optional probes are PARTIAL.
+- [x] CI/source unit and fake DGX regressions: 2/2 SUCCESS, 173 CPU tests per job.
+- [ ] Operator can FIRST read the **existing** `20261105T103738Z-c4eb4031/result.json` at `actions.verify.command.stdout/stderr` to identify the original failure without re-running GPU work. Be careful of raw output before sharing.
+- [ ] Only after that, `git pull --ff-only origin feature/recipe-wizard-handoff` and one `bash scripts/temporary/p1-post-download.sh --auto-gpu` to obtain per-subprobe baseline/extended status, actual evidence URI, benchmark metrics if baseline passes.
+- [ ] Treat default P1 baseline and full extra feature acceptance as distinct gates; do not claim P1 complete if tools/vision or benchmark remain PARTIAL. Never restart servers or re-download assets as a response to a Wizard probe failure.
+
+
 > Updated 2026-11-05 KST. **Draft PR [#1](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/pull/1) open, unmerged; current source CI at `43f5131` 2/2 SUCCESS (103 CPU tests/job).** Status terms are scoped. Tasks are not achieved merely because listed in a plan.
 
 ## 2026-11-05 — Completed download reported; P1 validation disagreement

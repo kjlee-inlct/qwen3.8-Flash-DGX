@@ -104,3 +104,32 @@ Never paste all execution commands as a block; approvals are action-specific and
 - Benchmark is a bounded sequential SSE test: 1-20 requests (default 3), 1-256 max tokens (default 64), seed 1234. Records TTFT and latency p50/p95 and measured usage-based token throughput. Missing usage returns PARTIAL rather than estimating a number.
 - Every executed action produces a unique JSON evidence record under ~/.local/state/blazux-wizard/p1/ by default, or --evidence-dir. No prompt contents or tokens are logged. PREPARED_PENDING_AUDIT and STARTED_PENDING_HEALTH are not model qualification.
 - There is no automatic rollback or confirmed full-load production benchmark yet. Retain failed containers/logs; any recovery/removal requires separate operator approval. P1 exits only with real DGX Wizard functional + benchmark proof and rollback evidence; then P2 27B via Wizard.
+
+## 2026-11-05 — Default Blazux first, optional tool/vision second (D-018)
+
+User's real DGX report `20261105T103738Z-c4eb4031` confirms
+original source/Hybrid assets READY and model ID correct, yet old
+combined Wizard verify FAIL with no evidence printed in summary.
+Do not say native Blazux model failed based on that alone.
+
+After source commit `391a2844`, Wizard separates `baseline_status`
+(regular /v1/completions and standard chat) from `extended_status`
+(strict tool and tiny synthetic image), and the temporary script
+retains evidence even when Wizard exits with rc=2. If baseline passes
+but an extra probe fails, the short 3-request benchmark is still
+permitted and the report says verify=PARTIAL. P1 full acceptance
+requires remaining features independently passing.
+
+Before repeating a GPU run, examine the previously recorded
+`result.json.actions.verify.command` locally for the original
+failure's stdout/stderr and exit code. The next operator-only
+invocation remains:
+
+```bash
+cd ~/Workspace/llm/blazux-orcarouter
+git pull --ff-only origin feature/recipe-wizard-handoff
+bash scripts/temporary/p1-post-download.sh --auto-gpu
+```
+
+Do not setup/download/prepare/restart containers to fix a Wizard-only
+probe discrepancy.

@@ -139,3 +139,26 @@ real evidence. `--inspect-only` remains fully non-executing.
 push and PR actions 2/2 SUCCESS with 155 unique CPU tests each. The
 source/Hybrid external metadata compatibility is protected by regressions;
 only the DGX operator's next run can establish actual model inference/benchmark.
+
+## D-018 — Baseline acceptance vs extended feature diagnostics
+
+The first **actual** operator `--auto-gpu` call after checkpoint/Hybrid
+readiness returned `verify=FAIL`, `benchmark=BLOCKED`, but the prior
+runner silently dropped the Wizard error JSON whenever the Wizard returned
+nonzero (including rc=2 for FAIL/PARTIAL, even with evidence saved).
+The saved raw report at
+`~/blazux-p1-reports/20261105T103738Z-c4eb4031/result.json` is still
+the best source for the *original* failure reason.
+
+The corrected Wizard first probes native Blazux-shaped `/v1/completions`
+and ordinary `/v1/chat/completions` (with `/no_think`).
+Tool forcing and synthetic vision are **additional** checks. Any extra
+failure is separately reported as `extended_status=FAIL`, with overall
+`verify=PARTIAL`, while `baseline_status=PASS` enables the short
+benchmark. A baseline failure still blocks benchmark. The wrapper now
+prints each probe's status, sanitized error type/HTTP status and the
+Wizard evidence path even when Wizard exits nonzero.
+
+Commit `391a2844f4c8549e282eae3e266806c89801ad1a`: GitHub
+CI 2/2 SUCCESS, 173/173 CPU tests per job. Real DGX result for the
+new version remains unverified until the operator reruns the bundle.

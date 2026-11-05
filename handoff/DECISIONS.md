@@ -30,6 +30,8 @@ Record what has been **decided** and what still needs approval. Proposals in doc
 
 | D-017 | 2026-11-05 | User confirmed Blazux default NVIDIA Flash-Next must remain compatible and authorized **bounded non-disruptive P1 GPU/API verify+benchmark without separate interactive plan-hash typing**. Correct new P1 checker false positives for existing shared metadata cross-repository symlinks (`tokenizer.json`, `model.safetensors.index.json`), retaining strict shard checks and bounded JSON index. Use `scripts/temporary/p1-post-download.sh --auto-gpu`, deriving live action-specific plan IDs and letting the Wizard revalidate each one. No change to permissions for service start/stop, setup/download, Hybrid repair, cache deletion, model switches or gateway. API model ID shows some server is active; preserve it. | DECIDED / SOURCE+CI PASS at 0063b0e (2/2 jobs, 155 tests/job); DGX GPU verdict PENDING |
 
+| D-018 | 2026-11-05 | Preserve native Blazux default Flash-Next acceptance in Wizard: mandatory /v1/completions + standard chat baseline, separate tool/vision probes, mark partial advanced failures without blocking bounded baseline benchmark, retain nonzero-rc Wizard evidence, keep model/server untouched. Original DGX verify failure still needs evidence to identify precise cause. | DECIDED / SOURCE+CI PASS 391a2844 / DGX RECHECK PENDING |
+
 ### Design choices not yet finalized
 
 - Remaining runtime/service/inventory contract fields and wizard flags. The source-only N1 recipe schema has been implemented.

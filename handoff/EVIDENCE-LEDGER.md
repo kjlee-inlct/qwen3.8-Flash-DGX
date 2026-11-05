@@ -132,6 +132,14 @@ Use an append-only entry for every meaningful result. Never substitute README cl
 - **Next DGX scope:** after code pull, single `bash scripts/temporary/p1-post-download.sh --auto-gpu` call. Actual GPU/API/benchmark statuses remain `NOT_RUN` for the new version until operator evidence.
 
 
+## E-20261105-15 — DGX P1 assets pass, Wizard's combined verify fails
+
+- **Raw-report path:** `/home/inlc/blazux-p1-reports/20261105T103738Z-c4eb4031/result.json` (operator-owned); only console summary supplied.
+- **Facts:** snapshot `fc694b54fb0174e0913e6adf86691ef85a4ead47`, `source_complete=true`, `hybrid_ready=true`, `source_issues=[]`, `hybrid_issues=[]`, 11/11 listed shards resolved in source+Hybrid, API model ID `qwen3.8-flash-next`, verify+benchmark plans READY, **verify=FAIL, benchmark=BLOCKED verification_not_passed**. These are verified user-supplied runtime outcomes. No benchmark inference was executed.
+- **Known source defect:** original temporary runner only parsed Wizard JSON result on rc=0; Wizard returns rc=2 with evidence even on FAIL, hence console `evidence:null` does not demonstrate no evidence. Original combined `_chat_probe` demanded 48 token text, tools required and tiny vision; one failure throws and masks others. Exact original error is UNKNOWN without reading the saved raw result; do not call this a model failure.
+- **SOURCE/CI corrective commit:** `391a2844f4c8549e282eae3e266806c89801ad1a`, [push CI](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42015135913/job/127203693134), [PR CI](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42015144016/job/127203722486); 2/2 SUCCESS, 173 CPU tests/job. Separates default completions/chat baseline from optional tools/vision and retains nonzero Wizard evidence; actual DGX post-fix GPU validation NOT_RUN.
+- **Next:** inspect stored evidence for original failure, then single auto-GPU wrapper on new code. Do not alter operating service, HF data, Hybrid, or gateway.
+
 ## Historic evidence not transferred
 
 ## E-20261105-04 — User-reported Flash-Next download still in progress
