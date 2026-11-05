@@ -1,3 +1,7 @@
+## 2026-11-05 — Fix P2 guided download falsely expiring under its own lock
+
+After a user entered the correct plan ID, the second preflight rejected the request because raw inode counts, floor free GiB and Docker uptime were hashed. Created `_approval_facts` containing stable model/revision/cache/image/host running-state/port occupancy plus time window. Retained all live minimum-disk, inode, transfer and Docker checks on revalidation. Added mock CPU tests reproducing the change while state lock is created and guarding safety-relevant image/state drift. No DGX download or service mutation was performed by this change.
+
 ## 2026-11-05 — P2 pinned NVIDIA downloader and single active model manifest foundations
 
 Operator confirmed one active GPU model per DGX Spark, both NVIDIA Flash-Next and 27B on host port 8000. Added `runtimes/service-policy.json`, `service_manifest.py`, `service_journal.py`; service menu read-only inventory uses actual Docker/socket. Added exact-revision `p2_27b_download.py` Wizard download plans with live revalidation/lock/approval and bounded evidence, no GPU/port/service effects. Added interactive `download --guided`, CPU regressions and pinned snapshot recognition without refs/main. Source and CI separate from actual DGX download/GPU/switch. No service interrupted.
