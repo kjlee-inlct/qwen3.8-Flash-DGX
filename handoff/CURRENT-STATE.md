@@ -1,3 +1,14 @@
+## 2026-11-06 — full P1–P7 Wizard source implemented; P2–P7 adapters to debug
+
+**Operator instruction D-021:** create the entire Wizard now, even if parts cannot yet execute; as actual P2 onward develops, debug/qualify individual backend adapters. Completed GitHub SOURCE:
+- `wizard/console.py`: simple 3-choice primary TTY, per-model Continue + all ten actions, service status/health/bounded logs/start/stop/restart/rollback/proxy/gateway, advanced P3/P4/P6/P7 with explicit switch pair and guarded legacy menu.
+- `wizard/workflow.py`: unified three-model action matrix, read-only machine `workflow MODEL --json` and `--for-action ACTION`; existing P1 guarded backend and P2 approved exact-revision downloader reused. Fixed a real P1 UX safety issue: never offer/invoke P1 guided start while another managed model is active or the inventory is unknown.
+- `wizard/roadmap.py`: seven-stage P1–P7 evidence-scoped acceptance overview, CLI `roadmap --json`. No source-only result counts as GPU/benchmark PASS.
+- `scripts/manager/service_logs.py`: bounded, opt-in read-only tail for exactly observed managed service; no Docker mutation, no automatic log upload.
+- Added focused CPU regression suites and CI for full console/P1–P7 workflow, P7 dashboard and log limits. Docs/CLI/decisions updated. GitHub PR #1 remains Draft until DGX verification.
+
+**DGX actual state:** user last supplied proof that the exact-revision 27B download began (`Fetching 19 files: 84%`). No later completion, evidence receipt, pinned shard audit, 27B vLLM-0.32 ARM64 start, API bench, P3/P6 switch or recovery have been observed; **do not claim these PASS**. The existing Flash-Next `:8000` deployment and download are untouched by this source-only work. User should not pull/interrupt until the active download exits. SOURCE/CPU CI verdict requires latest HEAD readback.
+
 ## 2026-11-05 — Batch A plus read-only service health/switch preview complete in SOURCE
 
 Model-first Wizard UI, legacy-compatible selection CLI and in-flight 27B detection implemented. Additional GitHub SOURCE: bounded localhost `/health`+`/v1/models` API identity probe exposed via `./wizard.sh service manager health --json`, and fail-closed `service_transition_preview.py` attached to model selection if an alternate running model is observed. Preview specifies stop-old → port 8000 free → start-target → verify identity → journal commit and rollback, but **always BLOCKED/plan_id=null** until vLLM 0.32 target runtime, original recovery and approved executor are qualified. Existing P1 runner and 27B guarded downloader remain unchanged. Final CI still requires HEAD check; source-only API/preview tests do not constitute actual DGX execution.
