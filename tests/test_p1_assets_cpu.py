@@ -78,12 +78,40 @@ class AssetAuditCPU(unittest.TestCase):
         (src / "model-00001.safetensors").symlink_to("../../blobs/missing")
         self.assertFalse(audit_checkpoint(self.cache)["source_complete"])
 
-    def test_escaping_symlink_fails_closed(self):
+    def test_indexed_external_shard_matches_blazux(self):
         src = self.complete()
-        outside = Path(self.tmp.name) / "outside.safetensors"
-        outside.write_text("secret")
-        (src / "model-00002.safetensors").unlink()
-        (src / "model-00002.safetensors").symlink_to(outside)
+        outside = Path(self.tmp.name) / "shared.safetensors"
+        outside.write_bytes(b"valid-shard")
+        path = src / "model-00002.safetensors"
+        path.unlink()
+        path.symlink_to(outside)
+        self.assertTrue(audit_checkpoint(self.cache)["source_complete"])
+
+    def test_dangling_external_indexed_shard_fails_closed(self):
+        src = self.complete()
+        path = src / "model-00002.safetensors"
+        path.unlink()
+        path.symlink_to(Path(self.tmp.name) / "missing.safetensors")
+        result = audit_checkpoint(self.cache)
+        self.assertFalse(result["source_complete"])
+        self.assertIn("model-00002.safetensors", result["source_issues"])
+
+    def test_empty_external_indexed_shard_fails_closed(self):
+        src = self.complete()
+        outside = Path(self.tmp.name) / "empty.safetensors"
+        outside.write_bytes(b"")
+        path = src / "model-00002.safetensors"
+        path.unlink()
+        path.symlink_to(outside)
+        self.assertFalse(audit_checkpoint(self.cache)["source_complete"])
+
+    def test_external_directory_instead_of_shard_fails_closed(self):
+        src = self.complete()
+        outside = Path(self.tmp.name) / "folder.safetensors"
+        outside.mkdir()
+        path = src / "model-00002.safetensors"
+        path.unlink()
+        path.symlink_to(outside)
         self.assertFalse(audit_checkpoint(self.cache)["source_complete"])
 
     def test_external_shared_metadata_links_match_default_flash(self):
@@ -118,15 +146,33 @@ class AssetAuditCPU(unittest.TestCase):
         self.assertFalse(outcome["source_complete"])
         self.assertIn("tokenizer.json", outcome["source_issues"])
 
-    def test_external_shard_symlink_still_blocked(self):
+    def test_external_shard_symlink_is_supported_when_indexed(self):
         source = self.complete()
         outside = Path(self.tmp.name) / "external-shard.safetensors"
         outside.write_bytes(b"weight")
         (source / "model-00001.safetensors").unlink()
         (source / "model-00001.safetensors").symlink_to(outside)
         outcome = audit_checkpoint(self.cache)
-        self.assertFalse(outcome["source_complete"])
-        self.assertIn("model-00001.safetensors", outcome["source_issues"])
+        self.assertTrue(outcome["source_complete"], outcome)
+
+    def test_unindexed_external_shard_cannot_replace_missing_indexed_file(self):
+        source = self.complete()
+        (source / "model-00002.safetensors").unlink()
+        outside = Path(self.tmp.name) / "other.safetensors"
+        outside.write_bytes(b"unrelated")
+        (source / "unlisted.safetensors").symlink_to(outside)
+        result = audit_checkpoint(self.cache)
+        self.assertFalse(result["source_complete"])
+        self.assertIn("model-00002.safetensors", result["source_issues"])
+
+    def test_external_shard_symlink_supported_in_hybrid(self):
+        hybrid = self.hybrid()
+        outside = Path(self.tmp.name) / "shared-hybrid.safetensors"
+        outside.write_bytes(b"hybrid-shard")
+        path = hybrid / "model-00001.safetensors"
+        path.unlink()
+        path.symlink_to(outside)
+        self.assertTrue(audit_checkpoint(self.cache)["hybrid_ready"])
 
     def test_operator_shape_eleven_external_shards_and_two_hybrid(self):
         source = self.complete()
