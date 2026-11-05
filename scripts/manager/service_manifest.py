@@ -43,6 +43,17 @@ def manifest_from_observation(inv: dict, *, desired: str | None = None,
             present.append(row)
             if str(container.get("status", "")).startswith("Up"):
                 running.append(row)
+    download_containers = [
+        {"name": c.get("name"), "status": c.get("status"),
+         "image_id": c.get("image_id")}
+        for c in inv.get("containers", [])
+        if c.get("name") == "qwen38-27b-dl"
+    ]
+    # Status is observed, not an authoritative byte-progress measurement.
+    download_running = any(
+        str(c.get("status", "")).startswith("Up")
+        for c in download_containers
+    )
     errors = list(inv.get("errors", []))
     if len(running) > 1:
         errors.append("SINGLE_ACTIVE_MODEL_POLICY_VIOLATION")
@@ -65,6 +76,8 @@ def manifest_from_observation(inv: dict, *, desired: str | None = None,
         "desired_model": desired,
         "observed_state": state, "observed_model": live_owner,
         "managed_containers": present,
+        "download_containers": download_containers,
+        "download_running": download_running,
         "api_port_8000_listening": port_listening,
         "api_model_identity_verified": False,
         "gpu_exclusivity_verified": False,
