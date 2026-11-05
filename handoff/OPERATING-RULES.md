@@ -11,10 +11,10 @@
 
 ## R2 — Live operations, authorization boundaries
 
-- Existing original Orcarouter service / API `:8000/v1`, its original Docker container, image, weights, HF cache, volume mounts, external integrations, model ID and restart policy are protected. The known historical container name is `qwen38-flash-orca-uncensored-bf16-mtp`; **verify current ID/image on DGX before use**.
-- Do not **stop, kill, exec into, remove, recreate, rename, replace, retag, rebind, reconfigure or run a load test against** the original container without a separately scoped approval and rollback procedure.
-- Do not use `./flash serve` with a protected `NAME`: upstream `scripts/serve.sh` has `docker rm -f "$NAME"`. Guard the name before invocation.
-- Never perform GPU/model loading, Docker image replacement, gateway cutover, service stop, model/cache deletion or other disruptive resource actions without specific approval. An earlier blanket “yes” on an unrelated phase is not authorization.
+- **Superseded observed-operational assumption (2026-11-05):** user reports all previous operating services deleted. The old Orcarouter container `qwen38-flash-orca-uncensored-bf16-mtp` and old `:8000/v1` are **historical**, no longer presumed active or statically reserved. Still perform fresh read-only Docker/socket/volume inspection on DGX; a user report does not prove the port and name are free. Preserve any actually existing unrelated containers, image assets, weights, HF cache, integrations or mounted storage.
+- Do not stop/kill/exec/remove/replace/retag/rebind/reconfigure any **observed existing container**, or mutate shared cache/models, without separately scoped approval. Refuse a name conflict: no implicit docker rm -f. Do not treat deletion of old services as authorization to remove other resources.
+- This fork removes the implicit `docker rm -f "$NAME"` from `scripts/serve.sh`, replacing it with an exact-name collision refusal; still verify collision checks and race behavior before approving operational launch. Existing upstream scripts in other worktrees may retain the destructive behavior.
+- Current user request authorizes **implementing** new Blazux default source/config for port 8000. Do not infer approval for GPU/model loading, Docker image replacement, gateway cutover, service stop, model/cache deletion or other disruptive resource actions. Before deployment obtain actual DGX preflight/port/image evidence and a scoped operation/rollback agreement.
 - Read-only GitHub/source/test inspection and local CPU-only tests are allowed. DGX read-only inspections should be scoped and recorded, avoiding sensitive output.
 - **vLLM 0.32 only** for all three model recipes. No SGLang integration.
 

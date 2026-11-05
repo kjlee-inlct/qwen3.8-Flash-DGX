@@ -32,7 +32,7 @@
 #   LOG_REQUESTS=0    1 = log every prompt and output (--enable-log-requests --enable-log-outputs, DEBUG on
 #                     vLLM's request logger only) for tools/vllm_watch.py. Debugging only: privacy + unbounded logs
 #   SERVED_MODEL_NAME=qwen3.8-flash-next   model name exposed by the OpenAI-compatible API
-#   PORT=18300        host port for the API
+#   PORT=8000         host port for the API (fork default; upstream was 18300)
 #   CTX=262144        max context length (native). With YARN=1 up to ~500000 (see README)
 #   YARN=0            1 = YaRN rope scaling (factor 4) for CTX > 262144
 #   SEQS=8            max concurrent sequences. Do NOT leave this at 1-2 when measuring
@@ -87,7 +87,7 @@ MADVISE="${MADVISE:-random}"
 FAST_ROWS="${FAST_ROWS:-0}"
 EFFORT_ALIAS="${EFFORT_ALIAS:-1}"
 LOG_REQUESTS="${LOG_REQUESTS:-0}"
-PORT="${PORT:-18300}"
+PORT="${PORT:-8000}"
 CTX="${CTX:-262144}"
 YARN="${YARN:-0}"
 SEQS="${SEQS:-8}"
@@ -116,6 +116,17 @@ if [ -n "$DRAFT_MODEL" ] && ! image_has_dflash; then
   exit 1
 fi
 COMPILE_CACHE="${COMPILE_CACHE:-}"
+
+# Fail closed before resolving cache/snapshots or creating temporary files.
+# Docker CLI errors must never be interpreted as an empty container list.
+EXISTING_NAMES="$(docker ps -a --format '{{.Names}}')" || {
+  echo "!! Docker name inventory unavailable; refusing to serve" >&2
+  exit 1
+}
+if printf '%s\n' "$EXISTING_NAMES" | grep -Fxq -- "$NAME"; then
+  echo "!! container '$NAME' already exists; refusing implicit replacement" >&2
+  exit 1
+fi
 
 # Resolve the local snapshot directory and map it to the in-container mount.
 REPO_DIR="$HF_CACHE/hub/models--${MODEL//\//--}"
@@ -388,9 +399,20 @@ if [ -n "${PYTORCH_ALLOC_CONF:-}" ]; then
   ALLOCATOR_ENV=(-e "PYTORCH_ALLOC_CONF=$PYTORCH_ALLOC_CONF")
 fi
 
-docker rm -f "$NAME" >/dev/null 2>&1 || true
-# If docker run itself fails (port already bound, ...) do not leave a Created container behind.
-trap 'rc=$?; [ $rc -ne 0 ] && docker rm -f "$NAME" >/dev/null 2>&1; exit $rc' EXIT
+# Never replace or remove a container implicitly. The old serve.sh used docker
+# rm -f "$NAME" even when it belonged to a different deployment. This wrapper now
+# refuses existing names and requires an explicit operator-controlled retirement.
+# A failed docker run may leave a Created container; inspect it manually.
+# This preflight is repeated just before run to minimize a name-claim race.
+NAMES_BEFORE_RUN="$(docker ps -a --format '{{.Names}}')" || {
+  echo "!! cannot inspect Docker container names; refusing to launch"
+  exit 1
+}
+if printf '%s\n' "$NAMES_BEFORE_RUN" | grep -Fxq -- "$NAME"; then
+  echo "!! container '$NAME' already exists; refusing to remove or replace it"
+  echo "   inspect with: docker ps -a --filter name=^$NAME$"
+  exit 1
+fi
 # shellcheck disable=SC2086
 docker run -d --name "$NAME" --restart unless-stopped \
   --gpus all --ipc=host --shm-size 16g -p "${PORT}:8000" \

@@ -16,8 +16,8 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[2]
 SCHEMA = ROOT / "schemas" / "recipe.schema.json"
 MAX_RECIPE_SIZE = 256 * 1024
-PROTECTED_CONTAINER_NAMES = frozenset({"qwen38-flash-orca-uncensored-bf16-mtp"})
-PROTECTED_PORTS = frozenset({8000})
+# Port/name protection is a runtime inventory decision, not a static ban.
+# N2 inventory checks live Docker and socket ownership before any launch plan.
 
 
 class RecipeError(ValueError):
@@ -84,12 +84,6 @@ def validate_recipe(data: Any, *, schema_path: Path = SCHEMA) -> list[str]:
             ref, digest = runtime.get("image_ref"), runtime.get("image_digest")
             if isinstance(ref, str) and isinstance(digest, str) and "@" in ref and ref.rsplit("@", 1)[1] != digest:
                 messages.append("semantic:runtime/image_ref:image_digest_mismatch")
-        service = data.get("service")
-        if isinstance(service, dict):
-            if isinstance(service.get("container_name"), str) and service["container_name"] in PROTECTED_CONTAINER_NAMES:
-                messages.append("semantic:service/container_name:protected_name")
-            if type(service.get("port")) is int and service["port"] in PROTECTED_PORTS:
-                messages.append("semantic:service/port:protected_port")
     return sorted(set(messages))
 
 

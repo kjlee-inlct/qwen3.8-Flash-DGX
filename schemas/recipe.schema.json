@@ -67,8 +67,8 @@
       "required": ["served_model_name", "container_name", "port"],
       "properties": {
         "served_model_name": {"type": "string", "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]{1,99}$"},
-        "container_name": {"type": "string", "pattern": "^[a-zA-Z][a-zA-Z0-9_.-]{1,99}$", "not": {"enum": ["qwen38-flash-orca-uncensored-bf16-mtp"]}},
-        "port": {"type": "integer", "minimum": 1024, "maximum": 65535, "not": {"enum": [8000]}}
+        "container_name": {"type": "string", "pattern": "^[a-zA-Z][a-zA-Z0-9_.-]{1,99}$"},
+        "port": {"type": "integer", "minimum": 1024, "maximum": 65535}
       }
     }
   }

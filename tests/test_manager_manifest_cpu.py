@@ -45,13 +45,16 @@ class ManifestValidationCPU(unittest.TestCase):
         invalid["runtime"]["image_digest"] = "sha256:" + "d" * 64
         self.assertIn("semantic:runtime/image_ref:image_digest_mismatch", validate_recipe(invalid))
 
-    def test_protected_runtime_guards(self):
-        invalid = deepcopy(self.valid)
-        invalid["service"]["container_name"] = "qwen38-flash-orca-uncensored-bf16-mtp"
-        invalid["service"]["port"] = 8000
-        issues = validate_recipe(invalid)
-        self.assertIn("semantic:service/container_name:protected_name", issues)
-        self.assertIn("semantic:service/port:protected_port", issues)
+    def test_port_8000_allowed_at_schema_level_but_not_runtime_authorized(self):
+        candidate = deepcopy(self.valid)
+        candidate["service"]["port"] = 8000
+        candidate["service"]["container_name"] = "qwen38-flash"
+        self.assertEqual(validate_recipe(candidate), [])  # runtime inventory still required
+        candidate["service"]["port"] = 0
+        self.assertTrue(validate_recipe(candidate))
+        candidate["service"]["port"] = 8000
+        candidate["service"]["container_name"] = "bad container name"
+        self.assertTrue(validate_recipe(candidate))
 
     def test_approval_controls_cannot_be_enabled(self):
         invalid = deepcopy(self.valid)

@@ -17,4 +17,4 @@ Install CPU-only requirements-manager.txt, then run:
 
 Candidate exit status MUST be 2 (FAIL). Even exit 0 cannot authorize
 Docker actions, model downloads, GPU use or deletion.
-The protected name/port checks are provisional until N2 read-only inventory.
+The former static Orcarouter name/8000 bans were removed on 2026-11-05 after user reported removal. N2 inventory now checks actual Docker container names and socket listeners; source format PASS is never permission to launch.

@@ -22,7 +22,7 @@ Run (isolated CPU, no Docker/GPU):
 - python3 -m unittest discover -s tests -p 'test_manager_manifest_cpu.py' -v
 - python3 -m scripts.manager.manifest validate recipes/qwen38-27b.candidate.yaml
 
-27B example MUST fail (exit 2), because actual repo revision, image digest, source SHA, architecture and PLE are unknown. Only the **synthetic** test fixture is schema-valid; its SHA values are not real pins. Schema success NEVER means image/checkpoint existence or permission to serve, download, stop or delete. Current protected name/port checks are historical only: N2 must reconcile fresh actual Docker, port, mounts and canonical paths before any planning action.
+27B example MUST fail (exit 2), because actual repo revision, image digest, source SHA, architecture and PLE are unknown. Only the **synthetic** test fixture is schema-valid; its SHA values are not real pins. Schema success NEVER means image/checkpoint existence or permission to serve, download, stop or delete. Historical hard-coded block for port 8000 and the former Orcarouter name was removed 2026-11-05 after user reported service retirement. N2 now performs fresh read-only Docker, socket, mount and cache observations. Port 8000 is allowed **at source schema level only**; if occupied, deployment MUST be blocked. No runtime authority follows from source schema PASS.
 
 ## C. Safety-first commands and state machine (proposed)
 

@@ -1,6 +1,6 @@
 # Current state — active snapshot
 
-**Snapshot written:** 2026-11-04 (KST) · **Status:** `P0_N1_SOURCE_IMPLEMENTED` · **Implementation:** N1 manifest validator and CPU tests; N2+ pending · **GPU:** `NOT_RUN`.
+**Snapshot written:** 2026-11-05 (KST) · **Status:** `P0_N1_N2_SOURCE_IMPLEMENTED / N3_PARTIAL` · **Implementation:** Flash-Next default port 8000, N2 read-only Inventory and Wizard doctor/plan; **GPU:** `NOT_RUN`.
 
 ## Repository/branch tracking
 
@@ -15,25 +15,27 @@
 | Old Preview repository | `kjlee-inlct/Qwen3.8-Flash-Next-NVFP4-BF16PLE-DGX-Spark`; frozen preservation, historic `feature/blazux-phase6-runtime-gates@2e6a5794b0fe282ae4bf6f4852acd919fea6d55a` |
 | New branch exact HEAD | **Read actual GitHub branch HEAD**. Do not embed a file's own eventual HEAD as authoritative; the branch commit changes when this file changes |
 | Draft PR | [#1 — recipe wizard roadmap and handoff](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/pull/1) against `main`; open, not merged |
-| PR CI | Original documentation commit had no checks; N1 CPU workflow now proposed, check **actual PR HEAD** for result. Not implied PASS. |
+| PR CI | N1 at bf453aea: two CPU jobs PASS as verified 2026-11-04. For 2026-11-05 N2/port changes, independently verify latest PR HEAD and CI. |
 
 ## Operational environment — protect; verify fresh
 
-The existing user-operated service is **Orcarouter**. Historical prior-session values (not rechecked on DGX in this conversation):
+**User report 2026-11-05:** prior operating services have all been deleted; requests Blazux default NVIDIA Flash-Next on the **same external :8000/v1 API port**. This is a user-reported change, not yet independently observed with current DGX Docker/ss/df commands. Historical prior-session values (not rechecked):
 - Container `qwen38-flash-orca-uncensored-bf16-mtp`.
 - Container ID `3fc5a3d5be1d52595602287acd87895220219bad050484251ac0408a163ffc45`.
 - Original image ID `sha256:b0984c4b724b6f8c0745acb654994e1bd3a6c50b75c2c76078f1bfd6b395f39a`.
 - OpenAI-compatible `:8000/v1`, model ID `qwen3.8-flash-next-orca-uncensored-bf16-mtp`, existing external clients.
 - Legacy workspace `~/Workspace/llm/blazux-phase6-gates`, target new workspace `~/Workspace/llm/blazux-orcarouter`.
 
-**Actual current running/stopped status, capacity, local Docker images, local checkpoints and ports: `NOT_OBSERVED_THIS_SESSION`.** No stop/delete/launch has been performed. Do not infer the historical ID still matches.
+**Actual current running/stopped status, capacity, local Docker images, model snapshots and ports: `NOT_OBSERVED_THIS_SESSION`.** No stop/delete/launch performed by this development session. Do not infer that port 8000 or container name is free just because previous services were reported deleted.
+
+**Target default service source configuration:** `MODEL=nvidia/Qwen3.8-Flash-Next-NVFP4`, `MODE=hybrid`, `MTP=2`, `YARN=1`, `CTX=500000`, `NAME=qwen38-flash`, `PORT=8000`, served model `qwen3.8-flash-next`, Docker internal 8000. This is desired/source state, **not a running API**. Existing Orcarouter model ID is not an alias for this different checkpoint.
 
 ## Stage matrix
 
 | Stage | Source/plan | CPU/CI | DGX/GPU | Release |
 |---|---|---|---|---|
-| P0 inventory + recipe/wizard architecture | `N1_SCHEMA_SOURCE_PASS`; N2+ pending | `N1_CPU_PASS (15 isolated tests)`; CI verify latest | `NOT_RUN` | `NOT_APPLICABLE` |
-| P1 Flash-Next baseline | `PLANNED` | `NOT_RUN` | `NOT_RUN` | `BLOCKED` |
+| P0 inventory + recipe/wizard architecture | `N1 schema + N2 inventory + default 8000 SOURCE_IMPLEMENTED`; N3 doctor/plan partial | N1 15 CPU PASS at prior SHA; new N2/launch tests **CI_RECHECK_REQUIRED** | `NOT_RUN` | `NOT_APPLICABLE` |
+| P1 Flash-Next baseline | `SOURCE_CONFIGURED / NOT_DEPLOYED` | `NOT_RUN` | `NOT_RUN` | `BLOCKED` |
 | P2 27B vLLM 0.32 | `PLANNED/COMPAT_UNKNOWN` | `NOT_RUN` | `NOT_RUN` | `BLOCKED` |
 | P3 Flash-Next ↔ 27B switching | `PLANNED` | `NOT_RUN` | `NOT_RUN` | `BLOCKED` |
 | P4 Flash-Next file retirement | `PLAN_ONLY/APPROVAL_REQUIRED` | `NOT_RUN` | `NOT_RUN` | `BLOCKED` |
@@ -49,19 +51,21 @@ The existing user-operated service is **Orcarouter**. Historical prior-session v
 - `docs/MANIFEST-CONTRACTS.md` — manifest schema intent, switch/rollback/deletion gates.
 - `handoff/*` — persistent entrypoint, rules, decisions, evidence, action list and starter prompt.
 - N1 SOURCE IMPLEMENTED: schema, bounded YAML validator, intentionally invalid 27B candidate, synthetic fixture, 15 CPU tests, new GitHub Actions CPU workflow. See schemas/recipe.schema.json, scripts/manager/manifest.py, recipes/, tests/test_manager_manifest_cpu.py.
-- No launchable production recipe, inventory manager, wizard, API gateway, service manager or 27B runtime adapter exists yet. The only schema-valid fixture contains **fake synthetic SHA values**.
+- Default Blazux `flash` + `profiles/default.env` + `scripts/serve.sh` now target host port 8000 and refuse implicit Docker name replacement. The built-in model is NVIDIA Flash-Next. This path requires image/model assets and explicit operational go-ahead on DGX.
+- `scripts/manager/inventory.py` and `wizard/00-doctor.sh`/`10-plan.sh` provide read-only Docker/ss/disk/cache inspection. N3 is partial (no interactive or execute path).
+- No pinned, launchable **manifest**; no service controller, proxy/gateway or 27B runtime adapter. Synthetic recipe SHA values are fake fixture data.
 
 ## Blockers / approvals
 
-- Need fresh read-only DGX storage/container inventory before operational choices.
+- Need fresh read-only DGX inventory **execution** before operational choices; the code now exists, but DGX observations do not.
 - Need vLLM 0.32 source check for Qwen3.8-27B architecture, quantized `lm_head`, GDN, tokenizer and speculative support. SGLang is excluded.
-- Need user-approved GPU window for P1/P2/P3/P5/P6 and explicit, exact deletion approval for P4. This documentation commit authorizes neither.
+- User requested implementation for Flash-Next on port 8000; no local GPU/model loading was performed and no command was executed against DGX. Obtain scoped operator confirmation and preflight evidence before actually running setup/serve; explicit deletion approval remains required for P4.
 - Need plan for sufficient free disk. Do not delete existing images/cache or checkpoint automatically.
 
 ## Immediate next actions
 
-1. N2: implement read-only storage/Docker inventory, canonical paths, protected runtime collision guards, deterministic dry-run, synthetic CPU tests.
-2. N3: add wizard source-only command orchestration, no launch, download, restart, switch or delete.
-3. N4: source-audit 27B vLLM 0.32 and obtain pin/architecture evidence; do not resolve candidate placeholders speculatively.
+1. On DGX execute read-only `wizard/00-doctor.sh` and `./flash doctor default`, check actual free port 8000, cache/weights/image, mounts and required capacity; record findings without secrets.
+2. Complete N3 wizard and pinned image/model provenance, and add a guarded prepare/serve plan; do not auto-run setup or serve.
+3. With separately scoped operation approval, run Blazux Flash-Next `setup/serve/wait/test` and bench, preserving rollback evidence. Then resume 27B source audit.
 
 See [NEXT-ACTIONS.md](NEXT-ACTIONS.md), [EVIDENCE-LEDGER.md](EVIDENCE-LEDGER.md) and [../docs/MODEL-RECIPE-WIZARD-PLAN.md](../docs/MODEL-RECIPE-WIZARD-PLAN.md).

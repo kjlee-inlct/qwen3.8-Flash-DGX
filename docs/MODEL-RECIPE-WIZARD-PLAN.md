@@ -1,6 +1,6 @@
 # Blazux vLLM 0.32 — Recipe/Wizard Master Plan
 
-> Status: **P0 N1 SOURCE IMPLEMENTED; N2+ PLAN ONLY / NO GPU VALIDATION** · Date: 2026-11-04 (KST) · Owner repo: `kjlee-inlct/qwen3.8-Flash-DGX`
+> Status: **P0 N1/N2 SOURCE IMPLEMENTED, N3 PARTIAL; GPU/actual DGX NOT_RUN** · Updated 2026-11-05 (KST) · Owner repo: `kjlee-inlct/qwen3.8-Flash-DGX`
 >
 > Base: `main@b0aa8b77604139557169387b2fa8386355d8b651`; planning branch: `feature/recipe-wizard-handoff`. Source evidence is not a DGX runtime validation.
 
@@ -72,8 +72,8 @@ N1 implemented schemas/recipe.schema.json, scripts/manager/manifest.py, requirem
 
 ## 5. Operations boundaries
 
-- Keep the historic Orcarouter API `:8000/v1`, external model ID and existing clients untouched until approved cutover. Proxy on `:8000` cannot be bound while the existing process owns it.
-- Existing runtime ID/image/volume references from older sessions are historical observations; reacquire via **read-only** `docker ps/inspect`, `ss`, `df` before making stateful decisions.
+- 2026-11-05 user report supersedes historic live-service assumption: prior Orcarouter operating services have been removed, according to user (not independently confirmed). New Blazux NVIDIA Flash-Next **default** target is `PORT=8000`, `SERVED_MODEL_NAME=qwen3.8-flash-next`, `NAME=qwen38-flash`. External client model ID changes from Orcarouter; clients must use the new ID. No gateway cutover or API startup was executed in this session.
+- Existing runtime ID/image/volume references from older sessions are historical observations; use the N2 read-only `wizard/00-doctor.sh` and `./flash doctor default` and reacquire actual `docker ps/inspect`, `ss`, `df` before stateful decisions.
 - Docker image pull/build may change storage; checkpoint download may consume huge disk. Treat download/build as separately gated resource operations and enforce quota/headroom.
 - Protect HF cache blobs shared by more than one snapshot, pinned model revisions, overlay source shards, existing runtime image, volume, compiled caches and fallback snapshot.
 - `serve.sh` is **not idempotent with respect to protection** because it removes the named container; use an external guard that prohibits protected `NAME`.

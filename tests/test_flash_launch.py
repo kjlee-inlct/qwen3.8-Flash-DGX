@@ -40,7 +40,10 @@ elif args[0] == "info":
     print("nvidia")
 elif args[0] == "version":
     print("test")
-elif args[0] in ("ps", "rm", "run", "logs"):
+elif args[0] == "ps":
+    if os.environ.get("FAKE_PS_NAME"):
+        print(os.environ["FAKE_PS_NAME"])
+elif args[0] in ("rm", "run", "logs"):
     pass
 else:
     raise SystemExit("Unexpected Docker command: " + repr(args))
@@ -155,6 +158,31 @@ else:
         r = self.run_script("flash", "doctor", "dflash")
         self.assertNotEqual(r.returncode, 0)
         self.assertIn("lacks the DFlash capability label", r.stdout)
+
+    def test_default_port_8000_and_next_flash_model_id(self):
+        r = self.run_script("flash", "serve", "default")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        args = next(x for x in self.calls() if x[0] == "run")
+        self.assertIn("8000:8000", args)
+        self.assertEqual(args[args.index("--served-model-name") + 1], "qwen3.8-flash-next")
+        self.assertEqual(args[args.index("--port") + 1], "8000")
+
+    def test_direct_script_defaults_to_port_8000(self):
+        r = self.run_script("scripts/serve.sh", MODE="nvfp4", DRAFT_MODEL="")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        args = next(x for x in self.calls() if x[0] == "run")
+        self.assertIn("8000:8000", args)
+
+    def test_existing_container_name_refused_without_rm_or_run(self):
+        r = self.run_script("scripts/serve.sh", MODE="nvfp4", FAKE_PS_NAME="qwen38-flash")
+        self.assertNotEqual(r.returncode, 0)
+        self.assertIn("refusing implicit replacement", r.stderr)
+        self.assertFalse(any(x[0] in ("rm", "run") for x in self.calls()))
+
+    def test_different_container_does_not_block_name(self):
+        r = self.run_script("scripts/serve.sh", MODE="nvfp4", FAKE_PS_NAME="unrelated")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertTrue(any(x[0] == "run" for x in self.calls()))
 
 
 if __name__ == "__main__":
