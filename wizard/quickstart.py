@@ -109,6 +109,14 @@ def selection_plan(model: str, *, service: dict[str, Any] | None = None,
             steps.append(_step("switch", "BLOCKED",
                                "Stop old model, release port 8000, start and verify",
                                scope="service_transition"))
+    elif selected == "flash-next" and observed is not None:
+        # Never run the P1 guided start path while 27B/Orcarouter is active.
+        # Only the separately tested, approved service handover may do this.
+        state, next_action = "TRANSITION_UNQUALIFIED", "blocked"
+        issues.append("EXCLUSIVE_ACTIVE_MODEL_SWITCH_REQUIRED")
+        steps.append(_step("switch", "BLOCKED",
+                           "Stop the other model via qualified atomic handover",
+                           scope="service_transition"))
     elif selected == "flash-next":
         state, next_action = "REVIEW_REQUIRED", "open_p1_guided"
         steps.append(_step("review_p1", "AVAILABLE",
