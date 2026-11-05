@@ -30,6 +30,12 @@ Blazux/vLLM 0.32 기반에서 (1) Flash-Next 구동/벤치, (2) 27B 구동/벤�
 
 P1은 `doctor/plan`까지만 소스 구현되었으며 설치·기동·API 검증·벤치마크·증거 저장까지의 end-to-end Wizard는 미완성입니다. **다음 시작 작업은 이를 완성하는 것**입니다. P2~P7은 앞 단계 DGX 검증·용량·승인 조건을 지키며 순서대로 진행합니다. 포트 `8000/v1` 유지 목표, 모델별 served ID 관리, vLLM 0.32만 허용합니다.
 
+## Wizard 개발 구조 (2026-11-05 추가 확정)
+
+**Wizard architecture decision (2026-11-05):** Implement all P1–P7 **menu/CLI modules first** and then integrate/debug actual runtime in P1→P7 order. Root operator entry is `./wizard.sh`; `wizard/menus/p1.py` through `p7.py` own per-menu behavior, with `wizard/main.py` and `wizard/menus/common.py` for routing and safe source contracts. Scripts accept explicit stage/action arguments and emit JSON and stable exit codes for operator-mediated DGX tests. Only P1 calls the existing guarded backend today; P2–P7 are SOURCE-ONLY plans and must never execute merely because a menu exists. No SGLang; vLLM 0.32 only.
+
+사용자 DGX는 Shell에서 Wizard 인자를 직접 실행하고 JSON 결과를 복사해 전달할 수 있으므로, **대화형과 비대화형 기능이 동일**해야 합니다. `./wizard.sh list --json`, `./wizard.sh p1 status --json`, `./wizard.sh p1 plan --for-action verify --json`부터 사용하세요. 미완성 P2~P7에서는 실행 대신 `BLOCKED`가 정상입니다. 현재 사용자의 `./flash setup default` 다운로드 및 이미 입력된 `serve/wait/test` 순서를 건드리지 마세요. 설치/기동/전환/제거는 단계별 인가와 실제 DGX 검증이 필요합니다.
+
 ## 진행 규칙
 
 `handoff/OPERATING-RULES.md`를 필수 규칙으로 적용하세요. 과거 Orcarouter 컨테이너와 API `:8000/v1`은 사용자가 서비스 삭제를 보고한 **역사적 환경**입니다. 이를 현재 실행 중으로 추정하지 말고, DGX의 실제 컨테이너/포트/이미지/캐시를 읽기 전용으로 새로 확인하세요. 새 NVIDIA Flash-Next 기본 목표 API는 `:8000/v1`이지만 현재 포트 점유는 미확인입니다. 기존 공유 이미지/모델 파일/HF 캐시/기타 컨테이너와 클라이언트는 확인 없이 변경하지 마세요. 정비창/모델 기동/GPU 사용/전환/삭제는 구체적 범위와 원복계획을 먼저 수립하고 별도 승인을 받아야 합니다. 문서상 P4가 있다고 해서 삭제 허가가 난 것은 아닙니다.

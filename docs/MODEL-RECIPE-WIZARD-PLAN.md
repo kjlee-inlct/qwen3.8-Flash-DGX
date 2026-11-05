@@ -27,6 +27,29 @@ Each model baseline milestone (P1/P2/P5) MUST be operable through Wizard from pr
 
 P1 Wizard source now includes scripts/manager/p1_assets.py, p1_wizard.py, p1_bench.py, wizard/p1.sh, tests/test_p1_*_cpu.py and CI. Source commit c625a49276272e90d19ab6367f580a0230754890: two CI jobs passed all 80 CPU tests each (41 new P1 and 39 baseline). Wizard provides asset/image inspection, stale-plan approval, Hybrid preparation/start/wait, API model/text/tool/vision checks and bounded SSE throughput/TTFT measurement with JSON evidence. 2026-11-05 user-supplied DGX log: vLLM 0.32 Docker image build finished; model download 9/25 files (36%) at last visible line. OpenWebUI and Portainer remained running; port 8000 was free at the earlier scan. The operator entered flash setup, serve, wait and test sequentially, so subsequent commands may run without assistant action. Do not modify the worktree, restart the process, repeat setup, or replace an already running container before the original chain ends. These are time-bounded facts, not proof of full download or API readiness. **Actual DGX Wizard GPU/API/benchmark and automated rollback NOT_RUN**. P1 cannot exit solely on these source tests.
 
+## 1C. Unified Wizard CLI scaffold, ahead of runtime integration
+
+**Wizard architecture decision (2026-11-05):** Implement all P1–P7 **menu/CLI modules first** and then integrate/debug actual runtime in P1→P7 order. Root operator entry is `./wizard.sh`; `wizard/menus/p1.py` through `p7.py` own per-menu behavior, with `wizard/main.py` and `wizard/menus/common.py` for routing and safe source contracts. Scripts accept explicit stage/action arguments and emit JSON and stable exit codes for operator-mediated DGX tests. Only P1 calls the existing guarded backend today; P2–P7 are SOURCE-ONLY plans and must never execute merely because a menu exists. No SGLang; vLLM 0.32 only.
+
+Directory layout after initial source implementation:
+
+```text
+wizard.sh                    # root interactive + noninteractive entry
+wizard/__main__.py          # python3 -m wizard
+wizard/main.py              # stage routing, JSON catalog, --stage/--action
+wizard/menus/common.py      # stage contract/status/plan and safety gates
+wizard/menus/p1.py          # existing Flash-Next P1 backend adapter
+wizard/menus/p2.py          # 27B interface, BLOCKED
+wizard/menus/p3.py          # Flash-Next ↔ 27B switch interface, BLOCKED
+wizard/menus/p4.py          # optional storage cleanup interface, BLOCKED
+wizard/menus/p5.py          # Orcarouter interface, BLOCKED
+wizard/menus/p6.py          # Orcarouter ↔ 27B interface, BLOCKED
+wizard/menus/p7.py          # integrated services/proxy/gateway interface, BLOCKED
+wizard/p1.sh                # legacy P1 compatibility wrapper
+```
+
+The source router/CLI and interfaces are implemented and covered by synthetic CPU CI. **This is not complete P2–P7 functionality** and does not qualify the GPU, service start/stop/switch or production cutover. See [Wizard CLI contract](WIZARD-CLI-CONTRACT.md) for operator/agent instructions and exit semantics.
+
 ## 2. Known inputs vs unknowns
 
 **Grounded in repository source:**

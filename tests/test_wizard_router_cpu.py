@@ -144,6 +144,20 @@ class WizardRouterCPU(unittest.TestCase):
         self.assertEqual(rc, 0)
         mock_main.assert_called_once_with(["status"])
 
+    def test_json_guided_is_rejected_without_prompt(self):
+        with patch("scripts.manager.p1_wizard.main") as fn:
+            rc, text = self.call(["p1", "guided", "--json"])
+        self.assertEqual(rc, 3)
+        self.assertEqual(json.loads(text)["status"], "BLOCKED")
+        fn.assert_not_called()
+
+    def test_p1_guided_default_on_tty(self):
+        with patch.object(router.sys.stdin, "isatty", return_value=True), \
+             patch("scripts.manager.p1_wizard.main", return_value=0) as fn:
+            rc, _ = self.call(["p1"])
+        self.assertEqual(rc, 0)
+        fn.assert_called_once_with(["guided"])
+
     def test_invalid_stage_returns_error_without_execution(self):
         rc, _ = self.call(["p99", "start"])
         self.assertEqual(rc, 2)

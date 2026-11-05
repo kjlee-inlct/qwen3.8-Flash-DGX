@@ -18,6 +18,15 @@
 - Keep external host API `:8000/v1` where feasible and consistently manage served-model IDs. No simultaneous assumption that two heavy models fit GPU memory. Any change to external clients/port/gateway requires explicit operator review.
 - P4 is conditional: if sufficient space exists, record **SKIPPED_NOT_NEEDED** rather than delete weights. If required, enforce exact-path dry-run and explicit separate approval, verified safe fallback, no shared-cache blob deletion and rollback plan. Preserve source, recipes, tests, logs and evidence.
 
+## R1B — Modular Wizard and user-mediated command execution
+
+**Wizard architecture decision (2026-11-05):** Implement all P1–P7 **menu/CLI modules first** and then integrate/debug actual runtime in P1→P7 order. Root operator entry is `./wizard.sh`; `wizard/menus/p1.py` through `p7.py` own per-menu behavior, with `wizard/main.py` and `wizard/menus/common.py` for routing and safe source contracts. Scripts accept explicit stage/action arguments and emit JSON and stable exit codes for operator-mediated DGX tests. Only P1 calls the existing guarded backend today; P2–P7 are SOURCE-ONLY plans and must never execute merely because a menu exists. No SGLang; vLLM 0.32 only.
+
+- All P-stage menus use one root `./wizard.sh` entrypoint; direct command syntax and interactive choices must share the same stage implementation. Never build separate secret execution paths for headless runs.
+- Default to read-only status/plan with machine-readable JSON; use exit 0 for successful inspection, exit 3 for blocked plans, and nonzero for failures. A plan printed with BLOCKED is evidence of **refusal**, not approval. P1 execution retains its fresh full `plan_id` gate. Do not allow `--dry-run` with `--execute`.
+- The adapter for P2, P3, P4, P5, P6, P7 must remain `INTERFACE_ONLY` and `executed=false` until separate pinned, tested implementation, source/CPU/CI and real DGX acceptance prove each operation. In particular P4 may be skipped and never deletes anything without its own exact-path approval; P3/P6 do not switch any live services until qualification.
+- Do not update the active DGX worktree while the user-owned `./flash setup default` or its queued `serve/wait/test` commands may still be running. The last supplied log showed download at 9/25 (36%), image build PASS; current state must be rechecked after completion.
+
 ## R2 — Live operations, authorization boundaries
 
 - **Superseded observed-operational assumption (2026-11-05):** user reports all previous operating services deleted. The old Orcarouter container `qwen38-flash-orca-uncensored-bf16-mtp` and old `:8000/v1` are **historical**, no longer presumed active or statically reserved. Still perform fresh read-only Docker/socket/volume inspection on DGX; a user report does not prove the port and name are free. Preserve any actually existing unrelated containers, image assets, weights, HF cache, integrations or mounted storage.

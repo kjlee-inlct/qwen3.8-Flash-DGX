@@ -1,5 +1,7 @@
 # Qwen3.8-Flash-Next on a single DGX Spark (GB10)
 
+> **Unified Wizard:** `./wizard.sh` opens the P1–P7 menu; `./wizard.sh list --json` and `./wizard.sh --stage p1 --action status --json` support direct scripted/operator use. P1 delegates to the guarded Blazux backend. P2–P7 are source-only menu/plan contracts with execution blocked until their DGX validation. [CLI contract](docs/WIZARD-CLI-CONTRACT.md).
+
 > **P1 Wizard:** Source and CPU CI (80/80 tests per job) implemented. Run `bash wizard/p1.sh status` for read-only inspection or `bash wizard/p1.sh` for interactive, per-step approved operations. See [P1 Wizard operations](docs/P1-WIZARD-OPERATIONS.md). If the existing operator setup/download or queued serve/wait/test chain is still active, do not run another setup or serve. CPU CI does not prove DGX runtime qualification.
 
 > **Fork-specific operational default (2026-11-05):** External API is now `http://localhost:8000/v1` for `./flash serve default`; served model ID `qwen3.8-flash-next`, Docker name `qwen38-flash`, NVIDIA Flash-Next checkpoint with the original Blazux default Hybrid/YaRN/MTP2 settings. This overrides upstream documentation examples using :18300. The previous Orcarouter :8000 service was **reported removed** (not confirmed on the DGX). Review [safe operations runbook](docs/FLASH-NEXT-8000-OPERATIONS.md) and run read-only `wizard/00-doctor.sh` before any deployment. **No automatic container replacement or deletion.**

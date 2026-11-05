@@ -1,5 +1,14 @@
 # Handoff changelog (append-only)
 
+## 2026-11-05 — H-009 — Build P1–P7 Wizard menu/router before operational phases
+
+- User requests complete up-front Wizard **architecture** and per-stage/menu source modules rather than one monolithic file; direct CLI/JSON automation in addition to guided menu for user-mediated DGX operations.
+- Added root executable `wizard.sh`, `wizard/main.py`, `wizard/menus/{common,p1,p2,p3,p4,p5,p6,p7}.py`; existing `wizard/p1.sh` retained as compatibility shim. P1 reuses existing guarded source workflow, P2–P7 status/plan interfaces explicitly `BLOCKED` for execution pending pinned recipes/source/runtime/rollback acceptance.
+- First source commit `de784feeff0f92f36dcc359ce77167ebcdfc5bbe`, two GitHub Actions SUCCESS, **101 CPU tests per job** (21 new routing tests and 80 previous).
+- Follow-up source hardens P1 JSON mode and adds two regression tests; verify final branch CI before release claim.
+- No DGX Docker/GPU/service interaction, model download or deletion by assistant. User-supplied previous download/queued setup chain preserved. Actual P1–P7 runtime acceptance remains incomplete.
+
+
 ## 2026-11-05 — H-008 — P1 Wizard code batch and operator build/download evidence
 
 - Operator-provided DGX log: Docker image `qwen38-flash-dgx:v0.32` built (image ID `sha256:9479fc92a9244fcf137afb36ed778e07495e29663a81db193736fcaa1f15e137`), port :8000 free at earlier read-only scan, model download 9/25 = 36% in last visible line. OpenWebUI/Portainer kept running. Shell has queued `serve/wait/test` after `./flash setup default`.
