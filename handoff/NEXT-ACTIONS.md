@@ -1,3 +1,13 @@
+## 2026-11-06 — full Wizard SOURCE / incremental P2–P7 debug
+
+- [x] Build complete model-first TTY menu and machine workflow/roadmap, expose all ten model lifecycle actions for Flash-Next/NVIDIA 27B/Orcarouter.
+- [x] Build service menu for status/health/bounded logs and guarded start/stop/restart/rollback/proxy/gateway; P3/P4/P6/P7 advanced plan actions and readiness dashboard are accessible.
+- [x] Preserve P1 exact approval and 27B pinned downloader; block P1 guided when another inference model is active or service inventory unknown; add regression.
+- [x] Add no-Docker/no-GPU CPU matrix to GitHub CI and update docs/decisions/handoff. Check final HEAD test counts and Draft PR #1 status.
+- [ ] While operator-owned 27B download remains active, leave DGX checkout, qwen38-27b-dl, source image/cache and Flash-Next :8000 untouched; **do not ask git pull while downloading**. On completion, obtain exact return code/evidence, then review `./wizard.sh model 27b status --inspect-cache --expected-revision 482ca0f3832238542f8f5295dde86b5f22711d80 --json`.
+- [ ] Begin real P2 runtime adapter qualification on source/CPU (vLLM 0.32 single GB10 ARM64, ModelOpt NVFP4, image digest, PLE/MTP) before any live GPU trial; model conversion/stop/switch requires separate approval.
+- [ ] Implement/start fault-injected service transaction and symmetric rollback when approved; P3 bidirectional proof, P4 optional no-deletion default, Orcarouter adapter from reviewed parallel branch, P6 switch, P7 acceptance. Keep shared host API 8000.
+
 ## 2026-11-05 — after model-first Batch A/source-only B
 
 - [x] Implement root model selection, read-only lifecycle plans and in-flight download suppression, preserving P1 and existing CLI.
