@@ -1,10 +1,21 @@
+## 2026-11-06 — Actual image source audit for 27B next
+
+- [x] Operator DGX actual `status --inspect-runtime` confirms NVIDIA pinned 27B source, correct architecture/modelopt/context, ARM64/Linux v0.32 local image ID and protected live Flash-Next.
+- [x] Add bounded installed-image source AST auditor and explicit no-GPU/no-network temporary Docker wrapper, plus eight CPU unit tests. `acf5d64` CI: 294/294 PASS.
+- [ ] **DGX read-only follow-up:** after `git status -sb` and clean `git pull --ff-only`, run `./scripts/temporary/p2-27b-image-audit.sh --plan`; review, then `./scripts/temporary/p2-27b-image-audit.sh --execute-cpu-only`. This transient runc container does not use GPU, host port or inference service. Return JSON, especially registry/modelopt checks and blocker messages.
+- [ ] Audit exact `hf_quant_config.json`, mixed FP8/NVFP4 per-layer support and pinned snapshot tokenizer, verify executable image registry and real memory budget; do not confuse static source presence with GPU loading.
+- [ ] Finish isolated 27B launcher/recipe and bounded P2 lifecycle executor with immutable image identification, transaction approval and full original Flash-Next restore. Actual 27B start and `:8000` switchover require a *separate* explicit user-approved transition window; until then no operation may touch inference service/GPU.
+- [ ] Run GPU/model/API/benchmark/rollback acceptance only with approved DGX plan. PR #1 stays Draft.
+
+---
+
 ## 2026-11-06 — NVIDIA 27B source downloaded; runtime qualification pending
 
-- [x] Record user-provided DGX NVIDIA pinned download 19/19, exit 0, \`SOURCE_FILES_PRESENT_PINNED_CANDIDATE\`, with exact evidence path; prior transfer-in-progress checklist is historical.
-- [x] Implement source-only read-only \`status --inspect-runtime\` audit of exact source revision, model config, Docker image/platform/label and current service, with CPU fault tests. No GPU allocation, service stop or auto approval.
-- [ ] After clean \`git pull --ff-only\` (download has completed), operator may run \`./wizard.sh model 27b status --inspect-runtime --json\` and return sanitized JSON, to ground actual cache/config/image/service assertions. Do not launch 27B.
+- [x] Record user-provided DGX NVIDIA pinned download 19/19, exit 0, `SOURCE_FILES_PRESENT_PINNED_CANDIDATE`, with exact evidence path; prior transfer-in-progress checklist is historical.
+- [x] Implement source-only read-only `status --inspect-runtime` audit of exact source revision, model config, Docker image/platform/label and current service, with CPU fault tests. No GPU allocation, service stop or auto approval.
+- [ ] After clean `git pull --ff-only` (download has completed), operator may run `./wizard.sh model 27b status --inspect-runtime --json` and return sanitized JSON, to ground actual cache/config/image/service assertions. Do not launch 27B.
 - [ ] Inspect exact pinned config / hf_quant_config and vLLM 0.32 model registry+ModelOpt loader in image, ARM64 support, memory budget and validated image digest. Complete a 27B-specific non-Flash serve recipe and guarded start/wait/verify/benchmark adapter.
-- [ ] Obtain a separate exact plan approval before any Flash-Next stop, 27B GPU start or P3 cutover. Preserve and verify rollback source, health and \`:8000\` API identity.
+- [ ] Obtain a separate exact plan approval before any Flash-Next stop, 27B GPU start or P3 cutover. Preserve and verify rollback source, health and `:8000` API identity.
 - [ ] After source CPU/CI, verify actual runtime in approved DGX window, including failures, latency/TTFT/TPS, model identity and rollback. Keep PR #1 Draft until end-to-end acceptance.
 
 ---## 2026-11-06 — full Wizard SOURCE / incremental P2–P7 debug

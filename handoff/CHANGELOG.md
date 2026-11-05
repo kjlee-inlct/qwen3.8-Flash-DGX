@@ -1,6 +1,12 @@
+## 2026-11-06 — Audit installed vLLM 0.32 image source using CPU-only runc
+
+Based on the new DGX preflight result, authored `scripts/manager/p2_27b_image_audit.py`, `scripts/temporary/p2-27b-image-audit.sh` and 8 CPU regressions to audit the exact local image's registered Qwen3.5 model class and ModelOpt NVFP4/FP8 source without importing vLLM/CUDA. The wrapper defaults to plan-only and requires an explicit CPU-only run flag; image ID pinned and Docker isolated with runc, no GPU or network. SOURCE commit `acf5d64` CI 294/294 PASS. Actual operator CPU-only image probe, GPU/27B service/bench and rollback NOT_RUN.
+
+---
+
 ## 2026-11-06 — P2 download completion evidence and guarded runtime preflight
 
-Reconciled operator's actual NVIDIA 27B 19/19 exit-0 download with stale handoff. Added read-only \`p2_27b_qualification.py\` for pinned source/config, host ARM64, Docker image/platform/label and current service observation, plus \`model 27b status --inspect-runtime\` command and isolated CPU regressions. Kept the candidate recipe intentionally invalid, GPU start/switch blocked, and Flash-Next service unchanged. NVIDIA 27B \`SOURCE_FILES_PRESENT_PINNED_CANDIDATE\` does not establish loader, GPU/API, benchmark, or rollback qualification. CI needs validation at new HEAD.
+Reconciled operator's actual NVIDIA 27B 19/19 exit-0 download with stale handoff. Added read-only `p2_27b_qualification.py` for pinned source/config, host ARM64, Docker image/platform/label and current service observation, plus `model 27b status --inspect-runtime` command and isolated CPU regressions. Kept the candidate recipe intentionally invalid, GPU start/switch blocked, and Flash-Next service unchanged. NVIDIA 27B `SOURCE_FILES_PRESENT_PINNED_CANDIDATE` does not establish loader, GPU/API, benchmark, or rollback qualification. CI needs validation at new HEAD.
 
 ---## 2026-11-06 — Complete P1–P7 Wizard console and lifecycle source (D-021)
 

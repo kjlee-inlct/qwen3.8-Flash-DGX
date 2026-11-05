@@ -1,3 +1,9 @@
+## P2 static image source probe — no GPU or API mutation
+
+For downloaded NVIDIA 27B, the installed-image source check is available as `./scripts/temporary/p2-27b-image-audit.sh --plan` (Docker image-inspect only), or operator-selected `./scripts/temporary/p2-27b-image-audit.sh --execute-cpu-only` (creates and removes a restricted runc container with network disabled, no GPU and no host port). It AST-parses the installed vLLM 0.32 image's model registry and ModelOpt code. `PASS`-like static output is **not** a model-load, GPU, API or recovery acceptance; do not use it as a model-lifecycle approval. See `docs/P2-27B-WIZARD-OPERATIONS.md`.
+
+---
+
 # Temporary operator scripts — maintained GitHub workflow
 
 Temporary scripts here are **tracked, tested, and short-lived**. They replace large

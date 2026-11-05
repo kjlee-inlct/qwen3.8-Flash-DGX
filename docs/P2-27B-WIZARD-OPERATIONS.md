@@ -1,4 +1,28 @@
-> **2026-11-06 superseding P2 receipt:** The user completed NVIDIA \`nvidia/Qwen3.8-27B-NVFP4\` at full immutable revision \`482ca0f3832238542f8f5295dde86b5f22711d80\` (19/19, exit code 0). Exact pinned *source* was found, with \`gpu_verified=false\`, \`runtime=NOT_RUN\`; see \`handoff/EVIDENCE-LEDGER.md\`. Do **not** restart acquisition. For new read-only audit run \`./wizard.sh model 27b status --inspect-runtime --json\`. This checks only local checkpoint facts, Docker image metadata and current service state; it cannot start the GPU model. Existing \`scripts/serve.sh\` uses Flash-Next-specific PLE/hybrid/MTP and snapshot-selection semantics and is **not** a qualified 27B launcher. Current public NVIDIA checkpoint config declares \`Qwen3_5ForConditionalGeneration\`, \`qwen3_5\`, ModelOpt \`modelopt\` mixed NVFP4/FP8 (https://huggingface.co/nvidia/Qwen3.8-27B-NVFP4/blob/main/config.json); public metadata does not prove pinned GB10/vLLM 0.32 load. Need actual pinned file audit, vLLM registry/loader and validated image digest plus reversible runtime before GPU approval.
+## 2026-11-06 — Installed vLLM image source audit (after operator runtime-preflight PASS metadata)
+
+Actual DGX runtime preflight shows correct NVIDIA 27B checkpoint and Qwen3.5/ModelOpt config, host aarch64, existing Linux/ARM64 `qwen38-flash-dgx:v0.32` image ID `sha256:9479fc92a9244fcf137afb36ed778e07495e29663a81db193736fcaa1f15e137`; Flash-Next occupies `:8000` and `repo_digests=[]`. This is metadata only; image ID is an immutable **local** artifact ID, not a canonical registry digest. The public **vLLM v0.32.0** docs register `Qwen3_5ForConditionalGeneration` and document ModelOpt NVFP4/FP8 mixed precision, but the exact installed patched image needs local verification.
+
+After clean fast-forward update, run the safe plan first:
+
+```bash
+./scripts/temporary/p2-27b-image-audit.sh --plan
+```
+
+Explicit opt-in to the static image source audit (CPU only):
+
+```bash
+./scripts/temporary/p2-27b-image-audit.sh --execute-cpu-only
+```
+
+The second command temporarily creates and removes a **non-inference runc container** (no `--gpus`, no port binding or network, read-only filesystem, no model cache mount). The self-contained audit script reads installed Python source with AST only and emits 4 checks: Qwen3.5 architecture registration, class declaration, ModelOpt mixed/NVFP4 config classes and NVFP4+FP8+MIXED_PRECISION algorithm literals. A `SOURCE_SURFACES_PRESENT_UNQUALIFIED` result means static code surfaces exist, **not** runnable GPU compatibility. A `BLOCKED` result means inspect returned issues and do not start GPU; do not suppress guards or rebuild automatically.
+
+The actual 27B vLLM loader, mixed NVFP4/FP8 GPU kernels, memory/context budget, isolated start/wait/verify/benchmark and Flash-Next rollback remain unverified. `./wizard.sh model 27b status --inspect-runtime --json` remains the default safe Wizard preflight. This image-source probe is an explicit temporary diagnostic, **not** automatic model selection, download, GPU start, service transition or permanent Wizard execution logic.
+
+Sources: https://docs.vllm.ai/en/v0.32.0/models/supported_models/ and https://docs.vllm.ai/en/v0.32.0/api/vllm/model_executor/layers/quantization/modelopt/ .
+
+---
+
+> **2026-11-06 superseding P2 receipt:** The user completed NVIDIA `nvidia/Qwen3.8-27B-NVFP4` at full immutable revision `482ca0f3832238542f8f5295dde86b5f22711d80` (19/19, exit code 0). Exact pinned *source* was found, with `gpu_verified=false`, `runtime=NOT_RUN`; see `handoff/EVIDENCE-LEDGER.md`. Do **not** restart acquisition. For new read-only audit run `./wizard.sh model 27b status --inspect-runtime --json`. This checks only local checkpoint facts, Docker image metadata and current service state; it cannot start the GPU model. Existing `scripts/serve.sh` uses Flash-Next-specific PLE/hybrid/MTP and snapshot-selection semantics and is **not** a qualified 27B launcher. Current public NVIDIA checkpoint config declares `Qwen3_5ForConditionalGeneration`, `qwen3_5`, ModelOpt `modelopt` mixed NVFP4/FP8 (https://huggingface.co/nvidia/Qwen3.8-27B-NVFP4/blob/main/config.json); public metadata does not prove pinned GB10/vLLM 0.32 load. Need actual pinned file audit, vLLM registry/loader and validated image digest plus reversible runtime before GPU approval.
 
 > **2026-11-05 model-selection override:** P2 now targets `nvidia/Qwen3.8-27B-NVFP4`, not RadixArk. NVIDIA publishes a ModelOpt mixed NVFP4/FP8 checkpoint with a vLLM example on GB300/TP4, which does **not** prove vLLM 0.32 on one GB10. NVIDIA immutable SHA, model availability in the local cache, image digest and runtime compatibility remain unverified. The previously inspected RadixArk revision `52d1adc5f38aa5ebf099c29ed7025ba34cfbb854` is historical inventory only; it must not be reused as NVIDIA provenance. No transfer/delete/launch was authorized. Source: https://huggingface.co/nvidia/Qwen3.8-27B-NVFP4
 

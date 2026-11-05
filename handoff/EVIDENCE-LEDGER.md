@@ -1,10 +1,21 @@
+## E-20261106-P2-READONLY — DGX real NVIDIA 27B qualification observation
+
+- Operator ran `git pull --ff-only origin feature/recipe-wizard-handoff`: fast-forward `e99914c..edf0968`, checkout clean as reported.
+- Real DGX `./wizard.sh model 27b status --inspect-runtime --json`: source candidate **present** at full SHA `482ca0f3832238542f8f5295dde86b5f22711d80`, architecture `Qwen3_5ForConditionalGeneration`, model type `qwen3_5`, quant method `modelopt`, context 262144, vision config yes, host aarch64; Docker image `qwen38-flash-dgx:v0.32` image ID `sha256:9479fc92a9244fcf137afb36ed778e07495e29663a81db193736fcaa1f15e137`, Linux/ARM64, `qwen38.base=v0.32`, `repo_digests=[]`.
+- Observed original Flash-Next active on host port 8000; NVIDIA download container no longer running. No GPU residency validation (`gpu_verified=false`), actual loader/model start/27B API/benchmark/rollback `NOT_RUN`.
+- Read-only preflight correctly BLOCKED: `VLLM032_27B_LOADER_NOT_QUALIFIED`, `MODEL_OPT_MIXED_NVFP4_FP8_GPU_NOT_QUALIFIED`, `IMAGE_DIGEST_NOT_PINNED_IN_VALIDATED_RECIPE`, `GPU_MEMORY_AND_CONTEXT_PROFILE_UNVERIFIED`, `27B_START_AND_FLASH_NEXT_ROLLBACK_NOT_VERIFIED`, `ACTIVE_MODEL_REQUIRES_SEPARATE_TRANSITION_APPROVAL`.
+- Public vLLM 0.32.0 supported models list `Qwen3_5ForConditionalGeneration` and versioned ModelOpt code provides NVFP4+FP8 mixed config. **Public upstream != local patched image**: image static audit developed but actual DGX execution of image source probe still `NOT_RUN`. See https://docs.vllm.ai/en/v0.32.0/models/supported_models/ and https://docs.vllm.ai/en/v0.32.0/api/vllm/model_executor/layers/quantization/modelopt/ .
+- **CI on `acf5d64a37929811af9e2da33fa1b30de5e38cb0`: SUCCESS, 294/294 CPU tests PASS.** No GPU/API/inference actions performed by GitHub development.
+
+---
+
 ## E-20261106-P2-DOWNLOAD — NVIDIA pinned download PASS (operator DGX evidence)
 
-- Command: \`./wizard.sh model 27b download --guided\`; approval ID \`e7d3ee776b65c3c5e3395fbeff5d0d739ef432028c030df8d604578412570c49\`.
-- \`Fetching 19 files: 100%\` (19/19); process exit 0; final \`status=PASS\`, \`executed=true\`, \`scope=DGX_NETWORK_DISK\`, \`checkpoint_status=SOURCE_FILES_PRESENT_PINNED_CANDIDATE\`, \`issues=[]\`.
-- Repo/revision: \`nvidia/Qwen3.8-27B-NVFP4\` / \`482ca0f3832238542f8f5295dde86b5f22711d80\`.
-- Evidence: \`/home/inlc/.local/state/blazux-wizard/p2/evidence/20261105T150433Z-bd8cf46ef5.json\`.
-- Independent weight-shard cryptographic rehash **NOT_RUN**; loader/GB10/GPU/API/benchmark/rollback **NOT_RUN**. \`gpu_verified=false\`.
+- Command: `./wizard.sh model 27b download --guided`; approval ID `e7d3ee776b65c3c5e3395fbeff5d0d739ef432028c030df8d604578412570c49`.
+- `Fetching 19 files: 100%` (19/19); process exit 0; final `status=PASS`, `executed=true`, `scope=DGX_NETWORK_DISK`, `checkpoint_status=SOURCE_FILES_PRESENT_PINNED_CANDIDATE`, `issues=[]`.
+- Repo/revision: `nvidia/Qwen3.8-27B-NVFP4` / `482ca0f3832238542f8f5295dde86b5f22711d80`.
+- Evidence: `/home/inlc/.local/state/blazux-wizard/p2/evidence/20261105T150433Z-bd8cf46ef5.json`.
+- Independent weight-shard cryptographic rehash **NOT_RUN**; loader/GB10/GPU/API/benchmark/rollback **NOT_RUN**. `gpu_verified=false`.
 - GitHub-only new preflight/test code: **SOURCE implemented; CI pending final HEAD**. No DGX source update or GPU operations by this coding session. This record supersedes older transfer 84% observations.
 
 ---## 2026-11-06 — Complete Wizard SOURCE; actual runtime remains gated
