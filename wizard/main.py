@@ -11,7 +11,7 @@ from wizard.menus import (
 USAGE = """Blazux Wizard (vLLM 0.32 only)
 
   ./wizard.sh                                simple model-first interactive menu\n  ./wizard.sh select 27b --json              read-only lifecycle selection plan\n  ./wizard.sh model choose flash-next --json same planner
-  ./wizard.sh list --json                    model/switch/storage/operations catalog\n  ./wizard.sh workflow 27b --json            full model lifecycle actions and gates\n  ./wizard.sh workflow 27b --for-action start --json  read-only action capability
+  ./wizard.sh list --json                    model/switch/storage/operations catalog\n  ./wizard.sh workflow 27b --json            full model lifecycle actions and gates\n  ./wizard.sh roadmap --json                 complete P1-P7 acceptance checklist\n  ./wizard.sh workflow 27b --for-action start --json  read-only action capability
   ./wizard.sh model flash-next status --json
   ./wizard.sh model 27b plan --for-action prepare --json
   ./wizard.sh model orcarouter-flash-next status --json
@@ -216,6 +216,13 @@ def main(argv: list[str] | None = None) -> int:
     if args[0] in ("workflow", "journey"):
         from wizard.workflow import run_cli
         return run_cli(args[1:], as_json=as_json, dry_run=dry_run)
+    if args[0] in ("roadmap", "readiness"):
+        from wizard.roadmap import run_cli
+        if len(args) != 1:
+            print(json.dumps({"status": "BLOCKED", "executed": False,
+                              "issues": ["ROADMAP_IS_READ_ONLY"]}))
+            return 2
+        return run_cli(as_json=as_json, dry_run=dry_run)
     if args[0] in ("list", "catalog"):
         data = catalog()
         if as_json:
