@@ -8,7 +8,7 @@ from __future__ import annotations
 from .models import flash_next, qwen_27b, orcarouter_flash_next
 from .switching import flash_next_27b, orcarouter_27b
 from .storage import flash_next_cleanup
-from .operations import system
+from .operations import system, service
 
 HANDLERS = {
     "p1": flash_next,
@@ -18,6 +18,7 @@ HANDLERS = {
     "p5": orcarouter_flash_next,
     "p6": orcarouter_27b,
     "p7": system,
+    "svc": service,
 }
 
 # Canonical human-readable selection keys and CLI names; order matters.
@@ -33,19 +34,22 @@ GROUPS = {
     },
     "storage": {"flash-next": "p4"},
     "operations": {"system": "p7"},
+    "service": {"manager": "svc"},
 }
 
 GROUP_TITLES = {
     "model": "Model management / 설치·기동·검증·벤치",
     "switch": "Model switching / 전환·원복",
     "storage": "Storage management / 용량·선택적 정리",
-    "operations": "System operations / 서비스·프록시·게이트웨이",
+    "operations": "System operations / 통합 운영 검증(P7)",
+    "service": "Service management / 조회·상태·재시작·복구",
 }
 
 GROUP_ALIASES = {
     "models": "model",
     "switching": "switch",
     "operation": "operations",
+    "services": "service",
 }
 
 STAGE_LOCATIONS = {
