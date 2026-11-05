@@ -115,6 +115,14 @@ Use an append-only entry for every meaningful result. Never substitute README cl
 - **Interpretation:** generic P1 source/Hybrid audit failure; not evidence of ongoing download. Could be refs-main-only handling, stale incomplete blobs, missing Hybrid marker/files or a different configured cache/mount; no cause selected without new diagnostic facts. New `p1_cache_diagnosis.py` provides read-only facts from actual snapshot and strict audit. SOURCE/CPU CI verified at `4c0041dd230e2abe22ba8379aca74068933ecece`: GitHub push and PR both SUCCESS, each **138/138 CPU tests PASS** (15 manifest + 10 inventory + 13 launcher + 1 executable-mode + 67 P1 + 32 Wizard router). The earlier `eb759ad` source attempt failed its tests because the optional new diagnostic key was absent from an old fake fixture; fixed in `4c0041d` without changing runtime assets. Real DGX evidence still pending.
 - **P1 GPU/API/benchmark:** Wizard verification and benchmark `NOT_RUN`; observed curl GET is an API reachability test, not a workload benchmark or complete model identity verification.
 
+## E-20261105-13 — Default NVIDIA index cap regression fixed, actual missing files unresolved
+
+- **Model release fact:** NVIDIA `nvidia/Qwen3.8-Flash-Next-NVFP4` revision `fc694b54fb0174e0913e6adf86691ef85a4ead47` includes `model.safetensors.index.json` (~31.3 MB) and `tokenizer.json` (~12.8 MB). Source: https://huggingface.co/nvidia/Qwen3.8-Flash-Next-NVFP4/tree/main
+- **Source bug:** Python strict index parser refused >16MiB (incompatible with official file), though the operator's **observed filenames** were initially rejected before this parser. Source change now permits ≤64MiB while retaining bounds; diagnostic returns exact file/symlink/size status, not merely `checkpoint_downloading_or_incomplete`.
+- **GitHub evidence:** code/test commit `66c6c448c1922f958886fa4696c403a4b6227685`, push job https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/41976231273/job/127075608240 and PR job https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/41976236273/job/127075624614 — both **SUCCESS**, per job 15 + 10 + 13 + 1 + 74 + 32 = 145 CPU tests PASS.
+- **Operator DGX prior evidence:** source files `model.safetensors.index.json`, `tokenizer.json` failed `_good_file` metadata validation; Hybrid `tokenizer.json` failed with `.prepared` present. HF blob incomplete-count=0, refs/main valid. Exact failure mode (missing vs dangling symlink vs zero-size) NOT YET OBSERVED. No actual P1 Wizard GPU/API workload BENCH acceptance.
+- **Next**: `git pull --ff-only` then one read-only temporary wrapper; review exact file metadata and served API ID. No guessed setup/download/prepare, and no modifying current services.
+
 ## Historic evidence not transferred
 
 ## E-20261105-04 — User-reported Flash-Next download still in progress

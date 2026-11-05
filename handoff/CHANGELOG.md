@@ -1,5 +1,12 @@
 # Handoff changelog (append-only)
 
+## 2026-11-05 — H-015 — P1 metadata audit bug corrected and file-level diagnosis added
+
+- Blazux default NVIDIA checkpoint remains supported. NVIDIA Hugging Face `fc694b5` index is 31.3 MB; our P1 Python audit invented a 16 MiB JSON size ceiling, causing a false rejection for *otherwise valid indexes*. Changed to a bounded 64 MiB cap; added realistic >16MiB and still-over-limit regression tests. This is our new code defect, not an upstream Blazux limitation.
+- The actual DGX `source_issues=[model.safetensors.index.json, tokenizer.json]` are from the **earlier `_good_file` predicate** and therefore do not prove that this size gate caused the user's failure. New read-only diagnostics now identify file absent/dangling symlink/empty/outside repo, size, source vs Hybrid, and report parsed API model IDs.
+- `66c6c448c1922f958886fa4696c403a4b6227685` source commit CI 2/2 **SUCCESS**, 145/145 CPU tests per job. No GPU/bench re-run, download/repair or service change by assistant; real DGX file evidence still required.
+
+
 ## 2026-11-05 — H-014 — Download completed (operator report), P1 audit disagreement
 
 - Operator confirms NVIDIA Flash-Next download finished. First actual DGX wrapper run on branch `dea7c5a`: Git clean, process scan no active setup, `/health` and `/v1/models` exit code 0; Doctor/inventory plan exit 3; Wizard verify/bench both BLOCKED on generic checkpoint incomplete and Hybrid unready. No Wizard GPU/benchmark calls made.

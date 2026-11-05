@@ -84,3 +84,24 @@ and share the `cache_diagnosis` part of its `result.json`, plus
 A successful `/health` or `/v1/models` HTTP request alone does not prove
 which model is served. Do not rerun `setup`, reprepare Hybrid or change
 a running container until the mismatch is diagnosed.
+
+## 2026-11-05 — Corrected index-size check / read-only file-probe
+
+An operator confirmed the download finished, yet the P1 Wizard reported
+`model.safetensors.index.json` and `tokenizer.json` failures in the source
+snapshot and `tokenizer.json` in the Hybrid snapshot. The official NVIDIA
+index is ~31.3 MB; a strict 16 MiB cap in our new P1 auditor was independently
+wrong and is fixed to 64 MiB at `66c6c44`. **The earlier two filename
+failures are from an even earlier file-existence/symlink/size check, so the
+index-size fix alone cannot be claimed as the root-cause solution.**
+
+The read-only `cache_diagnosis` now includes `source_metadata` and
+`hybrid_metadata` for the two affected files, distinguishing `MISSING`,
+`DANGLING_SYMLINK`, `TARGET_OUTSIDE_REPOSITORY`, `ZERO_BYTES` and
+`PRESENT_NONEMPTY`, and reports size plus old/current index cap comparisons.
+The wrapper console summary includes `api_model_ids`, extracted from
+`/v1/models` rather than just treating curl returncode zero as model proof.
+All changes are source/CPU only; CI 2/2 PASS, 145 tests/job.
+
+**Action:** `bash scripts/temporary/p1-post-download.sh --inspect-only`
+after Git Pull. No automatic repair/download, Hybrid rewrite or service changes.
