@@ -122,9 +122,16 @@ def inspect_27b(cache_root: Path | None = None, *, expected_revision: str | None
             refs[name] = v if SHA40.fullmatch(v) else None
         except (OSError, UnicodeError):
             refs[name] = None
-    revision = refs["main"] or refs["master"]
+    ref_revision = refs["main"] or refs["master"]
     if expected_revision is not None and not SHA40.fullmatch(expected_revision):
         raise ValueError("expected_revision must be a lowercase 40-character SHA")
+    # Explicit SHA downloads need not update refs/main. Prefer the named pinned
+    # snapshot if present; never mistake an older default ref for the requested
+    # revision or require refs/main to exist for exact SHA acquisition.
+    pinned_dir = (repo / "snapshots" / expected_revision
+                  if expected_revision is not None else None)
+    revision = (expected_revision if pinned_dir is not None
+                and pinned_dir.is_dir() else ref_revision)
     snapshot = repo / "snapshots" / revision if revision else None
     metadata = {}
     configuration = None
@@ -171,7 +178,8 @@ def inspect_27b(cache_root: Path | None = None, *, expected_revision: str | None
         "cache_root": str(cache.resolve()), "local_revision": revision,
         "expected_revision": expected_revision,
         "revision_matches": (revision == expected_revision if expected_revision is not None else None),
-        "refs": refs, "metadata": metadata,
+        "refs": refs, "ref_revision": ref_revision,
+        "metadata": metadata,
         "configuration": configuration, "shards": shards,
         "indexed_shard_count": len(shards),
         "incomplete_blob_files": incomplete,
