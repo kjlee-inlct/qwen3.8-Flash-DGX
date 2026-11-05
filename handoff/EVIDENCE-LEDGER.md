@@ -1,3 +1,7 @@
+## 2026-11-05 — P2 model selection and provenance split
+
+**DGX observation (historical, not NVIDIA):** user-supplied Wizard read-only inventory for `RadixArk/Qwen3.8-27B-NVFP4` at revision `52d1adc5f38aa5ebf099c29ed7025ba34cfbb854`; 3/3 indexed shards, 0 incomplete transfers, `issues=[]`. **Current chosen P2 model:** `nvidia/Qwen3.8-27B-NVFP4`; NVIDIA cache inspection, immutable SHA, vLLM 0.32 GPU operation and benchmark remain NOT_RUN. Public NVIDIA model card lists vLLM on GB300 TP4, not a qualification of this single Spark GB10. https://huggingface.co/nvidia/Qwen3.8-27B-NVFP4
+
 ## 2026-11-05 P2 — config audit SOURCE evidence
 
 - GitHub-connected source patch: `scripts/manager/p2_27b_inventory.py`, `tests/test_p2_27b_inventory_cpu.py` on `feature/recipe-wizard-handoff`.
