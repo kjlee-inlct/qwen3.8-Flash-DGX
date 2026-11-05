@@ -1,3 +1,9 @@
+## 2026-11-05 — Batch A plus read-only service health/switch preview complete in SOURCE
+
+Model-first Wizard UI, legacy-compatible selection CLI and in-flight 27B detection implemented. Additional GitHub SOURCE: bounded localhost `/health`+`/v1/models` API identity probe exposed via `./wizard.sh service manager health --json`, and fail-closed `service_transition_preview.py` attached to model selection if an alternate running model is observed. Preview specifies stop-old → port 8000 free → start-target → verify identity → journal commit and rollback, but **always BLOCKED/plan_id=null** until vLLM 0.32 target runtime, original recovery and approved executor are qualified. Existing P1 runner and 27B guarded downloader remain unchanged. Final CI still requires HEAD check; source-only API/preview tests do not constitute actual DGX execution.
+
+DGX transfer: user reported `Fetching 19 files: 84%` after successful download plan approval. Started only; **no completion or integrity evidence yet**. Do not ask operator to pull new commits or disrupt active download. Existing Flash-Next :8000 remains protected.
+
 ## 2026-11-05 — model-first Wizard SOURCE implemented during user-owned 27B download (current)
 
 **Operator DGX evidence:** on branch `feature/recipe-wizard-handoff`, `./wizard.sh model 27b download --guided` accepted a new full plan ID `e7d3ee776b65c3c5e3395fbeff5d0d739ef432028c030df8d604578412570c49` and printed `Fetching 19 files: 84% (16/19)`. This **establishes actual download started**; no process completion, receipt audit/evidence path, 27B vLLM-0.32 startup, GPU benchmark or switching results were supplied. Host preflight observed Flash-Next container `qwen38-flash` Up, bound `:8000`, approx 322 GiB free before download. **Do not recommend `git pull` or interfere with the operator's running download until it completes.**
