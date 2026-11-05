@@ -9,7 +9,8 @@ from __future__ import annotations
 import json
 from typing import Any
 
-from wizard.quickstart import MODEL_CHOICES, normalize, selection_plan
+from wizard import quickstart
+from wizard.quickstart import MODEL_CHOICES, normalize
 from wizard.menus import HANDLERS
 
 MODEL_ACTIONS: dict[str, tuple[str, ...]] = {
@@ -85,7 +86,7 @@ def action_capability(model: str, action: str, selected: dict) -> dict[str, Any]
 
 def model_workflow(model: str, *, selection: dict | None = None) -> dict[str, Any]:
     selected_model = normalize(model)
-    doc = selection if selection is not None else selection_plan(selected_model)
+    doc = selection if selection is not None else quickstart.selection_plan(selected_model)
     actions = [
         action_capability(selected_model, action, doc)
         for action in MODEL_ACTIONS[selected_model]
