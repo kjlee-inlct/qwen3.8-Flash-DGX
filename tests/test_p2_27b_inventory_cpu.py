@@ -66,6 +66,36 @@ class P2CacheCPU(unittest.TestCase):
         self.assertTrue(x["source_files_present"], x)
         self.assertTrue(x["shards"]["model-00001.safetensors"]["symlink"])
 
+    def test_configuration_facts_do_not_qualify_runtime(self):
+        source = self.snapshot()
+        self.write(source / "config.json", json.dumps({
+            "architectures": ["Qwen3ForCausalLM"],
+            "model_type": "qwen3",
+            "max_position_embeddings": 32768,
+            "quantization_config": {"quant_method": "modelopt"},
+            "vision_config": {"hidden_size": 64}
+        }))
+        facts = inspect_27b(self.cache)["configuration"]
+        self.assertEqual(facts["status"], "PARSED_UNQUALIFIED")
+        self.assertEqual(facts["architecture"], ["Qwen3ForCausalLM"])
+        self.assertEqual(facts["context_length"], 32768)
+        self.assertEqual(facts["quant_method"], "modelopt")
+        self.assertTrue(facts["vision_config_present"])
+        self.assertFalse(facts["vllm032_qualified"])
+
+    def test_bad_config_remains_unqualified(self):
+        source = self.snapshot()
+        self.write(source / "config.json", "not json")
+        result = inspect_27b(self.cache)
+        self.assertEqual(result["configuration"]["status"], "INVALID_CONFIG_JSON")
+        self.assertFalse(result["source_files_present"])
+        self.assertFalse(result["operations_enabled"])
+
+    def test_large_config_never_parsed(self):
+        source = self.snapshot()
+        self.write(source / "config.json", " " * (1024 * 1024 + 1))
+        self.assertEqual(inspect_27b(self.cache)["configuration"]["status"], "CONFIG_TOO_LARGE")
+
     def test_missing_shard_blocks_source_assets(self):
         source = self.snapshot()
         (source / "model-00002.safetensors").unlink()
