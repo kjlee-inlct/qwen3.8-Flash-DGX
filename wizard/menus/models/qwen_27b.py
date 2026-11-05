@@ -9,7 +9,7 @@ from scripts.manager.p2_27b_inventory import inspect_27b
 
 SPEC = Stage(
     "p2", "27B",
-    ("doctor", "recipe", "prepare", "start", "verify", "benchmark"),
+    ("doctor", "recipe", "download", "prepare", "start", "wait", "verify", "benchmark"),
     ("P1 bounded GPU benchmark PASS", "27B vLLM 0.32 compatibility verified",
      "immutable checkpoint revision"), ("27b",)
 )
