@@ -228,6 +228,7 @@ class WizardRouterCPU(unittest.TestCase):
             "switch": ["p3", "p6"],
             "storage": ["p4"],
             "operations": ["p7"],
+            "service": ["svc"],
         })
         for item in catalog["stages"]:
             self.assertTrue(item["module"].startswith("wizard.menus."))
