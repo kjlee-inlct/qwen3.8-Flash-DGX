@@ -32,6 +32,10 @@ Record what has been **decided** and what still needs approval. Proposals in doc
 
 | D-018 | 2026-11-05 | Preserve native Blazux default Flash-Next acceptance in Wizard: mandatory /v1/completions + standard chat baseline, separate tool/vision probes, mark partial advanced failures without blocking bounded baseline benchmark, retain nonzero-rc Wizard evidence, keep model/server untouched. Original DGX verify failure still needs evidence to identify precise cause. | DECIDED / SOURCE+CI PASS 391a2844 / DGX RECHECK PENDING |
 
+## D-019 — Single active GPU model, fixed API :8000 and manifest-first orchestration (2026-11-05)
+
+**DECIDED by operator:** At any given time DGX Spark hosts **one active GPU inference model**. Both NVIDIA Flash-Next and NVIDIA Qwen3.8-27B must expose the same host API `:8000/v1` when active. **27B start requires Flash-Next stop, port release, identity verification and approved rollback**; never run both GPU models or bind a second external port as an implicit workaround. Conversely, 27B → Flash-Next requires the same ordered stop/start/verify/restore discipline. Download is a separate **network/disk-only** operation allowed while Flash-Next serves (no GPU use, service stop, host port binding or API cutover). Maintain a versioned committed desired policy `runtimes/service-policy.json` and a live observed manifest from Docker/socket inventory; historical manifest records are evidence, not proof of current reality. State transitions must be lock-protected, auditable, checkpoint/image-preserving and explicitly plan-approved. Approval for download does **not** approve service stop, GPU startup or model switch. **SOURCE implemented / DGX transition NOT_RUN**, P3 acceptance remains separate.
+
 ### Design choices not yet finalized
 
 - Remaining runtime/service/inventory contract fields and wizard flags. The source-only N1 recipe schema has been implemented.
