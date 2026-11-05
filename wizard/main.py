@@ -22,6 +22,7 @@ USAGE = """Blazux Wizard (vLLM 0.32 only)
   ./wizard.sh service manager status --json
   ./wizard.sh service manager plan --for-action restart --json
   ./wizard.sh model 27b plan --for-action download --json
+  ./wizard.sh model 27b download --guided
 
 Compatibility (same handler, same safety boundaries):
   ./wizard.sh p1 status --json
@@ -114,7 +115,10 @@ def interactive() -> int:
                 action = input("Action (Enter to return): ").strip().lower()
             except EOFError:
                 return 0
-            if action in module.SPEC.actions:
+            if stage == "p2" and action == "download":
+                # One confirmed, pinned acquisition plan. No GPU/service effects.
+                module.run(["download", "--guided"])
+            elif action in module.SPEC.actions:
                 module.run(["plan", "--for-action", action])
             elif action:
                 print("Unsupported action; no operation executed.")
