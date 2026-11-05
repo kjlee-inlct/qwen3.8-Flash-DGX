@@ -3,8 +3,10 @@ from __future__ import annotations
 
 import io
 import json
+import contextlib
 import unittest
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
+from wizard import main as router
 
 from scripts.manager.service_health import inspect_api_health
 
@@ -79,6 +81,18 @@ class HealthCPU(unittest.TestCase):
         result = inspect_api_health(service=self.service, opener=huge)
         self.assertEqual(result["status"], "BLOCKED")
         self.assertIn("API_OBSERVATION_FAILED:ValueError", result["issues"])
+
+    def test_wizard_service_health_command_is_read_only(self):
+        result = inspect_api_health(service=self.service, opener=self.opener)
+        with patch("wizard.menus.operations.service.inspect_api_health",
+                   return_value=result), \
+             contextlib.redirect_stdout(io.StringIO()) as output:
+            rc = router.main(["service", "manager", "health", "--json"])
+        self.assertEqual(rc, 0)
+        doc = json.loads(output.getvalue())
+        self.assertEqual(doc["status"], "API_IDENTITY_CONFIRMED")
+        self.assertFalse(doc["executed"])
+        self.assertEqual(doc["api_host_port"], 8000)
 
     def test_orcarouter_unqualified_never_queries_api(self):
         service = {**self.service, "observed_model": "orcarouter"}
