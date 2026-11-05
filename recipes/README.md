@@ -21,7 +21,7 @@ The former static Orcarouter name/8000 bans were removed on 2026-11-05 after use
 
 ## P2 27B local cache discovery (source-only; no download)
 
-`RadixArk/Qwen3.8-27B-NVFP4` is the candidate checkpoint ID. Its published
+`nvidia/Qwen3.8-27B-NVFP4` is the currently selected candidate checkpoint ID. The prior RadixArk DGX inspection is historical and is not NVIDIA cache evidence. Its published
 model files are not proof of pinned vLLM-0.32 support or local availability.
 To inspect *existing* files and symlinks without Docker, sockets, model download
 or GPU calls, run:
