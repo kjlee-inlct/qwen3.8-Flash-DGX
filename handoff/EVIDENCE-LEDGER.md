@@ -1,3 +1,8 @@
+## 2026-11-05 — NVIDIA P2 cache and service-menu evidence
+
+- DGX user console: `nvidia/Qwen3.8-27B-NVFP4`, `refs.main=null`, `local_revision=null`, `indexed_shard_count=0`, `incomplete_blob_files=0`, `source_files_present=false`, `issues=[NO_PINNED_LOCAL_SNAPSHOT]`. Scope: read-only `~/.cache/huggingface` only; actual download NOT_RUN.
+- New GitHub SOURCE: Wizard `service manager` module and `model 27b plan --for-action download` fail-closed action. CI verdict requires latest-HEAD check. No DGX service, download, GPU, benchmark execution.
+
 ## 2026-11-05 — P2 model selection and provenance split
 
 **DGX observation (historical, not NVIDIA):** user-supplied Wizard read-only inventory for `RadixArk/Qwen3.8-27B-NVFP4` at revision `52d1adc5f38aa5ebf099c29ed7025ba34cfbb854`; 3/3 indexed shards, 0 incomplete transfers, `issues=[]`. **Current chosen P2 model:** `nvidia/Qwen3.8-27B-NVFP4`; NVIDIA cache inspection, immutable SHA, vLLM 0.32 GPU operation and benchmark remain NOT_RUN. Public NVIDIA model card lists vLLM on GB300 TP4, not a qualification of this single Spark GB10. https://huggingface.co/nvidia/Qwen3.8-27B-NVFP4
