@@ -115,8 +115,6 @@ class P2LaunchPreviewCPU(unittest.TestCase):
     def test_unknown_live_state_skips_health(self):
         service=valid_service()
         service["status"]="BLOCKED"
-        with self.assertRaisesRegex(AssertionError,"should not probe"):
-            pass
         def prohibited(**kwargs): raise AssertionError("should not probe")
         r=self.inspect(service=service,health=prohibited)
         self.assertIn("LIVE_SERVICE_INVENTORY_UNVERIFIED",r["issues"])
