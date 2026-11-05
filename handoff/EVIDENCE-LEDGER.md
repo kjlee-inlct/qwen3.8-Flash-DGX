@@ -1,3 +1,9 @@
+## 2026-11-05 — Service health and transition preview CPU evidence
+
+- SOURCE: local :8000 GET-only health/model-ID observer, with no inference POST, no Docker mutation, fixed request/size/time bounds; source-only stop-old → port release → new start → API verify → rollback preview, always BLOCKED without verified executor.
+- CPU mock tests cover correct served model ID, ID mismatch, bad or oversized response, unqualified Orcarouter, unknown service, stop-before-start and rollback invariants, and no hidden GPU/Docker actions.
+- Actual DGX service health action, 27B model start/switch and rollback: **NOT_RUN**. Source CI status must be confirmed at final HEAD. Last real DGX transfer evidence still only `Fetching 19 files: 84%`.
+
 ## 2026-11-05 — First DGX NVIDIA 27B transfer and unified Wizard source
 
 - **Actual DGX operator terminal:** `./wizard.sh model 27b download --guided` with exact approved plan id `e7d3ee776b65c3c5e3395fbeff5d0d739ef432028c030df8d604578412570c49`, `Fetching 19 files: 84% (16/19)`. Scope DGX NETWORK/DISK, actual transfer **STARTED**; completion, source checksum/index audit and outcome evidence **NOT_OBSERVED**. Existing `qwen38-flash` still Up with external host :8000 at initial plan.
