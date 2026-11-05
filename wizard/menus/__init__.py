@@ -28,13 +28,13 @@ GROUPS = {
         "27b": "p2",
         "orcarouter-flash-next": "p5",
     },
+    "service": {"manager": "svc"},
     "switch": {
         "flash-next-27b": "p3",
         "orcarouter-27b": "p6",
     },
     "storage": {"flash-next": "p4"},
     "operations": {"system": "p7"},
-    "service": {"manager": "svc"},
 }
 
 GROUP_TITLES = {
