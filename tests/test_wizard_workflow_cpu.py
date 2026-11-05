@@ -90,6 +90,28 @@ class ModelWorkflowCPU(unittest.TestCase):
         self.assertEqual(rc, 3)
         backend.assert_not_called()
 
+    def test_27b_inspect_from_model_actions_runs_read_only_preflight(self):
+        doc = workflow.model_workflow("27b", selection=fixture("27b"))
+        with patch("wizard.menus.models.qwen_27b.run", return_value=0) as adapter:
+            self.assertEqual(workflow.invoke_model_action(
+                "27b", "inspect", workflow=doc, as_json=True), 0)
+        adapter.assert_called_once_with(
+            ["status", "--inspect-runtime"], as_json=True)
+
+    def test_console_continue_27b_source_present_is_read_only(self):
+        observing = {"status": "OBSERVED_UNQUALIFIED",
+                     "observed_model": "flash-next", "download_running": False}
+        doc = workflow.model_workflow("27b", selection=fixture("27b"))
+        with patch("scripts.manager.service_manifest.inspect_service",
+                   return_value=observing), \
+             patch("wizard.console.model_workflow", return_value=doc), \
+             patch("wizard.console.invoke_model_action", return_value=0) as audit, \
+             patch("builtins.input", side_effect=["1", "2", "1", "0", "0"]), \
+             patch.object(router.sys.stdin, "isatty", return_value=True), \
+             contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(router.main([]), 0)
+        audit.assert_called_once_with("27b", "inspect", workflow=doc)
+
     def test_p2_p5_start_switch_and_rollback_all_fail_closed(self):
         for model in ("27b", "orcarouter"):
             doc = workflow.model_workflow(model, selection=fixture(model))

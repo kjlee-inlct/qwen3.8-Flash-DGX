@@ -146,6 +146,10 @@ def invoke_model_action(model: str, action: str, *,
         from wizard.menus.models import flash_next
         return flash_next.run(["guided"] if guided else ["plan", "--for-action", action],
                               as_json=as_json)
+    if action == "inspect" and selected == "27b":
+        # Reuse the fail-closed, read-only P2 runtime qualification adapter.
+        from wizard.menus.models import qwen_27b
+        return qwen_27b.run(["status", "--inspect-runtime"], as_json=as_json)
     if action == "inspect":
         from wizard.quickstart import render_plan
         if as_json:

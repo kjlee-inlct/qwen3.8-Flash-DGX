@@ -81,6 +81,9 @@ def _model_screen(model: str) -> None:
                 interactive_select(model)
             elif next_action == "monitor_download":
                 print("27B download already running. Do not start a second transfer.")
+            elif model == "27b" and doc["status"] == "SOURCE_PRESENT_UNQUALIFIED":
+                print("Pinned source found; running read-only 27B runtime preflight.")
+                invoke_model_action(model, "inspect", workflow=doc)
             elif next_action == "none":
                 print("Model container is already observed; verify service health separately.")
             else:

@@ -21,6 +21,7 @@ USAGE = """Blazux Wizard (vLLM 0.32 only)
   ./wizard.sh operations system status --json
   ./wizard.sh service manager status --json\n  ./wizard.sh service manager health --json  read-only local API identity\n  ./wizard.sh service manager logs --json    bounded local log tail
   ./wizard.sh service manager plan --for-action restart --json
+  ./wizard.sh model 27b status --inspect-runtime --json  read-only qualification
   ./wizard.sh model 27b plan --for-action download --json
   ./wizard.sh model 27b download --guided
 
