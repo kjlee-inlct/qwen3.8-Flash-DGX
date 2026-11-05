@@ -145,6 +145,7 @@ def _advanced_menu() -> None:
         for i, row in enumerate(rows, 2):
             print(f" {i}. {row[0]}")
         print(" 6. Legacy group / stage tools")
+        print(" 7. P1–P7 readiness dashboard")
         selected = _input("Choice (0 back): ")
         if selected in (None, "0"):
             return
@@ -154,6 +155,10 @@ def _advanced_menu() -> None:
         if selected == "6":
             from wizard.main import _advanced_menu as legacy_advanced
             legacy_advanced()
+            continue
+        if selected == "7":
+            from wizard.roadmap import run_cli
+            run_cli()
             continue
         if selected not in ("2", "3", "4", "5"):
             print("Unknown option.")
