@@ -130,6 +130,15 @@ def selection_plan(model: str, *, service: dict[str, Any] | None = None,
 
     # A transfer running in the background is a read-only fact. The currently
     # observed inference model is never stopped by model selection.
+    preview = None
+    if observed is not None and observed != selected:
+        from scripts.manager.service_transition_preview import preview_transition
+        preview = preview_transition(
+            selected, service=service,
+            checkpoint_ready=source_present if selected == "27b" else False,
+            runtime_qualified=False, api_identity_verified=False,
+            gpu_exclusivity_verified=False, rollback_verified=False,
+        )
     return {
         "schema_version": 1,
         "interface": "MODEL_SELECTION_PLAN",
@@ -148,6 +157,7 @@ def selection_plan(model: str, *, service: dict[str, Any] | None = None,
         "operations_enabled": False, "executed": False,
         "approval_accepted": False,
         "issues": sorted(set(issues)), "steps": steps,
+        "transition_preview": preview,
         "service_manifest": {
             "status": service.get("status"),
             "observed_state": service.get("observed_state"),
