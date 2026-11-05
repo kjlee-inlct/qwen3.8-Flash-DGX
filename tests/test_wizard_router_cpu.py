@@ -20,10 +20,10 @@ class WizardRouterCPU(unittest.TestCase):
             result = router.main(args)
         return result, out.getvalue()
 
-    def test_catalog_contains_seven_distinct_modules(self):
+    def test_catalog_contains_seven_roadmap_and_service_modules(self):
         doc = router.catalog()
         self.assertEqual([x["stage"] for x in doc["stages"]],
-                         ["p1", "p2", "p3", "p4", "p5", "p6", "p7"])
+                         ["p1", "p2", "p3", "p4", "p5", "p6", "p7", "svc"])
         self.assertEqual(doc["api_host_port"], 8000)
         expected_modules = {
             "p1": "wizard.menus.models.flash_next",
@@ -33,11 +33,12 @@ class WizardRouterCPU(unittest.TestCase):
             "p5": "wizard.menus.models.orcarouter_flash_next",
             "p6": "wizard.menus.switching.orcarouter_27b",
             "p7": "wizard.menus.operations.system",
+            "svc": "wizard.menus.operations.service",
         }
         for key, module in HANDLERS.items():
             with self.subTest(stage=key):
                 self.assertEqual(module.__name__, expected_modules[key])
-        self.assertEqual(len(doc["groups"]), 4)
+        self.assertEqual(len(doc["groups"]), 5)
 
     def test_catalog_machine_json(self):
         rc, s = self.call(["list", "--json"])
@@ -49,10 +50,10 @@ class WizardRouterCPU(unittest.TestCase):
         with patch.object(router.sys.stdin, "isatty", return_value=False):
             rc, s = self.call(["--json"])
         self.assertEqual(rc, 0)
-        self.assertEqual(len(json.loads(s)["stages"]), 7)
+        self.assertEqual(len(json.loads(s)["stages"]), 8)
 
     def test_future_stage_status_is_read_only(self):
-        for key in ("p2", "p3", "p4", "p5", "p6", "p7"):
+        for key in ("p2", "p3", "p4", "p5", "p6", "p7", "svc"):
             with self.subTest(stage=key):
                 rc, s = self.call([key, "status", "--json"])
                 obj = json.loads(s)
@@ -85,6 +86,25 @@ class WizardRouterCPU(unittest.TestCase):
                 self.assertFalse(obj["executed"])
                 self.assertFalse(obj["approval_accepted"])
                 self.assertIn("UNVERIFIED_APPROVAL_CANNOT_EXECUTE", obj["issues"])
+
+    def test_service_menu_status_and_restart_fail_closed(self):
+        rc, raw = self.call(["service", "manager", "status", "--json"])
+        self.assertEqual(rc, 0)
+        self.assertFalse(json.loads(raw)["operations_enabled"])
+        for action in ("start", "stop", "restart", "rollback", "proxy", "gateway"):
+            with self.subTest(action=action):
+                rc, raw = self.call(["service", "manager", action,
+                                     "--execute", "--approve-plan", "f"*64, "--json"])
+                self.assertEqual(rc, 3)
+                result = json.loads(raw)
+                self.assertFalse(result["executed"])
+                self.assertFalse(result["approval_accepted"])
+
+    def test_27b_download_wizard_plan_is_blocked(self):
+        rc, raw = self.call(["model", "27b", "plan", "--for-action",
+                             "download", "--json"])
+        self.assertEqual(rc, 3)
+        self.assertIn("NO_VALIDATED_RUNTIME_RECIPE", json.loads(raw)["issues"])
 
     def test_p3_valid_pair_remains_source_only(self):
         rc, s = self.call(["p3", "plan", "--for-action", "switch",
