@@ -74,7 +74,7 @@ class DownloadCPU(unittest.TestCase):
         self.assertNotIn("stop", command)
         self.assertNotIn("rm", command)
         self.assertNotIn("flash", command)
-        self.assertEqual(command[-6:-3], [module.MODEL_ID, "--revision", module.REVISION])
+        self.assertEqual(command[-5:-2], [module.MODEL_ID, "--revision", module.REVISION])
         self.assertEqual(command[-1], "8")
         self.assertIn(self.image_id, command)
 
