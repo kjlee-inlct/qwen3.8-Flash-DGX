@@ -23,6 +23,7 @@ on:
       - 'tests/test_p2_*_cpu.py'
       - 'tests/test_service_manifest_cpu.py'
       - 'tests/test_service_journal_cpu.py'
+      - 'tests/test_service_health_cpu.py'
       - 'tests/test_script_modes_cpu.py'
       - '.github/workflows/recipe-manifest-cpu.yml'
   pull_request:
@@ -65,6 +66,7 @@ jobs:
           python -m unittest discover -s tests -p 'test_p2_*_cpu.py' -v
           python -m unittest discover -s tests -p 'test_service_manifest_cpu.py' -v
           python -m unittest discover -s tests -p 'test_service_journal_cpu.py' -v
+          python -m unittest discover -s tests -p 'test_service_health_cpu.py' -v
           python -m unittest discover -s tests -p 'test_wizard_router_cpu.py' -v
           python -m unittest discover -s tests -p 'test_wizard_quickstart_cpu.py' -v
           python -m wizard list --json
