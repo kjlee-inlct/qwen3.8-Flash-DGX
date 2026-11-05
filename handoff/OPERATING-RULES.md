@@ -1,3 +1,11 @@
+## R1J — Full Wizard source first, P2–P7 qualify later (2026-11-06)
+
+- D-021 operator direction: finish **all user-facing model / service / advanced / P1–P7 lifecycle menu pathways now**, while execution adapters for P2–P7 remain deliberately blocked until independently qualified. Source-level completeness, CPU CI and DGX acceptance must be tracked as three different statuses.
+- `wizard/console.py` implements model-first operator UX; `wizard/workflow.py` owns action capability matrix; `wizard/roadmap.py` reports P1–P7 evidence-scoped status. Don't remove P1 action-specific approval runner or P2 approved revision downloader, and do not accept any new `--execute` bypass from generic UI.
+- For model actions `inspect/download/prepare/start/wait/verify/benchmark/switch/rollback/recipe`, display `BLOCKED` with exact reason when adapter not qualified. Do not silently start models via generic `flash serve` or auto-stop Flash-Next.
+- Service log view is opt-in, bounded, targets only observed managed model and is potentially sensitive; no automatic upload or logging of its contents to GitHub.
+- Keep in-flight NVIDIA 27B download and active Flash-Next/API untouched. After operator-owned transfer finishes, reconcile pinned source and new GitHub Wizard code; only then plan P2 GPU validation and P3 recovery window.
+
 ## R1I — Model-first root Wizard UX (operator accepted 2026-11-05)
 
 - Current canonical UI: **Select/run model, Service, Advanced** (plus Exit). Model choices Flash-Next / NVIDIA 27B / Orcarouter. Do not make the operator navigate P1–P7 for ordinary operations.
