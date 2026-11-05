@@ -17,6 +17,7 @@ from pathlib import Path
 import re
 import shutil
 import subprocess
+import sys
 import time
 from typing import Any
 from uuid import uuid4
@@ -236,6 +237,7 @@ def main(argv: list[str] | None = None, *, as_json: bool = False,
          dry_run: bool = False) -> int:
     parser = argparse.ArgumentParser(description="P2 pinned NVIDIA 27B Wizard download")
     parser.add_argument("command", choices=("plan", "download"))
+    parser.add_argument("--guided", action="store_true")
     parser.add_argument("--for-action", choices=("download",))
     parser.add_argument("--cache-root", type=Path)
     parser.add_argument("--approve-plan")
@@ -246,6 +248,18 @@ def main(argv: list[str] | None = None, *, as_json: bool = False,
                           "issues": ["DRY_RUN_EXECUTION_CONFLICT"]}))
         return 3
     plan = build_plan(cache_root=args.cache_root)
+    if args.guided:
+        if args.command != "download" or args.execute or args.approve_plan or dry_run or not sys.stdin.isatty():
+            print(json.dumps({"status": "BLOCKED", "executed": False,
+                              "issues": ["GUIDED_REQUIRES_INTERACTIVE_DOWNLOAD"]}))
+            return 3
+        print(json.dumps(plan, indent=2, sort_keys=True))
+        if plan["status"] != "READY_TO_REQUEST_APPROVAL":
+            return 3
+        approval = input("Type the full download plan_id to approve (Enter cancels): ").strip()
+        rc, result = execute_approved(plan, approval, cache_root=args.cache_root)
+        print(json.dumps(result, indent=2, sort_keys=True))
+        return rc
     if args.command == "plan" or not args.execute:
         if args.command == "plan" and args.execute:
             print(json.dumps({"status": "BLOCKED", "executed": False,
