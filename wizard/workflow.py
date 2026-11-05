@@ -54,7 +54,14 @@ def action_capability(model: str, action: str, selected: dict) -> dict[str, Any]
     elif action == "recipe":
         availability, reason = "READ_ONLY", "Show pinned recipe and qualification blockers"
     elif action in ("prepare", "start", "wait", "verify", "benchmark") and model == "flash-next":
-        availability, reason = "GUARDED_P1", "Reuse existing exact-action P1 plans and approvals"
+        if current == "UNKNOWN":
+            availability, reason = "BLOCKED", "Live service inventory is unverified"
+            issues.append("LIVE_SERVICE_INVENTORY_REQUIRED")
+        elif observed not in (None, "flash-next"):
+            availability, reason = "BLOCKED", "Another GPU model is active; use gated switching"
+            issues.append("EXCLUSIVE_ACTIVE_MODEL_SWITCH_REQUIRED")
+        else:
+            availability, reason = "GUARDED_P1", "Reuse existing exact-action P1 plans and approvals"
     elif action == "switch":
         availability, reason = "BLOCKED", "Service handover executor and restore tests not qualified"
         issues.extend(("SERVICE_TRANSITION_EXECUTOR_NOT_IMPLEMENTED",
