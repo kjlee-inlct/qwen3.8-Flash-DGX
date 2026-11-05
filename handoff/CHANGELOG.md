@@ -6,6 +6,7 @@
 - New asset verifier accepts only nonempty **metadata** symlinks (`model.safetensors.index.json`, `tokenizer.json`) across the model-repo boundary; weight shards remain root-pinned, JSON index still parsed with 64MiB cap. Source/Hybrid symlink, dangling link and escaped shard regression fixtures added. Diagnostic records compatibility flag and target size without copying model files.
 - User explicitly authorized GPU compute for non-disruptive P1 testing without per-action typed consent. Added `--auto-gpu` to the existing temporary wrapper. It checks expected served ID and health, takes current verify and benchmark hash IDs, invokes the original Wizard's same second-preflight protection, and never touches lifecycle/cache. P1 verify must PASS before bounded bench.
 - This is source-only implementation; do not claim actual P1 GPU PASS until new DGX operator evidence. D-017, R1E added to permanent rules; P2–P7 and destructive actions remain separately blocked.
+- **CI/source confirmation:** commit `0063b0e004902408f980c155076c098d49d4569e`, [push job](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/41978150843/job/127081754127) and [PR job](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/41978155433/job/127081768853), both **SUCCESS**. Each job ran 15 + 10 + 13 + 1 + 84 + 32 = **155/155 CPU tests PASS**. No actual DGX GPU/API/benchmark result has been observed for the fixed Wizard yet.
 
 
 ## 2026-11-05 — H-015 — P1 metadata audit bug corrected and file-level diagnosis added

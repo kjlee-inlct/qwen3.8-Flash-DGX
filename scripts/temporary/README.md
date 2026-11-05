@@ -134,3 +134,8 @@ download, Docker replacement, Hybrid repair, model deletion, switching or
 gateway changes. No active GPU run is claimed until the operator supplies
 real evidence. `--inspect-only` remains fully non-executing.
 
+
+**CI verification:** `0063b0e004902408f980c155076c098d49d4569e`,
+push and PR actions 2/2 SUCCESS with 155 unique CPU tests each. The
+source/Hybrid external metadata compatibility is protected by regressions;
+only the DGX operator's next run can establish actual model inference/benchmark.

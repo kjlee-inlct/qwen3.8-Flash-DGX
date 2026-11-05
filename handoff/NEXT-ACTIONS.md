@@ -26,7 +26,7 @@
 
 - [x] Restore compatibility for confirmed existing metadata symlinks without weakening shard containment; add synthetic source/Hybrid and dangling/shard escape regressions.
 - [x] Add scoped `--auto-gpu` to the existing one-command temporary runner. The operator may exercise the GPU without typing any plan-hash approvals. Still require actual model identity, current successful Wizard plan + double-checked plan ID, and verify PASS before benchmark. It never starts/stops a container, repairs Hybrid, changes model, or downloads anything.
-- [ ] Verify GitHub CPU CI at actual source HEAD and finalize handoff. No GPU PASS claim until operator results.
+- [x] GitHub SOURCE/CPU CI verified at `0063b0e004902408f980c155076c098d49d4569e`: push and PR jobs both SUCCESS, 155/155 CPU tests per job. No GPU PASS claim until operator results.
 - [ ] Operator: `git pull --ff-only`, then `bash scripts/temporary/p1-post-download.sh --auto-gpu`. Return `~/blazux-p1-reports/.../result.json` summary including `plans`, `actions`, `api_model_ids` and new `cache_diagnosis`. If still BLOCKED, diagnose *new explicit issues*; no blind `./flash setup` or cache purge.
 
 ## CONFIRMED IMPLEMENTATION ORDER — Wizard is the mandatory operator entrypoint
