@@ -1,3 +1,40 @@
+## 2026-11-06 — First Qwen3.8-27B GPU launch trial (one-shot and original service restoration)
+
+Actual DGX restricted CPU import/registry audit completed **all nine checks true with `issues: []`**; vLLM resolves `modelopt_mixed` to ModelOpt's imported config class. The Qwen3.8 NVIDIA checkpoint internally advertises `model_type=qwen3_5` and `Qwen3_5ForConditionalGeneration` solely as the loader class. The served model **is Qwen3.8-27B**, `nvidia/Qwen3.8-27B-NVFP4` pinned SHA `482ca0f3832238542f8f5295dde86b5f22711d80`.
+
+Community references were reviewed:
+- MiaAI-Lab `https://github.com/MiaAI-Lab/Qwen3.8-27B-DGX-Spark-RTX-6000` deploys **Unsloth compressed-tensors**; its `--quantization compressed-tensors`, FP8 KV defaults and MTP **must not** be copied to this NVIDIA ModelOpt checkpoint unverified.
+- NVIDIA forum `https://forums.developer.nvidia.com/t/qwen3-8-27b-nvfp4-on-a-single-dgx-spark-up-to-1m-context-vllm-mtp-measurements/380244/17` highlights GB10 NVFP4 kernel compatibility and separate tuned MTP results; future tuning only.
+- eugr `https://github.com/eugr/spark-vllm-docker` explicitly has NVIDIA Qwen3.8-27B recipes and alternative Spark kernel images; consider if the current pinned local vLLM 0.32 image fails actual GPU loading.
+- NVIDIA guidance `https://build.nvidia.com/spark/vllm/intermediate` includes the NVIDIA checkpoint and alternate tested images; not evidence that this particular local image works.
+
+**Implementation:** `scripts/manager/p2_27b_gpu_trial.py` is a separate first-use experimental executor, called only through dedicated `scripts/serve_27b.sh --trial-*`. Its **read-only plan** checks the exact live original container ID, original API identity, immutable image, pinned source ModelOpt metadata, :8000 ownership, absence of another running GPU-enabled Docker container, and absence of a preexisting 27B container. Any unknown additional condition stays BLOCKED. A 64-hex plan ID binds these observed facts for a 10-minute window; no prior download/CPU approval authorizes it.
+
+Start with a clean repo and inspect the plan **without changing the running service**:
+
+```bash
+cd ~/Workspace/llm/blazux-orcarouter
+git status -sb
+git pull --ff-only origin feature/recipe-wizard-handoff
+./scripts/serve_27b.sh --trial-plan
+```
+
+If `status=READY_TO_REQUEST_TRIAL_APPROVAL`, the operator may separately accept a **maintenance outage** and enter a full fresh plan ID (not literally `FULL_64_HEX_PLAN_ID`):
+
+```bash
+./scripts/serve_27b.sh --trial-execute \
+  --approve-plan FULL_64_HEX_PLAN_ID \
+  --ack-downtime I_ACCEPT_FLASH_NEXT_DOWNTIME
+```
+
+**WARNING:** This command actually STOPS `qwen38-flash` and interrupts all existing clients at :8000. It starts the separate official NVIDIA 27B snapshot with `--quantization modelopt_mixed`, `--max-model-len 8192`, `--max-num-seqs 1`, `--gpu-memory-utilization 0.70`, `--enforce-eager`, with PLE/MTP/YaRN disabled. It waits up to 600 seconds for exact Qwen3.8-27B API readiness and makes one max-24-token inference. Whether success or failure, it tries to stop/remove **only the labeled trial-created 27B container**, restart the **same preserved original Flash-Next** container, and verify `/health` plus served ID `qwen3.8-flash-next` within 240 seconds. The response distinguishes `PASS_RESTORED`, `FAIL_RESTORED`, `RECOVERY_FAILED`; local append-only JSON and bounded private `target.log` provide error diagnostics. **Do not run trial in the background.** Failure of Docker, host OOM/power, SIGKILL, broken original restart, or interrupted recovery may leave an outage; auto-recovery is attempted, not guaranteed.
+
+If `RECOVERY_FAILED`: inspect `docker ps -a`, the `qwen38-27b` trial ID/label, port :8000, GPU use, and `qwen38-flash` **before** manually restarting old service; never start two GPU inference containers together. No automatic image or model cache deletion, no permanent service switch, no PR merge. A GPU trial only becomes evidence when **actually run on DGX** and its original API return separately verified.
+
+Source CPU CI `ea28b0c0`: **354/354 PASS, 16 suites**. **GPU trial has NOT been executed as of this document update.**
+
+---
+
 ## 2026-11-06 — CPU import audit correction for vLLM ModelOpt mixed name
 
 The first actual DGX `--execute-cpu-only` invocation proved Python imports of Qwen3.5 and ModelOpt modules/classes (five checks passed). The lone `modelopt_mixed_cli_name=false` was a **probe implementation error**: `ModelOptMixedPrecisionConfig.get_name(self)` is an instance method and cannot be called without an instance. The import tool now checks the public vLLM factory `get_quantization_config("modelopt_mixed")` returns the same class as `ModelOptMixedPrecisionConfig`. The tool does not instantiate a config or start a vLLM engine. `schema_version=2` results add `quant_registry_module_imported`, `quant_registry_factory_present`, `modelopt_mixed_registry_class_matches`, and `quantization_name_verification=public_registry_factory_class_identity`; the original `modelopt_mixed_cli_name` field is retained with corrected semantics.

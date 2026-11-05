@@ -1,3 +1,9 @@
+## First one-shot Qwen3.8-27B GPU trial (separate operator approval)
+
+Actual DGX CPU-only module/registry audit PASS 9/9. An EXPERIMENTAL GPU trial is available through `./scripts/serve_27b.sh --trial-plan` (read-only) and `--trial-execute --approve-plan FULL_SHA64 --ack-downtime I_ACCEPT_FLASH_NEXT_DOWNTIME` (operator-initiated real service interruption). This is a **single-GPU stop→trial→restore** experiment, *not* production model switching. It keeps `qwen38-flash` intact and tries to restore it automatically with exact served ID verification even if 27B fails. No guarantee on host/Docker fault, manual inspection on `RECOVERY_FAILED`. See `docs/P2-27B-WIZARD-OPERATIONS.md`.
+
+---
+
 ## 2026-11-06 — Corrected ModelOpt quantization-name registration proof
 
 Initial real DGX restricted CPU probe imported Qwen3.5 and ModelOpt modules/classes successfully but incorrectly marked `modelopt_mixed` unavailable due to calling `ModelOptMixedPrecisionConfig.get_name()` as a classmethod; vLLM implements `get_name(self)`. The revised probe uses `vllm.model_executor.layers.quantization.get_quantization_config("modelopt_mixed")` and compares the returned class identity to the imported config type. No config/model instance is created. Run again after fast-forward; the old failed check does **not** disqualify 27B. All results remain CPU-only, `launch_authorized=false`; GPU transition requires scoped approval.

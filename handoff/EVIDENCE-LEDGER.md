@@ -1,3 +1,17 @@
+## E-20261106-P2-CPU-REGISTRY-PASS-AND-GPU-TRIAL-SOURCE
+
+**Actual user-supplied DGX:** refreshed isolated CPU `./scripts/temporary/p2-27b-loader-import-audit.sh --execute-cpu-only` reported **all 9 checks true**, including `qwen3_5_module_imported`, `qwen3_5_class_present`, `modelopt_module_imported`, `modelopt_nvfp4_class_present`, `quant_registry_factory_present`, `modelopt_mixed_registry_class_matches`, `modelopt_mixed_cli_name`. `observed_quantization_name=modelopt_mixed`, `issues=[]`, `status=IMPORT_AND_REGISTRY_PRESENT_UNQUALIFIED`, `gpu_verified=false`, `launch_authorized=false`. Actual Qwen3.8 checkpoint continues to declare internal `Qwen3_5ForConditionalGeneration`.
+
+**Source only:** Implemented opt-in exact-approved, single-GPU 27B trial and strong original-container restoration. Source commit `ea28b0c0ddbe085782617cc1445c2fcaf613f2a4`; [GitHub Actions run 42124595787](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42124595787) **SUCCESS 354/354 CPU tests, 16 suites**. No real DGX GPU model load, inference, stop/start, or recovery has been run yet. This capability must not be described as tested rollback.
+
+**External comparative sources** (not direct proof of this pinned image):
+- `https://github.com/MiaAI-Lab/Qwen3.8-27B-DGX-Spark-RTX-6000`: Unsloth compressed-tensors, separate from NVIDIA ModelOpt `nvidia/Qwen3.8-27B-NVFP4`.
+- `https://forums.developer.nvidia.com/t/qwen3-8-27b-nvfp4-on-a-single-dgx-spark-up-to-1m-context-vllm-mtp-measurements/380244/17`: GB10 NVFP4-specific community kernel caveats, MTP after basic start.
+- `https://github.com/eugr/spark-vllm-docker`: supports NVIDIA checkpoint and DGX Spark-specific images; adopt only after checking exact format/recipe.
+- `https://build.nvidia.com/spark/vllm/intermediate`: official Spark guide includes NVIDIA 27B, alternative NVIDIA vLLM image as potential contingency.
+
+---
+
 ## E-20261106-P2-CPU-IMPORT-DGX — observed import PASS, name-probe false negative
 
 Operator DGX `git pull --ff-only` fast-forward `99dde4c..9db92f7`. Image inspected `sha256:9479fc92a9244fcf137afb36ed778e07495e29663a81db193736fcaa1f15e137`. `./scripts/temporary/p2-27b-loader-import-audit.sh --execute-cpu-only` yielded **five PASS** checks (Qwen3.5 module and model class, ModelOpt module, ModelOpt MixedPrecision config class, NVFP4 config class). `modelopt_mixed_cli_name=false` and `MODEL_OPT_NAME_LOOKUP_FAILED:TypeError` were due to audit code calling instance method `get_name(self)` as a classmethod. Output `status=BLOCKED`, `runtime_qualified=false`, `executed_gpu=false`. Incidental restricted-container warning `vllm._C ModuleNotFoundError` and CUDA runtime missing; not proof of production loader failure. **No GPU run or source Flash-Next stop.**

@@ -1,3 +1,9 @@
+## 2026-11-06 — Qwen3.8-27B experimental GPU trial (explicit approval, restore original)
+
+After actual DGX 9/9 CPU import/ModelOpt registry PASS, implemented `scripts/manager/p2_27b_gpu_trial.py` with exact 64-character fresh plan approval, downtime acknowledgment, bounded initial 27B launch (NVIDIA ModelOpt mixed, no MTP), health/model ID + tiny generation test, private logs and exact original Flash-Next `:8000` container restoration. Added `--trial-plan`/`--trial-execute` to dedicated `serve_27b.sh`. Unknown Docker state or competing GPU container blocks start/restoration; trial never removes original. CPU regression CI `ea28b0c0` 354/354 PASS. **Actual 27B GPU trial and rollback NOT_RUN yet**. Compared MiaAI-Lab/Unsloth, NVIDIA forum GB10 recipe, eugr and NVIDIA guide; checkpoint formats not interchangeable.
+
+---
+
 ## 2026-11-06 — Resolve 27B CPU import check false-negative
 
 Observed the operator's actual isolated CPU import with Qwen3.5 and ModelOpt classes all present, but TypeError when our test incorrectly invoked vLLM `ModelOptMixedPrecisionConfig.get_name()` without `self`. Replaced with public vLLM quantization factory lookup under `modelopt_mixed` and exact returned class identity, without constructing quant config or model. Added 3 extra CPU tests plus instance-method regression; CI `0a14f189` **336/336 PASS**. Test must be re-run on DGX; runtime/launch still blocked.

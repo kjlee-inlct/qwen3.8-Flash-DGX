@@ -1,3 +1,14 @@
+## 2026-11-06 — One-shot actual NVIDIA 27B trial next; explicit operator outage approval required
+
+- [x] DGX CPU-only Qwen3.8 internal Qwen3_5 loader/ModelOpt registry checks **9/9 true, issues=[]**, `modelopt_mixed` registered. No GPU/weights tested.
+- [x] Deliver exact-approved **temporary** 27B GPU trial with original Flash-Next rollback. 354/354 CPU regression tests PASS at source commit `ea28b0c0`. No model switch or running service change yet.
+- [ ] Operator updates clean branch then runs `./scripts/serve_27b.sh --trial-plan` (read-only). Verify `status=READY_TO_REQUEST_TRIAL_APPROVAL`, original container ID and local pinned image identity, other GPU containers absent. If `BLOCKED`, investigate and **do not bypass**.
+- [ ] **Only during approved maintenance interruption**, operator may opt into `./scripts/serve_27b.sh --trial-execute --approve-plan FULL_64_HEX_SHA --ack-downtime I_ACCEPT_FLASH_NEXT_DOWNTIME`. This directly interrupts live Flash-Next :8000 and can cause an outage if rollback fails. No approval implied by CPU PASS, user preference to try soon, or earlier download permission. Keep terminal attached; do not use `nohup` or background execution. The exact plan expires within 10 minutes.
+- [ ] Record local trial JSON and bounded target log paths (no raw logs uploaded automatically). Distinguish trial API PASS, inference PASS, restored Flash-Next API PASS. If `RECOVERY_FAILED`, **do not start old while new GPU container may still run**; manually inspect Docker and GPU ownership.
+- [ ] Based on first GPU error, adjust ModelOpt/GB10 kernel image separately if needed; do not introduce Unsloth compressed-tensors flags into official NVIDIA ModelOpt checkpoint. Future MTP, long context and production switching remain distinct follow-ups.
+
+---
+
 ## 2026-11-06 — Re-run corrected 27B registry name audit (minimal next DGX step)
 
 - [x] Initial DGX isolated CPU import passed module/class presence (five checks). `modelopt_mixed` check initially reported TypeError due to incorrect class-level call to `get_name(self)`; not evidence the model cannot run.

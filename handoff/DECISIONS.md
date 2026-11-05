@@ -1,3 +1,11 @@
+## D-029 — 2026-11-06 — Permit FIRST 27B GPU trial only via exact-approved, bounded, restoring experiment
+
+A real DGX CPU-only ModelOpt registration pass justifies trying GPU startup instead of further speculative CPU checks. This is **not** permission to interrupt the running Flash-Next without operator acknowledgment. Implement 27B **experimental one-shot** guarded CLI, with default read-only planning and exact full SHA plan ID + typed interruption acknowledgment. A trial deliberately stops original `qwen38-flash` and must try restoring the **existing same original container** regardless of target launch success. No parallel GPU models, permanent model transition, cache deletion, image rebuild/pull, or reuse of Flash-Next PLE/MTP options. Protect on unknown Docker target/GPU status; if recovery cannot be verified, show failure and require operator intervention. Original service may be disrupted temporarily and power/daemon failure can defeat auto-recovery.
+
+Keep NVIDIA `nvidia/Qwen3.8-27B-NVFP4` ModelOpt FP8/NVFP4 separate from community Unsloth compressed-tensors examples; checkpoint's internal `Qwen3_5ForConditionalGeneration` is *only a loader identifier*, not the model product name. Start with ctx8192/one sequence/0.70 GPU/eager, no MTP/YaRN; qualify kernels/API first, optimize later.
+
+---
+
 ## D-028 — 2026-11-06 — Verify ModelOpt mixed name through public registry, not instance method
 
 The installed vLLM 0.32 `ModelOptMixedPrecisionConfig.get_name(self)` is an **instance** method. The initial CPU-only audit's class-level zero-argument call yielded a self-binding TypeError unrelated to model compatibility. Correct strategy: import `vllm.model_executor.layers.quantization`, call `get_quantization_config("modelopt_mixed")` (no config or model instantiation), and verify identity to the imported `ModelOptMixedPrecisionConfig`. Preserve fail-closed checks and exact raw DGX evidence. No method-call issue may be treated as GPU kernel/load failure; no source-only/CPU result can authorize GPU transition.
