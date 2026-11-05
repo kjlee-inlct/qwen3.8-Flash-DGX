@@ -1,3 +1,12 @@
+## R1I — Model-first root Wizard UX (operator accepted 2026-11-05)
+
+- Current canonical UI: **Select/run model, Service, Advanced** (plus Exit). Model choices Flash-Next / NVIDIA 27B / Orcarouter. Do not make the operator navigate P1–P7 for ordinary operations.
+- The same read-only decision planner serves root TTY selection and `./wizard.sh select MODEL --json`. It must suppress duplicate downloads while `qwen38-27b-dl` is running; no automatic start, stop, rollback or model conversion from merely selecting a model.
+- Preserve `scripts/manager/p1_wizard.py` and its existing exact action-specific approvals and DGX evidence. Reuse `p2_27b_download.py`, do not restart its existing active download. Keep old CLI aliases stable.
+- Desired Git manifest, observed live Docker/socket (with API/GPU verification separated), and event journal are distinct layers. No stale manifest may authorize a service change. The download's approval scope is **checkpoint-only**, never a transition.
+- During an ongoing DGX download, GitHub source/CI/docs work is allowed, but do not ask the user to `git pull`, `docker stop`, start another download or touch live `:8000` without carefully coordinating with completion; preserve user-owned in-flight container and mount.
+- Source acceptance does not imply 27B GPU, vLLM 0.32 runtime, model switch or recovery PASS. Implementation plan: `docs/UNIFIED-MODEL-WIZARD-DESIGN.md`.
+
 ## R1H — One model per DGX, one external API port (operator-confirmed 2026-11-05)
 
 - `runtimes/service-policy.json` is the reviewed desired-state policy. Exactly **one active GPU inference model** may run. Both NVIDIA Flash-Next and NVIDIA 27B must use host `:8000/v1` when active; no dual loading or permanent secondary port.
