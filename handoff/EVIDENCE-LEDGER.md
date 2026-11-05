@@ -1,3 +1,10 @@
+## 2026-11-05 — NVIDIA 27B pinned acquisition SOURCE and single-model policy
+
+- Authoritative public checkpoint: `nvidia/Qwen3.8-27B-NVFP4`, immutable `482ca0f3832238542f8f5295dde86b5f22711d80`, 3 indexed safetensors shards (~21.9GB): https://huggingface.co/nvidia/Qwen3.8-27B-NVFP4/tree/482ca0f3832238542f8f5295dde86b5f22711d80 .
+- Prior actual DGX user-provided inventory (before current code): `NO_PINNED_LOCAL_SNAPSHOT` for NVIDIA 27B. No evidence of downloaded NVIDIA checkpoint or running 27B service yet.
+- New GitHub SOURCE: guarded no-GPU, no-port Wizard download, pinned-without-refs scanner, single-model service policy, read-only observed manifest and transition journal primitives. Actual DGX download/GPU/API 27B/start-stop-switch: **NOT_RUN**. The runtime approval boundary remains independent of download approval.
+- Latest CPU CI should be checked against final commit before claiming PASS.
+
 ## 2026-11-05 — NVIDIA P2 cache and service-menu evidence
 
 - DGX user console: `nvidia/Qwen3.8-27B-NVFP4`, `refs.main=null`, `local_revision=null`, `indexed_shard_count=0`, `incomplete_blob_files=0`, `source_files_present=false`, `issues=[NO_PINNED_LOCAL_SNAPSHOT]`. Scope: read-only `~/.cache/huggingface` only; actual download NOT_RUN.
