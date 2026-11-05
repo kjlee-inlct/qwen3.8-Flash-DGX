@@ -1,3 +1,7 @@
+## 2026-11-05 — P2 pinned NVIDIA downloader and single active model manifest foundations
+
+Operator confirmed one active GPU model per DGX Spark, both NVIDIA Flash-Next and 27B on host port 8000. Added `runtimes/service-policy.json`, `service_manifest.py`, `service_journal.py`; service menu read-only inventory uses actual Docker/socket. Added exact-revision `p2_27b_download.py` Wizard download plans with live revalidation/lock/approval and bounded evidence, no GPU/port/service effects. Added interactive `download --guided`, CPU regressions and pinned snapshot recognition without refs/main. Source and CI separate from actual DGX download/GPU/switch. No service interrupted.
+
 ## 2026-11-05 — Service management UI and NVIDIA 27B download planning
 
 Added independent `service manager` Wizard menu/CLI (source-only) while retaining `operations system` for P7. Added `download` action to NVIDIA 27B planning, default BLOCKED. CPU router tests cover menu/catalog and refusal of unapproved mutation. Documented NVIDIA DGX `NO_PINNED_LOCAL_SNAPSHOT`; no download, restart, Docker/GPU work run.
