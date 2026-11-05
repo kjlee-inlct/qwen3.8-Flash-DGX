@@ -96,6 +96,37 @@ class P2CacheCPU(unittest.TestCase):
         self.write(source / "config.json", " " * (1024 * 1024 + 1))
         self.assertEqual(inspect_27b(self.cache)["configuration"]["status"], "CONFIG_TOO_LARGE")
 
+    def test_expected_revision_matches_without_runtime_authority(self):
+        self.snapshot()
+        x = inspect_27b(self.cache, expected_revision=self.rev)
+        self.assertTrue(x["revision_matches"])
+        self.assertTrue(x["source_files_present"])
+        self.assertFalse(x["operations_enabled"])
+
+    def test_expected_revision_mismatch_blocks_source_ready(self):
+        self.snapshot()
+        x = inspect_27b(self.cache, expected_revision="d" * 40)
+        self.assertFalse(x["revision_matches"])
+        self.assertIn("REVISION_MISMATCH", x["issues"])
+        self.assertFalse(x["source_files_present"])
+
+    def test_expected_revision_bad_format_rejected(self):
+        self.snapshot()
+        with self.assertRaises(ValueError):
+            inspect_27b(self.cache, expected_revision="../other")
+
+    def test_wizard_expected_revision_mismatch_stays_blocked(self):
+        self.snapshot()
+        buffer = io.StringIO()
+        with contextlib.redirect_stdout(buffer):
+            rc = router.main(["model", "27b", "status", "--inspect-cache",
+                              "--cache-root", str(self.cache),
+                              "--expected-revision", "d" * 40, "--json"])
+        self.assertEqual(rc, 0)
+        result = json.loads(buffer.getvalue())
+        self.assertIn("REVISION_MISMATCH", result["inspection"]["issues"])
+        self.assertFalse(result["operations_enabled"])
+
     def test_missing_shard_blocks_source_assets(self):
         source = self.snapshot()
         (source / "model-00002.safetensors").unlink()
