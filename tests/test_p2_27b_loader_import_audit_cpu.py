@@ -1,4 +1,4 @@
-"""P2 isolated CPU import source contract (fake modules, no Docker/GPU)."""
+"""Realistic CPU-only ModelOpt vLLM 0.32 import and registry unit tests."""
 from __future__ import annotations
 
 import json
@@ -8,85 +8,124 @@ from types import SimpleNamespace
 import unittest
 
 from scripts.manager.p2_27b_loader_import_audit import (
-    audit_installed_imports, MODEL_MODULE, QUANT_MODULE,
+    audit_installed_imports, MODEL_MODULE, QUANT_MODULE, REGISTRY_MODULE,
 )
 
 
-def fake_import(name):
+def fake_modules():
     class Qwen3_5ForConditionalGeneration:
         pass
 
     class ModelOptMixedPrecisionConfig:
-        @classmethod
-        def get_name(cls):
-            return "modelopt_mixed"
+        # The *actual* vLLM 0.32 signature has a self parameter.
+        # The audit must never instantiate the class or invoke get_name().
+        def get_name(self):
+            raise AssertionError("get_name(self) may not be invoked by CPU audit")
 
     class ModelOptNvFp4Config:
         pass
 
-    if name == MODEL_MODULE:
-        return SimpleNamespace(Qwen3_5ForConditionalGeneration=Qwen3_5ForConditionalGeneration)
-    if name == QUANT_MODULE:
-        return SimpleNamespace(ModelOptMixedPrecisionConfig=ModelOptMixedPrecisionConfig,
-                               ModelOptNvFp4Config=ModelOptNvFp4Config)
-    raise ImportError("unknown")
+    model = SimpleNamespace(Qwen3_5ForConditionalGeneration=Qwen3_5ForConditionalGeneration)
+    quant = SimpleNamespace(ModelOptMixedPrecisionConfig=ModelOptMixedPrecisionConfig,
+                            ModelOptNvFp4Config=ModelOptNvFp4Config)
+
+    def lookup(name):
+        if name == "modelopt_mixed":
+            return ModelOptMixedPrecisionConfig
+        raise ValueError("bad quantization name")
+
+    registry = SimpleNamespace(get_quantization_config=lookup)
+    modules = {MODEL_MODULE: model, QUANT_MODULE: quant,
+               REGISTRY_MODULE: registry}
+    return modules
+
+
+def importer_for(modules):
+    def importer(name):
+        if name not in modules:
+            raise ImportError("unexpected module")
+        return modules[name]
+    return importer
 
 
 class P2LoaderImportCPU(unittest.TestCase):
-    def test_valid_imports_do_not_grant_launch(self):
-        r = audit_installed_imports(importer=fake_import)
-        self.assertEqual(r["status"], "IMPORT_SURFACES_PRESENT_UNQUALIFIED")
+    def test_instance_get_name_not_called_and_registration_passes(self):
+        r = audit_installed_imports(importer=importer_for(fake_modules()))
+        self.assertEqual(r["status"], "IMPORT_AND_REGISTRY_PRESENT_UNQUALIFIED")
         self.assertTrue(all(r["checks"].values()))
+        self.assertEqual(r["observed_quantization_name"], "modelopt_mixed")
+        self.assertEqual(r["quantization_name_verification"],
+                         "public_registry_factory_class_identity")
         self.assertFalse(r["runtime_qualified"])
         self.assertFalse(r["launch_authorized"])
         self.assertFalse(r["executed_gpu"])
         json.dumps(r)
 
     def test_model_import_exception_sanitized_and_blocked(self):
-        def broken(name):
-            if name == MODEL_MODULE:
-                raise ImportError("secret-looking-message")
-            return fake_import(name)
-        r = audit_installed_imports(importer=broken)
+        modules = fake_modules()
+        del modules[MODEL_MODULE]
+        r = audit_installed_imports(importer=importer_for(modules))
         self.assertEqual(r["status"], "BLOCKED")
         self.assertIn("QWEN3_5_IMPORT_FAILED:ImportError", r["issues"])
-        self.assertNotIn("secret-looking-message", json.dumps(r))
 
     def test_quant_import_failure(self):
-        def broken(name):
-            if name == QUANT_MODULE:
-                raise RuntimeError("test")
-            return fake_import(name)
-        r = audit_installed_imports(importer=broken)
-        self.assertIn("MODELOPT_IMPORT_FAILED:RuntimeError", r["issues"])
+        modules = fake_modules()
+        del modules[QUANT_MODULE]
+        r = audit_installed_imports(importer=importer_for(modules))
+        self.assertIn("MODELOPT_IMPORT_FAILED:ImportError", r["issues"])
 
-    def test_wrong_name_fails(self):
-        def wrong(name):
-            o = fake_import(name)
-            if name == QUANT_MODULE:
-                o.ModelOptMixedPrecisionConfig.get_name = classmethod(lambda cls: "wrong")
-            return o
-        r = audit_installed_imports(importer=wrong)
-        self.assertIn("MODELOPT_MIXED_CLI_NAME_MISSING", r["issues"])
+    def test_registry_import_failure(self):
+        modules = fake_modules()
+        del modules[REGISTRY_MODULE]
+        r = audit_installed_imports(importer=importer_for(modules))
+        self.assertIn("QUANT_REGISTRY_IMPORT_FAILED:ImportError", r["issues"])
+        self.assertFalse(r["checks"]["modelopt_mixed_cli_name"])
+
+    def test_missing_factory_fails_closed(self):
+        modules = fake_modules()
+        modules[REGISTRY_MODULE] = SimpleNamespace()
+        r = audit_installed_imports(importer=importer_for(modules))
+        self.assertFalse(r["checks"]["quant_registry_factory_present"])
+        self.assertIsNone(r["observed_quantization_name"])
+
+    def test_wrong_registry_class_does_not_pass(self):
+        modules = fake_modules()
+        modules[REGISTRY_MODULE].get_quantization_config = lambda name: type("OtherConfig", (), {})
+        r = audit_installed_imports(importer=importer_for(modules))
+        self.assertIn("MODELOPT_MIXED_REGISTRY_CLASS_MATCHES_MISSING", r["issues"])
+        self.assertFalse(r["checks"]["modelopt_mixed_cli_name"])
+
+    def test_registry_lookup_error_does_not_leak_message(self):
+        modules = fake_modules()
+
+        def fail(name):
+            raise ValueError("secret-looking-message")
+
+        modules[REGISTRY_MODULE].get_quantization_config = fail
+        r = audit_installed_imports(importer=importer_for(modules))
+        self.assertEqual(r["status"], "BLOCKED")
+        self.assertIn("MODEL_OPT_REGISTRY_LOOKUP_FAILED:ValueError", r["issues"])
+        self.assertNotIn("secret-looking-message", json.dumps(r))
+
+    def test_registry_called_with_exact_name_only(self):
+        modules = fake_modules()
+        called = []
+        original = modules[REGISTRY_MODULE].get_quantization_config
+
+        def traced(name):
+            called.append(name)
+            return original(name)
+
+        modules[REGISTRY_MODULE].get_quantization_config = traced
+        r = audit_installed_imports(importer=importer_for(modules))
+        self.assertEqual(called, ["modelopt_mixed"])
+        self.assertTrue(r["checks"]["modelopt_mixed_cli_name"])
 
     def test_missing_architecture_class(self):
-        def wrong(name):
-            o = fake_import(name)
-            if name == MODEL_MODULE:
-                delattr(o, "Qwen3_5ForConditionalGeneration")
-            return o
-        r = audit_installed_imports(importer=wrong)
+        modules = fake_modules()
+        delattr(modules[MODEL_MODULE], "Qwen3_5ForConditionalGeneration")
+        r = audit_installed_imports(importer=importer_for(modules))
         self.assertIn("QWEN3_5_CLASS_PRESENT_MISSING", r["issues"])
-
-    def test_name_lookup_exception(self):
-        def wrong(name):
-            o = fake_import(name)
-            if name == QUANT_MODULE:
-                o.ModelOptMixedPrecisionConfig.get_name = classmethod(
-                    lambda cls: (_ for _ in ()).throw(ValueError("bad")))
-            return o
-        r = audit_installed_imports(importer=wrong)
-        self.assertIn("MODEL_OPT_NAME_LOOKUP_FAILED:ValueError", r["issues"])
 
     def test_cpu_shell_constraints(self):
         path = Path("scripts/temporary/p2-27b-loader-import-audit.sh")
@@ -100,9 +139,10 @@ class P2LoaderImportCPU(unittest.TestCase):
                      "-p 8000:8000", "HF_CACHE"):
             self.assertNotIn(item, src)
 
-    def test_python_module_does_not_instantiate_engine(self):
+    def test_python_module_does_not_instantiate_engine_or_quant_config(self):
         src = Path("scripts/manager/p2_27b_loader_import_audit.py").read_text()
-        for item in ("import torch", "LLM(", "load_model(", "subprocess"):
+        for item in ("import torch", "LLM(", "load_model(", "subprocess",
+                     "mixed.get_name(", "mixed("):
             self.assertNotIn(item, src)
 
 
