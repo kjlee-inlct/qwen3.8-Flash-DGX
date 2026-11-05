@@ -1,3 +1,9 @@
+## 2026-11-05 P2 — config audit SOURCE evidence
+
+- GitHub-connected source patch: `scripts/manager/p2_27b_inventory.py`, `tests/test_p2_27b_inventory_cpu.py` on `feature/recipe-wizard-handoff`.
+- Evidence level: **SOURCE committed**. CI at new HEAD requires separate run confirmation; no local DGX, GPU, Docker, network download or model service test was executed.
+- Previous P1 operator report remains valid with its original dated scope. No P2 runtime qualification inferred from candidate checkpoint metadata.
+
 # Evidence ledger — observed facts and test reports
 
 ## E-20261105-16 — P1 baseline, advanced tests, and bounded GPU bench PASS
