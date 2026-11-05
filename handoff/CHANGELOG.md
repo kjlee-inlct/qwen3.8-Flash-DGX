@@ -1,3 +1,7 @@
+## 2026-11-06 — Complete P1–P7 Wizard console and lifecycle source (D-021)
+
+Added `wizard/console.py` (three primary screens, model Continue/all actions, full service and advanced P3/P4/P6/P7 plans), `wizard/workflow.py` (P1/P2/P5 action slots for inspect/download/prepare/start/wait/verify/benchmark/switch/rollback/recipe), `wizard/roadmap.py` (all seven release gates), and `scripts/manager/service_logs.py` (bounded opt-in read-only service logs). Wired CLI `workflow` and `roadmap`, extended service `logs` route and CPU CI tests; preserved original P1 guarded engine and P2 approved downloader. Corrected P1 shortcut routing so another active GPU model or unknown service observation cannot enter P1 guided startup. All new P2–P7 mutation adapters remain blocked until runtime/recovery qualification. No DGX operations performed.
+
 ## 2026-11-05 — Read-only local API health and stop-before-start/rollback preview
 
 Added `scripts/manager/service_health.py` (fixed loopback :8000 GET /health and /v1/models, bounded response and timeout, served-ID match) and `scripts/manager/service_transition_preview.py` (fail-closed atomic handover preview and explicit recovery). Wired health into existing service CLI and simple root Service choice; attached transition preview to model selection when other model observed. Extended CPU unit tests and CI. No actual service/DGX/API/GPU calls in this development session. Download is user-owned and in progress per last evidence; not verified complete.
