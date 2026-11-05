@@ -80,3 +80,10 @@ See [master plan](MODEL-RECIPE-WIZARD-PLAN.md) and [current handoff](../handoff/
 
 `scripts/manager/service_health.py` performs bounded GET-only local :8000 health plus served model identity; it does **not** prove GPU exclusivity. `scripts/manager/service_transition_preview.py` assembles a source-only, fail-closed stop-before-start and rollback preview. There is no executable service transition adapter or accepted plan ID yet. The interactive Service choice performs the read-only API health inspection; `./wizard.sh service manager health --json` is the corresponding existing nested CLI. No logs or service restart code has been enabled.
 
+
+## Full Wizard model/service/release source contract (2026-11-06)
+
+`wizard/workflow.py` catalogs all three models with the same ten named actions (`inspect/download/prepare/start/wait/verify/benchmark/switch/rollback/recipe`). Its statuses explicitly distinguish `READ_ONLY`, `GUARDED_P1`, `APPROVAL_REQUIRED`, `IN_PROGRESS`, `BLOCKED`. A plan can be displayed before an execution adapter is qualified but does not supply an authorization or runnable command. Service inventory is actual Docker/socket observation; bounded local HTTP health is separate; bounded opt-in log tail exposes only locally observed managed container logs, never uploads private log contents. `wizard/roadmap.py` summarizes all P1–P7 gates as **NOT_RELEASE_QUALIFIED** until actual scoped evidence.
+
+Operator console `wizard/console.py` presents all P1–P7 actions: model lifecycle; service status/health/logs/start/stop/restart/rollback/proxy/gateway; advanced bidirectional P3/P6, P4 conditional storage, P7 acceptance and readiness report. Existing P1 and pinned P2 downloader are delegated without bypassing approvals. Model switching requires stop-old → free port 8000 → start-new → verify exact model → restore-old on failure; the actual executor is not yet qualified and remains blocked.
+
