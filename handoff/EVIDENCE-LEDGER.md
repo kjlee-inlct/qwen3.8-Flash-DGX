@@ -1,3 +1,11 @@
+## E-20261106-P2-ACTUAL-GPU-TRIAL-PASS-AND-WIZARD-STATUS-SOURCE
+
+**Real operator DGX terminal**: `./scripts/serve_27b.sh --trial-execute --approve-plan "$PLAN_ID" --ack-downtime I_ACCEPT_FLASH_NEXT_DOWNTIME` reported `{"executed":true,"target_api_ready":true,"inference_ok":true,"trial":"PASS","restoration":{"status":"RESTORED","issues":[]},"status":"PASS_RESTORED"}`. Private local evidence `/home/inlc/.local/state/blazux-wizard/p2/20261105T230229Z-a4fc14cf8079.json` and associated `.target.log`; only stdout was supplied, file contents not inspected. Supports **real GPU Qwen3.8-27B load/API/small generation and normal-path original Flash-Next return**, not comprehensive GPU benchmark or emergency recovery testing.
+
+**Source-only follow-up**: user requested **Manifest-based Wizard** rather than standalone `docker ps` and `curl`. Added new `scripts/manager/service_status.py`; `./wizard.sh service manager status --json` now composes a single fresh Manifest observation with a bounded API health check using exactly the same snapshot. It compares actual managed container/model/port, `runtimes/service-policy.json` expected served model ID and `/v1/models` response. Returns `LIVE_SERVICE_VERIFIED` only if the recorded checks all pass; otherwise `BLOCKED` with issues. `inventory` and `health` remain separate diagnostics. **No actual DGX run of the newly combined Wizard status yet.** `gpu_exclusivity_verified=false`, `previous_trial_provenance_verified=false` expressly separate current status from historical trial receipt.
+
+---
+
 ## E-20261106-P2-CPU-REGISTRY-PASS-AND-GPU-TRIAL-SOURCE
 
 **Actual user-supplied DGX:** refreshed isolated CPU `./scripts/temporary/p2-27b-loader-import-audit.sh --execute-cpu-only` reported **all 9 checks true**, including `qwen3_5_module_imported`, `qwen3_5_class_present`, `modelopt_module_imported`, `modelopt_nvfp4_class_present`, `quant_registry_factory_present`, `modelopt_mixed_registry_class_matches`, `modelopt_mixed_cli_name`. `observed_quantization_name=modelopt_mixed`, `issues=[]`, `status=IMPORT_AND_REGISTRY_PRESENT_UNQUALIFIED`, `gpu_verified=false`, `launch_authorized=false`. Actual Qwen3.8 checkpoint continues to declare internal `Qwen3_5ForConditionalGeneration`.

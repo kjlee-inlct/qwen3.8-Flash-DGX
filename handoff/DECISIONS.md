@@ -1,3 +1,9 @@
+## D-031 — 2026-11-06 — Wizard must use Manifest-led live service status as primary operator interface
+
+After real one-shot Qwen3.8-27B GPU `PASS_RESTORED`, the user chose **Manifest-based Wizard** instead of manual `docker ps` + `curl` for verifying original Flash-Next recovery and future switching. Keep a **single** `./wizard.sh service manager status --json` command with fresh actual Docker/socket observation + declared `runtimes/service-policy.json` expectations + localhost `/health` and `/v1/models` exact model ID. Return `LIVE_SERVICE_VERIFIED` or fail closed `BLOCKED`, never infer operation authority or API identity from a stale manifest. Preserve `inventory`, `health`, `logs` for diagnostics. Do not conflate current API verification with prior trial provenance, GPU exclusivity, permanent switch readiness, memory/latency measurements or user authorization to stop production. No Docker or GPU mutation from any status command.
+
+---
+
 ## D-029 — 2026-11-06 — Permit FIRST 27B GPU trial only via exact-approved, bounded, restoring experiment
 
 A real DGX CPU-only ModelOpt registration pass justifies trying GPU startup instead of further speculative CPU checks. This is **not** permission to interrupt the running Flash-Next without operator acknowledgment. Implement 27B **experimental one-shot** guarded CLI, with default read-only planning and exact full SHA plan ID + typed interruption acknowledgment. A trial deliberately stops original `qwen38-flash` and must try restoring the **existing same original container** regardless of target launch success. No parallel GPU models, permanent model transition, cache deletion, image rebuild/pull, or reuse of Flash-Next PLE/MTP options. Protect on unknown Docker target/GPU status; if recovery cannot be verified, show failure and require operator intervention. Original service may be disrupted temporarily and power/daemon failure can defeat auto-recovery.

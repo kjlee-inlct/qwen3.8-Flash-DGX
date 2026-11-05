@@ -1,3 +1,17 @@
+## 2026-11-06 — Manifest-driven unified read-only service status
+
+Canonical operator command for live model/service verification after GPU trial, model switch or restore:
+
+```bash
+./wizard.sh service manager status --json
+```
+
+This is a **read-only** composite of a fresh Docker/socket observation (actual runtime truth), `runtimes/service-policy.json` (desired model/port invariants), and bounded localhost `GET /health` + `GET /v1/models` (exact served-model identity). It uses the same Manifest observation when assessing HTTP identity, rather than observing a second independently moving Docker state. `status=LIVE_SERVICE_VERIFIED` requires a single running managed model, the expected container/published :8000 mapping, HTTP health success, and exact expected served ID. Otherwise `status=BLOCKED` and `issues` report the missing checks. Useful fields: `observed_model`, `expected_served_id`, `observed_model_ids`, `active_container`, `manifest_status`, `api_health_status`, `checks`. It never restarts, stops, launches, downloads or infers.
+
+Separate diagnostics remain `./wizard.sh service manager inventory --json`, `./wizard.sh service manager health --json`, `./wizard.sh service manager logs --json`. `gpu_exclusivity_verified=false`, `port_process_ownership_verified=false` and `previous_trial_provenance_verified=false` indicate claims not proven by the bounded status query. A historical `PASS_RESTORED` trial journal is separate from actual current-model identity. The new Wizard status implementation requires its own real DGX read-only acceptance after source CI.
+
+---
+
 > **CURRENT, 2026-11-06 (D-021):** Full P1–P7 TTY Wizard implemented as one **model-first console**; see `wizard/console.py`, `wizard/workflow.py`, and `wizard/roadmap.py`. Older domain-based PRIMARY menu text below is preserved as historical contract. The old model/switch/storage/operations/legacy P1–P7 CLI handlers **remain supported**. Source UI complete does **not** mean P2–P7 execution is approved or DGX qualified. `nvidia/Qwen3.8-27B-NVFP4` download was operator-reported STARTED, completion unknown.
 
 ### Current operator menu (source)

@@ -1,3 +1,9 @@
+## 2026-11-06 — REAL Qwen3.8-27B GPU PASS_RESTORED and unified Manifest-led Wizard status
+
+Operator supplied actual DGX `--trial-execute` result: `executed=true`, `target_api_ready=true`, `inference_ok=true`, `trial=PASS`, `restoration.status=RESTORED`, `issues=[]`, `status=PASS_RESTORED`. This supersedes earlier source-only `NOT_RUN` statements. User requested canonical Manifest-based Wizard read-only status rather than ad hoc Docker/curl. Implemented `scripts/manager/service_status.py` and unified `./wizard.sh service manager status --json`; added CPU fake-backend tests and updated routing. Kept old `inventory`, `health`, `logs` non-mutating. Combined status NOT_RUN on real DGX until operator invocation; no further actual GPU model or service changes made during this source update. See `handoff/P2-27B-GPU-TRIAL-PASS-20261106.md`.
+
+---
+
 ## 2026-11-06 — Qwen3.8-27B experimental GPU trial (explicit approval, restore original)
 
 After actual DGX 9/9 CPU import/ModelOpt registry PASS, implemented `scripts/manager/p2_27b_gpu_trial.py` with exact 64-character fresh plan approval, downtime acknowledgment, bounded initial 27B launch (NVIDIA ModelOpt mixed, no MTP), health/model ID + tiny generation test, private logs and exact original Flash-Next `:8000` container restoration. Added `--trial-plan`/`--trial-execute` to dedicated `serve_27b.sh`. Unknown Docker state or competing GPU container blocks start/restoration; trial never removes original. CPU regression CI `ea28b0c0` 354/354 PASS. **Actual 27B GPU trial and rollback NOT_RUN yet**. Compared MiaAI-Lab/Unsloth, NVIDIA forum GB10 recipe, eugr and NVIDIA guide; checkpoint formats not interchangeable.
