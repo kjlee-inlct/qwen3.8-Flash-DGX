@@ -1,5 +1,12 @@
 # Handoff changelog (append-only)
 
+## 2026-11-05 — H-014 — Download completed (operator report), P1 audit disagreement
+
+- Operator confirms NVIDIA Flash-Next download finished. First actual DGX wrapper run on branch `dea7c5a`: Git clean, process scan no active setup, `/health` and `/v1/models` exit code 0; Doctor/inventory plan exit 3; Wizard verify/bench both BLOCKED on generic checkpoint incomplete and Hybrid unready. No Wizard GPU/benchmark calls made.
+- Root cause **unknown**: P1 audit currently reads `refs/main` only, whereas `./flash` accepts `refs/master` or an alternate snapshot; it also treats any remaining `.incomplete` blob as blocking even when indexed files are present. A full copy of the raw report has not been supplied; do not assert either explanation as proven.
+- Added read-only `scripts/temporary/p1_cache_diagnosis.py`, wired into the one-command wrapper, plus CPU fixtures. First CI run failed due an optional diagnostic missing in the pre-existing report fixture; follow-up makes the field optional and adds tests. GitHub CI fix commit `4c0041dd230e2abe22ba8379aca74068933ecece` 2/2 SUCCESS, 138/138 CPU PASS per job. No DGX changes executed by assistant.
+
+
 ## 2026-11-05 — H-013 — Temporary operator bundle safety and final CPU CI
 
 - Fix commit `b9f9a1bce6d7aad30ad6648d6c6e7edf35f3712b` checks an operator-owned setup/serve process again just before test execution, blocks report output under HF cache, adds two CPU regressions, and removes duplicated CI invocation (temporary test suite is included under `test_p1_*_cpu.py`).

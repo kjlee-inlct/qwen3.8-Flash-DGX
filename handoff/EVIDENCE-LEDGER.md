@@ -107,6 +107,14 @@ Use an append-only entry for every meaningful result. Never substitute README cl
 - **Tested behaviors (mock DGX):** safe read-only inspection; no setup/Git reset/Docker rm; independent live Wizard plan approval; blocked/dirty/wrong-branch/active-setup refusal; mid-run race prevention; benchmark only after verify PASS; restricted JSON artifact outside Git/HF cache.
 - **Real DGX:** `NOT_RUN_BY_ASSISTANT`. No GPU/API/benchmark results, operator's queued `flash setup/serve/wait/test` completion still not observed and must be confirmed before `git pull`/wrapper.
 
+## E-20261105-12 — DGX operator report: checkpoint download finished, Wizard blocked
+
+- **Source:** user-provided DGX terminal output and operator clarification, 2026-11-05. **Evidence scope:** USER-REPORTED download complete; console wrapper evidence for `git pull` and `bash scripts/temporary/p1-post-download.sh`; not assistant SSH and not complete raw `result.json`.
+- **Git/host:** `feature/recipe-wizard-handoff@dea7c5aa183da770b6b467288f2f6eedf8e94946` fast-forward; working tree clean; no relevant active setup process detected. Result path `/home/inlc/blazux-p1-reports/20261105T052545Z-1e6ec592/result.json`.
+- **Read-only command statuses:** doctor=3, inventory_plan=3, HTTP health=0, HTTP models=0, GPU command=0, Docker command=0. Response contents and model ID were not pasted. P1 verify and benchmark `status=BLOCKED`, issues `checkpoint_downloading_or_incomplete` and `hybrid_not_prepared_or_incomplete`; no Wizard actions executed.
+- **Interpretation:** generic P1 source/Hybrid audit failure; not evidence of ongoing download. Could be refs-main-only handling, stale incomplete blobs, missing Hybrid marker/files or a different configured cache/mount; no cause selected without new diagnostic facts. New `p1_cache_diagnosis.py` provides read-only facts from actual snapshot and strict audit. SOURCE/CPU CI verified at `4c0041dd230e2abe22ba8379aca74068933ecece`: GitHub push and PR both SUCCESS, each **138/138 CPU tests PASS** (15 manifest + 10 inventory + 13 launcher + 1 executable-mode + 67 P1 + 32 Wizard router). The earlier `eb759ad` source attempt failed its tests because the optional new diagnostic key was absent from an old fake fixture; fixed in `4c0041d` without changing runtime assets. Real DGX evidence still pending.
+- **P1 GPU/API/benchmark:** Wizard verification and benchmark `NOT_RUN`; observed curl GET is an API reachability test, not a workload benchmark or complete model identity verification.
+
 ## Historic evidence not transferred
 
 ## E-20261105-04 — User-reported Flash-Next download still in progress
