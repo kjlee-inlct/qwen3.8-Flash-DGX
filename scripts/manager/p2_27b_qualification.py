@@ -15,6 +15,7 @@ from typing import Any, Callable
 
 from scripts.manager.p2_27b_download import IMAGE, REVISION
 from scripts.manager.p2_27b_inventory import inspect_27b
+from scripts.manager.p2_27b_quant_audit import inspect_pinned_quantization
 from scripts.manager.service_manifest import inspect_service
 
 IMAGE_ID = re.compile(r"^sha256:[0-9a-f]{64}$")
@@ -72,6 +73,7 @@ def inspect_27b_runtime(*, cache_root: Path | None = None,
                         inspector=inspect_27b,
                         service_observer=inspect_service,
                         runner=subprocess.run,
+                        quant_auditor=inspect_pinned_quantization,
                         machine=platform.machine) -> dict[str, Any]:
     """Gather source/host facts and precise unresolved gates; always fail closed."""
     issues: list[str] = []
@@ -95,6 +97,14 @@ def inspect_27b_runtime(*, cache_root: Path | None = None,
         issues.append("MODEL_ARCHITECTURE_OR_QUANT_METADATA_UNEXPECTED")
     if configuration.get("context_length") is None:
         issues.append("MODEL_CONTEXT_METADATA_NOT_CONFIRMED")
+    try:
+        quantization_audit = quant_auditor(cache_root)
+    except (OSError, ValueError, RuntimeError) as exc:
+        quantization_audit = {"status": "BLOCKED",
+                              "issues": ["HF_QUANT_INSPECTION_FAILED:" + type(exc).__name__]}
+    if not quantization_audit.get("mixed_fp8_nvfp4_metadata"):
+        issues.append("PINNED_HF_QUANT_CONFIG_UNQUALIFIED")
+    issues.extend("HF_QUANT:" + str(item) for item in quantization_audit.get("issues", []))
     try:
         host_arch = machine()
     except (OSError, ValueError):
@@ -151,6 +161,7 @@ def inspect_27b_runtime(*, cache_root: Path | None = None,
             "service_model_id": "qwen3.8-27b", "host_port": 8000,
         },
         "metadata_matches_expected": metadata_matches,
+        "quantization_audit": quantization_audit,
         "host_architecture": host_arch, "image": image,
         "observed_service": {
             "status": service.get("status"),
