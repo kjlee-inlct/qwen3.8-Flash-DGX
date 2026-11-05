@@ -23,6 +23,10 @@ Each model baseline milestone (P1/P2/P5) MUST be operable through Wizard from pr
 
 **Present:** `wizard/00-doctor.sh` and `10-plan.sh` read-only source; default NVIDIA Flash-Next profile port 8000, CPU test baseline. **Missing:** prepare/setup/serve/verify/benchmark/evidence Wizard and real DGX validation. This missing P1 path is the next implementation target.
 
+## 1B. P1 Wizard batch source implementation and evidence boundary
+
+P1 Wizard source now includes scripts/manager/p1_assets.py, p1_wizard.py, p1_bench.py, wizard/p1.sh, tests/test_p1_*_cpu.py and CI. Source commit c625a49276272e90d19ab6367f580a0230754890: two CI jobs passed all 80 CPU tests each (41 new P1 and 39 baseline). Wizard provides asset/image inspection, stale-plan approval, Hybrid preparation/start/wait, API model/text/tool/vision checks and bounded SSE throughput/TTFT measurement with JSON evidence. 2026-11-05 user-supplied DGX log: vLLM 0.32 Docker image build finished; model download 9/25 files (36%) at last visible line. OpenWebUI and Portainer remained running; port 8000 was free at the earlier scan. The operator entered flash setup, serve, wait and test sequentially, so subsequent commands may run without assistant action. Do not modify the worktree, restart the process, repeat setup, or replace an already running container before the original chain ends. These are time-bounded facts, not proof of full download or API readiness. **Actual DGX Wizard GPU/API/benchmark and automated rollback NOT_RUN**. P1 cannot exit solely on these source tests.
+
 ## 2. Known inputs vs unknowns
 
 **Grounded in repository source:**

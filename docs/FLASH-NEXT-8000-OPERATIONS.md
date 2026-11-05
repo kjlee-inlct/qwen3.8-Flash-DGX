@@ -1,6 +1,6 @@
 # NVIDIA Flash-Next — port 8000 safe deployment runbook
 
-**2026-11-05 source state only.** User reports all previous operating services deleted; current Docker, GPU, port, checkpoints and free space **NOT OBSERVED**. Do not confuse a schema/CI PASS with readiness or permission to use GPU.
+**Source and CPU CI pass, GPU Wizard unqualified.** 2026-11-05 user-supplied DGX log: vLLM 0.32 Docker image build finished; model download 9/25 files (36%) at last visible line. OpenWebUI and Portainer remained running; port 8000 was free at the earlier scan. The operator entered flash setup, serve, wait and test sequentially, so subsequent commands may run without assistant action. Do not modify the worktree, restart the process, repeat setup, or replace an already running container before the original chain ends. These are time-bounded facts, not proof of full download or API readiness.
 
 ## Intended fork defaults
 
@@ -44,6 +44,10 @@ curl -fsS http://127.0.0.1:8000/v1/models
 ```
 
 **If `qwen38-flash` already exists, `serve.sh` stops without removing/restarting it.** Do not run `docker rm -f` as a remedy without separately verifying identity and getting approval. Container image can have a mutable local tag; record exact image ID/digest, checkpoint full revision, model config, command, wall clock, GPU memory, API ID, test results and logs before promoting to production. Running a moving `refs/main` is not yet an immutable, qualified release.
+
+## P1 Wizard after existing operator process finishes
+
+Read [P1 Wizard operations](P1-WIZARD-OPERATIONS.md). Use read-only bash wizard/p1.sh status and bash wizard/p1.sh plan --for-action verify. If the model is already serving, do not use start: adopt its existing container and verify/benchmark with a fresh explicit plan approval.
 
 ## Recovery and limitations
 
