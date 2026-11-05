@@ -90,12 +90,16 @@ class WizardRouterCPU(unittest.TestCase):
                 self.assertIn("UNVERIFIED_APPROVAL_CANNOT_EXECUTE", obj["issues"])
 
     def test_service_menu_status_and_restart_fail_closed(self):
-        observation = {"stage": "svc", "status": "OBSERVED_UNQUALIFIED",
-                       "runtime": "NOT_RUN", "executed": False,
-                       "operations_enabled": False}
-        with patch("wizard.menus.operations.service.inspect_service", return_value=observation):
+        observation = {"stage": "svc", "status": "LIVE_SERVICE_VERIFIED",
+                       "scope": "DGX_READ_ONLY_MANIFEST_AND_API",
+                       "executed": False, "operations_enabled": False,
+                       "observed_model": "flash-next",
+                       "expected_served_id": "qwen3.8-flash-next"}
+        with patch("wizard.menus.operations.service.inspect_live_status",
+                   return_value=observation):
             rc, raw = self.call(["service", "manager", "status", "--json"])
         self.assertEqual(rc, 0)
+        self.assertEqual(json.loads(raw)["status"], "LIVE_SERVICE_VERIFIED")
         self.assertFalse(json.loads(raw)["operations_enabled"])
         for action in ("start", "stop", "restart", "rollback", "proxy", "gateway"):
             with self.subTest(action=action):
