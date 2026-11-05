@@ -75,3 +75,8 @@ At every transition write an append-only local transition log (no credentials). 
 - Release: `PASS` requires reproducible artifacts and gate matrix, not only an API 200. A status is one of `NOT_RUN`, `PASS`, `FAIL`, `BLOCKED`, `NOT_APPLICABLE` with explicit scope.
 
 See [master plan](MODEL-RECIPE-WIZARD-PLAN.md) and [current handoff](../handoff/CURRENT-STATE.md).
+
+## Read-only API/transition qualification additions (2026-11-05)
+
+`scripts/manager/service_health.py` performs bounded GET-only local :8000 health plus served model identity; it does **not** prove GPU exclusivity. `scripts/manager/service_transition_preview.py` assembles a source-only, fail-closed stop-before-start and rollback preview. There is no executable service transition adapter or accepted plan ID yet. The interactive Service choice performs the read-only API health inspection; `./wizard.sh service manager health --json` is the corresponding existing nested CLI. No logs or service restart code has been enabled.
+
