@@ -1,6 +1,12 @@
 # Manifest contracts, service orchestration and storage safety
 
-**State: P0 N1 RECIPE SOURCE CONTRACT IMPLEMENTED; runtime and N2+ NOT IMPLEMENTED.** Source schema/validator and intentionally invalid 27B candidate exist; no launchable runtime, gateway or wizard.
+**Current state (2026-11-05):** N1 recipe schema, P1 guarded Wizard backend, P2 source downloader, model-first selection plan, read-only service manifest and service transition journal primitives are implemented. P2 runtime image/loader and actual stop/start/switch remain **NOT_QUALIFIED/NOT_RUN**; do not infer operational readiness from model selection or download.
+
+## Unified model-first contract (2026-11-05)
+
+The accepted UX is `./wizard.sh` → **Select model / Service / Advanced**. Headless `./wizard.sh select 27b --json` returns a read-only lifecycle decision; the old `model/switch/storage/operations/p1..p7` CLI remains compatible. Full rules, classification table, safety contracts and phased acceptance live in [UNIFIED-MODEL-WIZARD-DESIGN.md](UNIFIED-MODEL-WIZARD-DESIGN.md).
+
+Service state has three separate truths: desired Git policy `runtimes/service-policy.json`; observed, bounded Docker/socket inventory `scripts/manager/service_manifest.py`; append-only local transition journal `scripts/manager/service_journal.py`. **Observed container != served API model or exclusive GPU claim**; both require active qualification. Downloader `qwen38-27b-dl` is disk/network-only and can coexist with one active GPU inference container. A running downloader is `DOWNLOADING`, not `DOWNLOADED` or `READY`.
 
 ## A. Five concerns with different ownership
 
