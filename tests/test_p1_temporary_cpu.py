@@ -43,7 +43,15 @@ class FakeDGX:
         elif "--execute" in argv:
             action = argv[3]
             status = self.verify_status if action == "verify" else self.benchmark_status
-            body = json.dumps({"status": status, "evidence": "/tmp/mock-evidence.json"})
+            body = json.dumps({
+                "status": status, "evidence": "/tmp/mock-evidence.json",
+                "baseline_status": ("PASS" if status == "PARTIAL" and action == "verify"
+                                    else None),
+                "extended_status": ("FAIL" if status == "PARTIAL" and action == "verify"
+                                    else None),
+                "probes": {"vision": {"status": "FAIL", "http_status": 400}}
+                          if status == "PARTIAL" and action == "verify" else None,
+            })
         elif argv and argv[0] == "curl" and argv[-1].endswith("/v1/models"):
             body = json.dumps({"data": [{"id": "qwen3.8-flash-next"}]})
         else:
@@ -108,6 +116,42 @@ class PostDownloadCPU(unittest.TestCase):
         data = flow.session(runner=fake, auto_gpu=True)
         self.assertEqual(data["actions"]["verify"]["status"], "FAIL")
         self.assertFalse(data["actions"]["benchmark"]["executed"])
+
+    def test_partial_extra_features_do_not_block_default_benchmark(self):
+        fake = FakeDGX()
+        fake.verify_status = "PARTIAL"
+        data = flow.session(runner=fake, auto_gpu=True)
+        self.assertEqual(data["actions"]["verify"]["status"], "PARTIAL")
+        self.assertEqual(data["actions"]["verify"]["baseline_status"], "PASS")
+        self.assertEqual(data["actions"]["benchmark"]["status"], "PASS")
+        self.assertEqual([x[3] for x in fake.events if "--execute" in x],
+                         ["verify", "benchmark"])
+
+    def test_failed_verification_still_retains_wizard_evidence(self):
+        fake = FakeDGX()
+        fake.verify_status = "FAIL"
+        data = flow.session(runner=fake, auto_gpu=True)
+        self.assertEqual(data["actions"]["verify"]["status"], "FAIL")
+        self.assertEqual(data["actions"]["verify"]["wizard_result"]["evidence"],
+                         "/tmp/mock-evidence.json")
+        self.assertFalse(data["actions"]["benchmark"]["executed"])
+
+    def test_failed_baseline_blocks_bench_even_when_extended_partial(self):
+        class BaselineFailed(FakeDGX):
+            def __call__(self, argv, **kwargs):
+                r = super().__call__(argv, **kwargs)
+                if "--execute" in argv and argv[3] == "verify":
+                    r.stdout = json.dumps({
+                        "status": "PARTIAL", "baseline_status": "FAIL",
+                        "extended_status": "PASS", "evidence": "/tmp/verify.json",
+                    })
+                    r.returncode = 2
+                return r
+        fake = BaselineFailed()
+        data = flow.session(runner=fake, auto_gpu=True)
+        self.assertFalse(data["actions"]["benchmark"]["executed"])
+        self.assertEqual(data["actions"]["benchmark"]["reason"],
+                         "verification_not_passed")
 
     def test_missing_expected_model_id_blocks_auto_gpu(self):
         class WrongModel(FakeDGX):

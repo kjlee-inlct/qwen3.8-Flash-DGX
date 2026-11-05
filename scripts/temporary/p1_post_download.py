@@ -154,7 +154,10 @@ def session(*, runner=subprocess.run, input_fn=input, interactive=False,
                        interactive=interactive and not auto_gpu, input_fn=input_fn):
             actions[action]["reason"] = "independent_operator_approval_missing"
             continue
-        if action == "benchmark" and actions["verify"]["status"] != "PASS":
+        if action == "benchmark" and not (
+                actions["verify"]["status"] == "PASS"
+                or (actions["verify"]["status"] == "PARTIAL"
+                    and actions["verify"].get("baseline_status") == "PASS")):
             actions[action]["reason"] = "verification_not_passed"
             continue
         if busy(runner=runner)["blocked"]:
@@ -163,14 +166,18 @@ def session(*, runner=subprocess.run, input_fn=input, interactive=False,
         result = perform(action, info["plan"]["plan_id"], runner=runner,
                          requests=requests, max_tokens=max_tokens, seed=seed)
         actions[action] = {"status": "FAIL", "executed": True, "command": result}
-        if result["returncode"] == 0:
-            try:
-                parsed = json.loads(result["stdout"])
-                if isinstance(parsed, dict):
-                    actions[action]["wizard_result"] = parsed
-                    actions[action]["status"] = parsed.get("status", "FAIL")
-            except (ValueError, TypeError):
-                pass
+        # Wizard returns rc=2 on FAIL/PARTIAL *after it saved its evidence*.
+        # Parse structured outcomes even on nonzero rc or the actual cause is
+        # hidden behind the generic "verify FAIL" summary (prior P1 bug).
+        try:
+            parsed = json.loads(result["stdout"])
+            if isinstance(parsed, dict):
+                actions[action]["wizard_result"] = parsed
+                actions[action]["status"] = parsed.get("status", "FAIL")
+                actions[action]["baseline_status"] = parsed.get("baseline_status")
+                actions[action]["extended_status"] = parsed.get("extended_status")
+        except (ValueError, TypeError):
+            pass
     return {"schema_version": 1, "stage": "P1",
             "preflight": {"expected_branch": BRANCH, "branch_ok": branch,
                           "tracked_tree_clean": clean,
@@ -259,6 +266,11 @@ def main(argv=None):
         "cache_diagnosis": cache_diagnosis_summary(result.get("checks", {})),
         "api_model_ids": api_model_ids(result.get("checks", {})),
         "actions": {k: {"status": v["status"], "reason": v.get("reason"),
+                        "baseline_status": v.get("baseline_status"),
+                        "extended_status": v.get("extended_status"),
+                        "error_type": (v.get("wizard_result") or {}).get("error_type"),
+                        "probes": (v.get("wizard_result") or {}).get("probes"),
+                        "wizard_returncode": (v.get("command") or {}).get("returncode"),
                         "evidence": (v.get("wizard_result") or {}).get("evidence")}
                     for k, v in result["actions"].items()},
     }, indent=2, sort_keys=True))

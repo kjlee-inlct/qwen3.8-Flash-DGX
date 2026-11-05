@@ -16,6 +16,7 @@ import re
 import subprocess
 import sys
 from typing import Any
+from urllib.error import HTTPError
 from urllib.request import urlopen
 from uuid import uuid4
 
@@ -169,7 +170,7 @@ def _safe_env(cache: str) -> dict[str, str]:
 
 
 def _chat_probe(*, opener=urlopen, kind: str = "text") -> dict:
-    content: Any = "Answer with one word: pong"
+    content: Any = "Answer with one word: pong. /no_think"
     if kind == "vision":
         # Original 1x1 synthetic PNG; no external URLs.
         pixel = ("iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAFklEQVR4"
@@ -181,7 +182,7 @@ def _chat_probe(*, opener=urlopen, kind: str = "text") -> dict:
         ]
     payload: dict[str, Any] = {
         "model": SERVED, "messages": [{"role": "user", "content": content}],
-        "temperature": 0, "max_tokens": 48, "stream": False,
+        "temperature": 0, "max_tokens": 256, "stream": False,
     }
     if kind == "tools":
         payload["messages"] = [{"role": "user",
@@ -210,13 +211,68 @@ def _chat_probe(*, opener=urlopen, kind: str = "text") -> dict:
     return {"status": "PASS", "kind": kind}
 
 
+def _default_completion(*, opener=urlopen) -> dict[str, Any]:
+    """Same ordinary /v1/completions coherence shape as Blazux smoke-test."""
+    payload = {"model": SERVED, "prompt": "The capital of France is",
+               "max_tokens": 12, "temperature": 0}
+    result = http_json(API + "/v1/completions", method="POST",
+                       payload=payload, timeout=120, opener=opener)
+    choices = result.get("choices")
+    if not isinstance(choices, list) or not choices or not isinstance(choices[0], dict):
+        raise ValueError("completion_choices_missing")
+    if not str(choices[0].get("text") or "").strip():
+        raise ValueError("completion_text_missing")
+    return {"status": "PASS", "kind": "default_completion"}
+
+
+def _checked_probe(fn, **kwargs) -> dict[str, Any]:
+    """Capture safe failure codes, not prompts, responses or credential data."""
+    try:
+        return fn(**kwargs)
+    except (HTTPError, TimeoutError, OSError, RuntimeError, TypeError,
+            ValueError, KeyError) as exc:
+        output = {"status": "FAIL", "error_type": type(exc).__name__}
+        if isinstance(exc, HTTPError):
+            output["http_status"] = exc.code
+        if isinstance(exc, ValueError) and str(exc) in {
+                "completion_choices_missing", "completion_text_missing",
+                "chat_missing_choices", "chat_missing_message",
+                "tool_call_missing", "response_content_missing",
+                "health_failed", "served_model_id_mismatch"}:
+            output["error_code"] = str(exc)
+        return output
+
+
 def verify_api(*, opener=urlopen) -> dict[str, Any]:
-    identity = require_model(API, SERVED, opener=opener)
+    """Blazux baseline is a gate; extra tool/vision probes are independent."""
+    identity = _checked_probe(
+        lambda **kwargs: require_model(API, SERVED, **kwargs), opener=opener)
+    if identity.get("status") == "FAIL":
+        return {
+            "status": "FAIL", "scope": "API/GPU",
+            "baseline_status": "FAIL", "extended_status": "NOT_RUN",
+            "probes": {"identity": identity}, "identity": None,
+        }
+    baseline = {
+        "default_completion": _checked_probe(_default_completion, opener=opener),
+        "chat": _checked_probe(_chat_probe, opener=opener, kind="text"),
+    }
+    baseline_ok = all(x.get("status") == "PASS" for x in baseline.values())
+    extended = {
+        "tools": _checked_probe(_chat_probe, opener=opener, kind="tools"),
+        "vision": _checked_probe(_chat_probe, opener=opener, kind="vision"),
+    } if baseline_ok else {}
+    extended_ok = bool(extended) and all(
+        x.get("status") == "PASS" for x in extended.values())
     return {
-        "status": "PASS", "scope": "API/GPU",
-        "identity": identity, "text": _chat_probe(opener=opener),
-        "tools": _chat_probe(opener=opener, kind="tools"),
-        "vision": _chat_probe(opener=opener, kind="vision"),
+        "status": ("FAIL" if not baseline_ok else
+                   "PASS" if extended_ok else "PARTIAL"),
+        "scope": "API/GPU",
+        "baseline_status": "PASS" if baseline_ok else "FAIL",
+        "extended_status": ("NOT_RUN" if not baseline_ok else
+                            "PASS" if extended_ok else "FAIL"),
+        "identity": identity,
+        "probes": {**baseline, **extended},
     }
 
 
@@ -300,6 +356,10 @@ def execute_approved(plan: dict, approval: str | None, *, cache_root: Path,
                                       "PREPARED_PENDING_AUDIT") else 2), {
         "status": record["status"], "scope": record["scope"],
         "action": plan["action"], "evidence": str(dest), "executed": True,
+        "error_type": record.get("error_type"),
+        "baseline_status": (record.get("result") or {}).get("baseline_status"),
+        "extended_status": (record.get("result") or {}).get("extended_status"),
+        "probes": (record.get("result") or {}).get("probes"),
     }
 
 

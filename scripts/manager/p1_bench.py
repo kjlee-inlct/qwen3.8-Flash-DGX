@@ -14,11 +14,11 @@ from typing import Any, Callable
 from urllib.request import Request, urlopen
 
 PROMPTS = (
-    "Reply in one short sentence: why should a power rail be decoupled?",
-    "State one benefit of a hardware watchdog in embedded systems.",
-    "Explain in one sentence what an FPGA timing slack indicates.",
+    "Reply in one short sentence: why should a power rail be decoupled? /no_think",
+    "State one benefit of a hardware watchdog in embedded systems. /no_think",
+    "Explain in one sentence what an FPGA timing slack indicates. /no_think",
 )
-CLIENT_VERSION = "p1-wizard-cpu-v1"
+CLIENT_VERSION = "p1-wizard-baseline-v2"
 
 
 def http_json(url: str, method: str = "GET", payload: dict | None = None,

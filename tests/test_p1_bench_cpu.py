@@ -49,6 +49,11 @@ class BenchCPU(unittest.TestCase):
             with self.subTest(kwargs=kwargs), self.assertRaises(ValueError):
                 run_benchmark("http://127.0.0.1:8000", "model", **kwargs)
 
+    def test_default_bench_prompts_avoid_reasoning_only_token_budget(self):
+        from scripts.manager.p1_bench import PROMPTS
+        self.assertEqual(len(PROMPTS), 3)
+        self.assertTrue(all(p.endswith("/no_think") for p in PROMPTS))
+
     def test_fake_stream_measures_ttft_and_tokens(self):
         calls = []
         def opener(req: Request, **_):

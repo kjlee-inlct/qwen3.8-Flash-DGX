@@ -224,6 +224,59 @@ class WizardCPU(unittest.TestCase):
             with self.assertRaises(ValueError):
                 wiz._chat_probe(kind="text")
 
+    def test_default_blazux_completion_is_a_separate_probe(self):
+        with patch.object(wiz, "http_json", return_value={
+            "choices": [{"text": " Paris."}]
+        }) as mock_http:
+            self.assertEqual(wiz._default_completion()["status"], "PASS")
+            self.assertTrue(mock_http.call_args.args[0].endswith("/v1/completions"))
+            self.assertEqual(mock_http.call_args.kwargs["payload"]["max_tokens"], 12)
+
+    def test_default_completion_empty_is_not_pass(self):
+        with patch.object(wiz, "http_json", return_value={
+            "choices": [{"text": ""}]
+        }):
+            self.assertEqual(wiz._checked_probe(wiz._default_completion)["error_code"],
+                             "completion_text_missing")
+
+    def test_wizard_verification_separates_blazux_baseline_and_optional_features(self):
+        def fake_probe(*, kind="text", **_):
+            if kind == "vision":
+                raise ValueError("response_content_missing")
+            return {"status": "PASS", "kind": kind}
+        with patch.object(wiz, "require_model", return_value={"health": "PASS"}), \
+             patch.object(wiz, "_default_completion", return_value={"status": "PASS"}), \
+             patch.object(wiz, "_chat_probe", side_effect=fake_probe):
+            data = wiz.verify_api()
+        self.assertEqual(data["status"], "PARTIAL")
+        self.assertEqual(data["baseline_status"], "PASS")
+        self.assertEqual(data["extended_status"], "FAIL")
+        self.assertEqual(data["probes"]["default_completion"]["status"], "PASS")
+        self.assertEqual(data["probes"]["vision"]["error_code"], "response_content_missing")
+
+    def test_default_chat_failure_skips_extra_probes(self):
+        calls = []
+        def fake_chat(*, kind="text", **_):
+            calls.append(kind)
+            raise ValueError("response_content_missing")
+        with patch.object(wiz, "require_model", return_value={"health": "PASS"}), \
+             patch.object(wiz, "_default_completion", return_value={"status": "PASS"}), \
+             patch.object(wiz, "_chat_probe", side_effect=fake_chat):
+            data = wiz.verify_api()
+        self.assertEqual(data["status"], "FAIL")
+        self.assertEqual(data["baseline_status"], "FAIL")
+        self.assertEqual(data["extended_status"], "NOT_RUN")
+        self.assertEqual(calls, ["text"])
+
+    def test_all_baseline_and_extended_features_pass(self):
+        with patch.object(wiz, "require_model", return_value={"health": "PASS"}), \
+             patch.object(wiz, "_default_completion", return_value={"status": "PASS"}), \
+             patch.object(wiz, "_chat_probe", return_value={"status": "PASS"}):
+            data = wiz.verify_api()
+        self.assertEqual(data["status"], "PASS")
+        self.assertEqual(data["baseline_status"], "PASS")
+        self.assertEqual(data["extended_status"], "PASS")
+
     def test_benchmark_plan_checks_parameter_bounds(self):
         with self.fake_facts():
             with self.assertRaises(ValueError):
