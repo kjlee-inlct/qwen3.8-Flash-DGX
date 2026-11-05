@@ -1,3 +1,12 @@
+## P2 immediate operator download and parallel source development (2026-11-05)
+
+- [x] Confirm NVIDIA exact model revision `482ca0f3832238542f8f5295dde86b5f22711d80` from authoritative source and add immutable SHA to invalid (not runtime-qualified) recipe.
+- [x] Implement guarded Wizard `download --guided` and `download --execute --approve-plan` with no GPU and no API/Docker service mutation; add mock CPU tests and pinned-without-refs audit.
+- [x] Commit one-GPU-model/host `:8000` service policy, read-only live manifest and generation-checked transition journal primitives.
+- [ ] After latest CI PASS, **operator**: `git pull --ff-only`, then `./wizard.sh model 27b download --guided`. If plan BLOCKED (capacity/image/cache/name/transfer), return the exact issues; do not force the download or delete Flash-Next. Download is **NOT_RUN** until actual DGX evidence is returned.
+- [ ] While 27B downloads, implement tested service-switch executor (stop Flash-Next, verify port release, start 27B at :8000, API verify and rollback); preserve original Flash-Next and require separately approved live transition.
+- [ ] Qualify vLLM 0.32 ModelOpt loader and single GB10/ARM64 compatibility, then Wizard wait/verify/benchmark and P2 runtime acceptance.
+
 ## P2 NVIDIA acquisition and service-manager follow-up (2026-11-05)
 
 - [x] User DGX read-only NVIDIA status: `NO_PINNED_LOCAL_SNAPSHOT`, 0 indexed shards, no local revision in inspected cache. Historical RadixArk evidence retained separately.
