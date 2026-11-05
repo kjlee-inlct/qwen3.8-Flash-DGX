@@ -37,3 +37,10 @@ The candidate recipe still fails schema validation until exact source SHA,
 model revision, architecture support, image SHA256 digest and runtime
 compatibility have actual evidence. All `prepare`, `start`, `verify`,
 `benchmark` actions remain BLOCKED.
+
+## NVIDIA 27B pinned acquisition (updated 2026-11-05)
+
+The P2 selected repository is `nvidia/Qwen3.8-27B-NVFP4`. Its immutable source revision is `482ca0f3832238542f8f5295dde86b5f22711d80`, as verified on the official Hugging Face tree. The candidate recipe pins this revision and desired `:8000` port, but **remains intentionally INVALID** until source runtime SHA, image digest, architecture/quantization loader, PLE/MTP and DGX API validation are reviewed. `nvidia/Qwen3.8-Flash-Next-NVFP4` uses the same host API port when active; both cannot run concurrently. Pinned source download is separate and can run while Flash-Next serves.
+
+Read-only plan: `./wizard.sh model 27b plan --for-action download --json`. Guided operator approval: `./wizard.sh model 27b download --guided` (must type fresh full plan ID). Both are backed by the same Wizard download implementation. SOURCE and CPU verification are not actual DGX download/GPU readiness. Consult `docs/P2-27B-WIZARD-OPERATIONS.md` and `runtimes/service-policy.json`.
+
