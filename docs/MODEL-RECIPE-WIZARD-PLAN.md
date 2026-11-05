@@ -1,3 +1,5 @@
+> **2026-11-05 accepted UX supersession:** Operator selected **model-first consolidated Wizard**, not the older multi-group primary menu. New design and batch acceptance: [UNIFIED-MODEL-WIZARD-DESIGN.md](UNIFIED-MODEL-WIZARD-DESIGN.md). Preserve existing P1 backend/CLI and P1–P7 acceptance sequence; P2 download has started per operator terminal (`Fetching 19 files: 84%`) but full checkpoint receipt and runtime are unverified. Older paragraphs below contain historical RadixArk/source-only snapshots; apply the current NVIDIA model selection and Git policy instead. One active GPU model, host port 8000, separate download vs transition approval.
+
 # Blazux vLLM 0.32 — Recipe/Wizard Master Plan
 
 ## Live evidence and next source gate (2026-11-05)
