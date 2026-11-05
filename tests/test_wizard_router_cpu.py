@@ -319,16 +319,25 @@ class WizardRouterCPU(unittest.TestCase):
                 self.assertEqual(rc, 0)
                 self.assertEqual(json.loads(output)["stage"], expected)
 
-    def test_interactive_two_level_group_selection(self):
+    def test_interactive_model_first_selection_without_implicit_p1_execution(self):
+        observed = {"status": "OBSERVED_UNQUALIFIED",
+                    "observed_model": "flash-next",
+                    "download_running": False}
+        chosen = {"title": "NVIDIA Flash-Next", "observed_model": "flash-next",
+                  "api_host_port": 8000, "status": "RUNNING_OBSERVED",
+                  "steps": [], "issues": [], "next_action": "none"}
         with patch("builtins.input", side_effect=["1", "1", "0", "0"]), \
              patch.object(router.sys.stdin, "isatty", return_value=True), \
-             patch("scripts.manager.p1_wizard.main", return_value=0) as mocked:
+             patch("scripts.manager.service_manifest.inspect_service",
+                   return_value=observed), \
+             patch("wizard.quickstart.selection_plan", return_value=chosen), \
+             patch("scripts.manager.p1_wizard.main") as backend:
             out = io.StringIO()
             with contextlib.redirect_stdout(out):
                 rc = router.main([])
         self.assertEqual(rc, 0)
-        mocked.assert_called_once_with(["guided"])
-        self.assertIn("model", out.getvalue())
+        backend.assert_not_called()
+        self.assertIn("Select / run model", out.getvalue())
 
     def test_schema_version_in_future_plans(self):
         for stage in ("p2", "p3", "p4", "p5", "p6", "p7"):
