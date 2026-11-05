@@ -185,7 +185,9 @@ def inspect_27b(cache_root: Path | None = None, *, expected_revision: str | None
         "incomplete_blob_files": incomplete,
         "source_files_present": source_files_present,
         "issues": sorted(set(issues)),
-        "checkpoint_status": ("SOURCE_FILES_PRESENT_UNPINNED"
+        "checkpoint_status": ("SOURCE_FILES_PRESENT_PINNED_CANDIDATE"
+                              if source_files_present and expected_revision is not None
+                              else "SOURCE_FILES_PRESENT_UNPINNED"
                               if source_files_present else "NOT_READY"),
         "runtime": "NOT_RUN", "executed": False,
         "operations_enabled": False, "recipe_pinned": False,
