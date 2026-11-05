@@ -1,3 +1,20 @@
+## 2026-11-06 — CPU import audit correction for vLLM ModelOpt mixed name
+
+The first actual DGX `--execute-cpu-only` invocation proved Python imports of Qwen3.5 and ModelOpt modules/classes (five checks passed). The lone `modelopt_mixed_cli_name=false` was a **probe implementation error**: `ModelOptMixedPrecisionConfig.get_name(self)` is an instance method and cannot be called without an instance. The import tool now checks the public vLLM factory `get_quantization_config("modelopt_mixed")` returns the same class as `ModelOptMixedPrecisionConfig`. The tool does not instantiate a config or start a vLLM engine. `schema_version=2` results add `quant_registry_module_imported`, `quant_registry_factory_present`, `modelopt_mixed_registry_class_matches`, and `quantization_name_verification=public_registry_factory_class_identity`; the original `modelopt_mixed_cli_name` field is retained with corrected semantics.
+
+New source CPU CI `0a14f189` run `42121160545`: **336/336 PASS**. New implementation **not yet run on DGX**.
+
+```bash
+cd ~/Workspace/llm/blazux-orcarouter
+git status -sb
+git pull --ff-only origin feature/recipe-wizard-handoff
+./scripts/temporary/p2-27b-loader-import-audit.sh --execute-cpu-only
+```
+
+This bounded runc test allocates **no GPU**, loads no model weights and leaves original Flash-Next untouched. `vllm._C` / CUDA runtime warnings in a CPU sandbox do not alone establish actual serving compatibility or incompatibility. Even all-true CPU registry evidence must retain `runtime_qualified=false` and `launch_authorized=false`. Do **not** run previewed Docker GPU command.
+
+---
+
 ## 2026-11-06 — Post-serve-split DGX receipt and CPU-only import diagnostics
 
 Actual DGX after update through `99dde4c`: `./scripts/serve_27b.sh --status` succeeded as a read-only audit of immutable revision `482ca0f3832238542f8f5295dde86b5f22711d80` (ModelOpt FP8 208 + NVFP4 193, 401 total). `./scripts/serve_27b.sh --plan` returned `api_identity_confirmed=true` for current Flash-Next `:8000`, original `qwen38-flash` local image ID equal to target 27B candidate ID, and a **blocked non-executable** `modelopt_mixed` 8192/seqs1/0.70/eager argv. No Docker run for 27B or service stop/change occurred.

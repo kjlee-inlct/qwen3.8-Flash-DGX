@@ -1,3 +1,13 @@
+## 2026-11-06 — Re-run corrected 27B registry name audit (minimal next DGX step)
+
+- [x] Initial DGX isolated CPU import passed module/class presence (five checks). `modelopt_mixed` check initially reported TypeError due to incorrect class-level call to `get_name(self)`; not evidence the model cannot run.
+- [x] Correct `p2_27b_loader_import_audit.py` to use public `get_quantization_config("modelopt_mixed")` registry/class-identity resolution without instantiating a quant config; source CI `0a14f189`, 336/336 PASS.
+- [ ] Clean fast-forward DGX to latest `feature/recipe-wizard-handoff`, execute `./scripts/temporary/p2-27b-loader-import-audit.sh --execute-cpu-only` and capture full JSON. Expected keys `quant_registry_module_imported`, `quant_registry_factory_present`, `modelopt_mixed_registry_class_matches`, `modelopt_mixed_cli_name`. A future PASS is a CPU import/registry PASS only, **not** GPU qualification. If registry wrong, investigate actual installed image rather than guessing flags.
+- [ ] Confirm true runtime CUDA/C++ extension and loader in an **independently approved** GPU plan before service stop/27B model load; preserve the live original Flash-Next and single :8000 service.
+- [ ] Keep Draft PR #1, no merge, no start/switch, no manual execution of `command_preview`.
+
+---
+
 ## 2026-11-06 — Next controlled 27B loader import evidence after successful DGX serve split
 
 - [x] DGX ran both dedicated entrypoint `./scripts/serve_27b.sh --status` and `--plan` after fast-forward to `99dde4c`; correct read-only outputs, no 27B start or service modification. Existing Flash-Next `qwen38-flash` API identity **confirmed**, original image ID equals candidate 27B local image ID, and ModelOpt source mix is 208 FP8 + 193 NVFP4.

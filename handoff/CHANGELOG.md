@@ -1,3 +1,9 @@
+## 2026-11-06 — Resolve 27B CPU import check false-negative
+
+Observed the operator's actual isolated CPU import with Qwen3.5 and ModelOpt classes all present, but TypeError when our test incorrectly invoked vLLM `ModelOptMixedPrecisionConfig.get_name()` without `self`. Replaced with public vLLM quantization factory lookup under `modelopt_mixed` and exact returned class identity, without constructing quant config or model. Added 3 extra CPU tests plus instance-method regression; CI `0a14f189` **336/336 PASS**. Test must be re-run on DGX; runtime/launch still blocked.
+
+---
+
 ## 2026-11-06 — Post-split DGX accepted read-only 27B entrypoint; new opt-in CPU import probe
 
 Reconciled real DGX fast-forward and actual `serve_27b.sh --status/--plan` JSON, including verified original Flash-Next API identity and identical original/target local vLLM 0.32 image IDs. Added isolated `scripts/manager/p2_27b_loader_import_audit.py`, `scripts/temporary/p2-27b-loader-import-audit.sh`, and 8 CPU tests. It imports installed vLLM Qwen3.5 and ModelOpt class and verifies `get_name()=modelopt_mixed` under restricted CPU runc (opt-in; not run on DGX yet); no inference/weights/GPU/cache/network/ports. Source CI `834c750` **333/333 PASS**; 27B GPU/service stop/start/switch remains blocked.

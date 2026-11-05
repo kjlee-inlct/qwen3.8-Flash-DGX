@@ -1,3 +1,9 @@
+## D-028 — 2026-11-06 — Verify ModelOpt mixed name through public registry, not instance method
+
+The installed vLLM 0.32 `ModelOptMixedPrecisionConfig.get_name(self)` is an **instance** method. The initial CPU-only audit's class-level zero-argument call yielded a self-binding TypeError unrelated to model compatibility. Correct strategy: import `vllm.model_executor.layers.quantization`, call `get_quantization_config("modelopt_mixed")` (no config or model instantiation), and verify identity to the imported `ModelOptMixedPrecisionConfig`. Preserve fail-closed checks and exact raw DGX evidence. No method-call issue may be treated as GPU kernel/load failure; no source-only/CPU result can authorize GPU transition.
+
+---
+
 ## D-027 — 2026-11-06 — Opt-in CPU loader import is distinct from GPU runtime acceptance
 
 After actual DGX read-only `serve_27b.sh --status/--plan` success, separately check installed Python imports of vLLM Qwen3.5 and `ModelOptMixedPrecisionConfig`, plus the declared quantization name `modelopt_mixed`, in a bounded **operator-opted-in CPU-only runc container**. Do not mount model cache, publish ports, request GPUs, start the vLLM engine, call inference or modify the original Flash-Next process. The wrapper must default to `--plan`. Import failure in this restricted environment is ambiguous; even a clean import/class/name result does not qualify GB10 GPU kernels, checkpoint loading, memory fit, API, benchmarks or rollback. GPU/start/transition requires separately scoped approval.

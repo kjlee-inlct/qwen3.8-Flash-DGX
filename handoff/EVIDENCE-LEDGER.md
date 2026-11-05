@@ -1,3 +1,11 @@
+## E-20261106-P2-CPU-IMPORT-DGX — observed import PASS, name-probe false negative
+
+Operator DGX `git pull --ff-only` fast-forward `99dde4c..9db92f7`. Image inspected `sha256:9479fc92a9244fcf137afb36ed778e07495e29663a81db193736fcaa1f15e137`. `./scripts/temporary/p2-27b-loader-import-audit.sh --execute-cpu-only` yielded **five PASS** checks (Qwen3.5 module and model class, ModelOpt module, ModelOpt MixedPrecision config class, NVFP4 config class). `modelopt_mixed_cli_name=false` and `MODEL_OPT_NAME_LOOKUP_FAILED:TypeError` were due to audit code calling instance method `get_name(self)` as a classmethod. Output `status=BLOCKED`, `runtime_qualified=false`, `executed_gpu=false`. Incidental restricted-container warning `vllm._C ModuleNotFoundError` and CUDA runtime missing; not proof of production loader failure. **No GPU run or source Flash-Next stop.**
+
+Follow-up code `0a14f189c4dae61827298fde46f3148d316f8c72` changes check to vLLM public `get_quantization_config("modelopt_mixed")` registry/class identity. CI run `42121160545` **SUCCESS 336/336 CPU tests**. This **corrected registry probe has not yet been executed on DGX**; record its actual JSON when provided.
+
+---
+
 ## E-20261106-P2-DGX-SERVE-SPLIT — actual DGX status and startup preview after file separation
 
 User-supplied DGX stdout: `git pull --ff-only origin feature/recipe-wizard-handoff` advanced `b1c9b2e..c44aa72` and then `c44aa72..99dde4c`. After split, `./scripts/serve_27b.sh --status` yielded `action=runtime-preflight`, immutable NVIDIA revision `482ca0f3832238542f8f5295dde86b5f22711d80`, ModelOpt FP8 208/NVFP4 193, 401 total, image id `sha256:9479fc92a9244fcf137afb36ed778e07495e29663a81db193736fcaa1f15e137`, ARM64/v0.32, `status=BLOCKED`, `runtime_qualified=false`, six explicit unresolved gates. `./scripts/serve_27b.sh --plan` returned `action=start-preview`, `observed_source.api_identity_confirmed=true`, original `qwen38-flash` with the **same image ID** as 27B candidate, 27B proposed `modelopt_mixed` / 8192 / seqs1 / 0.70/eager; `status=BLOCKED`, `operations_enabled=false`, `plan_id=null`, `executed=false`. This proves the split routing and live source identity; not GPU import/launch or benchmark.

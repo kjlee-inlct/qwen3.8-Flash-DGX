@@ -1,3 +1,9 @@
+## 2026-11-06 — Corrected ModelOpt quantization-name registration proof
+
+Initial real DGX restricted CPU probe imported Qwen3.5 and ModelOpt modules/classes successfully but incorrectly marked `modelopt_mixed` unavailable due to calling `ModelOptMixedPrecisionConfig.get_name()` as a classmethod; vLLM implements `get_name(self)`. The revised probe uses `vllm.model_executor.layers.quantization.get_quantization_config("modelopt_mixed")` and compares the returned class identity to the imported config type. No config/model instance is created. Run again after fast-forward; the old failed check does **not** disqualify 27B. All results remain CPU-only, `launch_authorized=false`; GPU transition requires scoped approval.
+
+---
+
 ## P2 CPU-only vLLM Qwen3.5 / ModelOpt Python loader import probe
 
 `./scripts/temporary/p2-27b-loader-import-audit.sh --plan` (default; only Docker image inspect) previews exact local image ID with no container. `--execute-cpu-only` explicitly opts into **one disposable read-only CPU runc container** with network disabled, no GPU, no HF model cache or host port, 2 GiB RAM limit, 2 CPUs and a Python module/class/name import check. The result reports individual checks and retains `runtime_qualified=false`, `gpu_verified=false`, `launch_authorized=false` even when all imports pass. An import failure may reflect the restricted sandbox rather than real GPU model incompatibility. **Do not treat this as approval** for 27B startup or switching. Implementation `scripts/manager/p2_27b_loader_import_audit.py`; unit tests `tests/test_p2_27b_loader_import_audit_cpu.py`.
