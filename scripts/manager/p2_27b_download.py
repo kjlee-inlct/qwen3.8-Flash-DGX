@@ -132,9 +132,11 @@ def build_plan(*, cache_root: Path | None = None, runner=subprocess.run,
         "approval_accepted": False, "plan_id": plan_id,
         "expires_within_minutes": 10,
         "download_authorized": False,
+        "exclusive_gpu_policy": "ONE_ACTIVE_MODEL_ONLY",
+        "service_api_port": 8000,
         "issues": sorted(set(issues)), "facts": facts,
         "command_preview": ["docker", "run", "--rm", "--name", NAME,
-                            "--no-gpus", "hf download", MODEL_ID,
+                            "hf download", MODEL_ID,
                             "--revision", REVISION],
         "safety": {"touch_live_service": False, "host_port_binding": False,
                    "gpu": False, "delete": False, "switch": False},
@@ -147,10 +149,12 @@ def _download_argv(cache: Path, image_id: str) -> list[str]:
         "docker", "run", "--rm", "--name", NAME,
         "--user", f"{os.getuid()}:{os.getgid()}",
         "--read-only", "--tmpfs", "/tmp:rw,nosuid,size=512m",
-        "--security-opt", "no-new-privileges",
+        "--security-opt", "no-new-privileges", "--cap-drop", "ALL",
         "-e", "HOME=/tmp", "-e", "HF_HOME=/hf",
         "-e", "HF_HUB_DISABLE_XET=0", "-e", "HF_XET_HIGH_PERFORMANCE=1",
         "-v", f"{cache}:/hf",
+        *(["-e", "HF_TOKEN"] if os.environ.get("HF_TOKEN") else []),
+        *(["-e", "HUGGING_FACE_HUB_TOKEN"] if os.environ.get("HUGGING_FACE_HUB_TOKEN") else []),
         "--entrypoint", "hf", image_id,
         "download", MODEL_ID, "--revision", REVISION, "--max-workers", "8",
     ]
@@ -177,6 +181,7 @@ def execute_approved(plan: dict, approval: str | None, *,
         return 3, {"status": "BLOCKED", "executed": False,
                    "issues": ["APPROVAL_MISSING_OR_PLAN_BLOCKED"]}
     state = Path(state_dir or Path.home() / ".local/state/blazux-wizard/p2")
+    operation_started = False
     try:
         state.mkdir(mode=0o700, parents=True, exist_ok=True)
         with (state / "download.lock").open("a+") as lock:
@@ -199,6 +204,7 @@ def execute_approved(plan: dict, approval: str | None, *,
             }
             try:
                 # This is the only stateful operation: download model files.
+                operation_started = True
                 process = runner(_download_argv(cache, fresh["facts"]["image_id"]),
                                  check=False)
                 record["download_exit_code"] = process.returncode
@@ -221,7 +227,7 @@ def execute_approved(plan: dict, approval: str | None, *,
                 "runtime": "NOT_RUN", "gpu_verified": False,
             }
     except OSError as exc:
-        return 3, {"status": "BLOCKED", "executed": False,
+        return 3, {"status": "BLOCKED", "executed": operation_started,
                    "issues": ["LOCK_OR_EVIDENCE_UNAVAILABLE"],
                    "error_type": type(exc).__name__}
 
