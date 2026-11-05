@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # P2 official NVIDIA Qwen3.8-27B-NVFP4 on DGX Spark — PLAN-ONLY.
 # The immutable NVIDIA checkpoint uses ModelOpt MIXED_PRECISION NVFP4/FP8.
-# No GPU run, inference, Docker stop/restart or model switch is authorized here.
+# No inference, GPU model launch, service mutation, or model switch is authorized.
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 MODE="${1:---plan}"
