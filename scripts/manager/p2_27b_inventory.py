@@ -111,7 +111,7 @@ def _configuration_facts(snapshot: Path) -> dict[str, Any]:
     return facts
 
 
-def inspect_27b(cache_root: Path | None = None) -> dict[str, Any]:
+def inspect_27b(cache_root: Path | None = None, *, expected_revision: str | None = None) -> dict[str, Any]:
     cache = Path(cache_root or os.environ.get(
         "HF_CACHE", str(Path.home() / ".cache/huggingface"))).expanduser()
     repo = cache / "hub" / REPO_DIR
@@ -123,11 +123,15 @@ def inspect_27b(cache_root: Path | None = None) -> dict[str, Any]:
         except (OSError, UnicodeError):
             refs[name] = None
     revision = refs["main"] or refs["master"]
+    if expected_revision is not None and not SHA40.fullmatch(expected_revision):
+        raise ValueError("expected_revision must be a lowercase 40-character SHA")
     snapshot = repo / "snapshots" / revision if revision else None
     metadata = {}
     configuration = None
     shards: dict[str, dict[str, Any]] = {}
     issues = []
+    if expected_revision is not None and revision != expected_revision:
+        issues.append("REVISION_MISMATCH")
     if snapshot is None or not snapshot.is_dir():
         issues.append("NO_PINNED_LOCAL_SNAPSHOT")
     else:
@@ -165,6 +169,8 @@ def inspect_27b(cache_root: Path | None = None) -> dict[str, Any]:
     return {
         "stage": "p2", "model_repo": MODEL_ID,
         "cache_root": str(cache.resolve()), "local_revision": revision,
+        "expected_revision": expected_revision,
+        "revision_matches": (revision == expected_revision if expected_revision is not None else None),
         "refs": refs, "metadata": metadata,
         "configuration": configuration, "shards": shards,
         "indexed_shard_count": len(shards),
