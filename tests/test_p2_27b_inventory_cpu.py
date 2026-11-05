@@ -104,6 +104,26 @@ class P2CacheCPU(unittest.TestCase):
         self.assertTrue(x["source_files_present"])
         self.assertFalse(x["operations_enabled"])
 
+    def test_explicit_revision_download_without_refs_main_is_accepted(self):
+        self.snapshot()
+        (self.repo / "refs/main").unlink()
+        x = inspect_27b(self.cache, expected_revision=self.rev)
+        self.assertTrue(x["source_files_present"], x)
+        self.assertEqual(x["local_revision"], self.rev)
+        self.assertIsNone(x["refs"]["main"])
+        self.assertEqual(x["checkpoint_status"],
+                         "SOURCE_FILES_PRESENT_PINNED_CANDIDATE")
+        self.assertFalse(x["recipe_pinned"])
+        self.assertFalse(x["operations_enabled"])
+
+    def test_expected_revision_can_override_old_main_when_snapshot_exists(self):
+        self.snapshot()
+        self.write(self.repo / "refs/main", "b" * 40)
+        x = inspect_27b(self.cache, expected_revision=self.rev)
+        self.assertEqual(x["local_revision"], self.rev)
+        self.assertEqual(x["ref_revision"], "b" * 40)
+        self.assertTrue(x["source_files_present"])
+
     def test_expected_revision_mismatch_blocks_source_ready(self):
         self.snapshot()
         x = inspect_27b(self.cache, expected_revision="d" * 40)
