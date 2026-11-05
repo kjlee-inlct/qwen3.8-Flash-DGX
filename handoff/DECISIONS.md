@@ -1,4 +1,8 @@
-# Decision record — accepted constraints vs proposals
+## D-022 — 2026-11-06 — P2 download is evidence, not 27B runtime approval
+
+Operator-supplied immutable NVIDIA 27B download PASS (19/19; exit 0; pinned source candidate) supersedes stale in-progress entries. Preserve exactly one active GPU inference model and host port 8000; never re-download without missing/corrupt evidence. Approve adding a **read-only** runtime preflight interface without enabling a GPU start, implicit service switch or recipe validity. The existing Flash-Next-specific serve script and hybrid/MTP defaults must not be repurposed as a validated 27B launcher. Actual 27B vLLM 0.32 loader, ModelOpt NVFP4/FP8, memory, image digest and safe rollback remain independent gates; P2 GPU service requires separate explicit authorization.
+
+---# Decision record — accepted constraints vs proposals
 
 Record what has been **decided** and what still needs approval. Proposals in docs are not automatically accepted implementations.
 

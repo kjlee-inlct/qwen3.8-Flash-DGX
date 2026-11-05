@@ -1,4 +1,10 @@
-## 2026-11-06 — full P1–P7 Wizard source implemented; P2–P7 adapters to debug
+## 2026-11-06 — P2 NVIDIA 27B download PASS confirmed; read-only runtime qualification added
+
+**Operator DGX evidence (2026-11-05 KST):** approved \`./wizard.sh model 27b download --guided\` completed **19/19** files, return code **0**. NVIDIA repo \`nvidia/Qwen3.8-27B-NVFP4\`, immutable revision \`482ca0f3832238542f8f5295dde86b5f22711d80\`, checkpoint result \`SOURCE_FILES_PRESENT_PINNED_CANDIDATE\`, \`issues=[]\`, \`gpu_verified=false\`, runtime \`NOT_RUN\`, evidence \`/home/inlc/.local/state/blazux-wizard/p2/evidence/20261105T150433Z-bd8cf46ef5.json\`. This **supersedes** older 84%-in-progress and NOT_RUN download notes below; do not redownload without new corruption evidence.
+
+**Current GitHub SOURCE addition:** \`scripts/manager/p2_27b_qualification.py\` and \`./wizard.sh model 27b status --inspect-runtime --json\` expose bounded, read-only pinned snapshot/config, modelopt architecture, host ARM64, exact Docker image metadata and actual service inventory, while retaining explicit blockers for unproven vLLM 0.32 loader, mixed NVFP4/FP8 GPU kernels, immutable recipe digest, memory/context and rollback. CPU regression cases added. **Neither a matching image tag nor downloaded files grant startup approval.** The existing Flash-Next on host :8000 remains protected; no GPU start, switch, cleanup or DGX command was run by the source session. Latest GitHub CI verdict requires post-commit check.
+
+---## 2026-11-06 — full P1–P7 Wizard source implemented; P2–P7 adapters to debug
 
 **Operator instruction D-021:** create the entire Wizard now, even if parts cannot yet execute; as actual P2 onward develops, debug/qualify individual backend adapters. Completed GitHub SOURCE:
 - `wizard/console.py`: simple 3-choice primary TTY, per-model Continue + all ten actions, service status/health/bounded logs/start/stop/restart/rollback/proxy/gateway, advanced P3/P4/P6/P7 with explicit switch pair and guarded legacy menu.

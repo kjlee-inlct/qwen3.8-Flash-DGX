@@ -6,6 +6,7 @@ from pathlib import Path
 
 from ..common import Stage, run as run_stage
 from scripts.manager.p2_27b_inventory import inspect_27b
+from scripts.manager.p2_27b_qualification import inspect_27b_runtime
 from scripts.manager import p2_27b_download
 
 SPEC = Stage(
@@ -23,6 +24,19 @@ def run(argv, *, as_json=False, dry_run=False):
                  or (args[0] == "plan" and "--for-action" in args
                      and args[args.index("--for-action") + 1:][:1] == ["download"])):
         return p2_27b_download.main(args, as_json=as_json, dry_run=dry_run)
+    if "--inspect-runtime" in args:
+        args.remove("--inspect-runtime")
+        # A read-only audit must never swallow --execute, --approve-plan or
+        # arbitrary extra arguments. The generic source-only gate handles those.
+        if args not in (["status"], ["doctor"]):
+            return run_stage(SPEC, args, as_json=as_json, dry_run=dry_run)
+        result = inspect_27b_runtime()
+        if as_json:
+            print(json.dumps(result, indent=2, sort_keys=True))
+        else:
+            print("P2 27B runtime preflight: BLOCKED (read-only)")
+            print(json.dumps(result, indent=2, sort_keys=True))
+        return 0
     if "--inspect-cache" not in args:
         return run_stage(SPEC, args, as_json=as_json, dry_run=dry_run)
     # A diagnostic option is NEVER a backdoor to unlock prepare/start/bench.

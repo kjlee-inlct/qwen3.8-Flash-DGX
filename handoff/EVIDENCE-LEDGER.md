@@ -1,4 +1,13 @@
-## 2026-11-06 — Complete Wizard SOURCE; actual runtime remains gated
+## E-20261106-P2-DOWNLOAD — NVIDIA pinned download PASS (operator DGX evidence)
+
+- Command: \`./wizard.sh model 27b download --guided\`; approval ID \`e7d3ee776b65c3c5e3395fbeff5d0d739ef432028c030df8d604578412570c49\`.
+- \`Fetching 19 files: 100%\` (19/19); process exit 0; final \`status=PASS\`, \`executed=true\`, \`scope=DGX_NETWORK_DISK\`, \`checkpoint_status=SOURCE_FILES_PRESENT_PINNED_CANDIDATE\`, \`issues=[]\`.
+- Repo/revision: \`nvidia/Qwen3.8-27B-NVFP4\` / \`482ca0f3832238542f8f5295dde86b5f22711d80\`.
+- Evidence: \`/home/inlc/.local/state/blazux-wizard/p2/evidence/20261105T150433Z-bd8cf46ef5.json\`.
+- Independent weight-shard cryptographic rehash **NOT_RUN**; loader/GB10/GPU/API/benchmark/rollback **NOT_RUN**. \`gpu_verified=false\`.
+- GitHub-only new preflight/test code: **SOURCE implemented; CI pending final HEAD**. No DGX source update or GPU operations by this coding session. This record supersedes older transfer 84% observations.
+
+---## 2026-11-06 — Complete Wizard SOURCE; actual runtime remains gated
 
 - GitHub SOURCE: `wizard/console.py` full three-level operator UI; `wizard/workflow.py` consistent P1/P2/P5 model action catalog; `wizard/roadmap.py` release evidence view; `scripts/manager/service_logs.py` bounded read-only log tail. Existing `scripts/manager/p1_wizard.py` and `scripts/manager/p2_27b_download.py` preserved. Added test suites `test_wizard_workflow_cpu.py`, `test_wizard_roadmap_cpu.py`, `test_service_logs_cpu.py`; no real Docker/GPU/network operations executed from GitHub code edits.
 - A CPU regression exposed a bypass where P1 guarded start dispatch ignored its own capability BLOCKED result. Fixed by requiring `GUARDED_P1` and preventing P1 quickstart when 27B/Orcarouter is active; latest CI must show PASS before releasing source.

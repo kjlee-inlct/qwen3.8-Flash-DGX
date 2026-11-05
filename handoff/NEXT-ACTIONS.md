@@ -1,4 +1,13 @@
-## 2026-11-06 — full Wizard SOURCE / incremental P2–P7 debug
+## 2026-11-06 — NVIDIA 27B source downloaded; runtime qualification pending
+
+- [x] Record user-provided DGX NVIDIA pinned download 19/19, exit 0, \`SOURCE_FILES_PRESENT_PINNED_CANDIDATE\`, with exact evidence path; prior transfer-in-progress checklist is historical.
+- [x] Implement source-only read-only \`status --inspect-runtime\` audit of exact source revision, model config, Docker image/platform/label and current service, with CPU fault tests. No GPU allocation, service stop or auto approval.
+- [ ] After clean \`git pull --ff-only\` (download has completed), operator may run \`./wizard.sh model 27b status --inspect-runtime --json\` and return sanitized JSON, to ground actual cache/config/image/service assertions. Do not launch 27B.
+- [ ] Inspect exact pinned config / hf_quant_config and vLLM 0.32 model registry+ModelOpt loader in image, ARM64 support, memory budget and validated image digest. Complete a 27B-specific non-Flash serve recipe and guarded start/wait/verify/benchmark adapter.
+- [ ] Obtain a separate exact plan approval before any Flash-Next stop, 27B GPU start or P3 cutover. Preserve and verify rollback source, health and \`:8000\` API identity.
+- [ ] After source CPU/CI, verify actual runtime in approved DGX window, including failures, latency/TTFT/TPS, model identity and rollback. Keep PR #1 Draft until end-to-end acceptance.
+
+---## 2026-11-06 — full Wizard SOURCE / incremental P2–P7 debug
 
 - [x] Build complete model-first TTY menu and machine workflow/roadmap, expose all ten model lifecycle actions for Flash-Next/NVIDIA 27B/Orcarouter.
 - [x] Build service menu for status/health/bounded logs and guarded start/stop/restart/rollback/proxy/gateway; P3/P4/P6/P7 advanced plan actions and readiness dashboard are accessible.

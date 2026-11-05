@@ -1,4 +1,8 @@
-## 2026-11-06 — Complete P1–P7 Wizard console and lifecycle source (D-021)
+## 2026-11-06 — P2 download completion evidence and guarded runtime preflight
+
+Reconciled operator's actual NVIDIA 27B 19/19 exit-0 download with stale handoff. Added read-only \`p2_27b_qualification.py\` for pinned source/config, host ARM64, Docker image/platform/label and current service observation, plus \`model 27b status --inspect-runtime\` command and isolated CPU regressions. Kept the candidate recipe intentionally invalid, GPU start/switch blocked, and Flash-Next service unchanged. NVIDIA 27B \`SOURCE_FILES_PRESENT_PINNED_CANDIDATE\` does not establish loader, GPU/API, benchmark, or rollback qualification. CI needs validation at new HEAD.
+
+---## 2026-11-06 — Complete P1–P7 Wizard console and lifecycle source (D-021)
 
 Added `wizard/console.py` (three primary screens, model Continue/all actions, full service and advanced P3/P4/P6/P7 plans), `wizard/workflow.py` (P1/P2/P5 action slots for inspect/download/prepare/start/wait/verify/benchmark/switch/rollback/recipe), `wizard/roadmap.py` (all seven release gates), and `scripts/manager/service_logs.py` (bounded opt-in read-only service logs). Wired CLI `workflow` and `roadmap`, extended service `logs` route and CPU CI tests; preserved original P1 guarded engine and P2 approved downloader. Corrected P1 shortcut routing so another active GPU model or unknown service observation cannot enter P1 guided startup. All new P2–P7 mutation adapters remain blocked until runtime/recovery qualification. No DGX operations performed.
 
