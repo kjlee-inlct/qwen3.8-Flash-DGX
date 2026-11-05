@@ -52,6 +52,74 @@ class DownloadCPU(unittest.TestCase):
         self.assertEqual(result["exclusive_gpu_policy"], "ONE_ACTIVE_MODEL_ONLY")
         self.assertFalse(result["safety"]["touch_live_service"])
 
+    def test_inode_usage_uptime_and_disk_drift_do_not_invalidate_approval(self):
+        original = self.make_plan()
+        # The Wizard creates a state directory and download.lock after showing
+        # the initial plan. Both consume inodes, and Docker human uptime changes.
+        later = {**self.observed,
+                 "disk": {"free_bytes": 59 * 1024 ** 3},
+                 "containers": [{**self.observed["containers"][0],
+                                 "status": "Up 2 hours"}]}
+        with patch.object(module, "inspect_host", return_value=later), \
+             patch.object(module, "_read_image_id", return_value=self.image_id), \
+             patch.object(module, "_other_transfer", return_value=False), \
+             patch.object(module, "inspect_27b",
+                          return_value={"source_files_present": False}), \
+             patch.object(module.os, "statvfs",
+                          return_value=SimpleNamespace(f_favail=1022)):
+            current = module.build_plan(cache_root=self.cache, now=600)
+        self.assertEqual(original["plan_id"], current["plan_id"])
+        self.assertEqual(current["status"], "READY_TO_REQUEST_APPROVAL")
+        self.assertNotEqual(original["facts"]["free_inodes"],
+                            current["facts"]["free_inodes"])
+
+    def test_approval_rechecks_after_lock_without_false_positive(self):
+        original = self.make_plan()
+        later = {**self.observed,
+                 "disk": {"free_bytes": 59 * 1024 ** 3},
+                 "containers": [{**self.observed["containers"][0],
+                                 "status": "Up 2 hours"}]}
+        runner = Mock(return_value=SimpleNamespace(returncode=0))
+        incomplete = {"source_files_present": False}
+        complete = {"source_files_present": True,
+                    "checkpoint_status": "SOURCE_FILES_PRESENT_PINNED_CANDIDATE",
+                    "indexed_shard_count": 3, "issues": []}
+        with patch.object(module, "inspect_host", return_value=later), \
+             patch.object(module, "_read_image_id", return_value=self.image_id), \
+             patch.object(module, "_other_transfer", return_value=False), \
+             patch.object(module, "inspect_27b",
+                          side_effect=[incomplete, complete]), \
+             patch.object(module.os, "statvfs",
+                          return_value=SimpleNamespace(f_favail=1022)):
+            rc, result = module.execute_approved(
+                original, original["plan_id"], cache_root=self.cache,
+                runner=runner, state_dir=self.state, now=600)
+        self.assertEqual(rc, 0, result)
+        self.assertTrue(result["executed"])
+        self.assertEqual(result["status"], "PASS")
+        self.assertTrue((self.state / "download.lock").is_file())
+        runner.assert_called_once()
+
+    def test_revalidation_still_blocks_low_disk_without_running(self):
+        original = self.make_plan()
+        later = {**self.observed,
+                 "disk": {"free_bytes": 15 * 1024 ** 3}}
+        runner = Mock(side_effect=AssertionError("must not download"))
+        with patch.object(module, "inspect_host", return_value=later), \
+             patch.object(module, "_read_image_id", return_value=self.image_id), \
+             patch.object(module, "_other_transfer", return_value=False), \
+             patch.object(module, "inspect_27b",
+                          return_value={"source_files_present": False}), \
+             patch.object(module.os, "statvfs",
+                          return_value=SimpleNamespace(f_favail=1022)):
+            rc, result = module.execute_approved(
+                original, original["plan_id"], cache_root=self.cache,
+                runner=runner, state_dir=self.state, now=600)
+        self.assertEqual(rc, 3)
+        self.assertFalse(result["executed"])
+        self.assertIn("INSUFFICIENT_VERIFIED_DISK_HEADROOM", result["issues"])
+        runner.assert_not_called()
+
     def test_low_disk_or_name_collision_blocks_without_plan_id(self):
         for changes in (
             {"disk": {"free_bytes": 10 * 1024 ** 3}},
