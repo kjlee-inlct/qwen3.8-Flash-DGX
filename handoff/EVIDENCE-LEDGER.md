@@ -1,3 +1,9 @@
+## 2026-11-06 — Complete Wizard SOURCE; actual runtime remains gated
+
+- GitHub SOURCE: `wizard/console.py` full three-level operator UI; `wizard/workflow.py` consistent P1/P2/P5 model action catalog; `wizard/roadmap.py` release evidence view; `scripts/manager/service_logs.py` bounded read-only log tail. Existing `scripts/manager/p1_wizard.py` and `scripts/manager/p2_27b_download.py` preserved. Added test suites `test_wizard_workflow_cpu.py`, `test_wizard_roadmap_cpu.py`, `test_service_logs_cpu.py`; no real Docker/GPU/network operations executed from GitHub code edits.
+- A CPU regression exposed a bypass where P1 guarded start dispatch ignored its own capability BLOCKED result. Fixed by requiring `GUARDED_P1` and preventing P1 quickstart when 27B/Orcarouter is active; latest CI must show PASS before releasing source.
+- Last DGX runtime evidence remains operator-reported NVIDIA 27B download started at `Fetching 19 files: 84%`, NOT_VERIFIED complete. No P2 NVFP4 loader, GPU acceptance, P3/P6 switch, P4 deletion, Orcarouter runtime or P7 release PASS evidence exists in this turn.
+
 ## 2026-11-05 — Service health and transition preview CPU evidence
 
 - SOURCE: local :8000 GET-only health/model-ID observer, with no inference POST, no Docker mutation, fixed request/size/time bounds; source-only stop-old → port release → new start → API verify → rollback preview, always BLOCKED without verified executor.
