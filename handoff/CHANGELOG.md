@@ -1,3 +1,7 @@
+## 2026-11-05 — Model-first Wizard UI and read-only automatic lifecycle planner (D-020)
+
+Created `docs/UNIFIED-MODEL-WIZARD-DESIGN.md`; changed `wizard/main.py` TTY root to 3 choices and introduced machine `select MODEL --json` / `model choose MODEL --json`. Added `wizard/quickstart.py`: safe consolidated download/monitor/P1-guided/switch-blocked plans from actual service + pinned checkpoint observations. Updated live `service_manifest.py` to classify in-flight `qwen38-27b-dl` without triggering new downloads; added unqualified Orcarouter service policy entry. Preserved old stage CLI and Flash-Next P1 backend. Added new CPU regression suite and refreshed canonical docs/CI/DECISIONS. User-owned NVIDIA 27B download started; receipt and runtime **not verified**. No service/API/GPU or DGX worktree actions performed in this coding session.
+
 ## 2026-11-05 — Fix P2 guided download falsely expiring under its own lock
 
 After a user entered the correct plan ID, the second preflight rejected the request because raw inode counts, floor free GiB and Docker uptime were hashed. Created `_approval_facts` containing stable model/revision/cache/image/host running-state/port occupancy plus time window. Retained all live minimum-disk, inode, transfer and Docker checks on revalidation. Added mock CPU tests reproducing the change while state lock is created and guarding safety-relevant image/state drift. No DGX download or service mutation was performed by this change.
