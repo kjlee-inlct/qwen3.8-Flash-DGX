@@ -29,6 +29,7 @@ on:
       - 'tests/test_service_manifest_cpu.py'
       - 'tests/test_service_journal_cpu.py'
       - 'tests/test_service_health_cpu.py'
+      - 'tests/test_service_status_cpu.py'
       - 'tests/test_service_transition_preview_cpu.py'
       - 'tests/test_service_logs_cpu.py'
       - 'tests/test_script_modes_cpu.py'
@@ -40,6 +41,7 @@ on:
       - 'wizard/**'
       - 'wizard.sh'
       - 'tests/test_wizard_router_cpu.py'
+      - 'tests/test_service_status_cpu.py'
       - 'schemas/**'
       - 'recipes/**'
       - 'scripts/manager/**'
@@ -74,6 +76,7 @@ jobs:
           python -m unittest discover -s tests -p 'test_service_manifest_cpu.py' -v
           python -m unittest discover -s tests -p 'test_service_journal_cpu.py' -v
           python -m unittest discover -s tests -p 'test_service_health_cpu.py' -v
+          python -m unittest discover -s tests -p 'test_service_status_cpu.py' -v
           python -m unittest discover -s tests -p 'test_service_transition_preview_cpu.py' -v
           python -m unittest discover -s tests -p 'test_service_logs_cpu.py' -v
           python -m unittest discover -s tests -p 'test_wizard_router_cpu.py' -v
