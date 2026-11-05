@@ -157,6 +157,22 @@ class PostDownloadCPU(unittest.TestCase):
         self.assertEqual(len(rec["stdout"]), 65536)
         self.assertTrue(rec["truncated"])
 
+    def test_api_ids_are_extracted_from_successful_model_probe(self):
+        raw = {"data": [{"id": "qwen3.8-flash-next"}, {"id": "another-id"}]}
+        checks = {"models": {"returncode": 0, "stdout": json.dumps(raw),
+                              "truncated": False}}
+        self.assertEqual(flow.api_model_ids(checks), ["qwen3.8-flash-next", "another-id"])
+        self.assertEqual(flow.api_model_ids({}), [])
+        self.assertEqual(flow.api_model_ids({
+            "models": {"returncode": 1, "stdout": json.dumps(raw)}
+        }), [])
+
+    def test_inspection_only_has_distinct_reason(self):
+        fake = FakeDGX()
+        data = flow.session(runner=fake, inspect_only=True)
+        self.assertEqual(data["actions"]["verify"]["reason"], "inspection_only")
+        self.assertFalse(any("--execute" in cmd for cmd in fake.events))
+
     def test_optional_diagnostic_missing_never_breaks_report(self):
         self.assertEqual(flow.cache_diagnosis_summary({}),
                          {"status": "UNAVAILABLE"})

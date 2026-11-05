@@ -131,7 +131,11 @@ def session(*, runner=subprocess.run, input_fn=input, interactive=False,
         plans[action] = info
         actions[action] = {"status": "BLOCKED", "executed": False}
         if inspect_only or not allowed or not info["ready"]:
-            actions[action]["reason"] = "inspect_only_or_preflight_blocked"
+            actions[action]["reason"] = (
+                "inspection_only" if inspect_only
+                else "branch_worktree_or_operator_process_blocked" if not allowed
+                else "wizard_plan_not_ready"
+            )
             continue
         selected = approve_verify if action == "verify" else approve_benchmark
         if not consent(action, info["plan"]["plan_id"], value=selected,
@@ -178,6 +182,23 @@ def cache_diagnosis_summary(checks):
     return {"status": "UNAVAILABLE"}
 
 
+def api_model_ids(checks):
+    """Extract only public model IDs, never raw API response or credentials."""
+    check = checks.get("models", {})
+    if check.get("returncode") != 0 or check.get("truncated"):
+        return []
+    try:
+        payload = json.loads(check["stdout"])
+        entries = payload.get("data", [])
+        if not isinstance(entries, list):
+            return []
+        return [item["id"] for item in entries[:8]
+                if isinstance(item, dict) and isinstance(item.get("id"), str)
+                and len(item["id"]) <= 256]
+    except (TypeError, KeyError, ValueError):
+        return []
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--inspect-only", action="store_true")
@@ -218,6 +239,7 @@ def main(argv=None):
                        "issues": v["plan"].get("issues", [])}
                   for k, v in result["plans"].items()},
         "cache_diagnosis": cache_diagnosis_summary(result.get("checks", {})),
+        "api_model_ids": api_model_ids(result.get("checks", {})),
         "actions": {k: {"status": v["status"], "reason": v.get("reason"),
                         "evidence": (v.get("wizard_result") or {}).get("evidence")}
                     for k, v in result["actions"].items()},

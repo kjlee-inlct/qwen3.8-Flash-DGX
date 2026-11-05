@@ -41,7 +41,9 @@ def _good_file(path: Path, root: Path) -> bool:
 
 def _indexed_files(snapshot: Path, root: Path) -> list[str]:
     index = snapshot / "model.safetensors.index.json"
-    if not _good_file(index, root) or index.stat().st_size > 16 * 1024 * 1024:
+    # NVIDIA publishes a ~31.3 MB index. The old 16 MiB gate rejected valid metadata.
+    # Retain a 64 MiB upper bound to avoid unbounded JSON parsing.
+    if not _good_file(index, root) or index.stat().st_size > 64 * 1024 * 1024:
         raise ValueError("index_missing_or_oversize")
     try:
         data = json.loads(index.read_text(encoding="utf-8"))

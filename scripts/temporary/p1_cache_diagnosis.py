@@ -5,6 +5,37 @@ import os
 from pathlib import Path
 from scripts.manager.p1_assets import audit_checkpoint, _audit_files, SHA40
 
+REQUIRED_METADATA = ("model.safetensors.index.json", "tokenizer.json")
+
+
+def probe_file(path: Path, repository: Path) -> dict:
+    """Explain missing files, dangling HF symlinks and unexpected file sizes."""
+    linked = path.is_symlink()
+    try:
+        path.lstat()
+    except FileNotFoundError:
+        return {"status": "MISSING", "symlink": False, "size_bytes": None}
+    except OSError:
+        return {"status": "STAT_UNAVAILABLE", "symlink": linked, "size_bytes": None}
+    try:
+        destination = path.resolve(strict=True)
+        repo_root = repository.resolve(strict=True)
+        if not destination.is_relative_to(repo_root):
+            status, size = "TARGET_OUTSIDE_REPOSITORY", None
+        elif not path.is_file():
+            status, size = "NOT_REGULAR_FILE", None
+        else:
+            size = path.stat().st_size
+            status = "PRESENT_NONEMPTY" if size else "ZERO_BYTES"
+    except (OSError, RuntimeError):
+        status, size = ("DANGLING_SYMLINK" if linked else "UNREADABLE"), None
+    info = {"status": status, "symlink": linked, "size_bytes": size}
+    if path.name == "model.safetensors.index.json" and size is not None:
+        info["exceeds_old_16mib_gate"] = size > 16 * 1024 * 1024
+        info["exceeds_current_64mib_gate"] = size > 64 * 1024 * 1024
+    return info
+
+
 def inspect(cache_root: Path) -> dict:
     cache = cache_root.expanduser().resolve()
     repo = cache / "hub/models--nvidia--Qwen3.8-Flash-Next-NVFP4"
@@ -34,6 +65,10 @@ def inspect(cache_root: Path) -> dict:
             rows.append({
                 "revision": rev,
                 "source_issues": source_issues,
+                "source_metadata": {name: probe_file(source / name, repo)
+                                    for name in REQUIRED_METADATA},
+                "hybrid_metadata": {name: probe_file(hybrid / name, repo)
+                                    for name in REQUIRED_METADATA},
                 "hybrid_present": hybrid.is_dir(),
                 "hybrid_marker_present": (hybrid / ".prepared").is_file(),
                 "hybrid_issues": hybrid_issues,

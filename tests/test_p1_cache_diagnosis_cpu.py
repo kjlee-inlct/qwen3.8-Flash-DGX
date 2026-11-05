@@ -65,6 +65,38 @@ class CacheDiagnosisCPU(unittest.TestCase):
                       data["wizard_audit"]["source_issues"])
         self.assertEqual(data["snapshots"][0]["source_issues"], [])
 
+    def test_missing_metadata_reasons_are_explicit(self):
+        self.complete()
+        self.write(self.repo / "refs/main", self.rev)
+        source = self.repo / "snapshots" / self.rev
+        (source / "tokenizer.json").unlink()
+        (source / "model.safetensors.index.json").unlink()
+        row = inspect(self.cache)["snapshots"][0]
+        self.assertEqual(row["source_metadata"]["tokenizer.json"]["status"], "MISSING")
+        self.assertEqual(row["source_metadata"]["model.safetensors.index.json"]["status"], "MISSING")
+
+    def test_dangling_hf_symlink_is_distinguished_from_missing(self):
+        self.complete()
+        self.write(self.repo / "refs/main", self.rev)
+        p = self.repo / "snapshots" / self.rev / "tokenizer.json"
+        p.unlink()
+        p.symlink_to("../../blobs/not-there")
+        row = inspect(self.cache)["snapshots"][0]
+        self.assertEqual(row["source_metadata"]["tokenizer.json"]["status"], "DANGLING_SYMLINK")
+        self.assertTrue(row["source_metadata"]["tokenizer.json"]["symlink"])
+
+    def test_snapshot_metadata_size_reports_old_gate(self):
+        self.complete()
+        self.write(self.repo / "refs/main", self.rev)
+        p = self.repo / "snapshots" / self.rev / "model.safetensors.index.json"
+        with p.open("ab") as file:
+            file.write(b" " * (17 * 1024 * 1024))
+        row = inspect(self.cache)["snapshots"][0]
+        self.assertEqual(row["source_metadata"]["model.safetensors.index.json"]["status"],
+                         "PRESENT_NONEMPTY")
+        self.assertTrue(row["source_metadata"]["model.safetensors.index.json"]["exceeds_old_16mib_gate"])
+        self.assertFalse(row["source_metadata"]["model.safetensors.index.json"]["exceeds_current_64mib_gate"])
+
     def test_partial_weight_shard_is_reported_by_name(self):
         self.complete()
         self.write(self.repo / "refs/main", self.rev)

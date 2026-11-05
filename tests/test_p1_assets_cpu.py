@@ -103,6 +103,24 @@ class AssetAuditCPU(unittest.TestCase):
         self.assertIn("blob_incomplete_present",
                       audit_checkpoint(self.cache)["source_issues"])
 
+    def test_large_nvidia_index_under_64_mib_is_accepted(self):
+        src = self.complete()
+        index = src / "model.safetensors.index.json"
+        with index.open("ab") as fp:
+            fp.write(b" " * (17 * 1024 * 1024))
+        data = audit_checkpoint(self.cache)
+        self.assertTrue(data["source_complete"], data)
+        self.assertNotIn("index_missing_or_oversize", data["source_issues"])
+
+    def test_oversize_index_still_refused_without_json_parse(self):
+        src = self.complete()
+        index = src / "model.safetensors.index.json"
+        with index.open("ab") as fp:
+            fp.truncate(64 * 1024 * 1024 + 1)
+        data = audit_checkpoint(self.cache)
+        self.assertFalse(data["source_complete"], data)
+        self.assertIn("index_missing_or_oversize", data["source_issues"])
+
     def test_wrong_label_rejected(self):
         def fake(cmd, **_):
             return subprocess.CompletedProcess(cmd, 0, "sha256:" + "b" * 64 + "|v0.29\n", "")
