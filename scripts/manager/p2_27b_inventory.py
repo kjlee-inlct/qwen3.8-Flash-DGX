@@ -132,6 +132,8 @@ def inspect_27b(cache_root: Path | None = None) -> dict[str, Any]:
         issues.append("NO_PINNED_LOCAL_SNAPSHOT")
     else:
         configuration = _configuration_facts(snapshot)
+        if configuration["status"] != "PARSED_UNQUALIFIED":
+            issues.append("CONFIG_INSPECTION:" + configuration["status"])
         metadata = {n: _file_info(snapshot / n) for n in ESSENTIAL}
         for n, info in metadata.items():
             if info["status"] != "PRESENT":
