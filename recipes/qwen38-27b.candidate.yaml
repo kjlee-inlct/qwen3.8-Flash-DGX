@@ -10,7 +10,7 @@ runtime:
   image_ref: REPLACE_WITH_VERIFIED_IMAGE_REF_AND_DIGEST
   image_digest: REPLACE_WITH_VERIFIED_IMAGE_DIGEST
 model:
-  repo_id: RadixArk/Qwen3.8-27B-NVFP4
+  repo_id: nvidia/Qwen3.8-27B-NVFP4
   revision: REPLACE_WITH_VERIFIED_FULL_SHA
   architecture: UNVERIFIED_27B_VLLM032
   quantization: nvfp4
