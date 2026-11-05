@@ -16,7 +16,7 @@ class P2CacheCPU(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
         self.cache = Path(self.temp.name) / "hf"
-        self.repo = self.cache / "hub/models--RadixArk--Qwen3.8-27B-NVFP4"
+        self.repo = self.cache / "hub/models--nvidia--Qwen3.8-27B-NVFP4"
         self.rev = "c" * 40
 
     def write(self, target, content="{}"):
@@ -43,6 +43,7 @@ class P2CacheCPU(unittest.TestCase):
         x = inspect_27b(self.cache)
         self.assertFalse(x["source_files_present"])
         self.assertFalse(x["operations_enabled"])
+        self.assertEqual(x["model_repo"], "nvidia/Qwen3.8-27B-NVFP4")
         self.assertEqual(x["runtime"], "NOT_RUN")
         self.assertIn("NO_PINNED_LOCAL_SNAPSHOT", x["issues"])
 
