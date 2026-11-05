@@ -1,3 +1,43 @@
+> **CURRENT, 2026-11-06 (D-021):** Full P1–P7 TTY Wizard implemented as one **model-first console**; see `wizard/console.py`, `wizard/workflow.py`, and `wizard/roadmap.py`. Older domain-based PRIMARY menu text below is preserved as historical contract. The old model/switch/storage/operations/legacy P1–P7 CLI handlers **remain supported**. Source UI complete does **not** mean P2–P7 execution is approved or DGX qualified. `nvidia/Qwen3.8-27B-NVFP4` download was operator-reported STARTED, completion unknown.
+
+### Current operator menu (source)
+
+```text
+Blazux Wizard — one GPU model / port 8000
+1. Select / run model
+   1. NVIDIA Flash-Next
+   2. NVIDIA 27B
+   3. Orcarouter Flash-Next
+   After selection: 1 Continue recommended step / 2 All model actions / 3 Refresh
+   Model actions: inspect, download, prepare, start, wait, verify,
+                  benchmark, switch, rollback, recipe
+2. Service health / status / logs
+   status, health, logs (read-only); start, stop, restart, rollback,
+   proxy, gateway (guarded and blocked until executor qualified)
+3. Advanced / recipes / storage
+   P3 switch pair selection, P4 selective cleanup, P6 switch pair,
+   P7 proxy/gateway/acceptance plan, legacy stage tools, readiness dashboard
+0. Exit
+```
+
+CLI entrypoints:
+```bash
+./wizard.sh
+./wizard.sh select 27b --json
+./wizard.sh workflow 27b --json
+./wizard.sh workflow 27b --for-action start --json
+./wizard.sh roadmap --json
+./wizard.sh service manager status --json
+./wizard.sh service manager health --json
+./wizard.sh service manager logs --json
+./wizard.sh model 27b status --inspect-cache --json
+./wizard.sh model 27b download --guided    # only after no transfer running
+./wizard.sh p1 plan --for-action verify --json
+./wizard.sh p3 plan --for-action switch --from-model flash-next --to-model 27b --json
+```
+
+**Approval and execution:** P1 individual guarded actions call the existing P1 backend; a P2 missing-checkpoint download calls the existing exact revision/plan approval backend. The source UI does not synthesize approvals or pass `--execute`; P2–P7 runtime actions remain `BLOCKED`. Current service status is derived from live Docker/socket, while API model identity uses bounded `GET /health` + `GET /v1/models`; service logs use an opt-in bounded `docker logs --tail 40` only for the observed managed container. Running containers are not GPU verification. All reports are read-only and release `PASS` requires actual DGX/benchmark/recovery evidence.
+
 # Blazux P1–P7 Wizard — CLI and menu contract
 
 **2026-11-05.** Single operator-facing entrypoint: `./wizard.sh` or `python3 -m wizard`. **Execution engine: vLLM 0.32 only; SGLang excluded.** All stages have separate modules in `wizard/menus/models/flash_next.py` … `p7.py`. They share the central router in `wizard/main.py`, common fail-closed contract in `wizard/menus/common.py`, and external `:8000/v1` target.
