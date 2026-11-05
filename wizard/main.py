@@ -11,7 +11,7 @@ from wizard.menus import (
 USAGE = """Blazux Wizard (vLLM 0.32 only)
 
   ./wizard.sh                                simple model-first interactive menu\n  ./wizard.sh select 27b --json              read-only lifecycle selection plan\n  ./wizard.sh model choose flash-next --json same planner
-  ./wizard.sh list --json                    model/switch/storage/operations catalog
+  ./wizard.sh list --json                    model/switch/storage/operations catalog\n  ./wizard.sh workflow 27b --json            full model lifecycle actions and gates\n  ./wizard.sh workflow 27b --for-action start --json  read-only action capability
   ./wizard.sh model flash-next status --json
   ./wizard.sh model 27b plan --for-action prepare --json
   ./wizard.sh model orcarouter-flash-next status --json
@@ -19,7 +19,7 @@ USAGE = """Blazux Wizard (vLLM 0.32 only)
     --from-model flash-next --to-model 27b --json
   ./wizard.sh storage flash-next status --json
   ./wizard.sh operations system status --json
-  ./wizard.sh service manager status --json\n  ./wizard.sh service manager health --json  read-only local API identity
+  ./wizard.sh service manager status --json\n  ./wizard.sh service manager health --json  read-only local API identity\n  ./wizard.sh service manager logs --json    bounded local log tail
   ./wizard.sh service manager plan --for-action restart --json
   ./wizard.sh model 27b plan --for-action download --json
   ./wizard.sh model 27b download --guided
@@ -51,7 +51,11 @@ def catalog() -> dict:
                 "stage": stage_id, "title": spec.title,
                 "group": group, "selection": selection,
                 "module": module.__name__,
-                "implementation": "INTERFACE_ONLY",
+                "implementation": (
+                    "SOURCE_DOWNLOAD_GUARDED_RUNTIME_BLOCKED" if stage_id == "p2"
+                    else "LIVE_READ_ONLY_GUARDED_MUTATIONS" if stage_id == "svc"
+                    else "INTERFACE_ONLY"
+                ),
                 "runtime": "NOT_RUN", "interface": "status/plan",
                 "operations_require_live_plan_approval": True,
                 "actions": list(spec.actions),
@@ -126,62 +130,9 @@ def _advanced_menu() -> int:
 
 
 def interactive() -> int:
-    """Simple model-first UI; all original guarded stage commands remain intact."""
-    from scripts.manager.service_manifest import inspect_service
-    from wizard.quickstart import MODEL_CHOICES, interactive_select
-    from wizard.menus.operations import service as service_menu
-
-    names = list(MODEL_CHOICES)
-    print("Blazux Wizard — one GPU model / port 8000")
-    while True:
-        # Read-only live observation; never assume the saved journal is current.
-        try:
-            observed = inspect_service()
-        except (OSError, RuntimeError, ValueError):
-            observed = {"status": "BLOCKED", "observed_model": None,
-                        "download_running": False}
-        active = (observed.get("observed_model")
-                  if observed.get("status") == "OBSERVED_UNQUALIFIED"
-                  else None)
-        print("\nActive observed: " + (active or "unknown / none")
-              + " | API :8000/v1 (identity unverified)")
-        if observed.get("download_running"):
-            print("NVIDIA 27B: download container RUNNING (completion unverified)")
-        print("  1. Select / run model")
-        print("  2. Service health / status")
-        print("  3. Advanced / recipes / storage")
-        print("  0. Exit")
-        try:
-            action = input("Select (0 exit): ").strip().lower()
-        except EOFError:
-            return 0
-        if action == "0":
-            return 0
-        if action == "1":
-            while True:
-                print("\nSelect model (0 back)")
-                for i, model in enumerate(names, 1):
-                    print(f"  {i}. {MODEL_CHOICES[model]['title']}")
-                try:
-                    choice = input("Model (0 back): ").strip().lower()
-                except EOFError:
-                    return 0
-                if choice == "0":
-                    break
-                selected = (names[int(choice) - 1]
-                            if choice.isdigit() and 1 <= int(choice) <= len(names)
-                            else choice)
-                try:
-                    interactive_select(selected)
-                except ValueError:
-                    print("Unknown model; no operation executed.")
-        elif action == "2":
-            service_menu.run(["health"])
-            print("Service mutations remain guarded; see Advanced for plans.")
-        elif action == "3":
-            _advanced_menu()
-        else:
-            print("Unknown menu; no operation executed.")
+    """Delegate all P1–P7 operator navigation to the complete TTY console."""
+    from wizard.console import run
+    return run()
 
 
 def _extract_pair(args: list[str], name: str) -> tuple[str | None, list[str]]:
@@ -262,6 +213,9 @@ def main(argv: list[str] | None = None) -> int:
         from wizard.quickstart import run_cli
         model_args = args[1:] if args[0] == "select" else args[2:]
         return run_cli(model_args, as_json=as_json, dry_run=dry_run)
+    if args[0] in ("workflow", "journey"):
+        from wizard.workflow import run_cli
+        return run_cli(args[1:], as_json=as_json, dry_run=dry_run)
     if args[0] in ("list", "catalog"):
         data = catalog()
         if as_json:
