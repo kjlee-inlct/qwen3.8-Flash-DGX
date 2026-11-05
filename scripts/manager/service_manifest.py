@@ -55,7 +55,8 @@ def manifest_from_observation(inv: dict, *, desired: str | None = None,
              "ONE_MANAGED_MODEL_RUNNING" if len(running) == 1 else
              "NO_MANAGED_MODEL_RUNNING")
     return {
-        "schema_version": 1, "scope": "DGX_READ_ONLY",
+        "schema_version": 1, "stage": "svc", "runtime": "NOT_RUN",
+        "scope": "DGX_READ_ONLY",
         "status": "BLOCKED" if errors else "OBSERVED_UNQUALIFIED",
         "executed": False, "operations_enabled": False,
         "policy": {"max_active_gpu_models": 1, "api_host_port": host_port,
