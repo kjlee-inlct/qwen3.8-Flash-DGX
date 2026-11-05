@@ -22,6 +22,13 @@ def run(argv, *, as_json=False, dry_run=False):
     # A diagnostic option is NEVER a backdoor to unlock prepare/start/bench.
     args.remove("--inspect-cache")
     cache_root = None
+    expected_revision = None
+    if "--expected-revision" in args:
+        at = args.index("--expected-revision")
+        if at + 1 >= len(args) or args[at + 1].startswith("--"):
+            raise ValueError("--expected-revision requires a 40-character SHA")
+        expected_revision = args[at + 1]
+        del args[at:at + 2]
     if "--cache-root" in args:
         at = args.index("--cache-root")
         if at + 1 >= len(args) or args[at + 1].startswith("--"):
@@ -30,7 +37,7 @@ def run(argv, *, as_json=False, dry_run=False):
         del args[at:at + 2]
     if args not in ([], ["status"]):
         return run_stage(SPEC, args, as_json=as_json, dry_run=dry_run)
-    inspection = inspect_27b(cache_root)
+    inspection = inspect_27b(cache_root, expected_revision=expected_revision)
     result = {
         "schema_version": 1, "stage": "p2", "status": "BLOCKED",
         "implementation": "READ_ONLY_ASSET_DISCOVERY",
