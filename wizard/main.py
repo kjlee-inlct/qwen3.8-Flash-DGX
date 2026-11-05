@@ -10,7 +10,7 @@ from wizard.menus import (
 
 USAGE = """Blazux Wizard (vLLM 0.32 only)
 
-  ./wizard.sh                                interactive grouped menus
+  ./wizard.sh                                simple model-first interactive menu\n  ./wizard.sh select 27b --json              read-only lifecycle selection plan\n  ./wizard.sh model choose flash-next --json same planner
   ./wizard.sh list --json                    model/switch/storage/operations catalog
   ./wizard.sh model flash-next status --json
   ./wizard.sh model 27b plan --for-action prepare --json
@@ -28,7 +28,7 @@ Compatibility (same handler, same safety boundaries):
   ./wizard.sh p1 status --json
   ./wizard.sh --stage p3 --action switch --from-model flash-next --to-model 27b --json
 
-P1 operation requires current full plan_id approval; 27B download and service mutations are blocked until separately approved, qualified adapters exist.
+P1 execution and P2 download retain exact plan ID approval; 27B start/switch and service mutations remain blocked until runtime qualification.
 """
 
 
@@ -65,63 +65,123 @@ def catalog() -> dict:
     return {
         "schema_version": 1, "engine": "vllm-0.32",
         "api_host_port": 8000, "groups": groups, "stages": stages,
+        "primary_menus": ["select_model", "service", "advanced"],
+        "model_selector": "select",
     }
 
 
-def interactive() -> int:
-    """One group menu, then model/transition submenu; no duplicated actions."""
-    groups = list(GROUPS)
-    print("Blazux Wizard — model / service / switch / storage / operations (0 exits)")
+def _advanced_menu() -> int:
+    """Keep all legacy module workflows in a secondary, explicit menu."""
+    groups = ["model", "switch", "storage", "operations", "service"]
     while True:
+        print("\nAdvanced actions (0 back)")
         for i, group in enumerate(groups, 1):
             print(f"  {i}. {group}: {GROUP_TITLES[group]}")
         try:
-            picked = input("Menu number/name (0 exits): ").strip().lower()
+            value = input("Advanced group (0 back): ").strip().lower()
+        except EOFError:
+            return 0
+        if value == "0":
+            return 0
+        group = (groups[int(value) - 1]
+                 if value.isdigit() and 1 <= int(value) <= len(groups)
+                 else GROUP_ALIASES.get(value, value))
+        if group not in GROUPS:
+            print("Unknown group.")
+            continue
+        choices = list(GROUPS[group])
+        print("  " + GROUP_TITLES[group])
+        for i, selected in enumerate(choices, 1):
+            print(f"    {i}. {selected}")
+        try:
+            picked = input("Item (0 back): ").strip().lower()
         except EOFError:
             return 0
         if picked == "0":
-            return 0
-        group = (groups[int(picked) - 1]
-                 if picked.isdigit() and 1 <= int(picked) <= len(groups)
-                 else GROUP_ALIASES.get(picked, picked))
-        if group not in GROUPS:
-            print("Unknown menu.")
             continue
-        choices = list(GROUPS[group])
-        while True:
-            print(f"  [{GROUP_TITLES[group]}] (0 back)")
-            for j, selection in enumerate(choices, 1):
-                print(f"    {j}. {selection}")
-            try:
-                selected = input("Item number/name (0 back): ").strip().lower()
-            except EOFError:
-                return 0
-            if selected == "0":
-                break
-            selection = (choices[int(selected) - 1]
-                         if selected.isdigit() and 1 <= int(selected) <= len(choices)
-                         else selected)
-            stage = GROUPS[group].get(selection)
-            if stage is None:
-                print("Unknown selection.")
-                continue
-            module = HANDLERS[stage]
-            if stage == "p1":
-                module.run(["guided"])
-                continue
-            module.run(["status"])
-            print("Read-only plan actions: " + ", ".join(module.SPEC.actions))
-            try:
-                action = input("Action (Enter to return): ").strip().lower()
-            except EOFError:
-                return 0
-            if stage == "p2" and action == "download":
-                # One confirmed, pinned acquisition plan. No GPU/service effects.
-                module.run(["download", "--guided"])
-            elif action in module.SPEC.actions:
-                module.run(["plan", "--for-action", action])
-            elif action:
-                print("Unsupported action; no operation executed.")
+        selection = (choices[int(picked) - 1]
+                     if picked.isdigit() and 1 <= int(picked) <= len(choices)
+                     else picked)
+        stage = GROUPS[group].get(selection)
+        if stage is None:
+            print("Unknown selection.")
+            continue
+        module = HANDLERS[stage]
+        if stage == "p1":
+            print("Opening the existing, individually approved Flash-Next Wizard.")
+            module.run(["guided"])
+            continue
+        module.run(["status"])
+        print("Available plan actions: " + ", ".join(module.SPEC.actions))
+        try:
+            action = input("Plan action (Enter returns): ").strip().lower()
+        except EOFError:
+            return 0
+        if stage == "p2" and action == "download":
+            module.run(["download", "--guided"])
+        elif action in module.SPEC.actions:
+            module.run(["plan", "--for-action", action])
+        elif action:
+            print("Unsupported action; no operation executed.")
+
+
+def interactive() -> int:
+    """Simple model-first UI; all original guarded stage commands remain intact."""
+    from scripts.manager.service_manifest import inspect_service
+    from wizard.quickstart import MODEL_CHOICES, interactive_select
+    from wizard.menus.operations import service as service_menu
+
+    names = list(MODEL_CHOICES)
+    print("Blazux Wizard — one GPU model / port 8000")
+    while True:
+        # Read-only live observation; never assume the saved journal is current.
+        try:
+            observed = inspect_service()
+        except (OSError, RuntimeError, ValueError):
+            observed = {"status": "BLOCKED", "observed_model": None,
+                        "download_running": False}
+        active = (observed.get("observed_model")
+                  if observed.get("status") == "OBSERVED_UNQUALIFIED"
+                  else None)
+        print("\nActive observed: " + (active or "unknown / none")
+              + " | API :8000/v1 (identity unverified)")
+        if observed.get("download_running"):
+            print("NVIDIA 27B: download container RUNNING (completion unverified)")
+        print("  1. Select / run model")
+        print("  2. Service status / logs / recovery")
+        print("  3. Advanced / recipes / storage")
+        print("  0. Exit")
+        try:
+            action = input("Select (0 exit): ").strip().lower()
+        except EOFError:
+            return 0
+        if action == "0":
+            return 0
+        if action == "1":
+            while True:
+                print("\nSelect model (0 back)")
+                for i, model in enumerate(names, 1):
+                    print(f"  {i}. {MODEL_CHOICES[model]['title']}")
+                try:
+                    choice = input("Model (0 back): ").strip().lower()
+                except EOFError:
+                    return 0
+                if choice == "0":
+                    break
+                selected = (names[int(choice) - 1]
+                            if choice.isdigit() and 1 <= int(choice) <= len(names)
+                            else choice)
+                try:
+                    interactive_select(selected)
+                except ValueError:
+                    print("Unknown model; no operation executed.")
+        elif action == "2":
+            service_menu.run(["status"])
+            print("Service mutations remain guarded; see Advanced for plans.")
+        elif action == "3":
+            _advanced_menu()
+        else:
+            print("Unknown menu; no operation executed.")
 
 
 def _extract_pair(args: list[str], name: str) -> tuple[str | None, list[str]]:
@@ -196,6 +256,10 @@ def main(argv: list[str] | None = None) -> int:
     if args[0] in ("help", "--help", "-h"):
         print(USAGE)
         return 0
+    if args[0] == "select" or (len(args) >= 2 and args[:2] == ["model", "choose"]):
+        from wizard.quickstart import run_cli
+        model_args = args[1:] if args[0] == "select" else args[2:]
+        return run_cli(model_args, as_json=as_json, dry_run=dry_run)
     if args[0] in ("list", "catalog"):
         data = catalog()
         if as_json:
