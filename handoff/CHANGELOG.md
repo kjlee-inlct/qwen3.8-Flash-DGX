@@ -1,3 +1,7 @@
+## 2026-11-05 — P2 model choice changed to NVIDIA
+
+Operator selected `nvidia/Qwen3.8-27B-NVFP4` instead of RadixArk. Switched read-only Wizard cache inventory, fixture cache path, invalid candidate recipe and current documentation. Preserved RadixArk 3/3-shard DGX result as historical evidence; NVIDIA local presence and DGX/GPU acceptance NOT_RUN. No runtime mutation or download.
+
 ## 2026-11-05 — P2 bounded config metadata audit
 
 Added read-only `config.json` model facts (architecture, model type, quantization, context, vision marker) to 27B Wizard inventory. Source inspection remains unqualified for vLLM 0.32 and never authorizes runtime mutations; malformed and >1MiB config are explicitly not source-ready. Added CPU fixtures. GitHub CI results must be recorded separately; no DGX command executed in this session.
