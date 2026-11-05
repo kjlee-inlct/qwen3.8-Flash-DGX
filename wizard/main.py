@@ -245,7 +245,9 @@ def main(argv: list[str] | None = None) -> int:
                           "executed": False}))
         return 3
     try:
-        args = _resolve_stage(_normalized(args))
+        args = _normalized(args)
+        if not (len(args) >= 2 and args[:2] == ["model", "choose"]):
+            args = _resolve_stage(args)
     except ValueError as exc:
         print(json.dumps({"status": "BLOCKED", "error": str(exc)}))
         return 2
