@@ -1,3 +1,9 @@
+## 2026-11-05 — Guided NVIDIA download refusal evidence and correction
+
+- Actual DGX console: operator supplied the full Wizard-computed plan ID `b190c936072038bc55c14c62dd2f9a63e3ddbf5c2e1ebbf0d1710551a7ec21ce`. Wizard returned `status=BLOCKED`, `executed=false`, `issues=[PREFLIGHT_CHANGED_REPLAN_REQUIRED]`. There is **no actual NVIDIA download execution evidence**.
+- GitHub source analysis: live preflight hashed mutable `free_inodes`, free GiB floor and human Docker status. The lock/state directory is created between plan generation and the second preflight, so drift can arise without a meaningful safety change.
+- SOURCE remedy: stable `_approval_facts` fingerprint; retain dynamic safety gates and ten-minute approval period; add regression tests. CPU/CI PASS verdict must be checked at final HEAD. DGX second attempt `NOT_RUN`.
+
 ## 2026-11-05 — NVIDIA 27B pinned acquisition SOURCE and single-model policy
 
 - Authoritative public checkpoint: `nvidia/Qwen3.8-27B-NVFP4`, immutable `482ca0f3832238542f8f5295dde86b5f22711d80`, 3 indexed safetensors shards (~21.9GB): https://huggingface.co/nvidia/Qwen3.8-27B-NVFP4/tree/482ca0f3832238542f8f5295dde86b5f22711d80 .
