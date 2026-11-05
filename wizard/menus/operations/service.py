@@ -10,6 +10,7 @@ import json
 from ..common import Stage, run as run_stage
 from scripts.manager.service_manifest import inspect_service
 from scripts.manager.service_health import inspect_api_health
+from scripts.manager.service_logs import inspect_logs
 
 SPEC = Stage(
     "svc", "Service management",
@@ -24,6 +25,21 @@ SPEC = Stage(
 
 def run(argv, *, as_json=False, dry_run=False):
     args = list(argv)
+    if args == ["logs"]:
+        try:
+            document = inspect_logs()
+        except (OSError, ValueError, RuntimeError) as exc:
+            document = {"stage": "svc", "status": "BLOCKED",
+                        "scope": "DGX_READ_ONLY", "executed": False,
+                        "issues": ["SERVICE_LOGS_UNAVAILABLE:" + type(exc).__name__]}
+        if dry_run:
+            document["dry_run"] = True
+        if as_json:
+            print(json.dumps(document, sort_keys=True, indent=2))
+        else:
+            print("Service logs — " + document["status"])
+            print(document.get("logs") or "\n".join(document.get("issues", [])))
+        return 0 if document["status"] == "READ_ONLY_LOGS" else 3
     if args == ["health"]:
         try:
             document = inspect_api_health()
