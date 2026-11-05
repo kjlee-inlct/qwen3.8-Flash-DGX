@@ -19,12 +19,15 @@ USAGE = """Blazux Wizard (vLLM 0.32 only)
     --from-model flash-next --to-model 27b --json
   ./wizard.sh storage flash-next status --json
   ./wizard.sh operations system status --json
+  ./wizard.sh service manager status --json
+  ./wizard.sh service manager plan --for-action restart --json
+  ./wizard.sh model 27b plan --for-action download --json
 
 Compatibility (same handler, same safety boundaries):
   ./wizard.sh p1 status --json
   ./wizard.sh --stage p3 --action switch --from-model flash-next --to-model 27b --json
 
-P1 operation requires current full plan_id approval; P2-P7 are interface-only.
+P1 operation requires current full plan_id approval; 27B download and service mutations are blocked until separately approved, qualified adapters exist.
 """
 
 
@@ -67,7 +70,7 @@ def catalog() -> dict:
 def interactive() -> int:
     """One group menu, then model/transition submenu; no duplicated actions."""
     groups = list(GROUPS)
-    print("Blazux Wizard — model / switch / storage / operations (0 exits)")
+    print("Blazux Wizard — model / service / switch / storage / operations (0 exits)")
     while True:
         for i, group in enumerate(groups, 1):
             print(f"  {i}. {group}: {GROUP_TITLES[group]}")
