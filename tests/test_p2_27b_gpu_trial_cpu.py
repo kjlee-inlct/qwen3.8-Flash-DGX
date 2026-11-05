@@ -93,7 +93,7 @@ class GPUTrialCPU(unittest.TestCase):
         def run(args,**kwargs):
             calls.append(args)
             if args[:3] == ["docker","ps","-a"]:
-                return completed("qwen38-27b\\n")
+                return completed("qwen38-27b\n")
             return completed()
         r=t.recover(CID,IMAGE,"d"*64,run=run,inspect=inspect)
         self.assertEqual(r["status"],"RECOVERY_FAILED")
@@ -137,7 +137,7 @@ class GPUTrialCPU(unittest.TestCase):
         def run(args,**kwargs):
             calls.append(args)
             if args[:3] == ["docker","ps","-a"]:
-                return completed("qwen38-27b\\n")
+                return completed("qwen38-27b\n")
             return completed()
         r=t.recover(CID,IMAGE,"d"*64,run=run,
                     inspect=lambda name:(_ for _ in ()).throw(RuntimeError("docker down")))
@@ -159,8 +159,8 @@ class GPUTrialCPU(unittest.TestCase):
             return d
         def runner(args):
             if args[:3] == ["docker", "ps", "-a"]:
-                return completed("qwen38-flash\\n")
-            return completed("qwen38-flash\\nanother-gpu-container\\n")
+                return completed("qwen38-flash\n")
+            return completed("qwen38-flash\nanother-gpu-container\n")
         p=t.make_plan(preview_func=preview,inspect=inspect,run=runner,now=1700000000)
         self.assertIn("OTHER_GPU_CONTAINER_RUNNING",p["issues"])
         self.assertIsNone(p["plan_id"])
@@ -168,7 +168,7 @@ class GPUTrialCPU(unittest.TestCase):
     def test_unknown_running_container_state_blocks_trial(self):
         def runner(args):
             if args[:3] == ["docker","ps","-a"]:
-                return completed("qwen38-flash\\n")
+                return completed("qwen38-flash\n")
             return completed(code=1)
         p=t.make_plan(preview_func=preview,inspect=lambda name: original(),
                       run=runner,now=1700000000)
@@ -178,8 +178,8 @@ class GPUTrialCPU(unittest.TestCase):
     def test_non_gpu_proxy_container_allowed(self):
         def runner(args):
             if args[:3] == ["docker","ps","-a"]:
-                return completed("qwen38-flash\\n")
-            return completed("qwen38-flash\\nopenwebui\\n")
+                return completed("qwen38-flash\n")
+            return completed("qwen38-flash\nopenwebui\n")
         p=t.make_plan(preview_func=preview,inspect=lambda name:original(),
                       run=runner,now=1700000000)
         self.assertEqual(p["status"],"READY_TO_REQUEST_TRIAL_APPROVAL")
