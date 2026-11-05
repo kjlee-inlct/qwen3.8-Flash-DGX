@@ -1,3 +1,9 @@
+## P2 source qualification update — 2026-11-05
+
+- [x] Add bounded config fact discovery (architecture, model type, quant method, context and vision metadata), strictly **unqualified** for vLLM/GB10, with malformed/oversized config regressions.
+- [ ] Check current CI after implementation and inspect real DGX read-only `./wizard.sh model 27b status --inspect-cache --json` output; never infer actual model availability from test fixtures.
+- [ ] Source-check immutable model revision and vLLM 0.32 loader/GB10 support, then implement guarded 27B recipe planning and runtime steps without allowing unapproved download/start/replacement.
+
 # Next actions — ordered work queue
 
 ## Current transition: P1 bounded GPU tests PASS → P2 27B inventory/qualification
