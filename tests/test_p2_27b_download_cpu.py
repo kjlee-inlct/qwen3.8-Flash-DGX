@@ -100,6 +100,31 @@ class DownloadCPU(unittest.TestCase):
         self.assertTrue((self.state / "download.lock").is_file())
         runner.assert_called_once()
 
+    def test_critical_image_or_running_state_change_requires_reapproval(self):
+        original = self.make_plan()
+        with patch.object(module, "_read_image_id",
+                          return_value="sha256:" + "9" * 64), \
+             patch.object(module, "inspect_host", return_value=self.observed), \
+             patch.object(module, "_other_transfer", return_value=False), \
+             patch.object(module, "inspect_27b",
+                          return_value={"source_files_present": False}), \
+             patch.object(module.os, "statvfs",
+                          return_value=SimpleNamespace(f_favail=1022)):
+            changed_image = module.build_plan(cache_root=self.cache, now=600)
+        self.assertNotEqual(original["plan_id"], changed_image["plan_id"])
+        stopped = {**self.observed,
+                   "containers": [{**self.observed["containers"][0],
+                                   "status": "Exited (0) 1 minute ago"}]}
+        with patch.object(module, "inspect_host", return_value=stopped), \
+             patch.object(module, "_read_image_id", return_value=self.image_id), \
+             patch.object(module, "_other_transfer", return_value=False), \
+             patch.object(module, "inspect_27b",
+                          return_value={"source_files_present": False}), \
+             patch.object(module.os, "statvfs",
+                          return_value=SimpleNamespace(f_favail=1022)):
+            changed_running = module.build_plan(cache_root=self.cache, now=600)
+        self.assertNotEqual(original["plan_id"], changed_running["plan_id"])
+
     def test_revalidation_still_blocks_low_disk_without_running(self):
         original = self.make_plan()
         later = {**self.observed,
