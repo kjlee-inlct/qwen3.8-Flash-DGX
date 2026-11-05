@@ -1,3 +1,7 @@
+## P2 source progress — 2026-11-05 (new session)
+
+GitHub-linked source changes add a bounded, read-only 27B `config.json` inspector to `scripts/manager/p2_27b_inventory.py`: records reported model architecture, model type, quantization method, context length and presence of vision configuration without inferring vLLM 0.32, GPU fit or runtime acceptance. Invalid/oversize JSON is explicitly rejected from `source_files_present`. CPU regression fixtures cover valid, invalid and oversized model config. **SOURCE changes committed; CI must be checked at latest HEAD. DGX/GPU tests NOT_RUN.** No installation, model download, Docker or API changes authorized.
+
 # Current state — active snapshot
 
 ## Newest confirmed DGX evidence: P1 API/GPU PASS; P2 source-only (2026-11-05)
