@@ -1,3 +1,7 @@
+## 2026-11-05 — P2 bounded config metadata audit
+
+Added read-only `config.json` model facts (architecture, model type, quantization, context, vision marker) to 27B Wizard inventory. Source inspection remains unqualified for vLLM 0.32 and never authorizes runtime mutations; malformed and >1MiB config are explicitly not source-ready. Added CPU fixtures. GitHub CI results must be recorded separately; no DGX command executed in this session.
+
 # Handoff changelog (append-only)
 
 ## 2026-11-05 — H-018 — Observed P1 GPU PASS; begin P2 source-only read inventory
