@@ -103,6 +103,18 @@ class QuickstartCPU(unittest.TestCase):
         with self.assertRaises(ValueError):
             q.normalize("unknown-model")
 
+    def test_other_running_model_prevents_p1_guided_shortcut(self):
+        selected = q.selection_plan("flash-next", service=live("27b"))
+        self.assertEqual(selected["status"], "TRANSITION_UNQUALIFIED")
+        self.assertEqual(selected["next_action"], "blocked")
+        self.assertIn("EXCLUSIVE_ACTIVE_MODEL_SWITCH_REQUIRED", selected["issues"])
+        with patch.object(q, "selection_plan", return_value=selected), \
+             patch("scripts.manager.p1_wizard.main") as p1, \
+             patch("builtins.input", side_effect=AssertionError("must not prompt")), \
+             contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(q.interactive_select("flash-next"), 0)
+        p1.assert_not_called()
+
     def test_unobserved_flash_next_uses_existing_p1_backend(self):
         plan = q.selection_plan("flash-next", service=live(None))
         self.assertEqual(plan["next_action"], "open_p1_guided")
