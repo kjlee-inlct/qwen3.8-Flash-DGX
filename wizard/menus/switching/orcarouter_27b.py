@@ -1,5 +1,5 @@
 """P6 Orcarouter/27B bidirectional switch plan interface."""
-from .common import Stage, run as run_stage
+from ..common import Stage, run as run_stage
 
 SPEC = Stage(
     "p6", "Orcarouter and 27B switching",

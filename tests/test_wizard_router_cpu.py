@@ -25,9 +25,19 @@ class WizardRouterCPU(unittest.TestCase):
         self.assertEqual([x["stage"] for x in doc["stages"]],
                          ["p1", "p2", "p3", "p4", "p5", "p6", "p7"])
         self.assertEqual(doc["api_host_port"], 8000)
+        expected_modules = {
+            "p1": "wizard.menus.models.flash_next",
+            "p2": "wizard.menus.models.qwen_27b",
+            "p3": "wizard.menus.switching.flash_next_27b",
+            "p4": "wizard.menus.storage.flash_next_cleanup",
+            "p5": "wizard.menus.models.orcarouter_flash_next",
+            "p6": "wizard.menus.switching.orcarouter_27b",
+            "p7": "wizard.menus.operations.system",
+        }
         for key, module in HANDLERS.items():
             with self.subTest(stage=key):
-                self.assertEqual(module.__name__, "wizard.menus." + key)
+                self.assertEqual(module.__name__, expected_modules[key])
+        self.assertEqual(len(doc["groups"]), 4)
 
     def test_catalog_machine_json(self):
         rc, s = self.call(["list", "--json"])
@@ -169,9 +179,18 @@ class WizardRouterCPU(unittest.TestCase):
 
     def test_stage_menu_files_exist(self):
         root = Path(__file__).resolve().parents[1]
+        names = (
+            "models/flash_next.py", "models/qwen_27b.py",
+            "models/orcarouter_flash_next.py",
+            "switching/flash_next_27b.py", "switching/orcarouter_27b.py",
+            "storage/flash_next_cleanup.py", "operations/system.py",
+        )
+        for name in names:
+            with self.subTest(file=name):
+                self.assertTrue((root / "wizard/menus" / name).is_file())
         for n in range(1, 8):
-            with self.subTest(stage=n):
-                self.assertTrue((root / "wizard/menus" / f"p{n}.py").is_file())
+            with self.subTest(legacy_file=n):
+                self.assertFalse((root / "wizard/menus" / f"p{n}.py").exists())
         self.assertTrue((root / "wizard.sh").is_file())
 
     def test_future_stage_status_does_not_inspect_docker(self):
@@ -179,6 +198,92 @@ class WizardRouterCPU(unittest.TestCase):
             for stage in ("p2", "p3", "p4", "p5", "p6", "p7"):
                 rc, _ = self.call([stage, "status", "--json"])
                 self.assertEqual(rc, 0)
+
+    def test_category_catalog_matches_roadmap(self):
+        catalog = router.catalog()
+        groups = {g["group"]: [i["stage"] for i in g["choices"]]
+                  for g in catalog["groups"]}
+        self.assertEqual(groups, {
+            "model": ["p1", "p2", "p5"],
+            "switch": ["p3", "p6"],
+            "storage": ["p4"],
+            "operations": ["p7"],
+        })
+        for item in catalog["stages"]:
+            self.assertTrue(item["module"].startswith("wizard.menus."))
+            self.assertIn(item["group"], groups)
+
+    def test_domain_model_flash_next_delegates_to_p1(self):
+        with patch("scripts.manager.p1_wizard.main", return_value=0) as mocked:
+            rc, _ = self.call(["model", "flash-next", "status", "--json"])
+        self.assertEqual(rc, 0)
+        mocked.assert_called_once_with(["status"])
+
+    def test_domain_model_other_models_are_blocked(self):
+        for model in ("27b", "orcarouter-flash-next"):
+            with self.subTest(model=model):
+                rc, output = self.call(["model", model, "plan",
+                                        "--for-action", "prepare", "--json"])
+                self.assertEqual(rc, 3)
+                self.assertEqual(json.loads(output)["status"], "BLOCKED")
+
+    def test_domain_switch_routes_to_p3_and_p6(self):
+        for pair, source, dest, stage in (
+            ("flash-next-27b", "flash-next", "27b", "p3"),
+            ("orcarouter-27b", "orcarouter", "27b", "p6"),
+        ):
+            with self.subTest(pair=pair):
+                rc, output = self.call([
+                    "switch", pair, "plan", "--for-action", "switch",
+                    "--from-model", source, "--to-model", dest, "--json"])
+                self.assertEqual(rc, 3)
+                doc = json.loads(output)
+                self.assertEqual(doc["stage"], stage)
+                self.assertNotIn("INVALID_OR_MISSING_SWITCH_PAIR", doc["issues"])
+
+    def test_storage_and_operations_groups(self):
+        for args, expected in (
+            (["storage", "flash-next", "status", "--json"], "p4"),
+            (["operations", "system", "status", "--json"], "p7"),
+        ):
+            rc, s = self.call(args)
+            self.assertEqual(rc, 0)
+            self.assertEqual(json.loads(s)["stage"], expected)
+
+    def test_group_item_explicit_flags(self):
+        rc, s = self.call(["--group", "switch", "--item", "flash-next-27b",
+                           "--action", "switch",
+                           "--from-model", "flash-next",
+                           "--to-model", "27b", "--json"])
+        self.assertEqual(rc, 3)
+        self.assertEqual(json.loads(s)["stage"], "p3")
+
+    def test_invalid_category_choice_fails_closed(self):
+        rc, s = self.call(["model", "random", "status", "--json"])
+        self.assertEqual(rc, 2)
+        self.assertEqual(json.loads(s)["status"], "BLOCKED")
+
+    def test_category_aliases(self):
+        for group, choice, expected in (
+            ("models", "27b", "p2"),
+            ("switching", "flash-next-27b", "p3"),
+            ("operation", "system", "p7"),
+        ):
+            with self.subTest(group=group):
+                rc, output = self.call([group, choice, "status", "--json"])
+                self.assertEqual(rc, 0)
+                self.assertEqual(json.loads(output)["stage"], expected)
+
+    def test_interactive_two_level_group_selection(self):
+        with patch("builtins.input", side_effect=["1", "1", "0", "0"]), \
+             patch.object(router.sys.stdin, "isatty", return_value=True), \
+             patch("scripts.manager.p1_wizard.main", return_value=0) as mocked:
+            out = io.StringIO()
+            with contextlib.redirect_stdout(out):
+                rc = router.main([])
+        self.assertEqual(rc, 0)
+        mocked.assert_called_once_with(["guided"])
+        self.assertIn("model", out.getvalue())
 
     def test_schema_version_in_future_plans(self):
         for stage in ("p2", "p3", "p4", "p5", "p6", "p7"):

@@ -1,5 +1,5 @@
 """P5 Orcarouter-Flash-Next source-only menu adapter."""
-from .common import Stage, run as run_stage
+from ..common import Stage, run as run_stage
 
 SPEC = Stage(
     "p5", "Orcarouter Flash-Next",

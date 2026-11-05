@@ -1,5 +1,5 @@
 """P7 integrated system acceptance interfaces."""
-from .common import Stage, run as run_stage
+from ..common import Stage, run as run_stage
 
 SPEC = Stage(
     "p7", "Integrated system operations",

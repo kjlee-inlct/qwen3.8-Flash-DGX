@@ -1,5 +1,5 @@
 """P3 bidirectional Flash-Next and 27B switch plan interface."""
-from .common import Stage, run as run_stage
+from ..common import Stage, run as run_stage
 
 SPEC = Stage(
     "p3", "Flash-Next and 27B switching",

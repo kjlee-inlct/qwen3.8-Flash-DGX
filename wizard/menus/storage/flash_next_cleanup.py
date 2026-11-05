@@ -1,5 +1,5 @@
 """P4 conditional Flash-Next storage stage; no mutation adapter."""
-from .common import Stage, run as run_stage
+from ..common import Stage, run as run_stage
 
 SPEC = Stage(
     "p4", "Flash-Next conditional storage planning",
