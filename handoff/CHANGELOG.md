@@ -1,3 +1,7 @@
+## 2026-11-05 — Service management UI and NVIDIA 27B download planning
+
+Added independent `service manager` Wizard menu/CLI (source-only) while retaining `operations system` for P7. Added `download` action to NVIDIA 27B planning, default BLOCKED. CPU router tests cover menu/catalog and refusal of unapproved mutation. Documented NVIDIA DGX `NO_PINNED_LOCAL_SNAPSHOT`; no download, restart, Docker/GPU work run.
+
 ## 2026-11-05 — P2 model choice changed to NVIDIA
 
 Operator selected `nvidia/Qwen3.8-27B-NVFP4` instead of RadixArk. Switched read-only Wizard cache inventory, fixture cache path, invalid candidate recipe and current documentation. Preserved RadixArk 3/3-shard DGX result as historical evidence; NVIDIA local presence and DGX/GPU acceptance NOT_RUN. No runtime mutation or download.
