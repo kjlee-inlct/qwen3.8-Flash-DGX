@@ -40,6 +40,10 @@ Record what has been **decided** and what still needs approval. Proposals in doc
 
 Operator approved `./wizard.sh` with only **1 Select/run model, 2 Service, 3 Advanced, 0 Exit** and model choices **Flash-Next / NVIDIA 27B / Orcarouter**. Wizard detects missing assets, in-flight download, active model and runtime readiness to propose the minimum required steps. It may invite checkpoint-only download through the existing P2 exact-plan gate. **Service switching (stop current model → free host :8000 → start new → API identity verification → rollback) remains separately gated and NOT_IMPLEMENTED/NOT_RUN.** Retain old Flash-Next P1 backend and all CLI names; this supersedes D-015 only for the interactive primary menu, not its stable internal category routes. Git desired policy/actual observation/event journal remain distinct. Per operator terminal, pinned NVIDIA 27B download **started** (`Fetching 19 files: 84%`); completion not evidenced. Full design: `docs/UNIFIED-MODEL-WIZARD-DESIGN.md`.
 
+## D-021 — Full P1–P7 Wizard source-first delivery (operator accepted 2026-11-06)
+
+Operator instructed **finish the entire Wizard interface now**, even if P2–P7 execution is not yet enabled; qualify and debug real adapters progressively as P2 onward develops. This explicitly approves full menus/action plans/status/roadmap and backend interface wiring in GitHub, **not** Docker/GPU/runtime/service mutation. Root menu remains model-first (D-020), all model actions are available for planning. Implement `wizard/console.py`, `wizard/workflow.py`, `wizard/roadmap.py`, bounded service log viewer and tests. Preserve original P1 `p1_wizard.py`, exact-approval P2 pinned downloader, all P1–P7 CLI aliases, one active GPU model, stable host `:8000/v1`, and separately scoped approval before any stop/start/switch/recovery. No in-flight 27B download disturbance. SOURCE complete does not imply runtime/gateway/recovery PASS; Draft PR remains open until qualifying DGX evidence.
+
 ### Design choices not yet finalized
 
 - Remaining runtime/service/inventory contract fields and wizard flags. The source-only N1 recipe schema has been implemented.
