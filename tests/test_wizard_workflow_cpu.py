@@ -52,6 +52,22 @@ class ModelWorkflowCPU(unittest.TestCase):
         self.assertEqual(rc, 0)
         execute.assert_called_once_with(["guided"], as_json=False)
 
+    def test_p1_cannot_start_while_another_model_or_unknown_service_active(self):
+        for state, observed in (("REVIEW_REQUIRED", "27b"),
+                                ("UNKNOWN", None)):
+            doc = workflow.model_workflow(
+                "flash-next", selection=fixture(
+                    "flash-next", status=state, observed=observed))
+            start = next(a for a in doc["actions"] if a["action"] == "start")
+            self.assertEqual(start["status"], "BLOCKED")
+            self.assertFalse(start["operations_enabled"])
+            with patch("wizard.menus.models.flash_next.run") as backend, \
+                 contextlib.redirect_stdout(io.StringIO()):
+                rc = workflow.invoke_model_action(
+                    "flash-next", "start", workflow=doc, guided=True)
+            self.assertEqual(rc, 3)
+            backend.assert_not_called()
+
     def test_27b_can_only_offer_download_when_missing(self):
         missing = workflow.model_workflow(
             "27b", selection=fixture("27b", next_action="download", status="ABSENT"))
