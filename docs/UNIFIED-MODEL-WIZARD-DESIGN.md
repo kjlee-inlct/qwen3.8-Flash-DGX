@@ -108,3 +108,15 @@ API namespace for new selection: `./wizard.sh select 27b --json` = read-only mod
 ### Deferred runtime gates
 
 Before a future launch can be enabled: pin target model-compatible vLLM 0.32 ARM64 image/loader; validate actual GPU memory constraints and served ID; verify the current API model independently; test Flash-Next recovery from deliberate failed target start; allow rollback only with a fresh scoped operator approval. Until then, `select 27b` after completed download reports `SOURCE_PRESENT_UNQUALIFIED`.
+
+## 8. Full interface scaffold delivered (2026-11-06 — D-021)
+
+Operator requested **build the complete Wizard now**, with adapters debugged through subsequent P2–P7 milestones. The resulting source interface is:
+- `wizard/console.py`: complete root menu + model selection + recommended action + all model actions + service status/health/logs + advanced P3/P4/P6/P7 + guarded old-stage access, P1 preservation.
+- `wizard/workflow.py`: uniform action catalogue for all three models and source-level capability matrix, separating `READ_ONLY`, `APPROVAL_REQUIRED`, `GUARDED_P1`, `IN_PROGRESS`, `BLOCKED`. P1 start is blocked if another model or unknown inventory is observed. P2 download is offered only when safely missing and no existing download is running.
+- `wizard/roadmap.py`: source/evidence-scoped P1–P7 acceptance dashboard, **always NOT_RELEASE_QUALIFIED** without real runtime proofs.
+- `scripts/manager/service_logs.py`: opt-in read-only, bounded logs for a uniquely observed managed container, not a service executor.
+- Existing `scripts/manager/p1_wizard.py` and `scripts/manager/p2_27b_download.py` are retained; service transition stop/start/rollback still preview-only, stage P4 optional cleanup remains blocked.
+
+**Critical boundary:** complete menu/action/planning source does NOT claim P2–P7 DGX runtime readiness. This is intentional per operator direction; as P2–P7 progress, replace only qualified backend slots, add CPU fault injection, then run separately approved DGX trials. No live changes during the operator-owned 27B transfer. CI and artifact evidence must be checked against the exact GitHub HEAD before claiming source PASS.
+
