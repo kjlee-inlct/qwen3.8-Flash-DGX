@@ -9,12 +9,13 @@ from __future__ import annotations
 import json
 from ..common import Stage, run as run_stage
 from scripts.manager.service_manifest import inspect_service
+from scripts.manager.service_status import inspect_live_status
 from scripts.manager.service_health import inspect_api_health
 from scripts.manager.service_logs import inspect_logs
 
 SPEC = Stage(
     "svc", "Service management",
-    ("inventory", "health", "logs", "start", "stop", "restart",
+    ("status", "inventory", "health", "logs", "start", "stop", "restart",
      "rollback", "proxy", "gateway"),
     ("read-only service/port/container inventory",
      "identified active model and exact runtime ownership",
@@ -56,7 +57,23 @@ def run(argv, *, as_json=False, dry_run=False):
             print("Service health — " + document["status"])
             print(json.dumps(document, sort_keys=True, indent=2))
         return 0 if document["status"] == "API_IDENTITY_CONFIRMED" else 3
-    if args in ([], ["status"], ["inventory"]):
+    if args in ([], ["status"]):
+        try:
+            document = inspect_live_status()
+        except (OSError, ValueError, RuntimeError) as exc:
+            document = {"stage": "svc", "action": "status",
+                        "status": "BLOCKED", "scope": "DGX_READ_ONLY_MANIFEST_AND_API",
+                        "executed": False, "operations_enabled": False,
+                        "issues": ["LIVE_STATUS_UNAVAILABLE:" + type(exc).__name__]}
+        if dry_run:
+            document["dry_run"] = True
+        if as_json:
+            print(json.dumps(document, sort_keys=True, indent=2))
+        else:
+            print("Service status — " + document["status"])
+            print(json.dumps(document, sort_keys=True, indent=2))
+        return 0 if document["status"] == "LIVE_SERVICE_VERIFIED" else 3
+    if args == ["inventory"]:
         try:
             document = inspect_service()
         except (OSError, ValueError, RuntimeError) as exc:

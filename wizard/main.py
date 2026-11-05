@@ -19,7 +19,7 @@ USAGE = """Blazux Wizard (vLLM 0.32 only)
     --from-model flash-next --to-model 27b --json
   ./wizard.sh storage flash-next status --json
   ./wizard.sh operations system status --json
-  ./wizard.sh service manager status --json\n  ./wizard.sh service manager health --json  read-only local API identity\n  ./wizard.sh service manager logs --json    bounded local log tail
+  ./wizard.sh service manager status --json   manifest + local API identity (read-only)\n  ./wizard.sh service manager health --json  read-only local API identity\n  ./wizard.sh service manager logs --json    bounded local log tail
   ./wizard.sh service manager plan --for-action restart --json
   ./wizard.sh model 27b status --inspect-runtime --json  read-only qualification
   ./wizard.sh model 27b plan --for-action start --launch-preview --json  blocked dedicated 27B preview
