@@ -12,8 +12,8 @@ from pathlib import Path
 import re
 from typing import Any
 
-MODEL_ID = "RadixArk/Qwen3.8-27B-NVFP4"
-REPO_DIR = "models--RadixArk--Qwen3.8-27B-NVFP4"
+MODEL_ID = "nvidia/Qwen3.8-27B-NVFP4"
+REPO_DIR = "models--nvidia--Qwen3.8-27B-NVFP4"
 SHA40 = re.compile(r"^[a-f0-9]{40}$")
 MAX_INDEX = 64 * 1024 * 1024
 MAX_ENTRIES = 500_000
