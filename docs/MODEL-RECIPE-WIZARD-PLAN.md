@@ -15,6 +15,14 @@ Deliver a **vLLM-only** recipe-driven single-DGX-Spark model-management system w
 
 **Out of scope for this phase:** SGLang, simultaneous residency of two large GPU models on a single 128-GB GB10, unapproved restart of the existing Orcarouter service, unapproved deletion, automatic release despite failed numeric gates. `aphex3k/Qwen3.8-27B-on-DGX-Spark` is a comparative benchmark/tuning reference **only**, not an engine dependency.
 
+## 1A. User-confirmed Wizard-first milestone contract (2026-11-05)
+
+**확정된 우선순위(2026-11-05):** **P1 Flash-Next 설치·구동·벤치(Wizard) → P2 27B 설치·구동·벤치(Wizard) → P3 Flash-Next ↔ 27B 반복 전환·원복(Wizard) → P4 Flash-Next 선택적 제거(용량 부족 시, Wizard + 정확한 대상/별도 승인) → P5 Orcarouter-Flash-Next 설치·구동·벤치(Wizard) → P6 Orcarouter ↔ 27B 반복 전환(Wizard) → P7 통합 운영 검증/완성.** 단계 수행의 기본 UI는 **Wizard**이며, 기존 `flash`/Python 스크립트는 내부 실행기로 재사용한다. 각 단계는 **구현 SOURCE/CPU**와 **실제 DGX/GPU/API/벤치 PASS**를 별도로 기록한다. **P1 Wizard end-to-end 미완성**, 현 단계에서 다음 개발 최우선이다. 단계 순서를 자의적으로 바꾸거나 직접 CLI 성공만으로 Wizard 단계 완료 처리하지 않는다.
+
+Each model baseline milestone (P1/P2/P5) MUST be operable through Wizard from preflight and pinned preparation to serve, API functional checks, benchmark, immutable evidence and failure recovery. P3/P6 bidirectional switching MUST be Wizard-controlled with safe transition state, readiness check, rollback and stable external API :8000. P4 may be skipped where capacity suffices and must not delete shared data; if needed it is an independent exact-path approval transaction via Wizard. P7 qualifies the completed operating workflow; a CLI command succeeding alone does **not** close a Wizard stage. No GPU/runtime action is authorized by this decision.
+
+**Present:** `wizard/00-doctor.sh` and `10-plan.sh` read-only source; default NVIDIA Flash-Next profile port 8000, CPU test baseline. **Missing:** prepare/setup/serve/verify/benchmark/evidence Wizard and real DGX validation. This missing P1 path is the next implementation target.
+
 ## 2. Known inputs vs unknowns
 
 **Grounded in repository source:**
@@ -38,7 +46,7 @@ Deliver a **vLLM-only** recipe-driven single-DGX-Spark model-management system w
 | P6 | Orcarouter ↔ 27B A→B→A switch | Repeat switch, failure injection, rollback, model IDs/client behavior, manifest consistency | **No** |
 | P7 | Release/operations approval | Runbooks, replayable recipes, security/CI, numeric gate, evidence, approved cutover | **No** |
 
-**Sequencing correction:** A model may be *retired from active operation* or its checkpoint *deleted from disk* only after an alternate, verified fallback exists. If P2 or P3 fails, **do not perform P4**. If disk is insufficient before P2, stop and request a specifically scoped cleanup decision; never infer approval from this roadmap. Existing live Orcarouter service is a separate protected asset until its migration is approved.
+**Sequencing correction:** A model may be *retired from active operation* or its checkpoint *deleted from disk* only after an alternate, verified fallback exists. If P2 or P3 fails, **do not perform P4**. If disk is insufficient before P2, stop and request a specifically scoped cleanup decision; never infer approval from this roadmap. User reported prior operating Orcarouter service deleted 2026-11-05; treat that as a report only and recheck live Docker/port evidence on DGX before any action.
 
 All stages have two statuses: **implementation** and **verification** (e.g. `DONE_SOURCE_ONLY / NOT_RUN_GPU`). Model load success is not performance or release acceptance.
 
@@ -76,7 +84,7 @@ N1 implemented schemas/recipe.schema.json, scripts/manager/manifest.py, requirem
 - Existing runtime ID/image/volume references from older sessions are historical observations; use the N2 read-only `wizard/00-doctor.sh` and `./flash doctor default` and reacquire actual `docker ps/inspect`, `ss`, `df` before stateful decisions.
 - Docker image pull/build may change storage; checkpoint download may consume huge disk. Treat download/build as separately gated resource operations and enforce quota/headroom.
 - Protect HF cache blobs shared by more than one snapshot, pinned model revisions, overlay source shards, existing runtime image, volume, compiled caches and fallback snapshot.
-- `serve.sh` is **not idempotent with respect to protection** because it removes the named container; use an external guard that prohibits protected `NAME`.
+- **Current fork** `scripts/serve.sh` refuses an already existing exact container name; old upstream worktrees may still use `docker rm -f "$NAME"`. Always verify the actual checked-out revision and dynamic port/name occupancy before launching.
 - No implicit model deletion, Docker prune, cache prune, or deletion because a stage calls for cleanup. Deletion is an independently approved transaction.
 - A `1e-4` same-checkpoint logprob strict release blocker previously failed in the Preview work. Preserve its `RELEASE_BLOCKED` state for affected Orcarouter release until new valid proof or an explicitly recorded policy decision; benchmark metrics are not a substitute.
 
