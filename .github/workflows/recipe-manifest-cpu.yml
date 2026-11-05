@@ -12,6 +12,8 @@ on:
       - 'profiles/**'
       - 'scripts/serve.sh'
       - 'wizard/**'
+      - 'wizard.sh'
+      - 'tests/test_wizard_router_cpu.py'
       - 'tests/test_flash_launch.py'
       - 'tests/test_manager_inventory_cpu.py'
       - 'tests/test_p1_*_cpu.py'
@@ -19,6 +21,9 @@ on:
       - '.github/workflows/recipe-manifest-cpu.yml'
   pull_request:
     paths:
+      - 'wizard/**'
+      - 'wizard.sh'
+      - 'tests/test_wizard_router_cpu.py'
       - 'schemas/**'
       - 'recipes/**'
       - 'scripts/manager/**'
@@ -49,7 +54,10 @@ jobs:
           python -m unittest discover -s tests -p 'test_flash_launch.py' -v
           python -m unittest discover -s tests -p 'test_script_modes_cpu.py' -v
           python -m unittest discover -s tests -p 'test_p1_*_cpu.py' -v
-          bash -n flash scripts/serve.sh wizard/00-doctor.sh wizard/10-plan.sh wizard/p1.sh
+          python -m unittest discover -s tests -p 'test_wizard_router_cpu.py' -v
+          python -m wizard list --json
+          python -m wizard p2 status --json
+          bash -n flash scripts/serve.sh wizard/00-doctor.sh wizard/10-plan.sh wizard/p1.sh wizard.sh
       - name: Confirm 27B candidate is not launchable
         run: |
           if python -m scripts.manager.manifest validate recipes/qwen38-27b.candidate.yaml; then

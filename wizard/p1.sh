@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# P1 Flash-Next Wizard; defaults to guided confirmation.
+# Compatibility shim to the central Wizard router.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 if [ "$#" -eq 0 ]; then
-  exec python3 -m scripts.manager.p1_wizard guided
+  exec python3 -m wizard p1 guided
 fi
-exec python3 -m scripts.manager.p1_wizard "$@"
+exec python3 -m wizard p1 "$@"
