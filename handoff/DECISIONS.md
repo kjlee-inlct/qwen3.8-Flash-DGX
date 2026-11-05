@@ -1,3 +1,9 @@
+## D-024 — 2026-11-06 — Quantization source audit is a distinct release gate
+
+Verify the local immutable NVIDIA 27B `hf_quant_config.json` rather than assuming the main-branch model card reflects downloaded revision. Require a bounded read-only `MIXED_PRECISION` description with layer-level FP8 and NVFP4 for source shape audit. Missing/invalid/unrecognized metadata blocks further qualification; valid metadata is still **not** proof of ModelOpt GPU kernel support, image import, memory capacity, runtime functionality or service transfer approval. No GPU launch and no implicit cleanup.
+
+---
+
 ## D-023 — 2026-11-06 — Installed image source audit before P2 GPU runtime
 
 Use a **separately invoked, explicitly CPU-only, isolated Docker runc image-source audit** to inspect patched vLLM 0.32 model registration/Qwen3.5 classes and ModelOpt NVFP4/FP8 before building/enabling a 27B launcher. A local image ID is not a registry digest, source symbols are not executed kernel proof, and neither gives service start authorization. The default operation is `--plan`; `--execute-cpu-only` uses no network, GPU or published ports, temporarily creates one runc container and removes it upon exit, and never touches Flash-Next. GPU start/old-service stop/transition and cache deletion remain separately gated.

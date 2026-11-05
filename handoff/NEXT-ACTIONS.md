@@ -1,3 +1,13 @@
+## 2026-11-06 — P2 CPU-source qualification next operator evidence
+
+- [x] Add immutable-source ModelOpt layer-algorithm auditor and integrate `quantization_audit` in Wizard; CI `cd63f25` 303/303 CPU PASS.
+- [ ] With checkout clean, `git pull --ff-only origin feature/recipe-wizard-handoff`, then rerun `./wizard.sh model 27b status --inspect-runtime --json` and review `quantization_audit` actual pinned local values; do not load model or stop Flash-Next.
+- [ ] Inspect local image source with `./scripts/temporary/p2-27b-image-audit.sh --plan`, then explicit `--execute-cpu-only` for isolated runc source AST checks (CPU-only temporary container). Return JSON without secrets; this is NOT GPU model loading.
+- [ ] Reconcile ModelOpt per-layer algorithm set against actual installed vLLM registry/loader. Only then design/qualify 27B-specific pinned launcher, image ID vs registry digest, memory/context profile and start/wait/verify/benchmark; no reuse of Flash-Next PLE/MTP defaults.
+- [ ] Operational GPU/start/switch/rollback requires separate scoped approval and verified original Flash-Next recovery assets. Keep PR #1 Draft.
+
+---
+
 ## 2026-11-06 — Actual image source audit for 27B next
 
 - [x] Operator DGX actual `status --inspect-runtime` confirms NVIDIA pinned 27B source, correct architecture/modelopt/context, ARM64/Linux v0.32 local image ID and protected live Flash-Next.

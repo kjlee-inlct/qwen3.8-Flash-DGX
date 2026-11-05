@@ -1,3 +1,9 @@
+## 2026-11-06 — Immutable NVIDIA ModelOpt mixed precision audit in P2 runtime preflight
+
+Added `scripts/manager/p2_27b_quant_audit.py` + nine CPU regressions. Existing Wizard runtime-preflight now reads bounded exact-pin `hf_quant_config.json`, reports producer/quantization mode/layer counts and blocks unexpected or unparseable mixes while preserving all prior image/host/runtime gates. GitHub source commit `cd63f25`: CI 303/303 PASS; no model, GPU, Docker service, download or cache mutations performed.
+
+---
+
 ## 2026-11-06 — Audit installed vLLM 0.32 image source using CPU-only runc
 
 Based on the new DGX preflight result, authored `scripts/manager/p2_27b_image_audit.py`, `scripts/temporary/p2-27b-image-audit.sh` and 8 CPU regressions to audit the exact local image's registered Qwen3.5 model class and ModelOpt NVFP4/FP8 source without importing vLLM/CUDA. The wrapper defaults to plan-only and requires an explicit CPU-only run flag; image ID pinned and Docker isolated with runc, no GPU or network. SOURCE commit `acf5d64` CI 294/294 PASS. Actual operator CPU-only image probe, GPU/27B service/bench and rollback NOT_RUN.

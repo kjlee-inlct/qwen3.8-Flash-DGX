@@ -1,3 +1,17 @@
+## 2026-11-06 — Exact pinned ModelOpt layer configuration inspection
+
+The real DGX result earlier confirmed `model_type=qwen3_5`, `quant_method=modelopt`, host/image ARM64, pinned checkpoint and existing Flash-Next API. Current SOURCE adds a second step: the existing read-only Wizard command
+
+```bash
+./wizard.sh model 27b status --inspect-runtime --json
+```
+
+now includes a `quantization_audit` object. It parses only the exact pinned snapshot's `hf_quant_config.json` (maximum 2MiB, at most 20,000 layer entries) and reports `quant_algo`, ModelOpt producer, total layers, counts by `NVFP4` and `FP8`, and a separate non-executable `mixed_fp8_nvfp4_metadata` boolean. Invalid/missing/unexpected values remain BLOCKED. It never copies weights, starts Docker, probes GPU or modifies Flash-Next.
+
+NVIDIA's published main file shows `quantization.quant_algo=MIXED_PRECISION` and per-layer `FP8` and `NVFP4` entries (https://huggingface.co/nvidia/Qwen3.8-27B-NVFP4/blob/main/hf_quant_config.json), but the exact immutable DGX snapshot is the source of truth. Do not infer GPU compatibility from this metadata shape. Run the separately documented CPU-only installed-image source audit if desired; actual ModelOpt kernels and vLLM 0.32 startup remain unverified.
+
+---
+
 ## 2026-11-06 — Installed vLLM image source audit (after operator runtime-preflight PASS metadata)
 
 Actual DGX runtime preflight shows correct NVIDIA 27B checkpoint and Qwen3.5/ModelOpt config, host aarch64, existing Linux/ARM64 `qwen38-flash-dgx:v0.32` image ID `sha256:9479fc92a9244fcf137afb36ed778e07495e29663a81db193736fcaa1f15e137`; Flash-Next occupies `:8000` and `repo_digests=[]`. This is metadata only; image ID is an immutable **local** artifact ID, not a canonical registry digest. The public **vLLM v0.32.0** docs register `Qwen3_5ForConditionalGeneration` and document ModelOpt NVFP4/FP8 mixed precision, but the exact installed patched image needs local verification.

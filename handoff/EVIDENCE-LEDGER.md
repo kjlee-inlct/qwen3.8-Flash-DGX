@@ -1,3 +1,9 @@
+## E-20261106-P2-QUANT-SOURCE-CI — Pinned ModelOpt audit unit tests
+
+GitHub `cd63f25f0bf7282ea06dbb13c3499798394322b0`, Actions `42065472163` — **303/303 CPU tests PASS**, all 15 test batches and deliberately unqualified candidate-recipe check SUCCESS. The added P2 audit uses `hf_quant_config.json` in exact NVIDIA immutable snapshot and reports layer algorithm counts; malformed/oversize/unknown algorithms fail closed. Neither the new quantization fields nor static image source checks have been run on DGX yet; GPU/27B loader/bench/API/transition and recovery **NOT_RUN**. The previous DGX `status --inspect-runtime` result remains a **config-only** observation, not a per-layer audit.
+
+---
+
 ## E-20261106-P2-READONLY — DGX real NVIDIA 27B qualification observation
 
 - Operator ran `git pull --ff-only origin feature/recipe-wizard-handoff`: fast-forward `e99914c..edf0968`, checkout clean as reported.

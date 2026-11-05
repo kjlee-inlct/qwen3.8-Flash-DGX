@@ -1,3 +1,11 @@
+## 2026-11-06 — Exact pinned ModelOpt mixed-precision metadata audit added to Wizard
+
+On the previous real DGX read-only preflight, source is pinned and configuration reports `quant_method=modelopt`, but **layer distribution has not yet been observed**. New SOURCE `scripts/manager/p2_27b_quant_audit.py` now parses only `hf_quant_config.json` in the immutable NVIDIA 27B snapshot, rejects oversized/malformed/unexpected algorithms, reports `MIXED_PRECISION`, exact per-algorithm counts, and adds `quantization_audit` to the existing `status --inspect-runtime` JSON. It does not inspect weights or approve runtime execution. Actual DGX run of this updated command remains **NOT_RUN**.
+
+**Latest source/CI:** `cd63f25f0bf7282ea06dbb13c3499798394322b0` — GitHub Actions run `42065472163` **SUCCESS, 303/303 CPU tests PASS**, including nine additional quantization unit tests. Existing single active model and Flash-Next :8000 unchanged. Further documentation commit requires final HEAD CI verification.
+
+---
+
 ## 2026-11-06 — DGX P2 runtime metadata verified; installed-image source audit developed
 
 **New actual operator DGX evidence (2026-11-06 KST):** after clean fast-forward from `e99914c` to `edf0968`, `./wizard.sh model 27b status --inspect-runtime --json` returned `source_files_present=true`, `source_checkpoint_status=SOURCE_FILES_PRESENT_PINNED_CANDIDATE`, pinned revision `482ca0f3832238542f8f5295dde86b5f22711d80`; `Qwen3_5ForConditionalGeneration`, `qwen3_5`, `modelopt`, context 262144, vision config present; host `aarch64`, Docker image ARM64/Linux with base label `v0.32`, local image ID `sha256:9479fc92a9244fcf137afb36ed778e07495e29663a81db193736fcaa1f15e137`. Flash-Next observed running and port 8000 listening; download no longer running. `repo_digests=[]`, `gpu_verified=false`, `runtime_qualified=false`; `status=BLOCKED` with six unresolved runtime/transition gates. This is read-only host evidence, not 27B GPU support proof.
