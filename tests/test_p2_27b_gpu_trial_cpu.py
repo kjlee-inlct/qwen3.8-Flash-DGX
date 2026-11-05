@@ -92,6 +92,8 @@ class GPUTrialCPU(unittest.TestCase):
         calls=[]
         def run(args,**kwargs):
             calls.append(args)
+            if args[:3] == ["docker","ps","-a"]:
+                return completed("qwen38-27b\\n")
             return completed()
         r=t.recover(CID,IMAGE,"d"*64,run=run,inspect=inspect)
         self.assertEqual(r["status"],"RECOVERY_FAILED")
@@ -117,6 +119,36 @@ class GPUTrialCPU(unittest.TestCase):
     def test_checkpoint_is_qwen38_not_qwen35(self):
         self.assertEqual(t.SERVED,"qwen3.8-27b")
         self.assertEqual(t.REVISION,"482ca0f3832238542f8f5295dde86b5f22711d80")
+
+    def test_unknown_target_state_refuses_to_restart_original(self):
+        calls=[]
+        def run(args,**kwargs):
+            calls.append(args)
+            if args[:3] == ["docker","ps","-a"]:
+                return completed(code=1)
+            return completed()
+        r=t.recover(CID,IMAGE,"d"*64,run=run,
+                    inspect=lambda name:self.fail("unknown Docker state"))
+        self.assertEqual(r["status"],"RECOVERY_FAILED")
+        self.assertNotIn(["docker","start","qwen38-flash"],calls)
+
+    def test_existing_target_inspection_failure_does_not_restart_old(self):
+        calls=[]
+        def run(args,**kwargs):
+            calls.append(args)
+            if args[:3] == ["docker","ps","-a"]:
+                return completed("qwen38-27b\\n")
+            return completed()
+        r=t.recover(CID,IMAGE,"d"*64,run=run,
+                    inspect=lambda name:(_ for _ in ()).throw(RuntimeError("docker down")))
+        self.assertEqual(r["status"],"RECOVERY_FAILED")
+        self.assertNotIn(["docker","start","qwen38-flash"],calls)
+
+    def test_docker_running_state_requires_trustworthy_observation(self):
+        def failed(args,**kwargs):
+            return completed(code=1)
+        with self.assertRaises(RuntimeError):
+            t.running(t.TARGET_CONTAINER,run=failed)
 
 if __name__=="__main__":
     unittest.main()

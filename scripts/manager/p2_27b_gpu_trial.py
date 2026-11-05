@@ -11,6 +11,7 @@ import json
 import os
 from pathlib import Path
 import re
+import signal
 import subprocess
 import sys
 import time
@@ -126,7 +127,9 @@ def make_plan(preview_func=build_27b_launch_preview, inspect=docker_info,
 
 def running(name, run=call):
     p = run(["docker", "inspect", "--format", "{{.State.Running}}", name])
-    return p.returncode == 0 and p.stdout.strip().lower() == "true"
+    if p.returncode or p.stdout.strip().lower() not in ("true", "false"):
+        raise RuntimeError("RUNNING_STATE_UNAVAILABLE")
+    return p.stdout.strip().lower() == "true"
 
 
 def port_free(run=call):
@@ -194,10 +197,18 @@ def trial_command(image, plan):
 def recover(source_id, image, plan, *, run=call, inspect=docker_info,
             waiter=wait_for):
     issues = []
+    # An inspect error is NOT proof that the target is absent. Obtain a fresh
+    # full Docker name list; a Docker daemon failure forbids dual-GPU restart.
     try:
-        target = inspect(TARGET_CONTAINER)
+        names = run(["docker", "ps", "-a", "--format", "{{.Names}}"])
+        if names.returncode:
+            return {"status": "RECOVERY_FAILED", "issues": ["TARGET_NAME_INVENTORY_FAILED"]}
+        if TARGET_CONTAINER in names.stdout.splitlines():
+            target = inspect(TARGET_CONTAINER)
+        else:
+            target = None
     except (OSError, RuntimeError, ValueError, subprocess.TimeoutExpired):
-        target = None
+        return {"status": "RECOVERY_FAILED", "issues": ["TARGET_STATE_UNVERIFIED"]}
     if target is not None:
         labels = (target.get("Config") or {}).get("Labels") or {}
         if labels.get(LABEL) != plan or target.get("Name") != "/" + TARGET_CONTAINER or target.get("Image") != image:
@@ -205,7 +216,11 @@ def recover(source_id, image, plan, *, run=call, inspect=docker_info,
         if (target.get("State") or {}).get("Running") and run(
                 ["docker", "stop", "--time", "30", TARGET_CONTAINER], timeout=55).returncode:
             issues.append("TARGET_STOP_FAILED")
-        if running(TARGET_CONTAINER, run):
+        try:
+            target_still_running = running(TARGET_CONTAINER, run)
+        except (OSError, RuntimeError, subprocess.TimeoutExpired):
+            return {"status": "RECOVERY_FAILED", "issues": ["TARGET_RUNNING_STATE_UNVERIFIED"]}
+        if target_still_running:
             issues.append("TARGET_STILL_RUNNING")
         elif run(["docker", "rm", TARGET_CONTAINER]).returncode:
             issues.append("TARGET_REMOVAL_FAILED")
@@ -316,6 +331,10 @@ def main(argv=None):
         result = make_plan()
         print(json.dumps(result, indent=2, sort_keys=True))
         return 0 if result["status"] != "BLOCKED" else 3
+    # A normal SIGTERM (e.g. shell disconnect) raises KeyboardInterrupt in
+    # the trial so the finally block can attempt restoration. SIGKILL/power
+    # loss cannot be handled and require manual operator recovery.
+    signal.signal(signal.SIGTERM, lambda *_: (_ for _ in ()).throw(KeyboardInterrupt()))
     rc, result = execute(options.approve_plan, options.ack_downtime)
     print(json.dumps(result, indent=2, sort_keys=True))
     return rc
