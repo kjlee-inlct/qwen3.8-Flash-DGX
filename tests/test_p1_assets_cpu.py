@@ -128,6 +128,39 @@ class AssetAuditCPU(unittest.TestCase):
         self.assertFalse(outcome["source_complete"])
         self.assertIn("model-00001.safetensors", outcome["source_issues"])
 
+    def test_operator_shape_eleven_external_shards_and_two_hybrid(self):
+        source = self.complete()
+        shared = Path(self.tmp.name) / "shared-shards"
+        shared.mkdir()
+        names = [f"model-{n:05d}-of-00010.safetensors" for n in range(1, 11)]
+        names += ["model-fp8-mtp-ple.safetensors"]
+        self.write(source / "model.safetensors.index.json", json.dumps({
+            "weight_map": {f"tensor-{n}": name for n, name in enumerate(names)}
+        }))
+        for original in ("model-00001.safetensors", "model-00002.safetensors"):
+            (source / original).unlink()
+        for name in names:
+            blob = shared / name
+            blob.write_bytes(b"regular nonempty shard")
+            (source / name).symlink_to(blob)
+        # Hybrid retains the ordinary config/tokenizer, but has a rewritten
+        # index referencing only its two converted/shared weights.
+        hybrid = self.repo / "snapshots" / (self.rev + "-fp8hybrid")
+        for name in ("config.json", "generation_config.json", "tokenizer.json",
+                     "tokenizer_config.json", "chat_template.jinja",
+                     "preprocessor_config.json"):
+            self.write(hybrid / name, (source / name).read_text())
+        self.write(hybrid / "model.safetensors.index.json", json.dumps({
+            "weight_map": {"x": names[-2], "y": names[-1]}
+        }))
+        for name in names[-2:]:
+            (hybrid / name).symlink_to(shared / name)
+        self.write(hybrid / ".prepared", "")
+        result = audit_checkpoint(self.cache)
+        self.assertTrue(result["source_complete"], result)
+        self.assertTrue(result["hybrid_ready"], result)
+        self.assertEqual(result["state"], "READY")
+
     def test_shard_path_traversal_fails_closed(self):
         src = self.complete()
         self.write(src / "model.safetensors.index.json", json.dumps({

@@ -111,6 +111,55 @@ class CacheDiagnosisCPU(unittest.TestCase):
         self.assertTrue(info["p1_metadata_link_compatible"])
         self.assertTrue(data["wizard_audit"]["source_complete"])
 
+    def test_external_indexed_weights_reported_and_accepted(self):
+        self.complete()
+        self.write(self.repo / "refs/main", self.rev)
+        source = self.repo / "snapshots" / self.rev
+        external = Path(self.cache.parent) / "external-shard.safetensors"
+        external.write_bytes(b"example-weight")
+        (source / "model-00001.safetensors").unlink()
+        (source / "model-00001.safetensors").symlink_to(external)
+        data = inspect(self.cache)
+        shards = data["snapshots"][0]["source_indexed_shards"]
+        self.assertEqual(shards["index_status"], "PARSED")
+        self.assertEqual(shards["total"], 1)
+        status = shards["files"]["model-00001.safetensors"]
+        self.assertEqual(status["status"], "TARGET_OUTSIDE_REPOSITORY")
+        self.assertTrue(status["p1_indexed_shard_link_compatible"])
+        self.assertEqual(status["resolved_target_size_bytes"], 14)
+        self.assertTrue(data["wizard_audit"]["source_complete"], data)
+
+    def test_missing_external_indexed_weights_still_blocked(self):
+        self.complete()
+        self.write(self.repo / "refs/main", self.rev)
+        link = self.repo / "snapshots" / self.rev / "model-00001.safetensors"
+        link.unlink()
+        link.symlink_to(Path(self.cache.parent) / "missing-shard.safetensors")
+        data = inspect(self.cache)
+        status = data["snapshots"][0]["source_indexed_shards"]["files"][
+            "model-00001.safetensors"]
+        self.assertEqual(status["status"], "DANGLING_SYMLINK")
+        self.assertFalse(data["wizard_audit"]["source_complete"])
+
+    def test_hybrid_shared_weight_link_is_visible(self):
+        self.complete()
+        self.write(self.repo / "refs/main", self.rev)
+        src = self.repo / "snapshots" / self.rev
+        hybrid = self.repo / "snapshots" / (self.rev + "-fp8hybrid")
+        for f in src.iterdir():
+            self.write(hybrid / f.name, f.read_text())
+        self.write(hybrid / ".prepared", "")
+        shared = Path(self.cache.parent) / "shared-hybrid.safetensors"
+        shared.write_bytes(b"hybrid-weight")
+        shard = hybrid / "model-00001.safetensors"
+        shard.unlink()
+        shard.symlink_to(shared)
+        data = inspect(self.cache)
+        status = data["snapshots"][0]["hybrid_indexed_shards"]["files"][
+            "model-00001.safetensors"]
+        self.assertTrue(status["p1_indexed_shard_link_compatible"])
+        self.assertTrue(data["wizard_audit"]["hybrid_ready"])
+
     def test_partial_weight_shard_is_reported_by_name(self):
         self.complete()
         self.write(self.repo / "refs/main", self.rev)

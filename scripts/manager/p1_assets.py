@@ -2,8 +2,9 @@
 """Read-only, fail-closed NVIDIA Flash-Next checkpoint and image audit.
 
 Never creates or changes a HF cache file. A refs/main revision alone is not proof
-that the download finished. All indexed safetensors shards must resolve to
-nonempty files, without escaping the checkpoint repository.
+that the download finished. Verify every indexed shard resolves to a nonempty
+regular file. Blazux's existing launcher follows externally linked cache files;
+the new Wizard must not falsely reject that supported layout.
 """
 from __future__ import annotations
 
@@ -31,21 +32,26 @@ def _inside(path: Path, root: Path) -> bool:
         return False
 
 
-# Blazux's default Flash-Next launcher tests whether these metadata files
-# exist; its legitimate HF snapshots may symlink tokenizer/index metadata into
-# a shared location outside the model repository. These two *read-only*
-# metadata names must not be rejected solely for that link layout.
-# Shard data remains confined to the pinned model repository.
+# Blazux checks existence of the complete indexed snapshot, following HF
+# symlinks even when a shared cache stores their targets beyond this model repo.
+# The Wizard previously invented a repository-containment rule not used by
+# Blazux, and rejected every indexed GPU weight in the operator's installation.
+# Keep index entry basename validation and require nonempty regular-file targets.
 SHARED_METADATA = frozenset(("tokenizer.json", "model.safetensors.index.json"))
 
 
-def _good_file(path: Path, root: Path) -> bool:
+def _good_file(path: Path, root: Path, *, indexed_shard: bool = False) -> bool:
     try:
         if not path.is_file() or path.stat().st_size <= 0:
             return False
         if _inside(path, root):
             return True
-        return (path.name in SHARED_METADATA and path.is_symlink()
+        # External targets are accepted ONLY for existing explicit snapshot
+        # metadata links or a safetensors filename named by the parsed weight_map.
+        # No file paths from weight_map can contain directories or '..'.
+        return (path.is_symlink()
+                and (path.name in SHARED_METADATA
+                     or (indexed_shard and path.suffix == ".safetensors"))
                 and path.resolve(strict=True).is_file())
     except (OSError, RuntimeError):
         return False
@@ -83,7 +89,8 @@ def _audit_files(snapshot: Path, root: Path) -> list[str]:
         try:
             shards = _indexed_files(snapshot, root)
             missing += [name for name in shards
-                        if not _good_file(snapshot / name, root)]
+                        if not _good_file(snapshot / name, root,
+                                          indexed_shard=True)]
         except ValueError as exc:
             missing.append(str(exc))
         try:

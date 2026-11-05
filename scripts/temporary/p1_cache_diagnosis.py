@@ -3,12 +3,15 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
-from scripts.manager.p1_assets import audit_checkpoint, _audit_files, SHA40, SHARED_METADATA
+from scripts.manager.p1_assets import (
+    audit_checkpoint, _audit_files, _good_file, _indexed_files, SHA40,
+    SHARED_METADATA,
+)
 
 REQUIRED_METADATA = ("model.safetensors.index.json", "tokenizer.json")
 
 
-def probe_file(path: Path, repository: Path) -> dict:
+def probe_file(path: Path, repository: Path, *, indexed_shard: bool = False) -> dict:
     """Explain missing files, dangling HF symlinks and unexpected file sizes."""
     linked = path.is_symlink()
     try:
@@ -31,19 +34,39 @@ def probe_file(path: Path, repository: Path) -> dict:
         status, size = ("DANGLING_SYMLINK" if linked else "UNREADABLE"), None
     info = {"status": status, "symlink": linked, "size_bytes": size}
     if status == "TARGET_OUTSIDE_REPOSITORY" and linked:
-        # Blazux follows existing metadata symlinks. These may be valid.
-        # Never mark arbitrary external shard links compatible.
+        # Report existing external cache links, without exposing target paths.
+        # Indexed shards are constrained by the parsed weight_map, whereas
+        # metadata is recognized from an explicit two-name allowlist.
         try:
-            info["p1_metadata_link_compatible"] = (
-                path.name in SHARED_METADATA and path.stat().st_size > 0)
-            info["resolved_target_size_bytes"] = path.stat().st_size
+            resolved_size = path.stat().st_size
         except OSError:
-            info["p1_metadata_link_compatible"] = False
-            info["resolved_target_size_bytes"] = None
+            resolved_size = None
+        info["resolved_target_size_bytes"] = resolved_size
+        if indexed_shard:
+            info["p1_indexed_shard_link_compatible"] = _good_file(
+                path, repository, indexed_shard=True)
+        else:
+            info["p1_metadata_link_compatible"] = (
+                path.name in SHARED_METADATA and _good_file(path, repository))
     if path.name == "model.safetensors.index.json" and size is not None:
         info["exceeds_old_16mib_gate"] = size > 16 * 1024 * 1024
         info["exceeds_current_64mib_gate"] = size > 64 * 1024 * 1024
     return info
+
+
+def probe_indexed_shards(snapshot: Path, repository: Path) -> dict:
+    """Bounded, metadata-only inspection of shard links from parsed weight_map."""
+    try:
+        shards = _indexed_files(snapshot, repository)
+    except (OSError, TypeError, ValueError) as exc:
+        return {"index_status": "UNAVAILABLE", "error_type": type(exc).__name__,
+                "total": None, "truncated": False, "files": {}}
+    # The auditor checks ALL parsed shards. Limit JSON report to 32 names.
+    shown = shards[:32]
+    return {"index_status": "PARSED", "total": len(shards),
+            "truncated": len(shards) > len(shown),
+            "files": {name: probe_file(snapshot / name, repository,
+                                      indexed_shard=True) for name in shown}}
 
 
 def inspect(cache_root: Path) -> dict:
@@ -77,8 +100,13 @@ def inspect(cache_root: Path) -> dict:
                 "source_issues": source_issues,
                 "source_metadata": {name: probe_file(source / name, repo)
                                     for name in REQUIRED_METADATA},
+                "source_indexed_shards": probe_indexed_shards(source, repo),
                 "hybrid_metadata": {name: probe_file(hybrid / name, repo)
                                     for name in REQUIRED_METADATA},
+                "hybrid_indexed_shards": (
+                    probe_indexed_shards(hybrid, repo) if hybrid.is_dir()
+                    else {"index_status": "MISSING", "total": None,
+                          "truncated": False, "files": {}}),
                 "hybrid_present": hybrid.is_dir(),
                 "hybrid_marker_present": (hybrid / ".prepared").is_file(),
                 "hybrid_issues": hybrid_issues,
