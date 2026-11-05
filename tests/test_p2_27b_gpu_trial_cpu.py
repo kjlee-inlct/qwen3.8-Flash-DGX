@@ -184,5 +184,21 @@ class GPUTrialCPU(unittest.TestCase):
                       run=runner,now=1700000000)
         self.assertEqual(p["status"],"READY_TO_REQUEST_TRIAL_APPROVAL")
 
+    def test_bounded_inference_requires_actual_generated_tokens(self):
+        import io
+        class Response:
+            status=200
+            def __init__(self, data): self.data=data
+            def __enter__(self): return self
+            def __exit__(self, *args): return False
+            def read(self, count): return self.data
+        from unittest.mock import patch
+        data=b'{"choices":[{"message":{"content":""}}],"usage":{"completion_tokens":0}}'
+        with patch.object(t,"urlopen",return_value=Response(data)):
+            self.assertFalse(t.one_inference())
+        data=b'{"choices":[{"message":{"reasoning_content":"thinking"}}],"usage":{"completion_tokens":1}}'
+        with patch.object(t,"urlopen",return_value=Response(data)):
+            self.assertTrue(t.one_inference())
+
 if __name__=="__main__":
     unittest.main()

@@ -206,7 +206,18 @@ def one_inference():
             if response.status != 200 or len(body) > 65536:
                 return False
             doc = json.loads(body)
-            return bool(isinstance(doc.get("choices"), list) and doc["choices"])
+            choices = doc.get("choices") if isinstance(doc, dict) else None
+            usage = doc.get("usage") if isinstance(doc, dict) else None
+            generated = (usage.get("completion_tokens", 0)
+                         if isinstance(usage, dict) else 0)
+            if not isinstance(choices, list) or not choices:
+                return False
+            return bool((isinstance(generated, int) and generated > 0)
+                        or any(isinstance(c, dict) and isinstance(c.get("message"), dict)
+                               and any(isinstance(c["message"].get(k), str)
+                                       and c["message"][k] for k in
+                                       ("content", "reasoning_content"))
+                               for c in choices))
     except (OSError, RuntimeError, ValueError, TimeoutError):
         return False
 
@@ -317,7 +328,21 @@ def execute(plan, acknowledge, *, planner=make_plan, run=call,
             audit["error_type"] = type(exc).__name__
             audit["error_code"] = str(exc) if isinstance(exc, RuntimeError) else "EXECUTION_ERROR"
         finally:
+            # Preserve bounded target startup evidence LOCALLY before retiring the
+            # trial container; never upload production/model logs to GitHub.
+            # This is best effort and MUST NOT prevent service restoration.
             if stop_attempted:
+                try:
+                    logs = run(["docker", "logs", "--tail", "120",
+                                TARGET_CONTAINER], timeout=20)
+                    if logs.returncode == 0:
+                        logfile = journal.with_suffix(".target.log")
+                        fd = os.open(logfile, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+                        with os.fdopen(fd, "w", encoding="utf-8") as stream:
+                            stream.write((logs.stdout + logs.stderr)[-65536:])
+                        audit["target_log"] = str(logfile)
+                except (OSError, ValueError, subprocess.TimeoutExpired):
+                    audit["target_log_capture"] = "UNAVAILABLE"
                 try:
                     restoration = recoverer(source_id, image, plan, run=run, inspect=inspect, waiter=waiter)
                 except Exception as exc:
@@ -339,6 +364,7 @@ def execute(plan, acknowledge, *, planner=make_plan, run=call,
             "target_api_ready": audit.get("target_api_ready", False),
             "inference_ok": audit.get("inference_ok", False),
             "restoration": restoration, "evidence": str(journal),
+            "target_log": audit.get("target_log"),
             "executed": stop_attempted,
         }
 
