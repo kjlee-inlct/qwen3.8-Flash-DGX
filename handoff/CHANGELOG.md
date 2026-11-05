@@ -1,5 +1,12 @@
 # Handoff changelog (append-only)
 
+## 2026-11-05 — H-012 — Git-first temporary operator script rule and first P1 bundle
+
+- User requested grouping post-download steps 1–3 into one script, committed in GitHub so the DGX operator only needs a Git Pull and single script invocation, with a separate temporary scripts directory. Follow-up explicitly requested that this **become a permanent documented project rule**.
+- Added D-016 and OPERATING-RULES R1D: use `scripts/temporary/` for scoped tested throwaway wrappers; source commit + CPU checks → operator's own `git pull --ff-only` after preexisting processes finish → one wrapper for inspect → individually approved Wizard verify/bench → structured evidence. No implicit setup/download/stop/start/cleanup, no logs in Git/HF cache, no secret upload, no self-removal.
+- Staged `scripts/temporary/p1-post-download.sh`, `p1_post_download.py`, README and mocked `tests/test_p1_temporary_cpu.py`; CI workflow and executable-bit test extended. **Runtime DGX operations NOT_RUN** in this GitHub-only session; result/CI to be verified at exact new HEAD.
+
+
 ## 2026-11-05 — H-011 — Rename numbered Wizard stages into capability groups
 
 - User clarified that model P1/P2/P5 belong to one **Model management** menu with descriptive model submodules; P3/P6 belong to one **Model switching** menu with transition submodules; P4 storage and P7 operations are separate domains.

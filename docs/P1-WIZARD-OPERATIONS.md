@@ -10,6 +10,29 @@ Target: nvidia/Qwen3.8-Flash-Next-NVFP4, vLLM 0.32.0, Hybrid / YaRN / MTP2, host
 
 Docker image build succeeded in uploaded terminal output: sha256:9479fc92a9244fcf137afb36ed778e07495e29663a81db193736fcaa1f15e137. Download was still in progress at 36% in the final visible line. This is not a complete checkpoint, Hybrid preparation or API proof. Do not compete with the operator-owned shell process. Any queued serve/wait/test may execute as soon as setup completes.
 
+## Combined post-download operator command
+
+To avoid pasting three separate command blocks, use the tracked temporary bundle
+after GitHub code/CI is confirmed and the operator's original setup/serve/wait/test
+chain has **fully exited**:
+
+```bash
+cd ~/Workspace/llm/blazux-orcarouter
+git fetch origin
+git switch feature/recipe-wizard-handoff
+git pull --ff-only origin feature/recipe-wizard-handoff
+bash scripts/temporary/p1-post-download.sh
+```
+
+Default interactive TTY runs phase 1 inspection, asks for a separate **full current
+plan ID** to authorize P1 verify and benchmark only when READY, then writes
+`~/blazux-p1-reports/<UTC>-<id>/result.json`. If you want **read-only only**,
+run `bash scripts/temporary/p1-post-download.sh --inspect-only`. No TTY means
+no automatic approval. Model setup/serve/switch, GPU inference without explicit
+consent and HF cache deletion are never hidden in this wrapper.
+See `scripts/temporary/README.md` and D-016. If the original setup is still
+running, do **not** pull or invoke the script yet.
+
 ## First, read-only inspection AFTER the original shell chain finishes
 
 ```bash
