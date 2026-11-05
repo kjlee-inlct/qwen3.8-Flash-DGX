@@ -1,3 +1,14 @@
+## 2026-11-06 — After real GPU PASS_RESTORED: check live status ONLY through Manifest Wizard
+
+- [x] Real DGX NVIDIA Qwen3.8-27B ModelOpt GPU startup, API ready and one bounded inference **PASS**. Normal-path original Flash-Next return `RESTORED`, issues=[]; overall `PASS_RESTORED`. Private evidence file `/home/inlc/.local/state/blazux-wizard/p2/20261105T230229Z-a4fc14cf8079.json` (not read independently). Never confuse normal restore with exceptional rollback tests.
+- [x] Create unified read-only Manifest + API Wizard service status. `./wizard.sh service manager status --json` combines actual Docker/socket, `runtimes/service-policy.json`, expected exact `/v1/models` served ID, and `/health`. Keep `inventory`, `health` and `logs` distinct diagnostics; all read-only, no activation.
+- [ ] Operator on DGX: `git status -sb`, `git pull --ff-only origin feature/recipe-wizard-handoff`, `./wizard.sh service manager status --json`. Confirm `status=LIVE_SERVICE_VERIFIED`, `observed_model=flash-next`, `expected_served_id=qwen3.8-flash-next`, all `checks` true and `issues=[]`. If BLOCKED, provide JSON and investigate, never silently bypass. No raw Docker/curl as main user workflow.
+- [ ] Design P2 functional and timed benchmark probes that run **while Qwen3.8-27B is temporarily serving**, capturing real TTFT, prefill/decode tokens/sec, peak memory and short/mid context behavior. Keep one-model GPU policy and mandatory original Flash-Next restore; require **new** explicit interruption approval for another GPU trial.
+- [ ] Then qualify repeated Flash-Next ↔ 27B permanent switching, transition journal + rollback, and separately Orcarouter. No unstated production model switch or PR merge.
+- [ ] Record new status command's actual DGX JSON and benchmark results in evidence ledger/hand-off as separate fresh observations.
+
+---
+
 ## 2026-11-06 — One-shot actual NVIDIA 27B trial next; explicit operator outage approval required
 
 - [x] DGX CPU-only Qwen3.8 internal Qwen3_5 loader/ModelOpt registry checks **9/9 true, issues=[]**, `modelopt_mixed` registered. No GPU/weights tested.

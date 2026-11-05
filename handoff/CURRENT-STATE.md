@@ -1,3 +1,13 @@
+## 2026-11-06 — ACTUAL P2 27B GPU PASS_RESTORED; manifest-led Wizard service status is canonical
+
+**Latest actual DGX operator JSON:** one-shot NVIDIA Qwen3.8-27B GPU trial `executed=true`, `target_api_ready=true`, `inference_ok=true`, `trial=PASS`, `restoration={"status":"RESTORED","issues":[]}`, overall `status=PASS_RESTORED`. First real GPU load, bounded inference and normal successful original Flash-Next restoration now confirmed. Original private DGX evidence `/home/inlc/.local/state/blazux-wizard/p2/20261105T230229Z-a4fc14cf8079.json` and `.target.log` exist according to operator stdout; contents **not independently inspected**. Historical older NOT_RUN sections below are superseded by this result; this does not verify full benchmark, MTP, large contexts, tools/vision, permanent switching or failure-mode rollback.
+
+**Service verification decision:** user prefers manifest-based Wizard over manual `docker ps`/`curl`. Implemented `./wizard.sh service manager status --json` to combine `runtimes/service-policy.json`, read-only fresh container/port Manifest and localhost `/health` + `/v1/models` exact expected served model ID in a **single** status response. New `scripts/manager/service_status.py` (source only) status `LIVE_SERVICE_VERIFIED` iff checks all pass, otherwise `BLOCKED` and explicit issues. `inventory`, `health`, `logs` retain individual read-only diagnostic commands. Status does not assert historical rollback provenance or GPU exclusivity outside managed models. **New unified-status command has NOT_RUN on actual DGX**; do not call it PASS until operator executes it.
+
+Next: operator fast-forwards clean branch, runs `./wizard.sh service manager status --json`, expects `flash-next` and `qwen3.8-flash-next` with all checks true. Source code/CI stage and GPU run stage stay distinct. Keep Draft PR #1 unmerged; no further Flash-Next stop/27B restart without fresh explicit approval. Detailed run receipt: [P2-27B-GPU-TRIAL-PASS-20261106.md](P2-27B-GPU-TRIAL-PASS-20261106.md).
+
+---
+
 ## 2026-11-06 — Qwen3.8-27B CPU registration PASS; explicit one-shot GPU trial prepared (NOT RUN)
 
 Operator DGX returned **all nine import/registry checks true**, `issues: []`, `status: IMPORT_AND_REGISTRY_PRESENT_UNQUALIFIED`, `modelopt_mixed_cli_name: true`, `schema_version: 2`. These are real restricted CPU-only imports for installed Qwen3.8-27B checkpoint's internal `Qwen3_5ForConditionalGeneration` loader and vLLM ModelOpt mixed precision registry. They do **not** prove CUDA kernels or GPU model load. `nvidia/Qwen3.8-27B-NVFP4` remains the target model; `qwen3_5` is **only** the checkpoint's internal architecture key.
