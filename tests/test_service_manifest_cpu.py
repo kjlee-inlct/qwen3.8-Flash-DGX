@@ -53,6 +53,34 @@ class ServiceManifestCPU(unittest.TestCase):
         self.assertIn("SINGLE_ACTIVE_MODEL_POLICY_VIOLATION", doc["issues"])
         self.assertFalse(doc["operations_enabled"])
 
+    def test_inflight_27b_download_visible_without_gpu_or_api_claim(self):
+        inventory = {**self.inv, "containers": [
+            *self.inv["containers"],
+            {"name": "qwen38-27b-dl", "status": "Up 2 minutes",
+             "image_id": "sha256:" + "c" * 64, "ports": ""},
+        ]}
+        observed = manifest_from_observation(inventory)
+        self.assertTrue(observed["download_running"])
+        self.assertEqual(observed["download_containers"][0]["name"],
+                         "qwen38-27b-dl")
+        self.assertEqual(observed["observed_model"], "flash-next")
+        self.assertFalse(observed["api_model_identity_verified"])
+        self.assertFalse(observed["operations_enabled"])
+
+    def test_completed_or_exited_download_not_reported_running(self):
+        inventory = {**self.inv, "containers": [
+            *self.inv["containers"],
+            {"name": "qwen38-27b-dl", "status": "Exited (0)",
+             "image_id": "sha256:" + "c" * 64, "ports": ""},
+        ]}
+        self.assertFalse(manifest_from_observation(inventory)["download_running"])
+
+    def test_orcarouter_registered_but_unqualified(self):
+        config = policy()
+        self.assertIn("orcarouter", config["models"])
+        self.assertEqual(config["models"]["orcarouter"]["qualification"],
+                         "NOT_VERIFIED")
+
     def test_desired_27b_requires_actual_transition(self):
         doc = manifest_from_observation(self.inv, desired="27b")
         self.assertTrue(doc["drift"])
