@@ -18,3 +18,22 @@ Install CPU-only requirements-manager.txt, then run:
 Candidate exit status MUST be 2 (FAIL). Even exit 0 cannot authorize
 Docker actions, model downloads, GPU use or deletion.
 The former static Orcarouter name/8000 bans were removed on 2026-11-05 after user reported removal. N2 inventory now checks actual Docker container names and socket listeners; source format PASS is never permission to launch.
+
+## P2 27B local cache discovery (source-only; no download)
+
+`RadixArk/Qwen3.8-27B-NVFP4` is the candidate checkpoint ID. Its published
+model files are not proof of pinned vLLM-0.32 support or local availability.
+To inspect *existing* files and symlinks without Docker, sockets, model download
+or GPU calls, run:
+
+```bash
+./wizard.sh model 27b status --inspect-cache --json
+```
+
+The JSON `inspection` reports refs/main/master, indexed shard file existence,
+quantization metadata presence and incomplete transfer counts. A
+`SOURCE_FILES_PRESENT_UNPINNED` result is deliberately **not** P2 READY.
+The candidate recipe still fails schema validation until exact source SHA,
+model revision, architecture support, image SHA256 digest and runtime
+compatibility have actual evidence. All `prepare`, `start`, `verify`,
+`benchmark` actions remain BLOCKED.

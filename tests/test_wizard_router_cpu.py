@@ -219,6 +219,20 @@ class WizardRouterCPU(unittest.TestCase):
         self.assertEqual(rc, 0)
         mocked.assert_called_once_with(["status"])
 
+    def test_p2_inventory_switch_is_strictly_read_only(self):
+        import tempfile
+        from pathlib import Path
+        with tempfile.TemporaryDirectory() as folder:
+            with patch("subprocess.run", side_effect=AssertionError("no subprocess")):
+                rc, output = self.call(["model", "27b", "status", "--inspect-cache",
+                                        "--cache-root", folder, "--json"])
+            self.assertEqual(rc, 0)
+            doc = json.loads(output)
+            self.assertEqual(doc["stage"], "p2")
+            self.assertFalse(doc["executed"])
+            self.assertFalse(doc["operations_enabled"])
+            self.assertEqual(doc["inspection"]["checkpoint_status"], "NOT_READY")
+
     def test_domain_model_other_models_are_blocked(self):
         for model in ("27b", "orcarouter-flash-next"):
             with self.subTest(model=model):

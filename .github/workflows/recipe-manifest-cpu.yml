@@ -19,6 +19,7 @@ on:
       - 'tests/test_flash_launch.py'
       - 'tests/test_manager_inventory_cpu.py'
       - 'tests/test_p1_*_cpu.py'
+      - 'tests/test_p2_*_cpu.py'
       - 'tests/test_script_modes_cpu.py'
       - '.github/workflows/recipe-manifest-cpu.yml'
   pull_request:
@@ -58,9 +59,11 @@ jobs:
           python -m unittest discover -s tests -p 'test_flash_launch.py' -v
           python -m unittest discover -s tests -p 'test_script_modes_cpu.py' -v
           python -m unittest discover -s tests -p 'test_p1_*_cpu.py' -v
+          python -m unittest discover -s tests -p 'test_p2_*_cpu.py' -v
           python -m unittest discover -s tests -p 'test_wizard_router_cpu.py' -v
           python -m wizard list --json
           python -m wizard p2 status --json
+          python -m wizard model 27b status --inspect-cache --json
           bash -n flash scripts/serve.sh wizard/00-doctor.sh wizard/10-plan.sh wizard/p1.sh wizard.sh scripts/temporary/p1-post-download.sh
       - name: Confirm 27B candidate is not launchable
         run: |
