@@ -141,8 +141,8 @@ def invoke_model_action(model: str, action: str, *,
         return qwen_27b.run(["download", "--guided"] if guided else
                             ["plan", "--for-action", "download"],
                             as_json=as_json)
-    if selected == "flash-next" and action in ("prepare", "start", "wait",
-                                                "verify", "benchmark"):
+    if (selected == "flash-next" and capability["status"] == "GUARDED_P1"
+            and action in ("prepare", "start", "wait", "verify", "benchmark")):
         from wizard.menus.models import flash_next
         return flash_next.run(["guided"] if guided else ["plan", "--for-action", action],
                               as_json=as_json)
