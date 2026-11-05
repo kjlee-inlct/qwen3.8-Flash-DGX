@@ -19,7 +19,7 @@ USAGE = """Blazux Wizard (vLLM 0.32 only)
     --from-model flash-next --to-model 27b --json
   ./wizard.sh storage flash-next status --json
   ./wizard.sh operations system status --json
-  ./wizard.sh service manager status --json
+  ./wizard.sh service manager status --json\n  ./wizard.sh service manager health --json  read-only local API identity
   ./wizard.sh service manager plan --for-action restart --json
   ./wizard.sh model 27b plan --for-action download --json
   ./wizard.sh model 27b download --guided
@@ -148,7 +148,7 @@ def interactive() -> int:
         if observed.get("download_running"):
             print("NVIDIA 27B: download container RUNNING (completion unverified)")
         print("  1. Select / run model")
-        print("  2. Service status / logs / recovery")
+        print("  2. Service health / status")
         print("  3. Advanced / recipes / storage")
         print("  0. Exit")
         try:
@@ -176,7 +176,7 @@ def interactive() -> int:
                 except ValueError:
                     print("Unknown model; no operation executed.")
         elif action == "2":
-            service_menu.run(["status"])
+            service_menu.run(["health"])
             print("Service mutations remain guarded; see Advanced for plans.")
         elif action == "3":
             _advanced_menu()
