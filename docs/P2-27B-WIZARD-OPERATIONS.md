@@ -90,3 +90,27 @@ DGX operator evidence: after updating to `3f4ef68`, `./wizard.sh model 27b statu
 `inventory/health/logs` should be live read-only snapshots, showing active Docker name/image ID, served model ID, host port binding and API response independently. `start/stop/restart/rollback` require ownership validation, fresh signed-off plan, lock, preservation of existing service and tested recovery. A service-name collision, occupied `:8000`, inability to inspect Docker, or missing known-good rollback blocks action. Proxy/gateway are configuration plans until implemented and verified. Keep external `:8000/v1` stable and avoid one-GPU double loading.
 
 **SOURCE implementation in this change:** menu/router and fail-closed plans/CPU tests. Actual NVIDIA download, service operations, DGX/GPU and full P2 benchmark: **NOT_RUN**.
+
+## 2026-11-05 — pinned downloader + single active GPU model policy (supersedes earlier source-only download note)
+
+The operator confirms **one active GPU model per DGX**. Flash-Next and NVIDIA 27B use the **same external `:8000/v1`**; 27B start **requires** a separately approved Flash-Next stop and port release. A cache download is allowed concurrently with the current Flash-Next service because it does not request GPU devices, publish a host port or alter containers. Never infer runtime completion from a download.
+
+**Verified public pin:** `nvidia/Qwen3.8-27B-NVFP4` at exact revision `482ca0f3832238542f8f5295dde86b5f22711d80`, published with 3 safetensors shards (~21.9GB). Source: https://huggingface.co/nvidia/Qwen3.8-27B-NVFP4/tree/482ca0f3832238542f8f5295dde86b5f22711d80 . This source revision is verified; **single GB10 vLLM-0.32 runtime compatibility remains unverified**.
+
+**Download operator flow** (safe by default, CPU source tested, actual DGX download NOT_RUN until operator execution):
+
+```bash
+cd ~/Workspace/llm/blazux-orcarouter
+git pull --ff-only origin feature/recipe-wizard-handoff
+./wizard.sh model 27b plan --for-action download --json
+# If status=READY_TO_REQUEST_APPROVAL and plan_id is non-null:
+./wizard.sh model 27b download --guided
+```
+
+The `--guided` path prints the exact current plan and requires typing the complete `plan_id`, then regenerates and checks the plan under an exclusive lock before any download. Alternatively use the same Wizard CLI with `download --execute --approve-plan FULL_PLAN_ID`. It executes a **pinned-image, exact-revision HF CLI** in its own `qwen38-27b-dl` Docker container, with an existing host-mounted cache, no `--gpus`, no published port and no `flash setup`/service stop. It enforces cache availability, Docker inventory and image SHA256, at least 35GiB available disk headroom, inode headroom, no name conflict or competing transfer, and a ten-minute plan-fingerprint window. Conservative headroom is an operational guard, not a model-memory estimate. Every successful or failed transfer attempt writes local bounded JSON evidence under `~/.local/state/blazux-wizard/p2/evidence`, and re-audits the exact immutable snapshot.
+
+Explicit revision downloads do not necessarily update HF `refs/main`; the P2 auditor now selects an existing pinned snapshot directly if `--expected-revision` is given. `SOURCE_FILES_PRESENT_PINNED_CANDIDATE` means files are visible and validated at the expected SHA, **not** P2 runtime readiness.
+
+**Service/manifest source contract:** `runtimes/service-policy.json` defines model identities, one-model rule, host port and stop-before-start/restore constraints. `./wizard.sh service manager inventory --json` derives a read-only manifest from current Docker/port observations. `scripts/manager/service_journal.py` provides an append-only, generation-checked, atomic local state journal for future approved transitions; no active switching executor calls it yet. Docker inventory alone is not proof of actual GPU residency or served API model ID, so these fields remain explicitly unverified. Service stop/start/switch/rollback need a separately implemented and approved transaction with API/GPU identification.
+
+**P1 protection:** preserve `qwen38-flash`, its checkpoint/image/cache, OpenWebUI clients and current host API. Download approval **cannot** authorize a GPU start or old service stop. No deletion as an implicit capacity remedy. If preflight is BLOCKED, return the JSON blocker for a code/host-specific remedy before any download.
