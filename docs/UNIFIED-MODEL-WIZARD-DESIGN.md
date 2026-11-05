@@ -97,3 +97,14 @@ API namespace for new selection: `./wizard.sh select 27b --json` = read-only mod
 4. Existing CLI aliases and P1 guarded implementation still pass prior CPU suites.
 5. GitHub PR and CPU CI pass; real service/download/GPU state is not modified by this batch.
 
+
+## 7. Batch B source-only progress (2026-11-05)
+
+- Added `scripts/manager/service_health.py`: bounded, **GET-only**, fixed loopback `127.0.0.1:8000` `/health` and `/v1/models` with capped responses/timeouts, matching expected served model ID. This is proof of **API identity only**, not GPU exclusivity or full runtime qualification. The Service root choice now runs this explicit read-only health check. Logs remain unimplemented/guarded.
+- Added `scripts/manager/service_transition_preview.py`: **non-executable** read-only preview of `OBSERVED → PLANNED → OLD_STOPPING → OLD_STOPPED(port free) → NEW_STARTING → NEW_VERIFYING → COMMITTED`, with explicit rollback `ROLLBACK_STARTING → RESTORED/RECOVERY_FAILED`. It requires target asset/runtime qualification, actual API and GPU identity, source recovery proof and exact separate approval before any future executor may act. The preview currently always includes `SERVICE_TRANSITION_EXECUTOR_NOT_IMPLEMENTED` and `plan_id=null`.
+- Model selection includes a `transition_preview` only if an **other** managed inference model is observed. The preview is information, not an operation. No download, service or GPU mutation was executed during this development.
+- Added CPU mocked tests and GitHub workflow coverage for health/identity mismatch, malformed/oversized HTTP, source+target gating, stop-before-start, rollback and no execution.
+
+### Deferred runtime gates
+
+Before a future launch can be enabled: pin target model-compatible vLLM 0.32 ARM64 image/loader; validate actual GPU memory constraints and served ID; verify the current API model independently; test Flash-Next recovery from deliberate failed target start; allow rollback only with a fresh scoped operator approval. Until then, `select 27b` after completed download reports `SOURCE_PRESENT_UNQUALIFIED`.
