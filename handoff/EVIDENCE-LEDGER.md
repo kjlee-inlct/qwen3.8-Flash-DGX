@@ -1,3 +1,9 @@
+## 2026-11-05 — First DGX NVIDIA 27B transfer and unified Wizard source
+
+- **Actual DGX operator terminal:** `./wizard.sh model 27b download --guided` with exact approved plan id `e7d3ee776b65c3c5e3395fbeff5d0d739ef432028c030df8d604578412570c49`, `Fetching 19 files: 84% (16/19)`. Scope DGX NETWORK/DISK, actual transfer **STARTED**; completion, source checksum/index audit and outcome evidence **NOT_OBSERVED**. Existing `qwen38-flash` still Up with external host :8000 at initial plan.
+- GitHub SOURCE: `docs/UNIFIED-MODEL-WIZARD-DESIGN.md`, `wizard/quickstart.py`, three-choice root TTY menu, live `download_running` manifest, unqualified Orcarouter policy, new CPU test matrix and legacy CLI compatibility. This is **SOURCE/CI evidence only**, no DGX UI update or GPU execution.
+- Final HEAD CI must be checked after all documentation and tests. Old P1 bounded verify/benchmark PASS remains historical and does not imply 27B qualification.
+
 ## 2026-11-05 — Guided NVIDIA download refusal evidence and correction
 
 - Actual DGX console: operator supplied the full Wizard-computed plan ID `b190c936072038bc55c14c62dd2f9a63e3ddbf5c2e1ebbf0d1710551a7ec21ce`. Wizard returned `status=BLOCKED`, `executed=false`, `issues=[PREFLIGHT_CHANGED_REPLAN_REQUIRED]`. There is **no actual NVIDIA download execution evidence**.
