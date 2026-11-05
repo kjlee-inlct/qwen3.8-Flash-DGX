@@ -1,3 +1,21 @@
+## 2026-11-06 — Post-serve-split DGX receipt and CPU-only import diagnostics
+
+Actual DGX after update through `99dde4c`: `./scripts/serve_27b.sh --status` succeeded as a read-only audit of immutable revision `482ca0f3832238542f8f5295dde86b5f22711d80` (ModelOpt FP8 208 + NVFP4 193, 401 total). `./scripts/serve_27b.sh --plan` returned `api_identity_confirmed=true` for current Flash-Next `:8000`, original `qwen38-flash` local image ID equal to target 27B candidate ID, and a **blocked non-executable** `modelopt_mixed` 8192/seqs1/0.70/eager argv. No Docker run for 27B or service stop/change occurred.
+
+Next **separate and explicit CPU-only test** (does not request a GPU, weights or API port):
+
+```bash
+cd ~/Workspace/llm/blazux-orcarouter
+git status -sb
+git pull --ff-only origin feature/recipe-wizard-handoff
+./scripts/temporary/p2-27b-loader-import-audit.sh --plan
+./scripts/temporary/p2-27b-loader-import-audit.sh --execute-cpu-only
+```
+
+`--plan` is metadata-only (`docker image inspect`). `--execute-cpu-only` starts one transient `--rm --runtime runc --network none --read-only --memory 2g --cpus 2` container with no GPU/port/weights mount. It checks Python import of installed `vllm.model_executor.models.qwen3_5` and `...quantization.modelopt`, model/config classes and `ModelOptMixedPrecisionConfig.get_name()==modelopt_mixed`. This is **not a model load or actual GPU test**; restricted sandbox import failures do not alone prove GPU incompatibility. Do not execute `command_preview`; 27B start/switch/rollback are blocked pending separately scoped GPU transition approval. Source CI `834c750`: **333/333 PASS**.
+
+---
+
 ## 2026-11-06 — Separate serving script layout
 
 The model-specific server entrypoints are now:

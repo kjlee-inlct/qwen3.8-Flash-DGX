@@ -1,3 +1,9 @@
+## D-027 — 2026-11-06 — Opt-in CPU loader import is distinct from GPU runtime acceptance
+
+After actual DGX read-only `serve_27b.sh --status/--plan` success, separately check installed Python imports of vLLM Qwen3.5 and `ModelOptMixedPrecisionConfig`, plus the declared quantization name `modelopt_mixed`, in a bounded **operator-opted-in CPU-only runc container**. Do not mount model cache, publish ports, request GPUs, start the vLLM engine, call inference or modify the original Flash-Next process. The wrapper must default to `--plan`. Import failure in this restricted environment is ambiguous; even a clean import/class/name result does not qualify GB10 GPU kernels, checkpoint loading, memory fit, API, benchmarks or rollback. GPU/start/transition requires separately scoped approval.
+
+---
+
 ## D-026 — 2026-11-06 — Serving scripts split per model, preserve legacy call path
 
 Choose model-specific serving entrypoints: `scripts/serve_flash-next.sh` contains original Flash-Next PLE/MTP/QSA implementation; `scripts/serve_27b.sh` is an independent NVIDIA ModelOpt entrypoint (initially plan/status only); `scripts/serve.sh` remains default-compatible Flash-Next dispatcher with optional explicit `27b` selection. `./flash serve` retains existing Flash-Next behavior and tests. Do not inherit Flash-Next-only PLE/MTP/hybrid settings into 27B and never allow 27B to start/switch without separately approved, exact-plan executor with tested old-service restore. `serve.sh` with no args is **not** a harmless preview: it keeps legacy Flash-Next start behavior. Prefer explicit `scripts/serve_27b.sh --plan` for P2 read-only evidence.

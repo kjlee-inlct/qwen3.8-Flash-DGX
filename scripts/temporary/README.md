@@ -1,3 +1,9 @@
+## P2 CPU-only vLLM Qwen3.5 / ModelOpt Python loader import probe
+
+`./scripts/temporary/p2-27b-loader-import-audit.sh --plan` (default; only Docker image inspect) previews exact local image ID with no container. `--execute-cpu-only` explicitly opts into **one disposable read-only CPU runc container** with network disabled, no GPU, no HF model cache or host port, 2 GiB RAM limit, 2 CPUs and a Python module/class/name import check. The result reports individual checks and retains `runtime_qualified=false`, `gpu_verified=false`, `launch_authorized=false` even when all imports pass. An import failure may reflect the restricted sandbox rather than real GPU model incompatibility. **Do not treat this as approval** for 27B startup or switching. Implementation `scripts/manager/p2_27b_loader_import_audit.py`; unit tests `tests/test_p2_27b_loader_import_audit_cpu.py`.
+
+---
+
 ## P2 static image source probe — no GPU or API mutation
 
 For downloaded NVIDIA 27B, the installed-image source check is available as `./scripts/temporary/p2-27b-image-audit.sh --plan` (Docker image-inspect only), or operator-selected `./scripts/temporary/p2-27b-image-audit.sh --execute-cpu-only` (creates and removes a restricted runc container with network disabled, no GPU and no host port). It AST-parses the installed vLLM 0.32 image's model registry and ModelOpt code. `PASS`-like static output is **not** a model-load, GPU, API or recovery acceptance; do not use it as a model-lifecycle approval. See `docs/P2-27B-WIZARD-OPERATIONS.md`.

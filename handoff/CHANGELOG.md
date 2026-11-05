@@ -1,3 +1,9 @@
+## 2026-11-06 — Post-split DGX accepted read-only 27B entrypoint; new opt-in CPU import probe
+
+Reconciled real DGX fast-forward and actual `serve_27b.sh --status/--plan` JSON, including verified original Flash-Next API identity and identical original/target local vLLM 0.32 image IDs. Added isolated `scripts/manager/p2_27b_loader_import_audit.py`, `scripts/temporary/p2-27b-loader-import-audit.sh`, and 8 CPU tests. It imports installed vLLM Qwen3.5 and ModelOpt class and verifies `get_name()=modelopt_mixed` under restricted CPU runc (opt-in; not run on DGX yet); no inference/weights/GPU/cache/network/ports. Source CI `834c750` **333/333 PASS**; 27B GPU/service stop/start/switch remains blocked.
+
+---
+
 ## 2026-11-06 — Separate dedicated Flash-Next/27B server entrypoints
 
 Moved existing Flash-Next launch implementation into executable `scripts/serve_flash-next.sh` and routed `./flash serve` directly to it. Replaced `scripts/serve.sh` with compatible default Flash-Next dispatcher and explicit 27B selection; added executable `scripts/serve_27b.sh` exposing only `--plan`/`--status` (read-only) while GPU start/switch remains blocked. Added 10 CPU regressions, executable-mode checks and CI workflow coverage for both new files. Source CI `67a54afc`: 325/325 PASS. No inference service changes, commits/merges to main or 27B GPU launch.

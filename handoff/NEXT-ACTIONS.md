@@ -1,3 +1,13 @@
+## 2026-11-06 — Next controlled 27B loader import evidence after successful DGX serve split
+
+- [x] DGX ran both dedicated entrypoint `./scripts/serve_27b.sh --status` and `--plan` after fast-forward to `99dde4c`; correct read-only outputs, no 27B start or service modification. Existing Flash-Next `qwen38-flash` API identity **confirmed**, original image ID equals candidate 27B local image ID, and ModelOpt source mix is 208 FP8 + 193 NVFP4.
+- [x] Implement isolated CPU-only import probe `p2-27b-loader-import-audit.sh` and 8 unit regressions; source `834c750` CI 333/333 PASS.
+- [ ] DGX: after clean `git status -sb` and `git pull --ff-only origin feature/recipe-wizard-handoff`, execute `./scripts/temporary/p2-27b-loader-import-audit.sh --plan`. Optional separately opted-in CPU container `--execute-cpu-only` may test installed vLLM Qwen3.5 and ModelOpt import/class/name with 2GiB/2CPU/no network/GPU/cache/ports. Report structured JSON only. A restricted CPU sandbox import failure is **not** a GPU incompatibility verdict.
+- [ ] Reconcile actual ModelOpt name/import facts with candidate `--quantization modelopt_mixed`; verify 27B image provenance, vLLM real loader and GB10 kernels, memory/context and original Flash-Next restore before any approved GPU transition. Keep P2 startup, service stop/switch and rollback blocked until scoped approval.
+- [ ] Keep Draft PR #1 unmerged. Do not execute `command_preview` by hand; no duplicate active inference models.
+
+---
+
 ## 2026-11-06 — Model-specific serving scripts delivered
 
 - [x] Split legacy `scripts/serve.sh` into default-compatible dispatcher + `scripts/serve_flash-next.sh` (existing executable) + `scripts/serve_27b.sh` (read-only plan/status). `./flash serve` explicitly uses Flash-Next file.

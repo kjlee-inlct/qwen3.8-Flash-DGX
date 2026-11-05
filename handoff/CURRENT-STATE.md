@@ -1,3 +1,11 @@
+## 2026-11-06 — Real DGX after model-specific serve split; CPU-only Python loader import probe prepared
+
+**Actual operator DGX evidence (new):** clean source pull `b1c9b2e..c44aa72`, then `c44aa72..99dde4c` (split `serve.sh` entrypoints into Flash-Next/27B). Operator ran `./wizard.sh model 27b plan --for-action start --launch-preview --json` before the split, then `./scripts/serve_27b.sh --status` and `--plan` **after the split**; both paths returned the expected read-only JSON, no errors. Latest `--status`: exact pinned NVIDIA 27B source/architecture ModelOpt FP8 208 + NVFP4 193, image ARM64 v0.32, `runtime_qualified=false`, six remaining GPU/start/rollback issues. Latest `--plan`: `observed_source.api_identity_confirmed=true`, source container `qwen38-flash`, original source image ID `sha256:9479fc92a9244fcf137afb36ed778e07495e29663a81db193736fcaa1f15e137`, **identical to candidate 27B local image ID**; target `command_preview` includes pinned snapshot `482ca0f3832238542f8f5295dde86b5f22711d80`, `modelopt_mixed`, context 8192, max seqs 1, mem fraction 0.70, eager. Status `BLOCKED`, `executed=false`, `plan_id=null`, `operations_enabled=false`. Original Flash-Next API remains observed and identity-confirmed on :8000. This is **not** 27B GPU/loader/bench/rollback proof.
+
+**New source-only follow-up:** `scripts/manager/p2_27b_loader_import_audit.py` and `scripts/temporary/p2-27b-loader-import-audit.sh` for isolated CPU-only actual installed module imports and `ModelOptMixedPrecisionConfig.get_name() == modelopt_mixed`. Default `--plan` only inspects Docker image; explicit `--execute-cpu-only` uses ephemeral restricted runc/no GPU/network/cache/ports. The new import probe **has not been run on real DGX**. Source commit `834c750fc966f73c885fcfc5d81d054a60ae419e` CI `42112730764` **SUCCESS 333/333 CPU tests**. Even import PASS cannot authorize 27B GPU start.
+
+---
+
 ## 2026-11-06 — Model-specific serve entrypoints separated (Flash-Next behavior preserved)
 
 Operator requested model-specific serving files rather than maintaining Flash-Next and 27B launch details in one `serve.sh`.
