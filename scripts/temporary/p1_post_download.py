@@ -163,6 +163,21 @@ def session(*, runner=subprocess.run, input_fn=input, interactive=False,
             "scope": "DGX_INSPECTION_AND_EXPLICITLY_APPROVED_API"}
 
 
+
+def cache_diagnosis_summary(checks):
+    """A missing, failed or truncated optional diagnostic must never break a report."""
+    check = checks.get("cache_diagnosis", {})
+    if check.get("returncode") != 0 or check.get("truncated"):
+        return {"status": "UNAVAILABLE"}
+    try:
+        value = json.loads(check["stdout"])
+        if isinstance(value, dict) and value.get("type") == "P1_READ_ONLY_CACHE_DIAGNOSIS":
+            return value
+    except (KeyError, TypeError, ValueError):
+        pass
+    return {"status": "UNAVAILABLE"}
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--inspect-only", action="store_true")
@@ -202,13 +217,7 @@ def main(argv=None):
         "plans": {k: {"ready": v["ready"],
                        "issues": v["plan"].get("issues", [])}
                   for k, v in result["plans"].items()},
-        "cache_diagnosis": (
-            json.loads(result["checks"]["cache_diagnosis"]["stdout"])
-            if result["checks"]["cache_diagnosis"]["returncode"] == 0
-               and not result["checks"]["cache_diagnosis"]["truncated"]
-               and result["checks"]["cache_diagnosis"]["stdout"].lstrip().startswith("{")
-            else {"status": "UNAVAILABLE"}
-        ),
+        "cache_diagnosis": cache_diagnosis_summary(result.get("checks", {})),
         "actions": {k: {"status": v["status"], "reason": v.get("reason"),
                         "evidence": (v.get("wizard_result") or {}).get("evidence")}
                     for k, v in result["actions"].items()},

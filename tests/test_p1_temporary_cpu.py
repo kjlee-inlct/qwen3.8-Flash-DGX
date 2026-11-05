@@ -157,6 +157,20 @@ class PostDownloadCPU(unittest.TestCase):
         self.assertEqual(len(rec["stdout"]), 65536)
         self.assertTrue(rec["truncated"])
 
+    def test_optional_diagnostic_missing_never_breaks_report(self):
+        self.assertEqual(flow.cache_diagnosis_summary({}),
+                         {"status": "UNAVAILABLE"})
+        self.assertEqual(flow.cache_diagnosis_summary({
+            "cache_diagnosis": {"returncode": 1, "stdout": "", "truncated": False}
+        }), {"status": "UNAVAILABLE"})
+
+    def test_diagnostic_result_parses_without_executing(self):
+        facts = {"type": "P1_READ_ONLY_CACHE_DIAGNOSIS", "refs": {"main": "a" * 40}}
+        check = {"cache_diagnosis": {
+            "returncode": 0, "stdout": json.dumps(facts), "truncated": False
+        }}
+        self.assertEqual(flow.cache_diagnosis_summary(check), facts)
+
     def test_results_saved_outside_repository(self):
         fake_data = {"preflight": {}, "plans": {}, "actions": {},
                      "checks": {}, "stage": "P1"}
