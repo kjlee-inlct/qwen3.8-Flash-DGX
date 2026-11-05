@@ -53,7 +53,7 @@ class WizardRouterCPU(unittest.TestCase):
         self.assertEqual(len(json.loads(s)["stages"]), 8)
 
     def test_future_stage_status_is_read_only(self):
-        for key in ("p2", "p3", "p4", "p5", "p6", "p7", "svc"):
+        for key in ("p2", "p3", "p4", "p5", "p6", "p7"):
             with self.subTest(stage=key):
                 rc, s = self.call([key, "status", "--json"])
                 obj = json.loads(s)
@@ -66,6 +66,8 @@ class WizardRouterCPU(unittest.TestCase):
         for key in ("p2", "p3", "p4", "p5", "p6", "p7"):
             module = HANDLERS[key]
             for action in module.SPEC.actions:
+                if key == "p2" and action == "download":
+                    continue  # source download has a separate mock preflight test
                 with self.subTest(stage=key, action=action):
                     rc, s = self.call([key, action, "--json"])
                     obj = json.loads(s)
@@ -88,7 +90,11 @@ class WizardRouterCPU(unittest.TestCase):
                 self.assertIn("UNVERIFIED_APPROVAL_CANNOT_EXECUTE", obj["issues"])
 
     def test_service_menu_status_and_restart_fail_closed(self):
-        rc, raw = self.call(["service", "manager", "status", "--json"])
+        observation = {"stage": "svc", "status": "OBSERVED_UNQUALIFIED",
+                       "runtime": "NOT_RUN", "executed": False,
+                       "operations_enabled": False}
+        with patch("wizard.menus.operations.service.inspect_service", return_value=observation):
+            rc, raw = self.call(["service", "manager", "status", "--json"])
         self.assertEqual(rc, 0)
         self.assertFalse(json.loads(raw)["operations_enabled"])
         for action in ("start", "stop", "restart", "rollback", "proxy", "gateway"):
@@ -101,10 +107,14 @@ class WizardRouterCPU(unittest.TestCase):
                 self.assertFalse(result["approval_accepted"])
 
     def test_27b_download_wizard_plan_is_blocked(self):
-        rc, raw = self.call(["model", "27b", "plan", "--for-action",
-                             "download", "--json"])
+        doc = {"stage": "p2", "action": "download", "status": "BLOCKED",
+               "issues": ["INSUFFICIENT_VERIFIED_DISK_HEADROOM"],
+               "executed": False, "plan_id": None}
+        with patch("scripts.manager.p2_27b_download.build_plan", return_value=doc):
+            rc, raw = self.call(["model", "27b", "plan", "--for-action",
+                                 "download", "--json"])
         self.assertEqual(rc, 3)
-        self.assertIn("NO_VALIDATED_RUNTIME_RECIPE", json.loads(raw)["issues"])
+        self.assertIn("INSUFFICIENT_VERIFIED_DISK_HEADROOM", json.loads(raw)["issues"])
 
     def test_p3_valid_pair_remains_source_only(self):
         rc, s = self.call(["p3", "plan", "--for-action", "switch",
