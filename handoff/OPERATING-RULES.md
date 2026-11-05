@@ -1,3 +1,11 @@
+## R1H — One model per DGX, one external API port (operator-confirmed 2026-11-05)
+
+- `runtimes/service-policy.json` is the reviewed desired-state policy. Exactly **one active GPU inference model** may run. Both NVIDIA Flash-Next and NVIDIA 27B must use host `:8000/v1` when active; no dual loading or permanent secondary port.
+- A service transition from Flash-Next to 27B requires: validated pinned 27B files/image → fresh live service+GPU+API identity manifest → exact approval and rollback resources → stop Flash-Next → verify port 8000 free → start 27B → verify served ID and bounded API health → commit; on failed startup restore Flash-Next and record recovery outcome. Reverse direction has symmetric gates.
+- The model **download only** may overlap Flash-Next inference because it uses disk/network, without GPU, host port binding, service stop or API change. Download plan approval cannot authorize a transition, start, stop, rollback, cleanup or GPU use.
+- Stored manifests and journals document desired/previous state, but **actual Docker/socket/API/GPU evidence wins**. Incomplete or contradictory observations block transitions; no success inferred from a stale manifest. The current implementation provides read-only live manifest and an approved downloader, **not** a qualified runtime switch executor.
+- Never run a 27B start through generic `flash serve` that overwrites/stops Flash-Next. Treat P3 as independent service handover acceptance and P2 first runtime as separately approved action.
+
 # Project operating rules (must follow in every conversation)
 
 ## R1G — P1 live evidence and P2 guarded progression (2026-11-05)
