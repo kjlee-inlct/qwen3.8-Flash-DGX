@@ -1,3 +1,12 @@
+## 2026-11-05 — after model-first Batch A/source-only B
+
+- [x] Implement root model selection, read-only lifecycle plans and in-flight download suppression, preserving P1 and existing CLI.
+- [x] Add bounded GET-only service health/model identity observer and preview-only atomic stop/port-free/start/verify/rollback order.
+- [x] Add mock CPU tests and workflow coverage for model cases, API failures and transition gates.
+- [ ] At completion of **operator-owned** NVIDIA download, collect return code, `~/.local/state/blazux-wizard/p2/evidence/*.json` path and exact pinned cache inspection before calling P2 downloaded; do not touch current DGX worktree during transfer.
+- [ ] Next source batch: validate NVIDIA 27B vLLM 0.32 ARM64/GB10 loader+image, build start/wait/verify/bench adapter and real manifest-based service handover with scoped approval and recovery; do not enable live switching from preview alone.
+- [ ] On user-approved DGX validation window after receipt, verify model start/rollback and 27B API/bench; keep Flash-Next model weights/image intact.
+
 ## 2026-11-05 — model-first unified Wizard source continuation
 
 - [x] Record accepted D-020 UX design and source/acceptance gates; retain Flash-Next P1 backend.
