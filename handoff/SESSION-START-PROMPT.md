@@ -46,6 +46,10 @@ P1은 `doctor/plan`까지만 소스 구현되었으며 설치·기동·API 검�
 
 긴 명령 블록을 반복해서 보내는 대신, `scripts/temporary/`에 목적별 단일 임시 실행 스크립트와 CPU 모의 테스트/README를 생성하고 GitHub에 커밋하여 CI 및 handoff를 갱신합니다. 사용자는 기존 DGX 다운로드/기동 셸 체인이 모두 끝난 뒤 `git pull --ff-only`하고 스크립트 하나를 실행합니다. 스크립트는 ① 읽기 전용 환경 점검 → ② 최신 Wizard plan ID별 별도 승인된 검증·벤치 → ③ 결과 JSON/증거 경로 수집을 묶습니다. 승인이나 준비가 없으면 BLOCKED를 보고하고 GPU를 실행하지 않습니다. 서버/캐시 중단·삭제, 재다운로드, Git 자동 갱신, 로그 자동 업로드를 하지 않습니다. 스크립트 정리는 증거 영구 기록 후 별도 PR/커밋으로만 수행합니다. 상세 규칙은 `handoff/OPERATING-RULES.md` R1D, `scripts/temporary/README.md` 및 결정 D-016을 읽으세요.
 
+## 2026-11-05 — D-017, Blazux 기본 Flash-Next 호환과 GPU 허용
+
+사용자가 제공한 DGX 결과에서 `qwen3.8-flash-next` API ID를 확인했고, 원본 index/tokenizer와 Hybrid tokenizer는 실재하는 **외부 경로 심볼릭 링크**로서 새로운 Wizard가 과도하게 차단했습니다. Blazux 기본 `os.path.exists` 동작과 일치하도록 메타데이터 두 파일만 기존 링크를 허용하고 weight shard 탈출은 금지합니다. 사용자는 **기존 서비스 중단 없는 bounded P1 GPU/API 검증·벤치**를 별도의 plan-hash 입력 없이 허용했습니다. 최신 단일 스크립트 `bash scripts/temporary/p1-post-download.sh --auto-gpu`는 현재 plan ID를 내부에서 받아 Wizard에 재검증시킵니다. 원본 Docker 컨테이너 재기동/삭제, 모델 다운로드, Hybrid 재생성, P2–P7 전환은 별도 허가가 필요합니다. 사용자의 '서비스 없음' 설명과 실제 API 응답을 구분하여, 활성 모델 서버/포트를 보호해야 합니다.
+
 ## 진행 규칙
 
 `handoff/OPERATING-RULES.md`를 필수 규칙으로 적용하세요. 과거 Orcarouter 컨테이너와 API `:8000/v1`은 사용자가 서비스 삭제를 보고한 **역사적 환경**입니다. 이를 현재 실행 중으로 추정하지 말고, DGX의 실제 컨테이너/포트/이미지/캐시를 읽기 전용으로 새로 확인하세요. 새 NVIDIA Flash-Next 기본 목표 API는 `:8000/v1`이지만 현재 포트 점유는 미확인입니다. 기존 공유 이미지/모델 파일/HF 캐시/기타 컨테이너와 클라이언트는 확인 없이 변경하지 마세요. 정비창/모델 기동/GPU 사용/전환/삭제는 구체적 범위와 원복계획을 먼저 수립하고 별도 승인을 받아야 합니다. 문서상 P4가 있다고 해서 삭제 허가가 난 것은 아닙니다.

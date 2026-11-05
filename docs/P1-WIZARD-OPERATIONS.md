@@ -33,6 +33,25 @@ consent and HF cache deletion are never hidden in this wrapper.
 See `scripts/temporary/README.md` and D-016. If the original setup is still
 running, do **not** pull or invoke the script yet.
 
+## Operator-approved P1 GPU verification without typed per-step hash (D-017)
+
+**Scope:** user explicitly authorized only nondisruptive P1 GPU verification
+and bounded benchmark without per-step hash prompts. After `git pull`
+on the active branch use:
+
+```bash
+bash scripts/temporary/p1-post-download.sh --auto-gpu
+```
+
+The temporary bundle still calls the existing Wizard execution entrypoint
+with a **fresh exact plan_id per action** and checks the currently served
+`qwen3.8-flash-next` API ID and its current checkpoint/image state before
+doing anything. It will not stop/start/replace Docker services, download,
+modify Hybrid files or run if the current plan is BLOCKED. The operator's
+previous report identified source index/tokenizer and Hybrid tokenizer as
+existing external symlink targets; this compatibility fix is distinct from
+any claim of GPU proof. Return the generated JSON report for P1 acceptance.
+
 ## First, read-only inspection AFTER the original shell chain finishes
 
 ```bash

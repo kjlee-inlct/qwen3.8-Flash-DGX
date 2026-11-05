@@ -31,11 +31,23 @@ def _inside(path: Path, root: Path) -> bool:
         return False
 
 
+# Blazux's default Flash-Next launcher tests whether these metadata files
+# exist; its legitimate HF snapshots may symlink tokenizer/index metadata into
+# a shared location outside the model repository. These two *read-only*
+# metadata names must not be rejected solely for that link layout.
+# Shard data remains confined to the pinned model repository.
+SHARED_METADATA = frozenset(("tokenizer.json", "model.safetensors.index.json"))
+
+
 def _good_file(path: Path, root: Path) -> bool:
     try:
-        return (path.is_file() and path.stat().st_size > 0
-                and _inside(path, root))
-    except OSError:
+        if not path.is_file() or path.stat().st_size <= 0:
+            return False
+        if _inside(path, root):
+            return True
+        return (path.name in SHARED_METADATA and path.is_symlink()
+                and path.resolve(strict=True).is_file())
+    except (OSError, RuntimeError):
         return False
 
 

@@ -44,6 +44,8 @@ class FakeDGX:
             action = argv[3]
             status = self.verify_status if action == "verify" else self.benchmark_status
             body = json.dumps({"status": status, "evidence": "/tmp/mock-evidence.json"})
+        elif argv and argv[0] == "curl" and argv[-1].endswith("/v1/models"):
+            body = json.dumps({"data": [{"id": "qwen3.8-flash-next"}]})
         else:
             body = "{}" if "--json" in argv else "ok\n"
         return subprocess.CompletedProcess(argv, 0, body, "")
@@ -79,6 +81,49 @@ class PostDownloadCPU(unittest.TestCase):
         executions = [x for x in fake.events if "--execute" in x]
         self.assertEqual([x[3] for x in executions], ["verify", "benchmark"])
         self.assertTrue(all("--approve-plan" in x for x in executions))
+
+    def test_scoped_auto_gpu_executes_only_verify_then_benchmark(self):
+        fake = FakeDGX()
+        data = flow.session(runner=fake, auto_gpu=True)
+        self.assertEqual(data["actions"]["verify"]["status"], "PASS")
+        self.assertEqual(data["actions"]["benchmark"]["status"], "PASS")
+        executed = [c for c in fake.events if "--execute" in c]
+        self.assertEqual([x[3] for x in executed], ["verify", "benchmark"])
+        self.assertTrue(all(c[c.index("--approve-plan") + 1] == PLAN
+                            for c in executed))
+        self.assertFalse(any(c[0] == "docker" and
+                             any(x in c for x in ("stop", "rm", "run"))
+                             for c in fake.events))
+
+    def test_scoped_auto_gpu_never_ignores_wizard_block(self):
+        fake = FakeDGX()
+        fake.ready = False
+        data = flow.session(runner=fake, auto_gpu=True)
+        self.assertEqual(data["actions"]["verify"]["status"], "BLOCKED")
+        self.assertFalse(any("--execute" in x for x in fake.events))
+
+    def test_scoped_auto_gpu_never_benchmarks_on_verify_failure(self):
+        fake = FakeDGX()
+        fake.verify_status = "FAIL"
+        data = flow.session(runner=fake, auto_gpu=True)
+        self.assertEqual(data["actions"]["verify"]["status"], "FAIL")
+        self.assertFalse(data["actions"]["benchmark"]["executed"])
+
+    def test_missing_expected_model_id_blocks_auto_gpu(self):
+        class WrongModel(FakeDGX):
+            def __call__(self, argv, **kwargs):
+                out = super().__call__(argv, **kwargs)
+                if argv and argv[0] == "curl" and argv[-1].endswith("/v1/models"):
+                    out.stdout = json.dumps({"data": [{"id": "other"}]})
+                return out
+        fake = WrongModel()
+        data = flow.session(runner=fake, auto_gpu=True)
+        self.assertFalse(data["preflight"]["expected_api_model_present"])
+        self.assertFalse(any("--execute" in c for c in fake.events))
+
+    def test_auto_gpu_cannot_be_combined_with_inspect_only(self):
+        with self.assertRaises(SystemExit):
+            flow.main(["--inspect-only", "--auto-gpu"])
 
     def test_missing_benchmark_approval_blocks_only_benchmark(self):
         fake = FakeDGX()

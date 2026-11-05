@@ -86,6 +86,48 @@ class AssetAuditCPU(unittest.TestCase):
         (src / "model-00002.safetensors").symlink_to(outside)
         self.assertFalse(audit_checkpoint(self.cache)["source_complete"])
 
+    def test_external_shared_metadata_links_match_default_flash(self):
+        source = self.complete()
+        shared = Path(self.tmp.name) / "shared-metadata"
+        shared.mkdir()
+        for name in ("tokenizer.json", "model.safetensors.index.json"):
+            original = source / name
+            dest = shared / name
+            dest.write_bytes(original.read_bytes())
+            original.unlink()
+            original.symlink_to(dest)
+        outcome = audit_checkpoint(self.cache)
+        self.assertTrue(outcome["source_complete"], outcome)
+        self.assertEqual(outcome["source_issues"], [])
+
+    def test_external_shared_metadata_works_in_hybrid(self):
+        hybrid = self.hybrid()
+        external = Path(self.tmp.name) / "shared-tokenizer.json"
+        external.write_bytes((hybrid / "tokenizer.json").read_bytes())
+        (hybrid / "tokenizer.json").unlink()
+        (hybrid / "tokenizer.json").symlink_to(external)
+        outcome = audit_checkpoint(self.cache)
+        self.assertTrue(outcome["hybrid_ready"], outcome)
+
+    def test_missing_external_metadata_target_still_blocks(self):
+        source = self.complete()
+        (source / "tokenizer.json").unlink()
+        (source / "tokenizer.json").symlink_to(
+            Path(self.tmp.name) / "no-tokenizer.json")
+        outcome = audit_checkpoint(self.cache)
+        self.assertFalse(outcome["source_complete"])
+        self.assertIn("tokenizer.json", outcome["source_issues"])
+
+    def test_external_shard_symlink_still_blocked(self):
+        source = self.complete()
+        outside = Path(self.tmp.name) / "external-shard.safetensors"
+        outside.write_bytes(b"weight")
+        (source / "model-00001.safetensors").unlink()
+        (source / "model-00001.safetensors").symlink_to(outside)
+        outcome = audit_checkpoint(self.cache)
+        self.assertFalse(outcome["source_complete"])
+        self.assertIn("model-00001.safetensors", outcome["source_issues"])
+
     def test_shard_path_traversal_fails_closed(self):
         src = self.complete()
         self.write(src / "model.safetensors.index.json", json.dumps({

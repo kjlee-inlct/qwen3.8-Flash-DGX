@@ -115,7 +115,8 @@ def perform(action, plan_id, *, runner=subprocess.run,
 
 
 def session(*, runner=subprocess.run, input_fn=input, interactive=False,
-            inspect_only=False, approve_verify=None, approve_benchmark=None,
+            inspect_only=False, auto_gpu=False,
+            approve_verify=None, approve_benchmark=None,
             requests=3, max_tokens=64, seed=1234):
     """Phases: inspect -> individually approved verify/benchmark -> evidence."""
     checks = {key: call(argv, runner=runner, timeout=65)
@@ -123,7 +124,12 @@ def session(*, runner=subprocess.run, input_fn=input, interactive=False,
     activity = busy(runner=runner)
     clean = checks["tracked_changes"]["returncode"] == 0 and not checks["tracked_changes"]["stdout"].strip()
     branch = checks["branch"]["returncode"] == 0 and checks["branch"]["stdout"].strip() == BRANCH
-    allowed = bool(clean and branch and not activity["blocked"])
+    expected_api_model_present = (
+        checks["health"]["returncode"] == 0
+        and "qwen3.8-flash-next" in api_model_ids(checks)
+    )
+    allowed = bool(clean and branch and not activity["blocked"]
+                   and expected_api_model_present)
     plans, actions = {}, {}
     for action in ("verify", "benchmark"):
         info = plan(action, runner=runner, requests=requests,
@@ -138,8 +144,14 @@ def session(*, runner=subprocess.run, input_fn=input, interactive=False,
             )
             continue
         selected = approve_verify if action == "verify" else approve_benchmark
+        # The user's scoped authorization permits bounded GPU inference but
+        # never service restart, checkpoint changes or cleanup. In auto mode,
+        # derive a CURRENT action-bound hash; the Wizard still rebuilds the
+        # live plan and validates that exact hash before each API request.
+        if auto_gpu:
+            selected = info["plan"]["plan_id"]
         if not consent(action, info["plan"]["plan_id"], value=selected,
-                       interactive=interactive, input_fn=input_fn):
+                       interactive=interactive and not auto_gpu, input_fn=input_fn):
             actions[action]["reason"] = "independent_operator_approval_missing"
             continue
         if action == "benchmark" and actions["verify"]["status"] != "PASS":
@@ -162,7 +174,9 @@ def session(*, runner=subprocess.run, input_fn=input, interactive=False,
     return {"schema_version": 1, "stage": "P1",
             "preflight": {"expected_branch": BRANCH, "branch_ok": branch,
                           "tracked_tree_clean": clean,
-                          "operator_process": activity, "runtime_allowed": allowed},
+                          "operator_process": activity,
+                          "expected_api_model_present": expected_api_model_present,
+                          "runtime_allowed": allowed},
             "checks": checks, "plans": plans, "actions": actions,
             "scope": "DGX_INSPECTION_AND_EXPLICITLY_APPROVED_API"}
 
@@ -202,6 +216,8 @@ def api_model_ids(checks):
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--inspect-only", action="store_true")
+    ap.add_argument("--auto-gpu", action="store_true",
+                    help="run bounded GPU verify then bench with fresh internal Wizard hashes; no extra prompts")
     ap.add_argument("--approve-verify", help="fresh complete SHA-256 verify plan_id")
     ap.add_argument("--approve-benchmark", help="fresh complete SHA-256 bench plan_id")
     ap.add_argument("--requests", type=int, default=3)
@@ -211,8 +227,10 @@ def main(argv=None):
     ns = ap.parse_args(argv)
     if not (1 <= ns.requests <= 20 and 1 <= ns.max_tokens <= 256 and 0 <= ns.seed <= 2**31 - 1):
         ap.error("unsafe benchmark settings")
-    if ns.inspect_only and (ns.approve_verify or ns.approve_benchmark):
-        ap.error("inspect-only cannot include action approvals")
+    if ns.inspect_only and (ns.approve_verify or ns.approve_benchmark or ns.auto_gpu):
+        ap.error("inspect-only cannot include GPU execution")
+    if ns.auto_gpu and (ns.approve_verify or ns.approve_benchmark):
+        ap.error("auto-gpu is exclusive with manual plan approvals")
     root = ns.report_root.expanduser().resolve()
     cache = Path(os.environ.get("HF_CACHE", str(Path.home() / ".cache/huggingface"))).expanduser().resolve()
     if root.is_relative_to(ROOT.resolve()) or root.is_relative_to(cache):
@@ -222,7 +240,7 @@ def main(argv=None):
     report.mkdir(mode=0o700)
     print("REPORT_DIR=" + str(report), flush=True)
     result = session(interactive=sys.stdin.isatty() and not ns.inspect_only,
-                     inspect_only=ns.inspect_only,
+                     inspect_only=ns.inspect_only, auto_gpu=ns.auto_gpu,
                      approve_verify=ns.approve_verify,
                      approve_benchmark=ns.approve_benchmark,
                      requests=ns.requests, max_tokens=ns.max_tokens, seed=ns.seed)

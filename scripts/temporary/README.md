@@ -105,3 +105,32 @@ All changes are source/CPU only; CI 2/2 PASS, 145 tests/job.
 
 **Action:** `bash scripts/temporary/p1-post-download.sh --inspect-only`
 after Git Pull. No automatic repair/download, Hybrid rewrite or service changes.
+
+## D-017: Blazux metadata links and opt-in automatic GPU testing
+
+Operator's actual report found source `model.safetensors.index.json` and
+`tokenizer.json`, plus Hybrid `tokenizer.json`, resolve to existing symlink
+targets outside their model-repository directory. P1's new strict checker
+previously marked these missing, but upstream Blazux follows file symlinks.
+We now accept these **two nonempty metadata link types only**; all indexed
+weight shards still require in-repo targets and valid bounded JSON indexing.
+`cache_diagnosis.*_metadata.*.p1_metadata_link_compatible` explains what
+was accepted, without exposing target paths or copying files.
+
+**GPU permission (operator granted 2026-11-05):** to use the currently
+responding Flash-Next API for bounded, non-disruptive tests **without typing
+plan IDs at prompts**, invoke after Git Pull:
+
+```bash
+bash scripts/temporary/p1-post-download.sh --auto-gpu
+```
+
+This flag only permits the existing Wizard's `verify` and `benchmark`
+actions after the same current-pinned-plan checks, with fresh action-specific
+plan IDs passed internally. P1 verify (text/tool/vision) must PASS before
+a short SSE benchmark (default 3 requests, 64 max tokens, seed 1234).
+It does **not** authorize `prepare`, `start`, `serve`, `stop`, `setup`,
+download, Docker replacement, Hybrid repair, model deletion, switching or
+gateway changes. No active GPU run is claimed until the operator supplies
+real evidence. `--inspect-only` remains fully non-executing.
+

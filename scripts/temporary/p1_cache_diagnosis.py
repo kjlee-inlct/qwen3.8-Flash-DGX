@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
-from scripts.manager.p1_assets import audit_checkpoint, _audit_files, SHA40
+from scripts.manager.p1_assets import audit_checkpoint, _audit_files, SHA40, SHARED_METADATA
 
 REQUIRED_METADATA = ("model.safetensors.index.json", "tokenizer.json")
 
@@ -30,6 +30,16 @@ def probe_file(path: Path, repository: Path) -> dict:
     except (OSError, RuntimeError):
         status, size = ("DANGLING_SYMLINK" if linked else "UNREADABLE"), None
     info = {"status": status, "symlink": linked, "size_bytes": size}
+    if status == "TARGET_OUTSIDE_REPOSITORY" and linked:
+        # Blazux follows existing metadata symlinks. These may be valid.
+        # Never mark arbitrary external shard links compatible.
+        try:
+            info["p1_metadata_link_compatible"] = (
+                path.name in SHARED_METADATA and path.stat().st_size > 0)
+            info["resolved_target_size_bytes"] = path.stat().st_size
+        except OSError:
+            info["p1_metadata_link_compatible"] = False
+            info["resolved_target_size_bytes"] = None
     if path.name == "model.safetensors.index.json" and size is not None:
         info["exceeds_old_16mib_gate"] = size > 16 * 1024 * 1024
         info["exceeds_current_64mib_gate"] = size > 64 * 1024 * 1024

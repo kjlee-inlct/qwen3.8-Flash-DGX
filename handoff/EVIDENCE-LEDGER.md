@@ -123,6 +123,14 @@ Use an append-only entry for every meaningful result. Never substitute README cl
 - **Operator DGX prior evidence:** source files `model.safetensors.index.json`, `tokenizer.json` failed `_good_file` metadata validation; Hybrid `tokenizer.json` failed with `.prepared` present. HF blob incomplete-count=0, refs/main valid. Exact failure mode (missing vs dangling symlink vs zero-size) NOT YET OBSERVED. No actual P1 Wizard GPU/API workload BENCH acceptance.
 - **Next**: `git pull --ff-only` then one read-only temporary wrapper; review exact file metadata and served API ID. No guessed setup/download/prepare, and no modifying current services.
 
+## E-20261105-14 — DGX confirms externally linked Flash-Next metadata
+
+- **Operator-supplied output:** `/home/inlc/blazux-p1-reports/20261105T055849Z-084c3609/result.json` summary after `git pull` to `4708fe9ef396404d823ca385cde013b67e4d098a`. `api_model_ids=["qwen3.8-flash-next"]`; full snapshot revision `fc694b54fb0174e0913e6adf86691ef85a4ead47`; incomplete blob count 0. Original model index + tokenizer and Hybrid tokenizer: `TARGET_OUTSIDE_REPOSITORY`, `symlink=true`, successful target resolution; Hybrid index `PRESENT_NONEMPTY`, `size_bytes=31907813`; Hybrid marker present.
+- **Interpretation:** Existing Blazux-compatible shared metadata link layout was over-rejected by the new P1 file containment check. This alone does not prove that every model tensor is valid or any GPU workload passed. The API served ID indicates there is an API service listening despite the user's description of no existing services.
+- **Test authorization:** user approves bounded, non-disruptive GPU inference/benchmark without manual per-action hash entry. Implement `--auto-gpu` as a scoped script option; still validate each current Wizard plan ID and fail closed on changed preflight or failed P1 verification. No service lifecycle or cache changes authorized.
+- **Next DGX scope:** after CPU CI verifies, single `git pull --ff-only` and one `scripts/temporary/p1-post-download.sh --auto-gpu` call. Actual GPU/API/benchmark statuses remain `NOT_RUN` for the new version until operator evidence.
+
+
 ## Historic evidence not transferred
 
 ## E-20261105-04 — User-reported Flash-Next download still in progress

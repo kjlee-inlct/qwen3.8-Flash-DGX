@@ -1,5 +1,13 @@
 # Handoff changelog (append-only)
 
+## 2026-11-05 — H-016 — Preserve default Blazux shared-metadata layout and preauthorize bounded P1 GPU tests
+
+- Operator's latest actual DGX report showed expected API model ID `qwen3.8-flash-next`; original index/tokenizer and Hybrid tokenizer are symlinks resolving to existing files **outside** the model repo. 31,907,813-byte Hybrid index and `.prepared` exist, incomplete blob count=0. Older P1 checker falsely treated these metadata links as missing. This is a P1 source compatibility defect; no evidence that the full checkpoint needs re-downloading.
+- New asset verifier accepts only nonempty **metadata** symlinks (`model.safetensors.index.json`, `tokenizer.json`) across the model-repo boundary; weight shards remain root-pinned, JSON index still parsed with 64MiB cap. Source/Hybrid symlink, dangling link and escaped shard regression fixtures added. Diagnostic records compatibility flag and target size without copying model files.
+- User explicitly authorized GPU compute for non-disruptive P1 testing without per-action typed consent. Added `--auto-gpu` to the existing temporary wrapper. It checks expected served ID and health, takes current verify and benchmark hash IDs, invokes the original Wizard's same second-preflight protection, and never touches lifecycle/cache. P1 verify must PASS before bounded bench.
+- This is source-only implementation; do not claim actual P1 GPU PASS until new DGX operator evidence. D-017, R1E added to permanent rules; P2–P7 and destructive actions remain separately blocked.
+
+
 ## 2026-11-05 — H-015 — P1 metadata audit bug corrected and file-level diagnosis added
 
 - Blazux default NVIDIA checkpoint remains supported. NVIDIA Hugging Face `fc694b5` index is 31.3 MB; our P1 Python audit invented a 16 MiB JSON size ceiling, causing a false rejection for *otherwise valid indexes*. Changed to a bounded 64 MiB cap; added realistic >16MiB and still-over-limit regression tests. This is our new code defect, not an upstream Blazux limitation.

@@ -97,6 +97,20 @@ class CacheDiagnosisCPU(unittest.TestCase):
         self.assertTrue(row["source_metadata"]["model.safetensors.index.json"]["exceeds_old_16mib_gate"])
         self.assertFalse(row["source_metadata"]["model.safetensors.index.json"]["exceeds_current_64mib_gate"])
 
+    def test_shared_metadata_symlink_is_visible_and_compatible(self):
+        self.complete()
+        self.write(self.repo / "refs/main", self.rev)
+        path = self.repo / "snapshots" / self.rev / "tokenizer.json"
+        external = Path(self.cache.parent) / "shared-tokenizer.json"
+        external.write_bytes(path.read_bytes())
+        path.unlink()
+        path.symlink_to(external)
+        data = inspect(self.cache)
+        info = data["snapshots"][0]["source_metadata"]["tokenizer.json"]
+        self.assertEqual(info["status"], "TARGET_OUTSIDE_REPOSITORY")
+        self.assertTrue(info["p1_metadata_link_compatible"])
+        self.assertTrue(data["wizard_audit"]["source_complete"])
+
     def test_partial_weight_shard_is_reported_by_name(self):
         self.complete()
         self.write(self.repo / "refs/main", self.rev)
