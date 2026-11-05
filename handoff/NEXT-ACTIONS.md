@@ -1,3 +1,11 @@
+## P2 NVIDIA acquisition and service-manager follow-up (2026-11-05)
+
+- [x] User DGX read-only NVIDIA status: `NO_PINNED_LOCAL_SNAPSHOT`, 0 indexed shards, no local revision in inspected cache. Historical RadixArk evidence retained separately.
+- [x] Add Wizard top-level Service management menu and 27B `download` planning action; all stateful actions remain fail-closed.
+- [ ] Implement live read-only service/port/inode/disk/download-container inventory, immutable NVIDIA source pin and exact SHA256 plan with freshness and explicit approval.
+- [ ] Implement and CPU-test guarded resumable 27B download (without `flash setup`, active model replacement or deletion); then schedule/approve actual DGX download separately.
+- [ ] Qualify vLLM 0.32 single GB10 runtime and implement start/wait/verify/bench + rollback as a distinct action from downloading.
+
 ## P2 NVIDIA target selection (2026-11-05)
 
 - [x] Replace P2 active model ID and local HF cache directory with `nvidia/Qwen3.8-27B-NVFP4`; retain RadixArk DGX result as historical evidence only.
