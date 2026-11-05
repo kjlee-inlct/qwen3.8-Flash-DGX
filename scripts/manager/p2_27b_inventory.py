@@ -60,6 +60,57 @@ def _indexed_shards(snapshot: Path) -> tuple[list[str], list[str]]:
         return [], ["INVALID_INDEX_JSON"]
 
 
+
+def _configuration_facts(snapshot: Path) -> dict[str, Any]:
+    """Bounded, read-only config facts. Never infer vLLM/GB10 compatibility."""
+    path = snapshot / "config.json"
+    info = _file_info(path)
+    facts: dict[str, Any] = {
+        "status": "NOT_INSPECTED", "architecture": [], "model_type": None,
+        "quant_method": None, "context_length": None,
+        "vision_config_present": False, "vllm032_qualified": False,
+    }
+    if info["status"] != "PRESENT":
+        facts["status"] = info["status"]
+        return facts
+    if info["size_bytes"] > 1024 * 1024:
+        facts["status"] = "CONFIG_TOO_LARGE"
+        return facts
+    try:
+        config = json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(config, dict):
+            raise ValueError("not an object")
+        text = config.get("text_config")
+        text = text if isinstance(text, dict) else {}
+        architectures = config.get("architectures")
+        if isinstance(architectures, list):
+            facts["architecture"] = [
+                item for item in architectures[:8]
+                if isinstance(item, str) and 0 < len(item) <= 128
+            ]
+        model_type = config.get("model_type")
+        if isinstance(model_type, str) and len(model_type) <= 128:
+            facts["model_type"] = model_type
+        quant = config.get("quantization_config")
+        if not isinstance(quant, dict):
+            quant = text.get("quantization_config")
+        if isinstance(quant, dict):
+            method = quant.get("quant_method")
+            if isinstance(method, str) and len(method) <= 128:
+                facts["quant_method"] = method
+        context = text.get("max_position_embeddings",
+                           config.get("max_position_embeddings"))
+        if isinstance(context, int) and not isinstance(context, bool) and 0 < context <= 10_000_000:
+            facts["context_length"] = context
+        facts["vision_config_present"] = isinstance(
+            config.get("vision_config"), dict
+        )
+        facts["status"] = "PARSED_UNQUALIFIED"
+    except (OSError, UnicodeError, ValueError, TypeError, RecursionError):
+        facts["status"] = "INVALID_CONFIG_JSON"
+    return facts
+
+
 def inspect_27b(cache_root: Path | None = None) -> dict[str, Any]:
     cache = Path(cache_root or os.environ.get(
         "HF_CACHE", str(Path.home() / ".cache/huggingface"))).expanduser()
@@ -74,11 +125,13 @@ def inspect_27b(cache_root: Path | None = None) -> dict[str, Any]:
     revision = refs["main"] or refs["master"]
     snapshot = repo / "snapshots" / revision if revision else None
     metadata = {}
+    configuration = None
     shards: dict[str, dict[str, Any]] = {}
     issues = []
     if snapshot is None or not snapshot.is_dir():
         issues.append("NO_PINNED_LOCAL_SNAPSHOT")
     else:
+        configuration = _configuration_facts(snapshot)
         metadata = {n: _file_info(snapshot / n) for n in ESSENTIAL}
         for n, info in metadata.items():
             if info["status"] != "PRESENT":
@@ -110,7 +163,8 @@ def inspect_27b(cache_root: Path | None = None) -> dict[str, Any]:
     return {
         "stage": "p2", "model_repo": MODEL_ID,
         "cache_root": str(cache.resolve()), "local_revision": revision,
-        "refs": refs, "metadata": metadata, "shards": shards,
+        "refs": refs, "metadata": metadata,
+        "configuration": configuration, "shards": shards,
         "indexed_shard_count": len(shards),
         "incomplete_blob_files": incomplete,
         "source_files_present": source_files_present,
