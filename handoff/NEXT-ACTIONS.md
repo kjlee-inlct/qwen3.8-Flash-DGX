@@ -1,3 +1,10 @@
+## P2 download approval unblock (2026-11-05)
+
+- [x] Diagnose user-reported exact approval rejected by mutable preflight fingerprint; fix hash scope to stable safety fields. All storage/Docker/inode preconditions still rerun under download lock.
+- [x] CPU regressions for lock inode creation, uptime/free-space drift, actual approved execution, low disk rejection, and service/image identity change requiring reapproval.
+- [ ] Check final-HEAD GitHub Actions and PR. On DGX operator's next run: `git pull --ff-only origin feature/recipe-wizard-handoff`, then `./wizard.sh model 27b download --guided` and input the **new** full plan ID. Never reuse pre-fix ID `b190c936...`. Report evidence path / any new blockers.
+- [ ] Actual NVIDIA 27B full checkpoint receipt and verification remains `NOT_RUN` until the operator reports results; single model at host `:8000` policy unchanged.
+
 ## P2 immediate operator download and parallel source development (2026-11-05)
 
 - [x] Confirm NVIDIA exact model revision `482ca0f3832238542f8f5295dde86b5f22711d80` from authoritative source and add immutable SHA to invalid (not runtime-qualified) recipe.
