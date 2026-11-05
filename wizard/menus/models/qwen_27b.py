@@ -6,6 +6,7 @@ from pathlib import Path
 
 from ..common import Stage, run as run_stage
 from scripts.manager.p2_27b_inventory import inspect_27b
+from scripts.manager import p2_27b_download
 
 SPEC = Stage(
     "p2", "27B",
@@ -17,6 +18,11 @@ SPEC = Stage(
 
 def run(argv, *, as_json=False, dry_run=False):
     args = list(argv)
+    # Model acquisition is independent of GPU service operation and switching.
+    if args and (args[0] == "download"
+                 or (args[0] == "plan" and "--for-action" in args
+                     and args[args.index("--for-action") + 1:][:1] == ["download"])):
+        return p2_27b_download.main(args, as_json=as_json, dry_run=dry_run)
     if "--inspect-cache" not in args:
         return run_stage(SPEC, args, as_json=as_json, dry_run=dry_run)
     # A diagnostic option is NEVER a backdoor to unlock prepare/start/bench.
