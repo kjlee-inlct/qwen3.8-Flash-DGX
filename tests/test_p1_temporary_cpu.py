@@ -175,6 +175,27 @@ class PostDownloadCPU(unittest.TestCase):
         with self.assertRaises(SystemExit):
             flow.main(["--inspect-only", "--requests", "100"])
 
+    def test_reports_not_allowed_under_hf_cache(self):
+        with tempfile.TemporaryDirectory() as temp, \
+             patch.dict(flow.os.environ, {"HF_CACHE": temp}):
+            with self.assertRaises(SystemExit):
+                flow.main(["--inspect-only", "--report-root",
+                           str(Path(temp) / "reports")])
+
+    def test_operator_work_start_after_plan_blocks_execution(self):
+        class RacingDGX(FakeDGX):
+            def __call__(self, argv, **kwargs):
+                result = super().__call__(argv, **kwargs)
+                if "plan" in argv and "--for-action" in argv:
+                    self.active = True
+                return result
+        fake = RacingDGX()
+        data = flow.session(runner=fake, approve_verify=PLAN,
+                            approve_benchmark=PLAN)
+        self.assertFalse(any("--execute" in x for x in fake.events))
+        self.assertEqual(data["actions"]["verify"]["reason"],
+                         "operator_work_started_after_preflight")
+
     def test_reports_not_allowed_under_git(self):
         with self.assertRaises(SystemExit):
             flow.main(["--inspect-only",

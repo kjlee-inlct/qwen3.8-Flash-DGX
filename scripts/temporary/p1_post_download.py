@@ -139,6 +139,9 @@ def session(*, runner=subprocess.run, input_fn=input, interactive=False,
         if action == "benchmark" and actions["verify"]["status"] != "PASS":
             actions[action]["reason"] = "verification_not_passed"
             continue
+        if busy(runner=runner)["blocked"]:
+            actions[action]["reason"] = "operator_work_started_after_preflight"
+            continue
         result = perform(action, info["plan"]["plan_id"], runner=runner,
                          requests=requests, max_tokens=max_tokens, seed=seed)
         actions[action] = {"status": "FAIL", "executed": True, "command": result}
@@ -173,8 +176,9 @@ def main(argv=None):
     if ns.inspect_only and (ns.approve_verify or ns.approve_benchmark):
         ap.error("inspect-only cannot include action approvals")
     root = ns.report_root.expanduser().resolve()
-    if root.is_relative_to(ROOT.resolve()):
-        ap.error("report root must be outside the Git repository")
+    cache = Path(os.environ.get("HF_CACHE", str(Path.home() / ".cache/huggingface"))).expanduser().resolve()
+    if root.is_relative_to(ROOT.resolve()) or root.is_relative_to(cache):
+        ap.error("report root must be outside Git and HF model cache")
     root.mkdir(mode=0o700, parents=True, exist_ok=True)
     report = root / (datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ") + "-" + uuid4().hex[:8])
     report.mkdir(mode=0o700)
