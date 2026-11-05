@@ -1,5 +1,11 @@
 # Handoff changelog (append-only)
 
+## 2026-11-05 — H-005 — Restore executable bits and record CI failure
+
+- Commit `7e8f4a109a04c130a5dba0d73e3ece0881d85478` had a real **CI FAIL**: manifest 15/15 PASS; inventory 10/10 PASS; shell launcher 9/13 PASS and 4/13 FAIL, exit 126 because `flash`/`scripts/serve.sh` lost executable permissions in GitHub tree update.
+- Restored executable mode `100755` for both scripts; added a CPU regression test asserting launch scripts are executable and `bash -n` workflow checks. Rerun CI on new HEAD; preserve failed evidence instead of rewriting.
+- No DGX, Docker runtime, GPU, API port or model state changed.
+
 ## 2026-11-05 — H-004 — Flash-Next on legacy :8000 and source-safe inventory
 
 - User reports previous operating services deleted; current Docker/ports/images/weights on DGX **NOT OBSERVED**. Do not treat past Orcarouter container or model ID as current deployment state.

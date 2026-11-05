@@ -15,7 +15,7 @@
 | Old Preview repository | `kjlee-inlct/Qwen3.8-Flash-Next-NVFP4-BF16PLE-DGX-Spark`; frozen preservation, historic `feature/blazux-phase6-runtime-gates@2e6a5794b0fe282ae4bf6f4852acd919fea6d55a` |
 | New branch exact HEAD | **Read actual GitHub branch HEAD**. Do not embed a file's own eventual HEAD as authoritative; the branch commit changes when this file changes |
 | Draft PR | [#1 — recipe wizard roadmap and handoff](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/pull/1) against `main`; open, not merged |
-| PR CI | N1 at bf453aea: two CPU jobs PASS as verified 2026-11-04. For 2026-11-05 N2/port changes, independently verify latest PR HEAD and CI. |
+| PR CI | New 2026-11-05 implementation commit 7e8f4a1: manifest 15/15 PASS, Inventory 10/10 PASS; **4 launcher tests FAIL (exit 126)** because executable mode lost. Follow-up commit restores script modes and adds regression; **recheck HEAD CI**. |
 
 ## Operational environment — protect; verify fresh
 
@@ -34,7 +34,7 @@
 
 | Stage | Source/plan | CPU/CI | DGX/GPU | Release |
 |---|---|---|---|---|
-| P0 inventory + recipe/wizard architecture | `N1 schema + N2 inventory + default 8000 SOURCE_IMPLEMENTED`; N3 doctor/plan partial | N1 15 CPU PASS at prior SHA; new N2/launch tests **CI_RECHECK_REQUIRED** | `NOT_RUN` | `NOT_APPLICABLE` |
+| P0 inventory + recipe/wizard architecture | `N1 schema + N2 inventory + default 8000 SOURCE_IMPLEMENTED`; N3 doctor/plan partial | N1 15 + N2 10 CPU PASS at 7e8f4a1; launch 4 FAIL from permissions; **CI_RECHECK_REQUIRED** after mode fix | `NOT_RUN` | `NOT_APPLICABLE` |
 | P1 Flash-Next baseline | `SOURCE_CONFIGURED / NOT_DEPLOYED` | `NOT_RUN` | `NOT_RUN` | `BLOCKED` |
 | P2 27B vLLM 0.32 | `PLANNED/COMPAT_UNKNOWN` | `NOT_RUN` | `NOT_RUN` | `BLOCKED` |
 | P3 Flash-Next ↔ 27B switching | `PLANNED` | `NOT_RUN` | `NOT_RUN` | `BLOCKED` |

@@ -45,6 +45,8 @@ jobs:
           python -m unittest discover -s tests -p 'test_manager_manifest_cpu.py' -v
           python -m unittest discover -s tests -p 'test_manager_inventory_cpu.py' -v
           python -m unittest discover -s tests -p 'test_flash_launch.py' -v
+          python -m unittest discover -s tests -p 'test_script_modes_cpu.py' -v
+          bash -n flash scripts/serve.sh wizard/00-doctor.sh wizard/10-plan.sh
       - name: Confirm 27B candidate is not launchable
         run: |
           if python -m scripts.manager.manifest validate recipes/qwen38-27b.candidate.yaml; then
