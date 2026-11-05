@@ -1,3 +1,9 @@
+## P2 NVIDIA target selection (2026-11-05)
+
+- [x] Replace P2 active model ID and local HF cache directory with `nvidia/Qwen3.8-27B-NVFP4`; retain RadixArk DGX result as historical evidence only.
+- [ ] After Git pull, operator runs read-only `./wizard.sh model 27b status --inspect-cache --json` for **NVIDIA cache**, not the previously inspected RadixArk checkpoint.
+- [ ] Verify NVIDIA immutable full SHA and actual local source files; qualify pinned vLLM 0.32 runtime/image and single GB10 memory before any download/start. No reuse of RadixArk revision.
+
 ## P2 source qualification update — 2026-11-05
 
 - [x] Add bounded config fact discovery (architecture, model type, quant method, context and vision metadata), strictly **unqualified** for vLLM/GB10, with malformed/oversized config regressions.
