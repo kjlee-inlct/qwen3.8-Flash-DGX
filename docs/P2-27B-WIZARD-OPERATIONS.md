@@ -1,3 +1,5 @@
+> **2026-11-05 model-selection override:** P2 now targets `nvidia/Qwen3.8-27B-NVFP4`, not RadixArk. NVIDIA publishes a ModelOpt mixed NVFP4/FP8 checkpoint with a vLLM example on GB300/TP4, which does **not** prove vLLM 0.32 on one GB10. NVIDIA immutable SHA, model availability in the local cache, image digest and runtime compatibility remain unverified. The previously inspected RadixArk revision `52d1adc5f38aa5ebf099c29ed7025ba34cfbb854` is historical inventory only; it must not be reused as NVIDIA provenance. No transfer/delete/launch was authorized. Source: https://huggingface.co/nvidia/Qwen3.8-27B-NVFP4
+
 # P2 — Qwen 27B Wizard source readiness (2026-11-05)
 
 ## State and evidence boundaries
@@ -7,9 +9,9 @@ Completions/Chat and optional Tools/Vision, and a bounded `benchmark=PASS`
 reported by the operator. Original P1 model and `:8000` stay protected.
 
 P2 is **not** yet runnable. The draft 27B candidate is
-`RadixArk/Qwen3.8-27B-NVFP4`, an upstream published ~22 GB NVFP4 file
-set (public metadata only). The model card is oriented around SGLang
-4-GPU deployment; that is **not** proof of vLLM 0.32 on single GB10.
+`nvidia/Qwen3.8-27B-NVFP4`, an NVIDIA published ~22 GB mixed NVFP4/FP8 file
+set (public metadata only). The NVIDIA model card shows vLLM on multi-GPU GB300;
+that does **not** prove our pinned vLLM 0.32 image on single GB10.
 Our project is explicitly vLLM-only, no SGLang and no hidden fallbacks.
 
 Existing `recipes/qwen38-27b.candidate.yaml` is intentionally invalid.
@@ -50,7 +52,7 @@ next recipe pinning.
 
 ## Source references
 
-- https://huggingface.co/RadixArk/Qwen3.8-27B-NVFP4
+- https://huggingface.co/nvidia/Qwen3.8-27B-NVFP4
 - `scripts/manager/p2_27b_inventory.py` and `wizard/menus/models/qwen_27b.py`
 - `handoff/OPERATING-RULES.md`, `handoff/NEXT-ACTIONS.md`
 
