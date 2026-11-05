@@ -18,6 +18,13 @@
       "checkpoint": "nvidia/Qwen3.8-27B-NVFP4",
       "served_id": "qwen3.8-27b",
       "container_name": "qwen38-27b"
+    },
+    "orcarouter": {
+      "checkpoint": null,
+      "served_id": null,
+      "container_name": "qwen38-orcarouter",
+      "qualification": "NOT_VERIFIED",
+      "comment": "Desired registry placeholder only; no Orcarouter service start is authorized."
     }
   },
   "transitions": {
