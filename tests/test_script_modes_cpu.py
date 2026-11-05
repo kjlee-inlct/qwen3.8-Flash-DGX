@@ -10,6 +10,7 @@ ROOT = Path(__file__).resolve().parents[1]
 class ExecutableScriptsTest(unittest.TestCase):
     def test_entrypoint_permissions(self):
         for name in ("flash", "scripts/serve.sh",
+                     "scripts/serve_flash-next.sh", "scripts/serve_27b.sh",
                      "wizard/00-doctor.sh", "wizard/10-plan.sh",
                      "wizard/p1.sh", "wizard.sh",
                      "scripts/temporary/p1-post-download.sh"):

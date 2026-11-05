@@ -13,6 +13,9 @@ on:
       - 'flash'
       - 'profiles/**'
       - 'scripts/serve.sh'
+      - 'scripts/serve_flash-next.sh'
+      - 'scripts/serve_27b.sh'
+      - 'tests/test_serve_split_cpu.py'
       - 'wizard/**'
       - 'wizard.sh'
       - 'tests/test_wizard_router_cpu.py'
@@ -82,7 +85,8 @@ jobs:
           python -m wizard list --json
           python -m wizard p2 status --json
           python -m wizard model 27b status --inspect-cache --json
-          bash -n flash scripts/serve.sh wizard/00-doctor.sh wizard/10-plan.sh wizard/p1.sh wizard.sh scripts/temporary/p1-post-download.sh
+          python -m unittest discover -s tests -p 'test_serve_split_cpu.py' -v
+          bash -n flash scripts/serve.sh scripts/serve_flash-next.sh scripts/serve_27b.sh wizard/00-doctor.sh wizard/10-plan.sh wizard/p1.sh wizard.sh scripts/temporary/p1-post-download.sh
       - name: Confirm 27B candidate is not launchable
         run: |
           if python -m scripts.manager.manifest validate recipes/qwen38-27b.candidate.yaml; then
