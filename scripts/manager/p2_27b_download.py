@@ -64,6 +64,35 @@ def _other_transfer(runner) -> bool | None:
         return None
 
 
+def _approval_facts(facts: dict[str, Any]) -> dict[str, Any]:
+    """Bind safety-critical identity, not continuously changing telemetry.
+
+    mkdir/download.lock consumes inodes after the first read. Container 'Up N
+    hours' strings and free bytes also drift while the same approved operation
+    remains safe. All minimum-capacity/inode and collision checks still run
+    again under the lock; do NOT bypass them when constructing this digest.
+    """
+    return {
+        "model_repo": facts["model_repo"],
+        "revision": facts["revision"],
+        "cache_root": facts["cache_root"],
+        "container_name": facts["container_name"],
+        "image_tag": facts["image_tag"],
+        "image_id": facts["image_id"],
+        "minimum_free_bytes": facts["minimum_free_bytes"],
+        "containers": sorted((
+            {"name": c["name"], "image_id": c["image_id"],
+             "running": str(c["status"]).startswith("Up"),
+             "ports": c["ports"]}
+            for c in facts["containers"]
+        ), key=lambda c: (c["name"] or "")),
+        "port_8000_listening": facts["port_8000_listening"],
+        "checkpoint_ready": facts["checkpoint_ready"],
+        "transfer_busy": facts["transfer_busy"],
+        "ten_minute_window": facts["ten_minute_window"],
+    }
+
+
 def build_plan(*, cache_root: Path | None = None, runner=subprocess.run,
                disk_usage=shutil.disk_usage, now: float | None = None) -> dict[str, Any]:
     """Read-only, deterministic bounded plan; no network or cache changes."""
@@ -124,14 +153,19 @@ def build_plan(*, cache_root: Path | None = None, runner=subprocess.run,
         "transfer_busy": busy,
         "ten_minute_window": int((time.time() if now is None else now) // 600),
     }
+    # Revalidate all live guards after acquiring the download lock, but only
+    # bind stable, safety-relevant properties in the approval hash. The lock
+    # and evidence folder creation themselves change free inode counts.
     plan_id = None if issues else hashlib.sha256(json.dumps(
-        facts, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+        _approval_facts(facts), sort_keys=True,
+        separators=(",", ":")).encode()).hexdigest()
     return {
         "stage": "p2", "action": "download",
         "status": "BLOCKED" if issues else "READY_TO_REQUEST_APPROVAL",
         "scope": "SOURCE/DGX_DISK", "executed": False,
         "approval_accepted": False, "plan_id": plan_id,
         "expires_within_minutes": 10,
+        "expires_at_epoch_seconds": (facts["ten_minute_window"] + 1) * 600,
         "download_authorized": False,
         "exclusive_gpu_policy": "ONE_ACTIVE_MODEL_ONLY",
         "service_api_port": 8000,
@@ -194,8 +228,13 @@ def execute_approved(plan: dict, approval: str | None, *,
             fresh = build_plan(cache_root=cache_root, runner=runner,
                                disk_usage=disk_usage, now=now)
             if fresh["status"] != "READY_TO_REQUEST_APPROVAL" or fresh["plan_id"] != approval:
+                issues = ["PREFLIGHT_CHANGED_REPLAN_REQUIRED"]
+                if fresh["facts"]["ten_minute_window"] != plan["facts"]["ten_minute_window"]:
+                    issues.append("DOWNLOAD_PLAN_TIME_WINDOW_EXPIRED")
+                if fresh["status"] == "BLOCKED":
+                    issues.extend(fresh["issues"])
                 return 3, {"status": "BLOCKED", "executed": False,
-                           "issues": ["PREFLIGHT_CHANGED_REPLAN_REQUIRED"]}
+                           "issues": sorted(set(issues))}
             cache = cache_path(cache_root)
             record = {
                 "stage": "p2", "action": "download", "model_repo": MODEL_ID,
