@@ -1,5 +1,9 @@
 # Handoff index — START HERE
 
+> **2026-11-05 current Wizard UI decision (D-020):** `./wizard.sh` now presents **1 Select/run model, 2 Service, 3 Advanced, 0 Exit**. `./wizard.sh select 27b --json` produces a read-only consolidated lifecycle plan. Old P1–P7, model/switch/storage/operations/service commands remain supported, and the P1 guarded backend is retained verbatim. Approved design: [../docs/UNIFIED-MODEL-WIZARD-DESIGN.md](../docs/UNIFIED-MODEL-WIZARD-DESIGN.md). DGX user-reported pinned NVIDIA 27B download **started** (`Fetching 19 files: 84%`); receipt, runtime and switching **NOT_VERIFIED**. No DGX commands from source work; do not change the worktree under an active download.
+
+
+
 **Canonical starting point for every new ChatGPT, human or agent work session on this fork.** These files live on the **new planning branch** `feature/recipe-wizard-handoff` until merged. Do not assume they are on `main`.
 
 ## Confirmed delivery order (2026-11-05)
