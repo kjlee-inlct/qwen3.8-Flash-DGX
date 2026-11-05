@@ -1,3 +1,7 @@
+## P2 DGX NVIDIA cache absent; Wizard service menu source implementation (2026-11-05)
+
+User-supplied DGX `./wizard.sh model 27b status --inspect-cache --json` after `git pull` to `3f4ef68` returned NVIDIA `nvidia/Qwen3.8-27B-NVFP4` `local_revision=null`, `source_files_present=false`, `indexed_shard_count=0`, `incomplete_blob_files=0`, `issues=[NO_PINNED_LOCAL_SNAPSHOT]`. The earlier RadixArk snapshot does not satisfy this NVIDIA checkpoint. No download has run. New Wizard top-level **service management** menu has a separate guarded `svc` handler; P7 operations remain integrated release acceptance, and 27B gains `download` planning. Both remain source-only/blocked for mutations; they cannot restart/stop the Flash-Next service or launch GPU. See `docs/P2-27B-WIZARD-OPERATIONS.md`.
+
 ## P2 operator decision — NVIDIA 27B replaces RadixArk candidate (2026-11-05)
 
 **Current target is `nvidia/Qwen3.8-27B-NVFP4`** per operator instruction. Public NVIDIA model card establishes checkpoint listing and vLLM multi-GPU GB300 example, **not** vLLM 0.32 single-GB10 qualification. Previously supplied DGX read-only inspection returned RadixArk revision `52d1adc5f38aa5ebf099c29ed7025ba34cfbb854`, 3/3 indexed shards, 0 incomplete transfers, zero issues, and a parsed ModelOpt config; this is **historical RadixArk evidence only** and cannot establish NVIDIA cache presence. The Wizard now inspects the `models--nvidia--Qwen3.8-27B-NVFP4` cache and retains fail-closed runtime status. No P2 model download, GPU start, service cutover or cache deletion approved or performed.
