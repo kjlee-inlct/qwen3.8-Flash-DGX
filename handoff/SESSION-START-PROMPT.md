@@ -32,9 +32,15 @@ P1은 `doctor/plan`까지만 소스 구현되었으며 설치·기동·API 검�
 
 ## Wizard 개발 구조 (2026-11-05 추가 확정)
 
-**Wizard architecture decision (2026-11-05):** Implement all P1–P7 **menu/CLI modules first** and then integrate/debug actual runtime in P1→P7 order. Root operator entry is `./wizard.sh`; `wizard/menus/p1.py` through `p7.py` own per-menu behavior, with `wizard/main.py` and `wizard/menus/common.py` for routing and safe source contracts. Scripts accept explicit stage/action arguments and emit JSON and stable exit codes for operator-mediated DGX tests. Only P1 calls the existing guarded backend today; P2–P7 are SOURCE-ONLY plans and must never execute merely because a menu exists. No SGLang; vLLM 0.32 only.
+**Wizard architecture decision (2026-11-05):** Implement all P1–P7 **menu/CLI modules first** and then integrate/debug actual runtime in P1→P7 order. Root operator entry is `./wizard.sh`; `wizard/menus/models/`, `switching/`, `storage/`, and `operations/` own per-menu behavior, with `wizard/main.py` and `wizard/menus/common.py` for routing and safe source contracts. Scripts accept explicit stage/action arguments and emit JSON and stable exit codes for operator-mediated DGX tests. Only P1 calls the existing guarded backend today; P2–P7 are SOURCE-ONLY plans and must never execute merely because a menu exists. No SGLang; vLLM 0.32 only.
 
 사용자 DGX는 Shell에서 Wizard 인자를 직접 실행하고 JSON 결과를 복사해 전달할 수 있으므로, **대화형과 비대화형 기능이 동일**해야 합니다. `./wizard.sh list --json`, `./wizard.sh p1 status --json`, `./wizard.sh p1 plan --for-action verify --json`부터 사용하세요. 미완성 P2~P7에서는 실행 대신 `BLOCKED`가 정상입니다. 현재 사용자의 `./flash setup default` 다운로드 및 이미 입력된 `serve/wait/test` 순서를 건드리지 마세요. 설치/기동/전환/제거는 단계별 인가와 실제 DGX 검증이 필요합니다.
+
+## 최신 Wizard 기능군별 구조 — D-015 (2026-11-05)
+
+**Current navigation contract (2026-11-05, D-015):** Wizard primary menus are **Model management** (`model flash-next` = P1; `model 27b` = P2; `model orcarouter-flash-next` = P5), **Model switching** (`switch flash-next-27b` = P3; `switch orcarouter-27b` = P6), **Storage management** (`storage flash-next` = P4) and **System operations** (`operations system` = P7). Source files live in explanatory category directories, not numbered `pN.py` files. **P1–P7 are retained as stable roadmap identifiers and backwards-compatible CLI aliases**, not the primary UI/file organization. The P1 core remains guarded; P2–P7 remain source-only and execution BLOCKED.
+
+다음 대화에서는 `./wizard.sh model flash-next status --json`, `./wizard.sh switch flash-next-27b ...` 형태를 우선 사용하고, P1~P7은 구버전 호환 별칭으로만 취급합니다. 서브모듈 변경 시 기능군 폴더와 테스트를 같이 수정하세요. 새 구조는 GitHub CI 통과만 확인되었으며, 실제 DGX Wizard 벤치는 아직 미수행입니다.
 
 ## 진행 규칙
 

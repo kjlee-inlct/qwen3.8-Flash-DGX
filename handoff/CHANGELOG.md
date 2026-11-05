@@ -1,5 +1,13 @@
 # Handoff changelog (append-only)
 
+## 2026-11-05 — H-011 — Rename numbered Wizard stages into capability groups
+
+- User clarified that model P1/P2/P5 belong to one **Model management** menu with descriptive model submodules; P3/P6 belong to one **Model switching** menu with transition submodules; P4 storage and P7 operations are separate domains.
+- Source commit `571e1c204d76bcb66b9e02cb1315ac775013a130`: move `wizard/menus/p1.py`–`p7.py` to `models/flash_next.py`, `models/qwen_27b.py`, `models/orcarouter_flash_next.py`, `switching/flash_next_27b.py`, `switching/orcarouter_27b.py`, `storage/flash_next_cleanup.py`, `operations/system.py`; update grouped two-level menu, CLI router, flat compatibility alias registry, 32 router CPU tests.
+- **CI 2/2 SUCCESS**, 112/112 CPU tests per job; historical P1–P7 CLI flags and `wizard/p1.sh` remain compatible. No assistant DGX Docker, GPU, checkpoint/download, model switching or cleanup operation. Source-only P2–P7 still blocked.
+- Active docs updated; D-015 supersedes D-014 numbered filename architecture, while original roadmap order P1→P7 remains unchanged.
+
+
 ## 2026-11-05 — H-010 — P1 JSON-mode hardening and final CPU CI
 
 - Follow-up commit `43f5131b63b7e3f20cde0c409b3ddd672ddb349b` hardened P1: no guided prompt in `--json` mode, verified guided default for TTY, added two router regression tests, committed modular CLI contract/handoff.

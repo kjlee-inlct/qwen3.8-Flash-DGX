@@ -29,7 +29,7 @@ P1 Wizard source now includes scripts/manager/p1_assets.py, p1_wizard.py, p1_ben
 
 ## 1C. Unified Wizard CLI scaffold, ahead of runtime integration
 
-**Wizard architecture decision (2026-11-05):** Implement all P1–P7 **menu/CLI modules first** and then integrate/debug actual runtime in P1→P7 order. Root operator entry is `./wizard.sh`; `wizard/menus/p1.py` through `p7.py` own per-menu behavior, with `wizard/main.py` and `wizard/menus/common.py` for routing and safe source contracts. Scripts accept explicit stage/action arguments and emit JSON and stable exit codes for operator-mediated DGX tests. Only P1 calls the existing guarded backend today; P2–P7 are SOURCE-ONLY plans and must never execute merely because a menu exists. No SGLang; vLLM 0.32 only.
+**Wizard architecture decision (2026-11-05):** Implement all P1–P7 **menu/CLI modules first** and then integrate/debug actual runtime in P1→P7 order. Root operator entry is `./wizard.sh`; `wizard/menus/models/`, `switching/`, `storage/`, and `operations/` own per-menu behavior, with `wizard/main.py` and `wizard/menus/common.py` for routing and safe source contracts. Scripts accept explicit stage/action arguments and emit JSON and stable exit codes for operator-mediated DGX tests. Only P1 calls the existing guarded backend today; P2–P7 are SOURCE-ONLY plans and must never execute merely because a menu exists. No SGLang; vLLM 0.32 only.
 
 Directory layout after initial source implementation:
 
@@ -38,17 +38,41 @@ wizard.sh                    # root interactive + noninteractive entry
 wizard/__main__.py          # python3 -m wizard
 wizard/main.py              # stage routing, JSON catalog, --stage/--action
 wizard/menus/common.py      # stage contract/status/plan and safety gates
-wizard/menus/p1.py          # existing Flash-Next P1 backend adapter
-wizard/menus/p2.py          # 27B interface, BLOCKED
-wizard/menus/p3.py          # Flash-Next ↔ 27B switch interface, BLOCKED
-wizard/menus/p4.py          # optional storage cleanup interface, BLOCKED
-wizard/menus/p5.py          # Orcarouter interface, BLOCKED
-wizard/menus/p6.py          # Orcarouter ↔ 27B interface, BLOCKED
-wizard/menus/p7.py          # integrated services/proxy/gateway interface, BLOCKED
+wizard/menus/models/flash_next.py          # existing Flash-Next P1 backend adapter
+wizard/menus/models/qwen_27b.py          # 27B interface, BLOCKED
+wizard/menus/switching/flash_next_27b.py          # Flash-Next ↔ 27B switch interface, BLOCKED
+wizard/menus/storage/flash_next_cleanup.py          # optional storage cleanup interface, BLOCKED
+wizard/menus/models/orcarouter_flash_next.py          # Orcarouter interface, BLOCKED
+wizard/menus/switching/orcarouter_27b.py          # Orcarouter ↔ 27B interface, BLOCKED
+wizard/menus/operations/system.py          # integrated services/proxy/gateway interface, BLOCKED
 wizard/p1.sh                # legacy P1 compatibility wrapper
 ```
 
 The source router/CLI and interfaces are implemented and covered by synthetic CPU CI. **This is not complete P2–P7 functionality** and does not qualify the GPU, service start/stop/switch or production cutover. See [Wizard CLI contract](WIZARD-CLI-CONTRACT.md) for operator/agent instructions and exit semantics.
+
+## 1D. Domain-grouped, descriptive Wizard menu modules (supersedes numbered source layout)
+
+**Current navigation contract (2026-11-05, D-015):** Wizard primary menus are **Model management** (`model flash-next` = P1; `model 27b` = P2; `model orcarouter-flash-next` = P5), **Model switching** (`switch flash-next-27b` = P3; `switch orcarouter-27b` = P6), **Storage management** (`storage flash-next` = P4) and **System operations** (`operations system` = P7). Source files live in explanatory category directories, not numbered `pN.py` files. **P1–P7 are retained as stable roadmap identifiers and backwards-compatible CLI aliases**, not the primary UI/file organization. The P1 core remains guarded; P2–P7 remain source-only and execution BLOCKED.
+
+```text
+wizard/
+  main.py                         # group/selection/legacy-alias CLI router
+  menus/
+    models/
+      flash_next.py               # P1 NVIDIA Flash-Next
+      qwen_27b.py                 # P2 Qwen 27B
+      orcarouter_flash_next.py    # P5 Orcarouter Flash-Next
+    switching/
+      flash_next_27b.py           # P3 two-way switch
+      orcarouter_27b.py           # P6 two-way switch
+    storage/
+      flash_next_cleanup.py       # P4 conditional exact-approved retirement
+    operations/
+      system.py                   # P7 service/proxy/gateway acceptance
+    common.py                     # shared fail-closed source-only contracts
+```
+
+New category-structured source and compatibility aliases CI verified at `571e1c2` (2 jobs, each 112/112 CPU PASS). P2–P7 runtime handlers are still NOT IMPLEMENTED; this layout change is **not** a stage exit or deployment permission.
 
 ## 2. Known inputs vs unknowns
 

@@ -1,5 +1,7 @@
 # Qwen3.8-Flash-Next on a single DGX Spark (GB10)
 
+> **Wizard menu organization (2026-11-05):** Use `./wizard.sh` for Model management (Flash-Next, 27B, Orcarouter Flash-Next), Model switching (Flash-Next↔27B, Orcarouter↔27B), Storage, or Operations. Descriptive source modules are under `wizard/menus/models/`, `switching/`, `storage/`, `operations/`. Example `./wizard.sh model flash-next status --json`. P1–P7 remain supported CLI aliases; no new runtime authorization is implied.
+
 > **Unified Wizard:** `./wizard.sh` opens the P1–P7 menu; `./wizard.sh list --json` and `./wizard.sh --stage p1 --action status --json` support direct scripted/operator use. P1 delegates to the guarded Blazux backend. P2–P7 are source-only menu/plan contracts with execution blocked until their DGX validation. [CLI contract](docs/WIZARD-CLI-CONTRACT.md).
 
 > **P1 Wizard:** Source and CPU CI (80/80 tests per job) implemented. Run `bash wizard/p1.sh status` for read-only inspection or `bash wizard/p1.sh` for interactive, per-step approved operations. See [P1 Wizard operations](docs/P1-WIZARD-OPERATIONS.md). If the existing operator setup/download or queued serve/wait/test chain is still active, do not run another setup or serve. CPU CI does not prove DGX runtime qualification.

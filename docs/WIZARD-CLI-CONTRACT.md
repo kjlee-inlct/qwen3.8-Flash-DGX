@@ -1,6 +1,29 @@
 # Blazux P1–P7 Wizard — CLI and menu contract
 
-**2026-11-05.** Single operator-facing entrypoint: `./wizard.sh` or `python3 -m wizard`. **Execution engine: vLLM 0.32 only; SGLang excluded.** All stages have separate modules in `wizard/menus/p1.py` … `p7.py`. They share the central router in `wizard/main.py`, common fail-closed contract in `wizard/menus/common.py`, and external `:8000/v1` target.
+**2026-11-05.** Single operator-facing entrypoint: `./wizard.sh` or `python3 -m wizard`. **Execution engine: vLLM 0.32 only; SGLang excluded.** All stages have separate modules in `wizard/menus/models/flash_next.py` … `p7.py`. They share the central router in `wizard/main.py`, common fail-closed contract in `wizard/menus/common.py`, and external `:8000/v1` target.
+
+## Primary domain-based navigation (current)
+
+**Current navigation contract (2026-11-05, D-015):** Wizard primary menus are **Model management** (`model flash-next` = P1; `model 27b` = P2; `model orcarouter-flash-next` = P5), **Model switching** (`switch flash-next-27b` = P3; `switch orcarouter-27b` = P6), **Storage management** (`storage flash-next` = P4) and **System operations** (`operations system` = P7). Source files live in explanatory category directories, not numbered `pN.py` files. **P1–P7 are retained as stable roadmap identifiers and backwards-compatible CLI aliases**, not the primary UI/file organization. The P1 core remains guarded; P2–P7 remain source-only and execution BLOCKED.
+
+```bash
+./wizard.sh                                   # four primary menus, then submenu choice
+./wizard.sh list --json                       # grouped catalog + P1–P7 stage metadata
+./wizard.sh model flash-next status --json
+./wizard.sh model 27b status --json
+./wizard.sh model orcarouter-flash-next status --json
+./wizard.sh switch flash-next-27b plan --for-action switch --from-model flash-next --to-model 27b --json
+./wizard.sh switch orcarouter-27b plan --for-action switch --from-model orcarouter --to-model 27b --json
+./wizard.sh storage flash-next status --json
+./wizard.sh operations system status --json
+# Equivalent automation syntax:
+./wizard.sh --group model --item flash-next --action status --json
+# Backward compatibility:
+./wizard.sh p1 status --json
+./wizard.sh --stage p3 --action switch --from-model flash-next --to-model 27b --json
+```
+
+The catalog reports both `groups` and a flat `stages` list. P-stage IDs remain stable for evidence/handoff and existing scripts. **P2–P7 actions still return BLOCKED**; a direct CLI interface is not authorization to execute unvalidated work.
 
 ## Supported entry modes
 
@@ -57,13 +80,13 @@ Those examples are **not authorizations to run them now**. They require a comple
 
 | Stage | Menu module | Next integration required |
 |---|---|---|
-| P1 NVIDIA Flash-Next | `wizard/menus/p1.py` | Actual DGX P1 Wizard functional and benchmark acceptance, rollback proof |
-| P2 27B | `wizard/menus/p2.py` | Pinned recipe, vLLM 0.32 source/CPU compatibility, model preparation/bench |
-| P3 Flash-Next ↔ 27B | `wizard/menus/p3.py` | Transactional switch, readiness gate, repeat A→B→A and rollback |
-| P4 optional Flash-Next cleanup | `wizard/menus/p4.py` | Capacity check, canonical exact candidates, shared refs, independently approved delete path; otherwise SKIP |
-| P5 Orcarouter | `wizard/menus/p5.py` | BF16 PLE/MTP overlay adapter, numeric qualification and benchmark |
-| P6 Orcarouter ↔ 27B | `wizard/menus/p6.py` | Bidirectional switch/rollback, verified API model IDs |
-| P7 integrated operations | `wizard/menus/p7.py` | Service/proxy/gateway/storage managers, audit, production rollout and rollback |
+| P1 NVIDIA Flash-Next | `wizard/menus/models/flash_next.py` | Actual DGX P1 Wizard functional and benchmark acceptance, rollback proof |
+| P2 27B | `wizard/menus/models/qwen_27b.py` | Pinned recipe, vLLM 0.32 source/CPU compatibility, model preparation/bench |
+| P3 Flash-Next ↔ 27B | `wizard/menus/switching/flash_next_27b.py` | Transactional switch, readiness gate, repeat A→B→A and rollback |
+| P4 optional Flash-Next cleanup | `wizard/menus/storage/flash_next_cleanup.py` | Capacity check, canonical exact candidates, shared refs, independently approved delete path; otherwise SKIP |
+| P5 Orcarouter | `wizard/menus/models/orcarouter_flash_next.py` | BF16 PLE/MTP overlay adapter, numeric qualification and benchmark |
+| P6 Orcarouter ↔ 27B | `wizard/menus/switching/orcarouter_27b.py` | Bidirectional switch/rollback, verified API model IDs |
+| P7 integrated operations | `wizard/menus/operations/system.py` | Service/proxy/gateway/storage managers, audit, production rollout and rollback |
 
 The accepted execution/acceptance order remains P1→P2→P3→conditional P4→P5→P6→P7. Source scaffolding for later stages does **not** authorize skipping earlier runtime gates.
 
