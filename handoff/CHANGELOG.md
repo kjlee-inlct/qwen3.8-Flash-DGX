@@ -1,5 +1,13 @@
 # Handoff changelog (append-only)
 
+## 2026-11-05 — H-010 — P1 JSON-mode hardening and final CPU CI
+
+- Follow-up commit `43f5131b63b7e3f20cde0c409b3ddd672ddb349b` hardened P1: no guided prompt in `--json` mode, verified guided default for TTY, added two router regression tests, committed modular CLI contract/handoff.
+- GitHub Actions push and PR `manifest` jobs both **SUCCESS**; per job 15 manifest + 10 inventory + 13 Flash launcher + 1 script mode + 41 P1 + 23 Wizard router = **103/103 CPU PASS**. [push job](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/41961837000/job/127029761586); [PR job](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/41961842431/job/127029780582).
+- No actual DGX Wizard GPU/API/benchmark operations, model switching, cleanup or gateway changes occurred. P2–P7 menu skeleton SOURCE_ONLY and execution BLOCKED. Original user download/setup/serve chain not interrupted.
+
+
+
 ## 2026-11-05 — H-009 — Build P1–P7 Wizard menu/router before operational phases
 
 - User requests complete up-front Wizard **architecture** and per-stage/menu source modules rather than one monolithic file; direct CLI/JSON automation in addition to guided menu for user-mediated DGX operations.
