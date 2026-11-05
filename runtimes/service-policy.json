@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "title": "Single GPU-model service policy for DGX Spark",
+  "engine": "vllm-0.32",
+  "max_active_gpu_models": 1,
+  "api": {
+    "host_port": 8000,
+    "base_path": "/v1",
+    "port_must_remain_stable": true
+  },
+  "models": {
+    "flash-next": {
+      "checkpoint": "nvidia/Qwen3.8-Flash-Next-NVFP4",
+      "served_id": "qwen3.8-flash-next",
+      "container_name": "qwen38-flash"
+    },
+    "27b": {
+      "checkpoint": "nvidia/Qwen3.8-27B-NVFP4",
+      "served_id": "qwen3.8-27b",
+      "container_name": "qwen38-27b"
+    }
+  },
+  "transitions": {
+    "require_exact_approved_plan": true,
+    "revalidate_live_state": true,
+    "stop_old_before_start_new": true,
+    "preserve_old_checkpoint_and_image": true,
+    "verify_new_api_model_id": true,
+    "failed_new_model_rollback_to_old": true,
+    "no_automatic_deletion": true,
+    "append_only_transition_journal": true,
+    "actual_docker_state_overrides_stored_manifest": true
+  },
+  "download": {
+    "may_overlap_live_inference": true,
+    "uses_gpu": false,
+    "binds_host_port": false,
+    "does_not_stop_old": true
+  }
+}
