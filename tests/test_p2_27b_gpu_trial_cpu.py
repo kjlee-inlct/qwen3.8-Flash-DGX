@@ -97,7 +97,7 @@ class GPUTrialCPU(unittest.TestCase):
             return completed()
         r=t.recover(CID,IMAGE,"d"*64,run=run,inspect=inspect)
         self.assertEqual(r["status"],"RECOVERY_FAILED")
-        self.assertEqual(calls,[])
+        self.assertEqual(calls, [["docker", "ps", "-a", "--format", "{{.Names}}"]])
 
     def test_no_existing_target_restores_same_original_container(self):
         calls=[]
@@ -149,6 +149,40 @@ class GPUTrialCPU(unittest.TestCase):
             return completed(code=1)
         with self.assertRaises(RuntimeError):
             t.running(t.TARGET_CONTAINER,run=failed)
+
+    def test_other_gpu_enabled_container_blocks_trial(self):
+        def inspect(name):
+            if name == t.ORIGINAL_CONTAINER:
+                return original()
+            d=original()
+            d["HostConfig"]["DeviceRequests"]=[{"Count":-1,"Capabilities":[["gpu"]]}]
+            return d
+        def runner(args):
+            if args[:3] == ["docker", "ps", "-a"]:
+                return completed("qwen38-flash\\n")
+            return completed("qwen38-flash\\nanother-gpu-container\\n")
+        p=t.make_plan(preview_func=preview,inspect=inspect,run=runner,now=1700000000)
+        self.assertIn("OTHER_GPU_CONTAINER_RUNNING",p["issues"])
+        self.assertIsNone(p["plan_id"])
+
+    def test_unknown_running_container_state_blocks_trial(self):
+        def runner(args):
+            if args[:3] == ["docker","ps","-a"]:
+                return completed("qwen38-flash\\n")
+            return completed(code=1)
+        p=t.make_plan(preview_func=preview,inspect=lambda name: original(),
+                      run=runner,now=1700000000)
+        self.assertIn("RUNNING_CONTAINER_INVENTORY_FAILED",p["issues"])
+        self.assertIsNone(p["plan_id"])
+
+    def test_non_gpu_proxy_container_allowed(self):
+        def runner(args):
+            if args[:3] == ["docker","ps","-a"]:
+                return completed("qwen38-flash\\n")
+            return completed("qwen38-flash\\nopenwebui\\n")
+        p=t.make_plan(preview_func=preview,inspect=lambda name:original(),
+                      run=runner,now=1700000000)
+        self.assertEqual(p["status"],"READY_TO_REQUEST_TRIAL_APPROVAL")
 
 if __name__=="__main__":
     unittest.main()

@@ -7,6 +7,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 MODE="${1:---plan}"
 if [[ "$MODE" == "--trial-execute" ]]; then
   shift
+  cd "$ROOT"
   exec python3 -m scripts.manager.p2_27b_gpu_trial execute "$@"
 fi
 
@@ -33,6 +34,7 @@ case "$MODE" in
     exec "$ROOT/wizard.sh" model 27b plan --for-action start --launch-preview --json
     ;;
   --trial-plan)
+    cd "$ROOT"
     exec python3 -m scripts.manager.p2_27b_gpu_trial plan
     ;;
   --status|status)

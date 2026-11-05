@@ -102,6 +102,30 @@ def make_plan(preview_func=build_27b_launch_preview, inspect=docker_info,
             issues.append("TARGET_CONTAINER_NAME_OCCUPIED")
     except (OSError, subprocess.TimeoutExpired):
         issues.append("DOCKER_NAME_INVENTORY_UNAVAILABLE")
+    # Enforce one GPU-enabled Docker model at a time. OpenWebUI/proxy containers
+    # without GPU requests are allowed. Unknown runtime/DeviceRequests block.
+    try:
+        p = run(["docker", "ps", "--format", "{{.Names}}"])
+        if p.returncode:
+            issues.append("RUNNING_CONTAINER_INVENTORY_FAILED")
+        else:
+            running_names = p.stdout.splitlines()
+            if ORIGINAL_CONTAINER not in running_names:
+                issues.append("ORIGINAL_NOT_IN_RUNNING_CONTAINERS")
+            for other in running_names:
+                if other == ORIGINAL_CONTAINER:
+                    continue
+                other_doc = inspect(other)
+                hc = other_doc.get("HostConfig") or {}
+                cfg = other_doc.get("Config") or {}
+                env = cfg.get("Env") or []
+                nvidia_env = next((v.split("=", 1)[1] for v in env
+                                   if isinstance(v, str) and v.startswith("NVIDIA_VISIBLE_DEVICES=")), "")
+                if hc.get("DeviceRequests") or (hc.get("Runtime") == "nvidia"
+                    and nvidia_env not in ("none", "void")):
+                    issues.append("OTHER_GPU_CONTAINER_RUNNING")
+    except (OSError, RuntimeError, ValueError, subprocess.TimeoutExpired):
+        issues.append("OTHER_RUNNING_GPU_INVENTORY_UNVERIFIED")
     window = int(time.time() if now is None else now) // 600
     facts = {
         "operation": "one-shot-27b-gpu-trial", "source_container_id": source_id,
