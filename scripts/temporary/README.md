@@ -66,3 +66,21 @@ its explicit approval/rollback guards, not bypass them.
   references to the Wizard's own evidence files at
   `~/.local/state/blazux-wizard/p1/`.
 - **Status:** SOURCE/CPU CI verified at `b9f9a1bce6d7aad30ad6648d6c6e7edf35f3712b` (2/2 jobs SUCCESS, 131/131 CPU tests/job); **actual DGX runtime checks still NOT_RUN**. BLOCKED and PARTIAL are not GPU PASS.
+
+## Troubleshooting: completed download but Wizard reports INCOMPLETE
+
+The original `./flash` resolves `refs/main`, then `refs/master`, then the most
+recent non-Hybrid snapshot; the P1 Wizard currently requires `refs/main`
+and checks indexed shards, quantization metadata, Hybrid state and leftover
+`*.incomplete` blob names. A completed transfer is **not** a P1 runtime PASS.
+
+The temporary wrapper now includes a **read-only** `cache_diagnosis` result
+with actual `refs/main` and `refs/master`, up to 16 snapshot revisions,
+missing indexed shard/config names, Hybrid `.prepared` presence, and the
+strict Wizard asset audit. It does not download, repair or delete anything.
+After `git pull` run `bash scripts/temporary/p1-post-download.sh --inspect-only`
+and share the `cache_diagnosis` part of its `result.json`, plus
+`checks.models.stdout` (inspect locally for anything sensitive).
+A successful `/health` or `/v1/models` HTTP request alone does not prove
+which model is served. Do not rerun `setup`, reprepare Hybrid or change
+a running container until the mismatch is diagnosed.

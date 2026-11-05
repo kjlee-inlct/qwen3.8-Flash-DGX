@@ -31,6 +31,8 @@ CHECKS = (
     ("health", ("curl", "-fsS", "--max-time", "8", "http://127.0.0.1:8000/health")),
     ("models", ("curl", "-fsS", "--max-time", "8", "http://127.0.0.1:8000/v1/models")),
     ("status", (*WIZARD, "status", "--json")),
+    ("cache_diagnosis", ("python3", "-m",
+                         "scripts.temporary.p1_cache_diagnosis")),
 )
 ACTIVE_MARKERS = (
     "./flash setup ", "bash flash setup ", "scripts/download-weights.sh",
@@ -200,6 +202,13 @@ def main(argv=None):
         "plans": {k: {"ready": v["ready"],
                        "issues": v["plan"].get("issues", [])}
                   for k, v in result["plans"].items()},
+        "cache_diagnosis": (
+            json.loads(result["checks"]["cache_diagnosis"]["stdout"])
+            if result["checks"]["cache_diagnosis"]["returncode"] == 0
+               and not result["checks"]["cache_diagnosis"]["truncated"]
+               and result["checks"]["cache_diagnosis"]["stdout"].lstrip().startswith("{")
+            else {"status": "UNAVAILABLE"}
+        ),
         "actions": {k: {"status": v["status"], "reason": v.get("reason"),
                         "evidence": (v.get("wizard_result") or {}).get("evidence")}
                     for k, v in result["actions"].items()},
