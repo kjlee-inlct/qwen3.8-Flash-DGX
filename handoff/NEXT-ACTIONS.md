@@ -1,3 +1,13 @@
+## 2026-11-05 — model-first unified Wizard source continuation
+
+- [x] Record accepted D-020 UX design and source/acceptance gates; retain Flash-Next P1 backend.
+- [x] Implement root 3-choice menu and read-only `select MODEL --json`; model plans for active, missing, in-flight, source-only, unknown and Orcarouter cases. Show only the relevant downloader or existing P1 guided backend behind explicit separate prompts.
+- [x] Expose `qwen38-27b-dl` live container state in observed service manifest; suppress second download; add Orcarouter registry placeholder with no launch permission.
+- [x] Add CPU regression matrix and GitHub CI job; preserve all legacy P1–P7 command routes and destructive refusal behavior.
+- [ ] **Operator-owned DGX transfer still in progress at last evidence (`16/19` files).** Do not pull updates, restart Flash-Next, interrupt/alter download or run a second transfer. After download exits, collect Wizard receipt/evidence first and only then update DGX checkout.
+- [ ] Batch B: actual /v1/models + GPU observation, bounded health/logs, immutable recipe/runtime qualification, and source-only stop→free :8000→start→verify→rollback transition plans with fault injection tests.
+- [ ] Batch C: separately approve a live DGX service handover window; validate 27B vLLM 0.32 image/loader/ARM64 before any GPU start. Keep Orcarouter separate branch unmodified.
+
 ## P2 download approval unblock (2026-11-05)
 
 - [x] Diagnose user-reported exact approval rejected by mutable preflight fingerprint; fix hash scope to stable safety fields. All storage/Docker/inode preconditions still rerun under download lock.
