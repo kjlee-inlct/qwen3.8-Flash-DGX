@@ -1,3 +1,7 @@
+## 2026-11-05 — Read-only local API health and stop-before-start/rollback preview
+
+Added `scripts/manager/service_health.py` (fixed loopback :8000 GET /health and /v1/models, bounded response and timeout, served-ID match) and `scripts/manager/service_transition_preview.py` (fail-closed atomic handover preview and explicit recovery). Wired health into existing service CLI and simple root Service choice; attached transition preview to model selection when other model observed. Extended CPU unit tests and CI. No actual service/DGX/API/GPU calls in this development session. Download is user-owned and in progress per last evidence; not verified complete.
+
 ## 2026-11-05 — Model-first Wizard UI and read-only automatic lifecycle planner (D-020)
 
 Created `docs/UNIFIED-MODEL-WIZARD-DESIGN.md`; changed `wizard/main.py` TTY root to 3 choices and introduced machine `select MODEL --json` / `model choose MODEL --json`. Added `wizard/quickstart.py`: safe consolidated download/monitor/P1-guided/switch-blocked plans from actual service + pinned checkpoint observations. Updated live `service_manifest.py` to classify in-flight `qwen38-27b-dl` without triggering new downloads; added unqualified Orcarouter service policy entry. Preserved old stage CLI and Flash-Next P1 backend. Added new CPU regression suite and refreshed canonical docs/CI/DECISIONS. User-owned NVIDIA 27B download started; receipt and runtime **not verified**. No service/API/GPU or DGX worktree actions performed in this coding session.
