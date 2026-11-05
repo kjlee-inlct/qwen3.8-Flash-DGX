@@ -14,6 +14,10 @@ CLI reference: [../docs/WIZARD-CLI-CONTRACT.md](../docs/WIZARD-CLI-CONTRACT.md).
 
 **Current navigation contract (2026-11-05, D-015):** Wizard primary menus are **Model management** (`model flash-next` = P1; `model 27b` = P2; `model orcarouter-flash-next` = P5), **Model switching** (`switch flash-next-27b` = P3; `switch orcarouter-27b` = P6), **Storage management** (`storage flash-next` = P4) and **System operations** (`operations system` = P7). Source files live in explanatory category directories, not numbered `pN.py` files. **P1–P7 are retained as stable roadmap identifiers and backwards-compatible CLI aliases**, not the primary UI/file organization. The P1 core remains guarded; P2–P7 remain source-only and execution BLOCKED.
 
+### User-operated DGX temporary command bundles (D-016/R1D)
+
+Prefer a **Git-committed, CI-tested, single-entry temporary script** in `scripts/temporary/` over pasting many shell commands. The operator completes any previous setup, then `git pull --ff-only`, runs one wrapper, and returns reviewed JSON evidence. See [OPERATING-RULES.md](OPERATING-RULES.md) R1D and [scripts/temporary/README.md](../scripts/temporary/README.md). Initial P1 bundle: source/CI PASS 131/131 tests/job ×2 at `b9f9a1b`, actual DGX execution NOT_RUN.
+
 ## Read order (mandatory)
 
 1. **[CURRENT-STATE.md](CURRENT-STATE.md)** — latest known project, branch/HEAD, active stage, blockers and verification status.

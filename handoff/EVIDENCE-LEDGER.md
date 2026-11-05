@@ -101,6 +101,12 @@ Use an append-only entry for every meaningful result. Never substitute README cl
 - **Safety design:** only read-only diagnostics by default; per-action plan hash validated through current P1 Wizard; terminal consent separate for verify and benchmark, no benchmark without verify PASS, process/branch/dirty-tree guards; JSON report outside Git and model cache with 0600 permissions, no automatic model mutation.
 - **Evidence outstanding:** new GitHub Actions results and actual DGX operator log. User's prior download/setup chain must be confirmed finished **before** using the wrapper. No assistant-executed DGX/GPU/API/benchmark, no service changes or cache deletion; `DGX=NOT_RUN` until operator returns evidence.
 
+## E-20261105-11 — P1 temporary operator bundle CPU CI accepted
+
+- **Code HEAD:** `b9f9a1bce6d7aad30ad6648d6c6e7edf35f3712b`, `feature/recipe-wizard-handoff`. GitHub Actions [push](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/41970955588/job/127058833280) and [PR](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/41970960007/job/127058848658), both **SUCCESS**: 131 unique CPU tests each (15 manifest, 10 inventory, 13 launch, 1 script mode, 60 P1 including 19 temporary tests, 32 router).
+- **Tested behaviors (mock DGX):** safe read-only inspection; no setup/Git reset/Docker rm; independent live Wizard plan approval; blocked/dirty/wrong-branch/active-setup refusal; mid-run race prevention; benchmark only after verify PASS; restricted JSON artifact outside Git/HF cache.
+- **Real DGX:** `NOT_RUN_BY_ASSISTANT`. No GPU/API/benchmark results, operator's queued `flash setup/serve/wait/test` completion still not observed and must be confirmed before `git pull`/wrapper.
+
 ## Historic evidence not transferred
 
 ## E-20261105-04 — User-reported Flash-Next download still in progress

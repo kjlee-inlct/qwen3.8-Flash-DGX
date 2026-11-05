@@ -1,5 +1,11 @@
 # Handoff changelog (append-only)
 
+## 2026-11-05 — H-013 — Temporary operator bundle safety and final CPU CI
+
+- Fix commit `b9f9a1bce6d7aad30ad6648d6c6e7edf35f3712b` checks an operator-owned setup/serve process again just before test execution, blocks report output under HF cache, adds two CPU regressions, and removes duplicated CI invocation (temporary test suite is included under `test_p1_*_cpu.py`).
+- GitHub Actions **2/2 SUCCESS**, each with 15 manifest + 10 inventory + 13 Flash launch + 1 executable-mode + 60 P1 (41 earlier and 19 temporary) + 32 Wizard router = **131/131 unique CPU tests PASS**. [Push](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/41970955588/job/127058833280), [PR](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/41970960007/job/127058848658).
+- This is SOURCE/CI evidence, not a DGX runtime observation. Download, model service, GPU benchmarks and existing user processes were untouched by the assistant.
+
 ## 2026-11-05 — H-012 — Git-first temporary operator script rule and first P1 bundle
 
 - User requested grouping post-download steps 1–3 into one script, committed in GitHub so the DGX operator only needs a Git Pull and single script invocation, with a separate temporary scripts directory. Follow-up explicitly requested that this **become a permanent documented project rule**.

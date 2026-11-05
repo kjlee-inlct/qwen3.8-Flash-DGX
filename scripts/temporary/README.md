@@ -65,5 +65,4 @@ its explicit approval/rollback guards, not bypass them.
   directory 0700), includes all check exit codes, guarded plans and result
   references to the Wizard's own evidence files at
   `~/.local/state/blazux-wizard/p1/`.
-- **Status:** SOURCE/CPU only until actual DGX output is returned. Blocked or
-  partial tests are never recorded as GPU PASS.
+- **Status:** SOURCE/CPU CI verified at `b9f9a1bce6d7aad30ad6648d6c6e7edf35f3712b` (2/2 jobs SUCCESS, 131/131 CPU tests/job); **actual DGX runtime checks still NOT_RUN**. BLOCKED and PARTIAL are not GPU PASS.
