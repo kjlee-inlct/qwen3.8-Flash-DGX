@@ -1,3 +1,15 @@
+## 2026-11-06 — DGX pinned 27B quant + image AST PASS; dedicated launch *preview* added
+
+**New actual operator DGX evidence supersedes old checklists:**
+- `./wizard.sh model 27b status --inspect-runtime --json` confirmed exact pinned source `482ca0f3832238542f8f5295dde86b5f22711d80`; `quantization_audit.status=PINNED_METADATA_PARSED_UNQUALIFIED`, `producer=modelopt`, `quant_algo=MIXED_PRECISION`, **FP8=208, NVFP4=193, 401 total**, `issues=[]`, CPU metadata only.
+- `./scripts/temporary/p2-27b-image-audit.sh --plan` returned immutable local image ID `sha256:9479fc92a9244fcf137afb36ed778e07495e29663a81db193736fcaa1f15e137`, no execution.
+- Operator explicitly ran `--execute-cpu-only`: `SOURCE_SURFACES_PRESENT_UNQUALIFIED`, **four of four checks true**: 27B model registry architecture, `Qwen3_5ForConditionalGeneration` class, ModelOpt NVFP4/FP8 mixed algorithms and mixed config classes. Actual installed image source locations: `vllm/model_executor/models/registry.py`, `.../models/qwen3_5.py`, `.../layers/quantization/modelopt.py`. This test ran one CPU-only runc audit container; GPU `false`, launch authority `false`.
+- Flash-Next remains observed on port 8000. **27B GPU loading, GPU kernels, API, benchmarks and rollback remain NOT_RUN**. Source PASS does not close those gates.
+
+**New P2 implementation:** `scripts/manager/p2_27b_launch_preview.py` and `./wizard.sh model 27b plan --for-action start --launch-preview --json` implement an entirely read-only 27B-specific candidate argv and live-source API identity preview; **never execute** the candidate `docker run` argv. Initial **unvalidated** settings: `modelopt_mixed`, 8192 context, 1 sequence, 0.70 memory fraction, eager, PLE/MTP disabled. Source commit `ae4490d66d9c1b9306435165a9821253ee6f38d7`, GitHub Actions run `42110115101` **SUCCESS 315/315 CPU tests**. The new docs commit requires its own CI verification.
+
+---
+
 ## 2026-11-06 — Exact pinned ModelOpt mixed-precision metadata audit added to Wizard
 
 On the previous real DGX read-only preflight, source is pinned and configuration reports `quant_method=modelopt`, but **layer distribution has not yet been observed**. New SOURCE `scripts/manager/p2_27b_quant_audit.py` now parses only `hf_quant_config.json` in the immutable NVIDIA 27B snapshot, rejects oversized/malformed/unexpected algorithms, reports `MIXED_PRECISION`, exact per-algorithm counts, and adds `quantization_audit` to the existing `status --inspect-runtime` JSON. It does not inspect weights or approve runtime execution. Actual DGX run of this updated command remains **NOT_RUN**.

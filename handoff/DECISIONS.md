@@ -1,3 +1,9 @@
+## D-025 — 2026-11-06 — P2 27B dedicated initial-run preview without implicit transition
+
+Once operator-supplied 27B pinned source metadata (FP8 208/NVFP4 193) and installed vLLM 0.32 source registry/ModelOpt AST checks pass, develop a **separate 27B runner** instead of reusing Flash-Next `scripts/serve.sh` (PLE/MTP/QSA defaults). The new `model 27b plan --for-action start --launch-preview` returns a **non-executable, unapproved** argv with exact local image ID, pinned snapshot path, `modelopt_mixed`, conservative *unvalidated* 8192 context/1 sequence/0.70 GPU memory/eager. Preview inspects original Flash-Next container image and localhost API identity but never calls Docker run/stop. No `plan_id`, no `--execute` override, no `operations_enabled`. A registry digest/validated recipe, GPU memory/kernels, exact source recovery and separate stop-before-start approval are still required. A preview command displayed in JSON must **never be copied to the shell**.
+
+---
+
 ## D-024 — 2026-11-06 — Quantization source audit is a distinct release gate
 
 Verify the local immutable NVIDIA 27B `hf_quant_config.json` rather than assuming the main-branch model card reflects downloaded revision. Require a bounded read-only `MIXED_PRECISION` description with layer-level FP8 and NVFP4 for source shape audit. Missing/invalid/unrecognized metadata blocks further qualification; valid metadata is still **not** proof of ModelOpt GPU kernel support, image import, memory capacity, runtime functionality or service transfer approval. No GPU launch and no implicit cleanup.

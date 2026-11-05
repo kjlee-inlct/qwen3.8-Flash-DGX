@@ -1,3 +1,15 @@
+## E-20261106-P2-DGX-STATIC — exact pinned 27B CPU source proof from operator
+
+Operator supplied actual DGX outputs (2026-11-06 KST):
+1. Exact `nvidia/Qwen3.8-27B-NVFP4` revision `482ca0f3832238542f8f5295dde86b5f22711d80` source found. Quantization audit `MIXED_PRECISION`, `producer=modelopt`, `layer_algorithms={"FP8":208,"NVFP4":193}`, `layer_count=401`, `issues=[]`, `mixed_fp8_nvfp4_metadata=true`, `runtime_qualified=false`.
+2. `./scripts/temporary/p2-27b-image-audit.sh --plan`: `CPU_ONLY_PROBE_PLAN`, local image `sha256:9479fc92a9244fcf137afb36ed778e07495e29663a81db193736fcaa1f15e137`, no GPU/network/port mutation.
+3. `--execute-cpu-only`: `SOURCE_SURFACES_PRESENT_UNQUALIFIED`, image registry Qwen3.5 true, Qwen3.5 class true, ModelOpt FP8/NVFP4/mixed algorithm literals true, mixed config classes true; all three Python source modules parsed. `executed_gpu=false`, `gpu_verified=false`, `runtime_qualified=false`, `launch_authorized=false`.
+4. User reported git pull 13 changed files, no service stop/restart, and old Flash-Next status `observed_model=flash-next`, `:8000` listening from live preflight. Full 27B runtime remains `BLOCKED` as designed.
+
+**SOURCE CI:** GitHub commit `ae4490d66d9c1b9306435165a9821253ee6f38d7`, Actions run `42110115101`: SUCCESS **315/315 CPU tests PASS**. Added dedicated non-executable 27B launch argv and API identity/baseline checks, not a GPU run. Initial `234a8e4a` CI had one failing *test-only placeholder assertion*, fixed by `ae4490d6`; latest success supersedes the first failure.
+
+---
+
 ## E-20261106-P2-QUANT-SOURCE-CI — Pinned ModelOpt audit unit tests
 
 GitHub `cd63f25f0bf7282ea06dbb13c3499798394322b0`, Actions `42065472163` — **303/303 CPU tests PASS**, all 15 test batches and deliberately unqualified candidate-recipe check SUCCESS. The added P2 audit uses `hf_quant_config.json` in exact NVIDIA immutable snapshot and reports layer algorithm counts; malformed/oversize/unknown algorithms fail closed. Neither the new quantization fields nor static image source checks have been run on DGX yet; GPU/27B loader/bench/API/transition and recovery **NOT_RUN**. The previous DGX `status --inspect-runtime` result remains a **config-only** observation, not a per-layer audit.

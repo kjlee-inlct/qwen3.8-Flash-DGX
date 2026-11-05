@@ -1,3 +1,14 @@
+## 2026-11-06 — P2 dedicated 27B launch preview; GPU acceptance still blocked
+
+- [x] Actual pinned DGX quant audit: modelopt `MIXED_PRECISION`, FP8 **208**, NVFP4 **193**, total **401**, no metadata issues.
+- [x] Actual installed image AST audit: **4/4 checks true**, `SOURCE_SURFACES_PRESENT_UNQUALIFIED`; no GPU model load or kernels tested.
+- [x] Build dedicated 27B **start-preview** with exact snapshot SHA, local image ID, `modelopt_mixed`, conservative initial GPU settings, no Flash-Next-specific PLE/MTP, source container image and local API identity audit. Source-only `ae4490d6` CI **315/315 PASS**. Does not enable `start --execute`.
+- [ ] After clean fast-forward, run `./wizard.sh model 27b plan --for-action start --launch-preview --json` on DGX. This reads local Docker and `/health` plus `/v1/models` on existing `127.0.0.1:8000`, not a GPU model inference request; compare returned original container image and served API ID. Report `issues` and `observed_source`. **Do not run `command_preview`**.
+- [ ] Verify runtime vLLM 0.32 CLI `modelopt_mixed`, quant loader import/GPU kernels, VRAM/context 8192/SSM dtype, image provenance/pinned-recipe acceptance, verified Flash-Next recovery before enabling an executable P2 transaction. Keep per-action source identity and explicit approval ID, revalidate immediately before any future stop/start.
+- [ ] Only with separately approved DGX GPU/port 8000 maintenance window: stop old, verify port and GPU freed, start isolated 27B, wait, test exact API ID/text/tools/vision + bounded benchmark and restore on failure. Keep PR #1 Draft until those tests pass.
+
+---
+
 ## 2026-11-06 — P2 CPU-source qualification next operator evidence
 
 - [x] Add immutable-source ModelOpt layer-algorithm auditor and integrate `quantization_audit` in Wizard; CI `cd63f25` 303/303 CPU PASS.

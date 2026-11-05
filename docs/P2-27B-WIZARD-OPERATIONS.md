@@ -1,3 +1,23 @@
+## 2026-11-06 — DGX source evidence and dedicated 27B startup preview
+
+DGX operator verified exactly pinned modelopt `MIXED_PRECISION`: **208 FP8 + 193 NVFP4 = 401** quantized layers, all metadata checks clear. The installed Docker image's registry/Qwen3.5 class/ModelOpt AST check reported **4/4 true**, static scope `SOURCE_SURFACES_PRESENT_UNQUALIFIED`. Neither result is a GPU kernel or model-loading verification. Existing Flash-Next remains the sole inference service at host port 8000.
+
+New standalone P2 preview:
+
+```bash
+git status -sb
+git pull --ff-only origin feature/recipe-wizard-handoff
+./wizard.sh model 27b plan --for-action start --launch-preview --json
+```
+
+This audits currently running Flash-Next container identity and **only local** `http://127.0.0.1:8000/health` and `/v1/models` (no inference calls). Expected JSON always `status=BLOCKED`, `plan_id=null`, `operations_enabled=false`. A `command_preview` array describes the **27B-specific, untested** candidate: exact pinned snapshot, immutable local Docker image ID, ModelOpt `modelopt_mixed` (vLLM v0.32 docs), 8192 initial max context, one concurrent seq, 0.70 GPU memory utilization, eager, no PLE or MTP flags; no image rebuild or global CLI defaults. **Do not execute command_preview manually.** No GPU, Docker run/stop, model switch, port ownership changes or automatic recovery occurs.
+
+There are two independent source/identity problems to solve before executable code may be enabled: locally registered source symbols do not prove Python module import/CUDA/FlashInfer kernels; the OCI **local image ID** is not a verified registry digest or source tree commit. Actual memory and context, startup, API identity, chat/tools/vision, benchmark, and protected original Flash-Next rollback remain unverified. These require an explicit approved transition plan with live revalidation and no simultaneous models.
+
+Official vLLM v0.32 references: https://docs.vllm.ai/en/v0.32.0/api/vllm/model_executor/layers/quantization/modelopt/ and https://docs.vllm.ai/en/v0.32.0/features/quantization/ .
+
+---
+
 ## 2026-11-06 — Exact pinned ModelOpt layer configuration inspection
 
 The real DGX result earlier confirmed `model_type=qwen3_5`, `quant_method=modelopt`, host/image ARM64, pinned checkpoint and existing Flash-Next API. Current SOURCE adds a second step: the existing read-only Wizard command

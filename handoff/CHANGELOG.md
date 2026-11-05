@@ -1,3 +1,9 @@
+## 2026-11-06 — Operator DGX 27B source PASS and separate blocked launch-preview
+
+Recorded actual exact pinned ModelOpt layer counts FP8 208 + NVFP4 193, and installed image source 4/4 checks true from CPU-only runc. Added `scripts/manager/p2_27b_launch_preview.py` + 12 CPU tests and `--launch-preview` Wizard CLI, returning proposed explicit `modelopt_mixed` vLLM argv and source/API fingerprints. This is not approval/execution, includes immutable pinned revision, prohibits Flash-Next PLE/MTP inheritance, and keeps transition/rollback/GPU gates closed. CI `ae4490d6` 315/315 PASS. No DGX GPU or inference service mutation performed.
+
+---
+
 ## 2026-11-06 — Immutable NVIDIA ModelOpt mixed precision audit in P2 runtime preflight
 
 Added `scripts/manager/p2_27b_quant_audit.py` + nine CPU regressions. Existing Wizard runtime-preflight now reads bounded exact-pin `hf_quant_config.json`, reports producer/quantization mode/layer counts and blocks unexpected or unparseable mixes while preserving all prior image/host/runtime gates. GitHub source commit `cd63f25`: CI 303/303 PASS; no model, GPU, Docker service, download or cache mutations performed.
