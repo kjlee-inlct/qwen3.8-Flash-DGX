@@ -1,3 +1,17 @@
+## 2026-11-07 — NEW ORIGINAL OPERATOR DGX ZIP / POST-B REAL P1 RECEIPTS
+
+New user-provided `blazux-wizard.zip`, **not source CI**:
+- Canonical P3-B `blazux-wizard/p3/stage-b.json`: `PASS/executed=true/live_verified=true`; completed `2026-11-06T22:31:24Z`; Flash-Next restored.
+- Read-only diagnostic `blazux-wizard/p3/p1-diagnostics-20261106T231959Z-8de8d9f283d8.json`: PASS, expected own Flash container name/port rc3.
+- Latest read-only diagnostic `blazux-wizard/p3/p1-diagnostics-20261106T232509Z-42cd3f5e323f.json`: PASS, expected own Flash container name/port rc3.
+- **Actual GPU Verify** `blazux-wizard/p1/20261106T232627Z-82b4aebbdd13.json`: `PASS`, baseline/extended `PASS`, all four probes `PASS`, explicit SHA `dbc86cd43d631ca012e1439c03d7ed7197429aae1e314fc04ee0782ccf20b020`, image `sha256:9479fc92a9244fcf137afb36ed778e07495e29663a81db193736fcaa1f15e137`, revision `fc694b54fb0174e0913e6adf86691ef85a4ead47`.
+- **Actual GPU Benchmark** `blazux-wizard/p1/20261106T233031Z-66af25d31aab.json`: `PASS`, separate explicit SHA `72f18943a69b04dad0b082bb1da4e12cac62e12017eeb6170a5fdebbc1a7882f`, 3 samples, 64 tokens each, concurrency 1, seed 1234. TTFT p50/p95 1.384594/1.779602 sec, latency p50/p95 1.724560/1.813754 sec, mean 37.9527 tokens/sec, 192 output tokens.
+- The uploaded ZIP's `blazux-p1-reports/` and `blazux-p3-reports/` trees are *separate older operator reports*. The new project-local P1 evidence location contains **no claim of existing DGX files yet**: code-only default newly introduced in GitHub and unverified on real operator runtime.
+
+New evidence layout and dual-read gate documented in [contract](../docs/WIZARD-OPERATOR-UX-EVIDENCE-CONTRACT.md). Historical records remain append-only. P3-C NOT_AUTHORIZED and NOT_RUN.
+
+---
+
 ## E-20261107-P3-B-REAL-PASS-POST-B-READONLY-P1-AND-SOURCE-FIX
 
 **OPERATOR-SUPPLIED ACTUAL DGX EVIDENCE (not assistant-observed live Docker):** P3-B canonical `/home/inlc/.local/state/blazux-wizard/p3/stage-b.json` with `stage=b,status=PASS,executed=true,live_verified=true,active_model=flash-next`; wrapper report `/home/inlc/blazux-p3-reports/p3-a-operator-20261106T223124Z-14861d75.json` shows `P3_B_PASS_FLASH_NEXT_ACTIVE`, exit 0, `issues=[]`, independent post-switch `LIVE_SERVICE_VERIFIED` and `qwen3.8-flash-next`. Prefix `p3-a-operator-` is a WRAPPER naming error, not a failed B execution. Old wrapper `approval_accepted=false` is stale bookkeeping despite explicit separate terminal triple input and successful Wizard. Do not rewrite this historic private receipt.
