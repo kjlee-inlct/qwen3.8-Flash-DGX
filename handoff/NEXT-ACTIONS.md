@@ -1,3 +1,18 @@
+## 2026-11-06 — P3 SOURCE/CPU gates ready; hold at operational approval boundary
+
+- [x] P2 completed and recorded as `BENCH_PASS_RESTORED_VERIFIED`, original Flash-Next restored/verified. Do not run again.
+- [x] D-034 source stages A/B/C implemented in `p3_persistent_switch.py`, read-only plans visible in Wizard CLI/TTY; source container restore and journal protections with fake Docker tests.
+- [x] Post-B P1 `verify`, measured `benchmark` and historical rc=3 diagnostic proof gate implemented; **no actual P1 remedial evidence yet**, so final C is appropriately ineligible.
+- [x] Source CI PASS 411/411 on `27728045907a1f2111dc4b8340fbea2cc365ff1d` ([PR run](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42168524464)). Follow-up documentation commits are not additional GPU proof.
+- [ ] Evaluate real P3 stage-A read-only `./wizard.sh switch flash-next-27b stage-a --plan --json` on DGX after non-destructive `git status -sb` and `git pull --ff-only`. Collect exact live source, pinned image/target, candidate plan and issue array.
+- [ ] **NEW explicit approval needed** before executing A (Flash→27B) during a maintenance window. Separately confirm API ID and observed source/target IDs; do not chain B.
+- [ ] Plan and separately approve B (27B→Flash); only after verified B obtain historical doctor/inventory-plan rc=3 root cause records, re-run P1 functional and numerical benchmark with fresh P1 approvals. Keep diagnostic status BLOCKED until reviewed.
+- [ ] Only after P1 actual evidence verified, plan and separately approve C (Flash→27B). Verify 27B actually active; preserve Flash-Next and other model source assets.
+- [ ] Before considering production release, perform controlled DGX fault-injection checks and validate actual rollback, port/GPU exclusivity and persistence after Docker restart. CI mock success is not enough.
+- [ ] Keep PR #1 Draft/unmerged pending explicit merge request and production review. No Orcarouter/cleanup scope.
+
+---
+
 ## 2026-11-06 — UPDATED NEXT ACTIONS: P2 COMPLETE; SOURCE-ONLY P3 engineering
 
 - [x] P2 27B bounded **actual DGX** GPU/API/streaming benchmark: `BENCH_PASS_RESTORED_VERIFIED`, 3/3; original Flash-Next `RESTORED` and `LIVE_SERVICE_VERIFIED` (operator-supplied JSON). See EVIDENCE-LEDGER. **Do not rerun P2.**
