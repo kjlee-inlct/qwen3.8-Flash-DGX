@@ -86,9 +86,10 @@ def _docker_names(run: Callable[..., Any]) -> list[str]:
 
 
 def _gpu_conflicts(source: str, run: Callable[..., Any],
-                   inspect: Callable[..., dict]) -> list[str]:
+                   inspect: Callable[..., dict], *,
+                   require_source_running: bool = True) -> list[str]:
     p = run(["docker", "ps", "--format", "{{.Names}}"])
-    if p.returncode or source not in p.stdout.splitlines():
+    if p.returncode or (require_source_running and source not in p.stdout.splitlines()):
         return ["RUNNING_GPU_SOURCE_UNVERIFIED"]
     issues = []
     for name in p.stdout.splitlines():
@@ -314,6 +315,14 @@ def _restore(stage: str, source: str, target: str, source_id: str,
             return {"status": "RECOVERY_FAILED", "issues": ["SOURCE_ID_IMAGE_DRIFT"]}
         if not gpu.port_free(run):
             return {"status": "RECOVERY_FAILED", "issues": ["PORT_8000_NOT_FREE_FOR_RESTORE"]}
+        # A new foreign GPU consumer could have appeared during the failed
+        # transition. Never restart the original GPU model on top of unknown
+        # GPU-enabled Docker containers, even while attempting recovery.
+        foreign_gpu = _gpu_conflicts(
+            NAMES[source], run, inspect, require_source_running=False)
+        if foreign_gpu:
+            return {"status": "RECOVERY_FAILED",
+                    "issues": ["RESTORE_FOREIGN_GPU_CONSUMER"] + foreign_gpu}
         if not (src.get("State") or {}).get("Running") and run(
                 ["docker", "start", NAMES[source]], timeout=90).returncode:
             return {"status": "RECOVERY_FAILED", "issues": ["SOURCE_RESTART_FAILED"]}
