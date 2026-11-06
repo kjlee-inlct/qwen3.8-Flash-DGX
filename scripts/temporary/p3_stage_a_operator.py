@@ -327,9 +327,15 @@ def main(argv: list[str] | None = None) -> int:
     else:
         report["issues"] = (execution.get("issues") or
                             ["P3_A_EXECUTION_FAILED_OR_UNVERIFIED"])
+        if (exec_rc == 3 and execution.get("executed") is False
+                and "P3_STALE_PLAN_OR_CHANGED_PREFLIGHT" in report["issues"]):
+            report["status"] = "BLOCKED"
+            report["issues"] = ["P3_A_WIZARD_REJECTED_STALE_OR_CHANGED_PLAN",
+                                *report["issues"]]
     report["evidence_file"] = persist(report)
     print(json.dumps(report, indent=2, sort_keys=True, ensure_ascii=False))
-    return 0 if report["status"] == "P3_A_PASS_27B_ACTIVE" else 4
+    return (0 if report["status"] == "P3_A_PASS_27B_ACTIVE" else
+            3 if report["status"] == "BLOCKED" else 4)
 
 
 if __name__ == "__main__":
