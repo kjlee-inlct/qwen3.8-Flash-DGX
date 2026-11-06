@@ -1,3 +1,15 @@
+## 2026-11-06 — Source hardening/CPU 413 PASS; P3-A runtime requires new explicit approval
+
+- [x] Operator-supplied real DGX `sequence --plan` P2 receipt and P3-A read-only plan READY recorded below, including exact 14:40 KST expiry; **NOT_EXECUTED**.
+- [x] Correct stale `sequence --plan` wording: staged source exists but actual DGX switch not qualified. Keep source implemented vs DGX acceptance explicit.
+- [x] Add recovery-time foreign GPU-enabled Docker consumer guard (stop/restore collision fails closed) and focused CPU fake-Docker tests.
+- [x] CPU 413/413 SUCCESS on tested source commit `02bf94c1628828ce22fa338dd5a8e5a0955f9179`: [push](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42170050031), [PR](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42170056860).
+- [ ] **No runtime P3-A action without explicit separately scoped operator downtime approval.** When such approval arrives, regenerate exact unexpired `stage-a --plan` and independently review source/target, :8000 ownership, GPU consumers, recovery readiness; old `79be6bf...` token expires 14:40 KST, never reuse it.
+- [ ] After any separately authorized actual A run, verify independent live `qwen3.8-27b` API and complete A receipt before considering B. Stages B and C independently approved; P1 remediation/rebenchmark after verified B remains mandatory.
+- [ ] Keep Draft PR unmerged; no unattended DGX operation, host Docker change, source cleanup or port service interruption.
+
+---
+
 ## 2026-11-06 — Actual P3-A DGX read-only plan READY; next gate requires explicit downtime approval
 
 - [x] Operator supplied real `./wizard.sh service manager status --json`: Flash-Next `LIVE_SERVICE_VERIFIED` on :8000, exact API ID `qwen3.8-flash-next`, `issues=[]`; **no mutation** and GPU/process exclusivity not independently qualified.
