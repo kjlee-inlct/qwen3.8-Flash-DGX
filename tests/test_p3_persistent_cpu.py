@@ -110,6 +110,8 @@ class P3StagedPlanCPU(unittest.TestCase):
         self.assertEqual(out["source_model"], "27b")
         self.assertEqual(out["target_model"], "flash-next")
         self.assertEqual(out["target_container_id"], FLASH)
+        self.assertEqual(out["required_downtime_acknowledgement"], p3.B_DOWNTIME_ACK)
+        self.assertEqual(out["required_p3_entry_acknowledgement"], p3.B_ENTRY_ACK)
 
     def test_c_blocked_until_p1_evidence_after_b(self):
         write_stage(self.root, "a")
@@ -234,13 +236,23 @@ class P3ExecuteCPU(unittest.TestCase):
         self.assertFalse((self.root / "stage-a.json").exists())
 
 
+    def test_stage_b_rejects_flash_downtime_or_missing_b_specific_entry(self):
+        for ack, entry in ((p3.ACK, p3.B_ENTRY_ACK),
+                           (p3.B_DOWNTIME_ACK, None),
+                           (p3.B_DOWNTIME_ACK, p3.ENTRY_ACK)):
+            rc, out = p3.execute("b", A_PLAN, ack, entry, root=self.root,
+                                 planner=self._planner, run=self._run)
+            self.assertEqual(rc, 3)
+            self.assertFalse(out["executed"])
+        self.assertEqual(self.commands, [])
+
     def test_stage_b_keeps_original_flash_running_and_preserves_27b(self):
         self.stageA_created = True
         self.states = {"qwen38-flash": False, "qwen38-27b": True}
         with patch.object(p3, "_record") as journal, \
              patch.object(p3.gpu, "running", side_effect=lambda name, run: self.states[name]), \
              patch.object(p3.gpu, "port_free", return_value=True):
-            rc, out = p3.execute("b", A_PLAN, p3.ACK, root=self.root,
+            rc, out = p3.execute("b", A_PLAN, p3.B_DOWNTIME_ACK, p3.B_ENTRY_ACK, root=self.root,
                 planner=self._planner, run=self._run, inspect=self._inspect,
                 waiter=lambda name, model, seconds, run: self.states[name],
                 live=lambda: live("flash-next"))
