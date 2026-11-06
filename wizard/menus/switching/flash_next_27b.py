@@ -6,7 +6,7 @@ from ..common import Stage, run as run_stage
 
 SPEC = Stage(
     "p3", "Flash-Next and 27B switching",
-    ("inspect", "switch", "rollback", "verify", "sequence", "stage-a", "stage-b", "stage-c"),
+    ("inspect", "switch", "rollback", "verify", "sequence"),
     ("Actual P2 DGX benchmark PASS and fresh service status",
      "Separate P3 operator entry, scoped approval for each switch",
      "27B->Flash-Next success, P1 remediation+benchmark, final 27B verification"),
