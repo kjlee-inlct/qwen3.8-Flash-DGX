@@ -12,6 +12,7 @@ from datetime import datetime, timezone
 import json
 import math
 import os
+import re
 from pathlib import Path
 import subprocess
 from uuid import uuid4
@@ -171,13 +172,25 @@ def assessment(current: dict[str, Any], historic: dict[str, Any],
                     "expected_api_model_present", "runtime_allowed"))
           and (pf.get("operator_process") or {}).get("blocked") is False)
     issue("CURRENT_GIT_BRANCH_OR_WORKTREE_NOT_VERIFIED",
-          branch == BRANCH and git_clean and len(git_head) == 40)
+          branch == BRANCH and git_clean and bool(re.fullmatch("[0-9a-f]{40}", git_head)))
     wa = ((current.get("cache_diagnosis") or {}).get("wizard_audit") or {})
     issue("P1_ASSET_AUDIT_NOT_READY",
           wa.get("state") == "READY" and wa.get("source_complete") is True
           and wa.get("hybrid_ready") is True
           and wa.get("source_issues") == [] and wa.get("hybrid_issues") == []
           and wa.get("model_repo") == REPO)
+    planned = current.get("plans") or {}
+    issue("P1_FUNCTIONAL_AND_BENCH_PLANS_NOT_READY",
+          isinstance(planned, dict) and all(
+              isinstance(planned.get(k), dict)
+              and planned[k].get("ready") is True
+              and (planned[k].get("plan") or {}).get("issues") == []
+              for k in ("verify", "benchmark")))
+    revision = wa.get("revision")
+    issue("P1_RECEIPT_CHECKPOINT_REVISION_DRIFT",
+          isinstance(revision, str) and len(revision) == 40
+          and verify.get("model_revision") == revision
+          and benchmark.get("model_revision") == revision)
     issue("CURRENT_MANIFEST_API_NOT_VERIFIED",
           live.get("status") == "LIVE_SERVICE_VERIFIED"
           and live.get("observed_model") == "flash-next"
