@@ -125,6 +125,10 @@ def assess_p1(*, stage_b: dict[str, Any], flash_image: str,
                 doc, digest = _read_private(path, root)
                 if doc.get("action") == action:
                     records.append((doc, digest))
+            # Legacy and new repository receipts can use different naming
+            # schemes. Freshness is the UTC finish time, never pathname order.
+            records.sort(key=lambda item: _time(item[0].get("finished_at_utc")),
+                         reverse=True)
             if not records:
                 issues.append("P1_" + action.upper() + "_RECEIPT_NOT_FOUND")
                 continue
