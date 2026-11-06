@@ -1,3 +1,15 @@
+## 2026-11-07 — POST-B P1 READ-ONLY AUDIT NEXT; P3-B ACTUAL PASS (supersedes old B execution TODO)
+
+**Completed in actual operator DGX output:** P3-B stage B `P3_B_PASS_FLASH_NEXT_ACTIVE`, canonical `stage-b.json`, original Flash restored and served `qwen3.8-flash-next`, post-B `p1-post-download.sh --inspect-only` preflight PASS/Verify+Benchmark plans READY. P3-A/B must NOT be repeated. Old P3-B operator report was misnamed `p3-a-operator-20261106T223124Z-14861d75.json`; preserve as original evidence.
+
+**Next operator step only AFTER new GitHub CPU CI PASS** (D-016): clean branch and `git pull --ff-only origin feature/recipe-wizard-handoff` in `~/Workspace/llm/blazux-orcarouter`, then run exactly **`bash scripts/temporary/p1-post-b-audit.sh`**. This is source/API/read-only preflight and doctor/inventory RAW rc3 diagnosis: NO GPU inference, benchmark, Docker start/stop or P3-C. New private `~/.local/state/blazux-wizard/p3/p1-diagnostics-<UTC>-<nonce>.json` is append-only, `0600`; existing evidence never overwritten.
+
+**Expected:** `status=PASS`, `issues=[]`, `doctor_exit_code=3`, `inventory_plan_exit_code=3`, `post_b_verify=NOT_RUN`, `post_b_benchmark=NOT_RUN`, `p3_c_authorized=false`. If `BLOCKED`, retain report and stop; do not infer benign collision from exit 3 alone, repeat P3 stages or auto-enter GPU tests. Historical successful P1 numeric results cannot substitute for new post-B samples.
+
+**After successful new diagnostics:** independently propose/obtain new action-specific P1 Verify plan ID and operator approval; after actual successful Verify, separately approve new numeric P1 Benchmark (at least 3 samples, `requests=3,max_tokens=64,seed=1234,concurrency=1` when supported). Only with verified immutable post-B receipts, metrics, timestamps, same Flash revision/image and fresh evidence gate PASS is P3-C eligible for **its own explicit downtime approval**. Do not supply P3-C execute commands earlier.
+
+---
+
 ## 2026-11-06 — User approved ONE P3-B shutdown/return; execute only with fresh exact interactive B gates
 
 - [x] Operator separately answered **"승인"** to explicitly scoped P3-B **NVIDIA 27B downtime → preserved Flash-Next restoration** question after actual B-read-only PASS; D-041 records this approval. Original P3-A approval alone was not used.

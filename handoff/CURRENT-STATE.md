@@ -1,3 +1,21 @@
+## 2026-11-07 — LATEST AUTHORITATIVE STAGE: P3-B ACTUAL DGX PASS; Flash-Next ACTIVE
+
+**This section supersedes older `P3-B NOT_RUN` / `27B ACTIVE` sections below.** Actual DGX outputs supplied by the operator, NOT inferred from CPU CI:
+
+- P2 27B initial GPU benchmark/restoration: **PASS / COMPLETE**, do not repeat.
+- P3-A Flash-Next → 27B: **ACTUAL_DGX_PASS** (`stage-a.json`, `P3_A_PASS_27B_ACTIVE`).
+- P3-B 27B → original Flash-Next: **ACTUAL_DGX_PASS**, `stage-b.json`, `P3_B_PASS_FLASH_NEXT_ACTIVE`, `executed=true`, `wizard_result.status=PASS`, `wizard_result.live_verified=true`, `issues=[]`, `post_switch_status=LIVE_SERVICE_VERIFIED`.
+- Last operator-verified model: **flash-next**; API served ID **`qwen3.8-flash-next`**, port **8000**. New live runtime observation during this GitHub source-only work: **NOT_PERFORMED**.
+- Original Flash CID `90f39a4dbccd0b5f97efa0ff163c61402ddace3dd3cb4da986a91dff7eb45ed5`. P3-A-created 27B CID `6d9ede0904c2b8e9e632d45b51aba4acbaf4502ae648da60cca77677948b0e2d`. Runtime image shared `sha256:9479fc92a9244fcf137afb36ed778e07495e29663a81db193736fcaa1f15e137`; identical image does NOT imply identical served model.
+- Actual B operator report `/home/inlc/blazux-p3-reports/p3-a-operator-20261106T223124Z-14861d75.json` (historically misnamed); canonical `/home/inlc/.local/state/blazux-wizard/p3/stage-b.json`. Historical `approval_accepted=false` in old operator report is a wrapper bookkeeping error, not evidence of missing core execution consent. Do not modify old evidence.
+- P1 POST-B READ-ONLY PREFLIGHT: **PASS**: `/home/inlc/blazux-p1-reports/20261106T224010Z-d2095867/result.json`, API ID correct, branch+clean+plan checks READY, source/Hybrid ready. `actions.verify/benchmark=BLOCKED` with `reason=inspection_only` means **NOT_RUN**, not failed.
+- P1 POST-B Verify: **NOT_RUN**; Benchmark: **NOT_RUN**. Post-B raw doctor/inventory `rc=3` disposition: **NOT_YET_QUALIFIED** (prior pre-A expected collision is not new post-B evidence).
+- P3-C: **NOT_RUN, NOT_AUTHORIZED**, ineligible until separately approved actual new P1 Verify, numeric Benchmark, valid post-B diagnostics.
+
+**Current source work:** stage-B filename/approval-state fixes and append-only `scripts/temporary/p1-post-b-audit.sh` with fake-DGX tests and latest-evidence P3-C gate. No GPU/service mutation or PR merge. D-016: commit/CI first, then operator fast-forward pulls and runs ONE tracked read-only audit, stops on BLOCKED, and separately approves any later GPU action.
+
+---
+
 ## 2026-11-06 — P3-B separate downtime permission GRANTED; actual DGX transition pending
 
 Operator explicitly replied **"승인"** when asked the unambiguous scoped question "P3-B(현재 NVIDIA 27B 중단 → 원본 Flash-Next 복귀)를 승인하시겠습니까?" following real DGX `READY_FOR_SEPARATE_P3_B_APPROVAL` (`issues=[]`, saved `~/blazux-p3-reports/p3-b-inspect-20261106T084156Z-f48d7da9.json`). **P3-B entry permission now granted** for this one stage only; does not authorize another action. No new actual B DGX output exists: **P3-B NOT_RUN**, 27B last verified running. Tracked GitHub `scripts/temporary/p3-stage-b-operator.sh --execute` is ready, CPU [489/489 PASS](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42190159738) with exact stage-B-only `I_ACCEPT_27B_DOWNTIME` + `I_SEPARATELY_AUTHORIZE_P3_STAGE_B`, fresh full current plan SHA and typed three-step terminal confirmation. Do not pre-fill approvals or use expired B inspection plan SHA. D-016: agent commits docs; operator fast-forward pulls and runs one tracked wrapper. Wizard must verify live source/target containers and restore on failure when possible; return `P3_B_PASS_FLASH_NEXT_ACTIVE` and independently verified `qwen3.8-flash-next` before any P1 work. No automatic post-B P1 or C, no PR merge/cleanup.
