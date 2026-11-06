@@ -401,6 +401,52 @@ class P1GateCPU(unittest.TestCase):
         self.assertEqual(status["status"], "PASS", status["issues"])
         self.assertEqual(set(status["evidence_hashes"]), {"verify", "benchmark", "diagnostics"})
 
+    def test_model_project_receipts_and_legacy_receipts_are_both_discovered(self):
+        with tempfile.TemporaryDirectory() as directory:
+            base = Path(directory)
+            old, p3root = self._positive_p1_fixture(base / "legacy")
+            new_root = base / "reports" / "models" / "qwen3.8-flash-next"
+            new_root.mkdir(parents=True)
+            # Both action receipts initially reside in the old state root.
+            status = assess_p1(
+                stage_b={"finished_at_utc": "2026-11-06T06:00:00+00:00"},
+                flash_image=IMAGE, p1_root=new_root, p3_root=p3root,
+                legacy_p1_root=old)
+            self.assertEqual(status["status"], "PASS", status["issues"])
+
+            # Move only the benchmark receipt to the new project directory;
+            # the independent Verify receipt remains where it was created.
+            bench = old / "bench.json"
+            project_bench = new_root / "20261106T090000Z-benchmark.json"
+            project_bench.write_bytes(bench.read_bytes())
+            project_bench.chmod(0o600)
+            bench.unlink()
+            status = assess_p1(
+                stage_b={"finished_at_utc": "2026-11-06T06:00:00+00:00"},
+                flash_image=IMAGE, p1_root=new_root, p3_root=p3root,
+                legacy_p1_root=old)
+            self.assertEqual(status["status"], "PASS", status["issues"])
+
+    def test_newest_failed_project_attempt_cannot_be_masked_by_old_pass(self):
+        with tempfile.TemporaryDirectory() as directory:
+            base = Path(directory)
+            old, p3root = self._positive_p1_fixture(base / "legacy")
+            new_root = base / "reports" / "models" / "qwen3.8-flash-next"
+            new_root.mkdir(parents=True)
+            bad_verify = json.loads((old / "verify.json").read_text())
+            bad_verify["status"] = "FAIL"
+            bad_verify["result"]["status"] = "FAIL"
+            bad_verify["finished_at_utc"] = "2026-11-06T10:00:00+00:00"
+            new_file = new_root / "20261106T100000Z-failed.json"
+            new_file.write_text(json.dumps(bad_verify))
+            new_file.chmod(0o600)
+            status = assess_p1(
+                stage_b={"finished_at_utc": "2026-11-06T06:00:00+00:00"},
+                flash_image=IMAGE, p1_root=new_root, p3_root=p3root,
+                legacy_p1_root=old)
+            self.assertEqual(status["status"], "BLOCKED")
+            self.assertIn("P1_VERIFY_RECEIPT_UNQUALIFIED", status["issues"])
+
     def test_wrong_p1_served_id_in_real_identity_blocks_stage_c(self):
         with tempfile.TemporaryDirectory() as directory:
             p1, p3root = self._positive_p1_fixture(Path(directory) / "p1")
