@@ -1,3 +1,13 @@
+## 2026-11-06 — P3-A completed on actual DGX; prepare B read-only, require fresh B authorization
+
+- [x] **REAL P3-A SUCCESS:** user ran `p3-stage-a-operator.sh --execute` with a new exact plan SHA `b6c7a32e249eaf45dd864719eb32822bf1e72a2d123b5d60e312d5fffec203a4` and both individually typed ACKs; Wizard `PASS/executed=true/live_verified=true`, wrapper `P3_A_PASS_27B_ACTIVE` with `issues=[]`, after-switch `LIVE_SERVICE_VERIFIED` and `27b`. Evidence `~/blazux-p3-reports/p3-a-operator-20261106T074306Z-c99bf2ad.json` plus `~/.local/state/blazux-wizard/p3/stage-a.json`. Supersedes prior failed/expired SHA refusal history. No P3-B runtime action.
+- [x] Build a D-016 GitHub-tracked **read-only** stage-B inspector `scripts/temporary/p3-stage-b-inspect.sh`, Python, fake-DGX tests, CI. It checks actual successful immutable stage-A receipt, active 27B API, new canonical B-stage plan and preserved original Flash container ID/image with P2 provenance; **no execute mode**.
+- [ ] After GitHub-tested source push, DGX user fast-forward pulls and runs **only `bash scripts/temporary/p3-stage-b-inspect.sh`** to collect actual `READY_FOR_SEPARATE_P3_B_APPROVAL` / `BLOCKED` with issues and private evidence. Inspection never stops 27B or starts Flash; keep 27B LIVE.
+- [ ] **Separate operator B approval** required after inspecting evidence: no `stage-b --execute` from A approval, no reusing A plan SHA, no automatic downtime. B is 27B→Flash-Next and needs its own fresh plan, independent typed downtime approval, original Flash container preservation and target API verification.
+- [ ] Only **after** B PASS, run actual new P1 full functional Verify and numerical Benchmark with explicit individual P1 plans/approvals, plus reviewed rc3 diagnostic evidence newer than B before contemplating P3-C. C final 27B active likewise independently approved. Preserve Draft PR unmerged, checkpoints, original Docker objects and public :8000/v1 contract.
+
+---
+
 ## 2026-11-06 — P3-A exact-input UX fixed; previous approved input refused as stale, no transition
 
 - [x] Operator had typed **all three correct** P3-A strings. Wizard returned `P3_STALE_PLAN_OR_CHANGED_PREFLIGHT`, `executed=false`, `approval_accepted=false`; former wrapper displayed ambiguous `OPERATOR_REVIEW_REQUIRED`. Plan expiration `1793950200` was **16:30:00 KST**; report time `16:30:49 KST`. No P3-A Docker stop/start, Flash→27B NOT_RUN. Preserve original Flash.
