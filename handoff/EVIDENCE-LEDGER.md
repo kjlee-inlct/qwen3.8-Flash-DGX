@@ -1,3 +1,13 @@
+## E-20261106-P3-REORDERED-SOURCE-ONLY — user instruction, code/CI evidence; no new DGX runtime data
+
+**Operator's new instruction:** Do not automatically enter P3 after P2; when P3 successfully switches **27B→Flash-Next**, resolve P1 shortcomings and benchmark Flash-Next before switching **Flash-Next→27B**. Since previous P2 design restores Flash-Next, P3 must separately and explicitly establish 27B as the source model for the requested 27B→Flash-Next test. Final intended active service after P3 is **27B** (not Flash-Next).
+
+**Source-only changes:** retired `scripts/manager/p3_27b_roundtrip.py` previously executable two-cycle path (its `main`, `make_plan`, `execute` now always return `BLOCKED`); introduced read-only `scripts/manager/p3_transition_sequence.py` + Wizard `switch flash-next-27b sequence --plan --json` with `plan_id=null` and no auto progression. Read-only new sequence encodes per-stage explicit approvals and prerequisite P1 remediation/rebenchmark. CPU tests verify no receipt, successful receipt still requires manual entry, phase order, wrong model/API BLOCKED, and legacy direct execution prevented.
+
+**Verification:** GitHub Actions [run 42163187058](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42163187058) **SUCCESS, 395/395 CPU tests, 19 test suites**, on code HEAD `f195e8bcc48333b5d40147c8b66e6c412c949818`. Subsequent docs-only commits do not constitute DGX runtime validation. No new actual P2 benchmark/P3 transition was performed. Previous actual DGX P2 `--plan` was only `READY_TO_REQUEST_TRIAL_APPROVAL`; no measured bench result supplied. Draft PR stays unmerged.
+
+---
+
 ## E-20261106-DGX-P2-BENCH-PLAN-READY-P3-PLAN-BLOCKED — actual operator stdout
 
 **P2 read-only plan evidence:** `action=Qwen3.8-27B-bounded-benchmark-and-original-restore`, `status=READY_TO_REQUEST_TRIAL_APPROVAL`, `issues=[]`, `executed=false`, `gpu_verified=false`, `image_id=sha256:9479fc92a9244fcf137afb36ed778e07495e29663a81db193736fcaa1f15e137`, `source_container_id=90f39a4dbccd0b5f97efa0ff163c61402ddace3dd3cb4da986a91dff7eb45ed5`, `plan_id=2f76c3b03865b6a15a5c2fe8f316231f532fbf8b7fe178ffd00db8383edc3399` (expired 2026-11-06 **12:20 KST**), benchmark `requests=3`, `max_tokens=64`, `concurrency=1`, `seed=1234`, `stream=true`. This is a **read-only plan**; no actual GPU benchmark result or performance numbers.

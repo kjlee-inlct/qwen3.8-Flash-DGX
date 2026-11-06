@@ -1,3 +1,19 @@
+## 2026-11-06 — P3 new operator-defined sequence (read-only); old roundtrip retired
+
+P2 27B bounded benchmark remains its own separately approved step. A P2 benchmark PASS **must NOT automatically enter P3**. After P2 returns to verified Flash-Next, stop and await the operator's new P3 authorization.
+
+The **only current P3-specific sequence interface** is read-only:
+
+```bash
+./wizard.sh switch flash-next-27b sequence --plan --json
+```
+
+It always returns `status=BLOCKED`, `plan_id=null`, `executed=false`, `operations_enabled=false` until a separately qualified persistent switching executor is implemented and approved. Even with a valid P2 benchmark receipt, it shows `P3_SEPARATE_OPERATOR_ENTRY_REQUIRED`; no automatic P3 transition. Phase order: **explicit P3 entry → establish active 27B → switch 27B→Flash-Next → resolve P1 gaps and rebenchmark Flash-Next → switch Flash-Next→27B, final 27B API verified**. Each operational step requires a separate fresh approval, verified API model ID and recovery.
+
+The former P3 two-roundtrip `roundtrip --plan`/`roundtrip --execute` commands are **RETIRED/BLOCKED**, including direct Python legacy entry points. Do not follow historical P3 instructions in old documents. See [binding P3 sequence](P3-MANUAL-TRANSITION-SEQUENCE-20261106.md).
+
+---
+
 ## 2026-11-06 — Read-only installed model inventory, including protected legacy Orcarouter
 
 An earlier example `./wizard.sh model list --installed --json` was suggested **before implementation** and gave `{"status":"BLOCKED","error":"choose a valid submenu item for model"}` when the operator tried it. That error was a **missing Wizard route**, NOT evidence that any model was deleted.
