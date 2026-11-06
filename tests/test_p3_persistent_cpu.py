@@ -286,6 +286,43 @@ class P3ExecuteCPU(unittest.TestCase):
                              for cmd in self.commands))
 
 
+class P3RecoveryForeignGPUGuardCPU(unittest.TestCase):
+    def _simulate_recovery(self, foreign: bool):
+        calls = []
+        def run(args, timeout=35):
+            calls.append(args[:])
+            if args[:3] == ["docker", "ps", "-a"]:
+                return SimpleNamespace(returncode=0,
+                    stdout="qwen38-flash\\nqwen38-27b\\n")
+            if args[:2] == ["docker", "ps"]:
+                return SimpleNamespace(returncode=0,
+                    stdout="foreign-inference\\n" if foreign else "")
+            return SimpleNamespace(returncode=0, stdout="")
+
+        def inspect(name):
+            if name == "foreign-inference":
+                return {"HostConfig": {"DeviceRequests": [{"Driver": "nvidia"}]},
+                        "Config": {"Env": []}}
+            return inspect_doc(name, False)
+        with patch.object(p3.gpu, "port_free", return_value=True):
+            result = p3._restore("a", "flash-next", "27b",
+                FLASH, IMAGE, IMAGE, A_PLAN, run=run, inspect=inspect,
+                waiter=lambda *a, **kw: True, live=lambda: live("flash-next"))
+        return result, calls
+
+    def test_unexpected_gpu_container_blocks_original_restart(self):
+        result, calls = self._simulate_recovery(foreign=True)
+        self.assertEqual(result["status"], "RECOVERY_FAILED")
+        self.assertIn("RESTORE_FOREIGN_GPU_CONSUMER", result["issues"])
+        self.assertIn("OTHER_GPU_CONTAINER_RUNNING", result["issues"])
+        self.assertNotIn(["docker", "start", "qwen38-flash"], calls)
+
+    def test_no_foreign_gpu_allows_identity_verified_restore(self):
+        result, calls = self._simulate_recovery(foreign=False)
+        self.assertEqual(result["status"], "RESTORED", result["issues"])
+        self.assertIn(["docker", "start", "qwen38-flash"], calls)
+
+
 class P1GateCPU(unittest.TestCase):
     def test_no_new_evidence_fails_closed(self):
         with tempfile.TemporaryDirectory() as root:
