@@ -1,3 +1,20 @@
+## 2026-11-06 — P3-A conditional operator approval now eligible; one GitHub-tracked exact-gated wrapper
+
+Operator provided **actual** tracked P1 pre-A receipt `/home/inlc/blazux-p1-reports/p1-pre-a-20261106T065104Z-aaed31b2.json` with `PRE_A_P1_REVIEW_READY`, `issues=[]`, both historical/current `doctor/inventory-plan` rc3 confirmed as own active Flash collisions, P1 Verify PASS and 3-sample numerical benchmark PASS. This closes the earlier pre-A P1 diagnostic gaps. The operator's previous "**if no P1 work remains, approve 27B transition**" is eligible as **P3-A only**, not B/C and not an automatic service stop. Local pre-A receipt `p3_a_execution_authorized=false` is expected for read-only evidence.
+
+**D-016 tracked operator script:** `scripts/temporary/p3-stage-a-operator.sh` backed by `p3_stage_a_operator.py` (tested with fake-DGX). Default **read-only** plan `bash scripts/temporary/p3-stage-a-operator.sh --plan`; actual explicitly chosen service interruption `bash scripts/temporary/p3-stage-a-operator.sh --execute` requires a real TTY and three independent prompt responses: **full current stage-A `plan_id`** printed from real DGX, `I_ACCEPT_FLASH_NEXT_DOWNTIME`, then `I_SEPARATELY_AUTHORIZE_P3_ENTRY`. No automatic approval, no plan ID supplied by assistant; 10-min plan expiry rechecked by Wizard. The wrapper verifies private pre-A PASS receipt freshness, live Flash API/image and P2 hash/target image/source container, branches and clean worktree before prompting. If any issue => BLOCKED, no Docker mutation. It invokes only canonical Wizard `switch flash-next-27b stage-a --execute` *after* all three confirmations. Successful A **leaves 27B active** and independently re-verifies served ID and image; no B/C. Failure displays recovery result and stops without retry; host/Docker crash may defeat rollback. Read-only/report mode only writes private `~/blazux-p3-reports/p3-a-operator-*.json` (0600), never Git/cache.
+
+**DGX operator after GitHub push + CI:**
+```bash
+cd ~/Workspace/llm/blazux-orcarouter
+git pull --ff-only origin feature/recipe-wizard-handoff
+bash scripts/temporary/p3-stage-a-operator.sh --execute
+```
+
+Use `--plan` instead of `--execute` for read-only preview. This is a real first P3-A service interruption: :8000 becomes temporarily unavailable and return to Flash on failure is best effort. The model target must be verified via fresh API `qwen3.8-27b`, never inferred from same Docker image. A PASS in Python/CPU CI does **not** certify arbitrary host-GPU-process exclusivity or production recoverability. The operator must observe the outputs and stop on any unexpected GPU user, Docker error or unavailable rollback. Original Flash model checkpoint and container remain protected.
+
+---
+
 ## 2026-11-06 — Correct persisted P1 cache diagnosis schema in pre-A wrapper
 
 Real operator `bash scripts/temporary/p1-pre-a-readiness.sh` at prior HEAD `3a594193` reported P1 Verify PASS, benchmark PASS with real 3-sample numerical metrics, and historic/current expected Flash collision on :8000. It nevertheless returned `P1_ASSET_AUDIT_NOT_READY` and `P1_RECEIPT_CHECKPOINT_REVISION_DRIFT`. **Source bug:** the stored `p1-post-download.sh --inspect-only` `result.json` contains `checks.cache_diagnosis.stdout` (full JSON as captured command output), **not** the ephemeral console-summary field `cache_diagnosis`. `p1-pre-a-readiness.py` read the latter and treated the absent revision as actual drift.
