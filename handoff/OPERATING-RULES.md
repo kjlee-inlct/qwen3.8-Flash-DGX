@@ -1,3 +1,11 @@
+## R1O — 2026-11-06 — P3-B read-only READY, 27B remains ACTIVE until newly scoped B approval (LATEST)
+
+Actual DGX read-only B inspection (17:41:56 KST) reported `READY_FOR_SEPARATE_P3_B_APPROVAL`, `issues=[]`, active API ID `qwen3.8-27b`, immutable 27B running container and original preserved Flash container identities; `executed=false`. **Do not treat READY as permission to stop the live 27B service.** B's operator approval must be separately given, with an unexpired fresh SHA and **correctly named shutdown target**: `I_ACCEPT_27B_DOWNTIME` plus independent `I_SEPARATELY_AUTHORIZE_P3_STAGE_B`; neither P3-A's SHA nor `I_ACCEPT_FLASH_NEXT_DOWNTIME` is valid for B. Record the change under D-040.
+
+D-016 remains binding: agent prepares `scripts/temporary/p3-stage-b-operator.sh` + Python, fake-DGX tests and permanent handoff on GitHub, confirms CI and PR, then operator fast-forward pulls. `--plan` is read-only and safe; **`--execute` is not authorized by this source work** and must NOT be asked of DGX operator until a separate explicit B downtime approval is obtained. If authorized, wrapper requires exact printed live SHA, 27B downtime and B-entry literals, fresh preflight/replan, and stops after B; no automatic post-B P1 or C. Canonical Wizard owns Docker mutation with best-effort rollback. No GPU-service changes from source-only GitHub work, preserve active 27B, old Flash container/image, P2 assets, API :8000 and Draft PR unmerged. Stale B inspect SHA expired 2026-11-06 17:50 KST, NEVER reuse for execution.
+
+---
+
 ## R1N — 2026-11-06 — Actual P3-A PASS means 27B is ACTIVE; mandatory STOP before separate P3-B authorization (LATEST)
 
 Operator reported real `P3_A_PASS_27B_ACTIVE` and `LIVE_SERVICE_VERIFIED` after `stage-a --execute` with exact newly generated SHA and downtime+entry acknowledgments, stored `~/blazux-p3-reports/p3-a-operator-20261106T074306Z-c99bf2ad.json`, Wizard immutable receipt `~/.local/state/blazux-wizard/p3/stage-a.json`. This supersedes R1M's "A not run" state. **P3-A PASS (actual runtime)** is distinct from GitHub source CI success. Keep the active 27B service untouched until user explicitly approves B; sharing A's PASS is not a second-stage approval. No automatic B, P1 after B, or C, no hidden GPU tests, no cache/image cleanup, no Draft PR merge. Original Flash image/container must be preserved.
