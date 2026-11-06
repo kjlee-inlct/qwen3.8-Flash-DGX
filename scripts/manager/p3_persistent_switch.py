@@ -30,6 +30,10 @@ ROOT = Path.home() / ".local/state/blazux-wizard/p3"
 LABEL = "blazux.p3.approved-stage-a"
 ACK = gpu.ACK
 ENTRY_ACK = "I_SEPARATELY_AUTHORIZE_P3_ENTRY"
+B_DOWNTIME_ACK = "I_ACCEPT_27B_DOWNTIME"
+B_ENTRY_ACK = "I_SEPARATELY_AUTHORIZE_P3_STAGE_B"
+STAGE_ACKS = {"a": ACK, "b": B_DOWNTIME_ACK, "c": ACK}
+STAGE_ENTRY_ACKS = {"a": ENTRY_ACK, "b": B_ENTRY_ACK, "c": None}
 NAMES = {"flash-next": gpu.ORIGINAL_CONTAINER, "27b": gpu.TARGET_CONTAINER}
 IDS = {"flash-next": gpu.ORIGINAL_ID, "27b": gpu.SERVED}
 DIRECTIONS = {"a": ("flash-next", "27b"),
@@ -271,8 +275,8 @@ def make_plan(stage: str, *, root: Path = ROOT, reader=latest_p2_benchmark,
             "p2_receipt_sha256": evidence_sha,
             "p3_a_plan_id": (first or {}).get("plan_id"),
             "p1_evidence": evidence,
-            "required_downtime_acknowledgement": ACK,
-            "required_p3_entry_acknowledgement": ENTRY_ACK if stage == "a" else None,
+            "required_downtime_acknowledgement": STAGE_ACKS[stage],
+            "required_p3_entry_acknowledgement": STAGE_ENTRY_ACKS[stage],
             "notice": "PLAN ONLY: no Docker/GPU changes. Any execution requires fresh exact plan, explicit downtime and (stage A) separate P3 entry. Stage C requires P1 actual evidence."}
 
 
@@ -344,9 +348,8 @@ def execute(stage: str, plan_id: str | None, ack: str | None,
             planner=make_plan, run=gpu.call, inspect=gpu.docker_info,
             waiter=gpu.wait_for, live=inspect_live_status) -> tuple[int, dict]:
     if (stage not in DIRECTIONS or not isinstance(plan_id, str)
-            or not SHA.fullmatch(plan_id) or ack != ACK
-            or (stage == "a" and enter_p3 != ENTRY_ACK)
-            or (stage != "a" and enter_p3 is not None)):
+            or not SHA.fullmatch(plan_id) or ack != STAGE_ACKS.get(stage)
+            or enter_p3 != STAGE_ENTRY_ACKS.get(stage)):
         return 3, _issue("P3_STAGE_PLAN_DOWNTIME_AND_ENTRY_ACK_REQUIRED", stage=stage)
     try:
         _private_dir(root)
