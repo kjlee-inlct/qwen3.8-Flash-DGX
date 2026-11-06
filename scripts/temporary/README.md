@@ -1,3 +1,17 @@
+## 2026-11-06 — Actual B inspection READY, new stage-B-specific exact approvals (SOURCE ONLY)
+
+User ran the tracked read-only B inspector on actual DGX after successful P3-A: `READY_FOR_SEPARATE_P3_B_APPROVAL`, `issues=[]`, `executed=false`; live `qwen3.8-27b`, original Flash container `90f39...` and running 27B `6d9ede...` preserved. Receipt `~/blazux-p3-reports/p3-b-inspect-20261106T084156Z-f48d7da9.json`. A shared Docker runtime IMAGE digest for these models is expected; only exact model ID/containers and pinned resources prove which runs.
+
+**Critical correction before any B execute:** P3 canonical core used the A/C `I_ACCEPT_FLASH_NEXT_DOWNTIME` even for B, where the ACTIVE 27B is stopped. The correct **new B-only** manual strings are now `I_ACCEPT_27B_DOWNTIME` and independent `I_SEPARATELY_AUTHORIZE_P3_STAGE_B`, plus a newly generated full 64-character `stage-b` plan SHA. Existing A/C approval strings and actions unchanged. This change is source/CPU only; B service interruption has NOT been authorized.
+
+Tracked D-016 `scripts/temporary/p3-stage-b-operator.sh` wraps canonical stage-B with default safe `--plan` (no service changes), `--execute` (actual live 27B shutdown and original preserved Flash restart) protected by exact **three freshly typed operator inputs**, an independent real stage-B user decision, fresh live Manifest/API and original A receipt/27B+Flash image and container identity, minimum 120s input window, a read-only replan after inputs and core's final preflight. Exact actual SHA and both literal ACKs printed beside prompts. After B, wrapper rechecks `qwen3.8-flash-next` API, writes private 0600 `~/blazux-p3-reports/p3-b-operator-*.json` and stops; NO automatic P1 or stage C. If core returns `RECOVERY_FAILED` or live API fails, stop and inspect before any further action. Host failures can defeat rollback.
+
+**NO B APPROVAL IN USER LOG:** Do not ask operator to invoke `--execute` until they explicitly authorize 27B downtime and transition 27B→Flash. To review source safely after GitHub CI: `bash scripts/temporary/p3-stage-b-operator.sh --plan` (read-only) after `git pull --ff-only origin feature/recipe-wizard-handoff`. B inspector earlier plan SHA `7af40f...` expired 17:50 KST and may not be reused. Do not modify DGX workspace with ad hoc scripts, restart/stop 27B automatically, clean caches or merge Draft PR. After separate approval the same D-016 wrapper may use `--execute`; no new source required.
+
+**CPU source evidence:** [PR GitHub Actions 42190159738](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42190159738) SUCCESS 489/489 tests across 22 groups on source `59046c4e17a5094f2c80a84025a763c2a767edcb`. DGX has NOT run this updated wrapper and B is NOT_RUN.
+
+---
+
 ## 2026-11-06 — P3-A real DGX PASS; P3-B preparation is strictly READ-ONLY
 
 Actual DGX operator `scripts/temporary/p3-stage-a-operator.sh --execute` at `20261106T074306Z` succeeded: `P3_A_PASS_27B_ACTIVE`, `issues=[]`, canonical Wizard stage-A `status=PASS`, `executed=true`, `live_verified=true`, independent API/Manifest `LIVE_SERVICE_VERIFIED` with `observed_model=27b`. Real receipts: `~/.local/state/blazux-wizard/p3/stage-a.json` and `~/blazux-p3-reports/p3-a-operator-20261106T074306Z-c99bf2ad.json`. The active target is **27B**, not Flash; keep running. P3-B has **not** been approved, and P3-C and post-B P1 are pending.
