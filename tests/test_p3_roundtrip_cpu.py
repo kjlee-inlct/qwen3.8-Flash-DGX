@@ -1,4 +1,4 @@
-"""Pure-CPU P3 two-cycle acceptance checks. No Docker, HTTP or GPU."""
+"""CPU-only P3 revised manual sequence and retired legacy runner tests."""
 from __future__ import annotations
 
 import contextlib
@@ -9,177 +9,150 @@ from pathlib import Path
 from unittest.mock import patch
 import unittest
 
-from scripts.manager import p3_27b_roundtrip as p3
-from scripts.manager import p2_27b_gpu_trial as trial
+from scripts.manager import p3_27b_roundtrip as legacy
+from scripts.manager import p3_transition_sequence as p3
 from wizard import main as wizard
 
 
-def base():
-    return {"status":"READY_TO_REQUEST_TRIAL_APPROVAL","plan_id":"1"*64,
-            "source_container_id":"2"*64, "image_id":"sha256:"+"3"*64,
-            "issues":[], "executed":False}
+def good_live():
+    return {"status": "LIVE_SERVICE_VERIFIED",
+            "observed_model": "flash-next",
+            "expected_served_id": "qwen3.8-flash-next", "issues": []}
 
 
-def receipt():
-    return {"path": "/private/benchmark.json", "sha256":"4"*64}, None
+def good_receipt():
+    return {"path": "/private/benchmark.json", "sha256": "4"*64}, None
 
 
-class P3RoundtripCPU(unittest.TestCase):
-    def test_no_p2_benchmark_receipt_blocks_entire_p3_plan(self):
-        doc = p3.make_plan(base_planner=base,
-                           receipt_reader=lambda:(None,"P2_BENCHMARK_RECEIPT_NOT_FOUND"))
-        self.assertEqual(doc["status"],"BLOCKED")
-        self.assertIsNone(doc["plan_id"])
-        self.assertIn("P2_BENCHMARK_RECEIPT_NOT_FOUND",doc["issues"])
+class P3ManualSequenceCPU(unittest.TestCase):
+    def test_no_p2_receipt_blocks_manual_entry(self):
+        result = p3.plan(
+            receipt_reader=lambda: (None, "P2_BENCHMARK_RECEIPT_NOT_FOUND"),
+            service_inspector=good_live)
+        self.assertEqual(result["status"], "BLOCKED")
+        self.assertIn("P2_BENCHMARK_RECEIPT_NOT_FOUND", result["issues"])
+        self.assertFalse(result["automatic_progression_from_p2"])
+        self.assertFalse(result["operations_enabled"])
+        self.assertIsNone(result["plan_id"])
 
-    def test_p3_id_binds_p2_result_and_is_not_old_trial_approval(self):
-        one = p3.make_plan(base_planner=base,receipt_reader=receipt)
-        self.assertEqual(one["status"],"READY_TO_REQUEST_TRIAL_APPROVAL")
-        self.assertNotEqual(one["plan_id"],"1"*64)
-        self.assertEqual(one["cycles"],2)
-        other = p3.make_plan(base_planner=base,
-                             receipt_reader=lambda:({"sha256":"5"*64,"path":"/private/b"},None))
-        self.assertNotEqual(one["plan_id"],other["plan_id"])
+    def test_after_p2_pass_still_requires_explicit_p3_operator_entry(self):
+        result = p3.plan(receipt_reader=good_receipt,
+                         service_inspector=good_live)
+        self.assertTrue(result["p2_benchmark_receipt_present"])
+        self.assertEqual(result["status"], "BLOCKED")
+        self.assertIn("P3_SEPARATE_OPERATOR_ENTRY_REQUIRED", result["issues"])
+        self.assertFalse(result["operations_enabled"])
+        self.assertFalse(result["automatic_progression_from_p2"])
+        self.assertEqual(result["intended_final_model"], "27b")
+        self.assertIsNone(result["plan_id"])
+        self.assertFalse(result["permanent_switch_executor_ready"])
 
-    def test_private_receipt_read_and_fail_closed_on_bad_or_newer_failure(self):
+    def test_order_targets_flash_next_p1_remediation_then_final_27b(self):
+        result = p3.plan(receipt_reader=good_receipt,
+                         service_inspector=good_live)
+        actions = [phase["action"] for phase in result["phases"]]
+        self.assertEqual(actions, [
+            "manually-approve-p3",
+            "switch-flash-next-to-27b",
+            "switch-27b-to-flash-next",
+            "audit-fix-and-benchmark-p1",
+            "switch-flash-next-to-27b"])
+        self.assertEqual(result["phases"][2]["required_observed_model"], "27b")
+        self.assertEqual(result["phases"][3]["required_observed_model"], "flash-next")
+        self.assertTrue(result["p1_remediation_and_rebenchmark_required"])
+        self.assertIn("TTFT", " ".join(result["p1_open_checks"]))
+
+    def test_only_flash_next_observed_after_p2_is_accepted(self):
+        def wrong_model():
+            return {**good_live(), "observed_model": "27b",
+                    "expected_served_id": "qwen3.8-27b"}
+        result = p3.plan(receipt_reader=good_receipt,
+                         service_inspector=wrong_model)
+        self.assertIn("P2_MUST_RESTORE_FLASH_NEXT_BEFORE_SEPARATE_P3_ENTRY",
+                      result["issues"])
+        self.assertIn("FLASH_NEXT_API_IDENTITY_NOT_VERIFIED", result["issues"])
+
+    def test_missing_live_api_blocks_even_with_p2_receipt(self):
+        result = p3.plan(receipt_reader=good_receipt,
+                         service_inspector=lambda: {
+                             "status": "BLOCKED", "observed_model": None,
+                             "issues": ["API_UNAVAILABLE"]})
+        self.assertIn("LIVE_SERVICE_STATE_UNVERIFIED", result["issues"])
+        self.assertIn("API_UNAVAILABLE", result["issues"])
+
+    def test_read_only_observation_failure_never_implies_success(self):
+        def bad():
+            raise OSError("unavailable")
+        result = p3.plan(receipt_reader=bad, service_inspector=bad)
+        self.assertIn("P2_BENCHMARK_RECEIPT_UNAVAILABLE", result["issues"])
+        self.assertIn("LIVE_SERVICE_STATE_UNVERIFIED", result["issues"])
+
+    def test_old_roundtrip_direct_api_never_performs_mutation(self):
+        plan = legacy.make_plan(base_planner=lambda:self.fail("no planner"))
+        self.assertEqual(plan["status"], "BLOCKED")
+        self.assertIsNone(plan["plan_id"])
+        self.assertIn("P3_LEGACY_ROUNDTRIP_RETIRED", plan["issues"])
+        code, result = legacy.execute("a"*64, "I_ACCEPT_FLASH_NEXT_DOWNTIME",
+                                      core=lambda *a,**k:self.fail("no GPU"))
+        self.assertEqual(code, 3)
+        self.assertFalse(result["executed"])
+
+    def test_legacy_cli_plan_execute_are_both_blocked(self):
+        for mode in ("plan", "execute"):
+            with self.subTest(mode=mode), contextlib.redirect_stdout(io.StringIO()) as out:
+                code = legacy.main([mode, "--approve-plan", "a"*64,
+                                    "--ack-downtime", "I_ACCEPT_FLASH_NEXT_DOWNTIME"])
+            self.assertEqual(code, 3)
+            self.assertEqual(json.loads(out.getvalue())["status"], "BLOCKED")
+
+    def test_latest_qualifying_p2_benchmark_receipt_remains_read_only(self):
         with tempfile.TemporaryDirectory() as temp:
-            root=Path(temp)
+            root = Path(temp)
             good = {
-                "status":"BENCH_PASS_RESTORED_VERIFIED",
-                "benchmark":{"status":"PASS",
-                             "benchmark_version":"p2-27b-api-benchmark-v1"},
-                "restoration":{"status":"RESTORED","issues":[]},
-                "post_restore_wizard_status":{
-                    "status":"LIVE_SERVICE_VERIFIED",
-                    "observed_model":"flash-next",
-                    "expected_served_id":trial.ORIGINAL_ID, "issues":[]},
+                "status": "BENCH_PASS_RESTORED_VERIFIED",
+                "benchmark": {"status": "PASS",
+                              "benchmark_version": "p2-27b-api-benchmark-v1"},
+                "restoration": {"status": "RESTORED", "issues": []},
+                "post_restore_wizard_status": {
+                    "status": "LIVE_SERVICE_VERIFIED",
+                    "observed_model": "flash-next",
+                    "expected_served_id": "qwen3.8-flash-next",
+                    "issues": []},
             }
-            path = root/"20261106T100000Z-111111111111.benchmark.json"
+            path = root / "20261106T110000Z-receipt.benchmark.json"
             path.write_text(json.dumps(good))
-            found, error=p3.latest_p2_benchmark(root)
-            self.assertIsNone(error)
-            self.assertEqual(found["path"],str(path))
-            newer=root/"20261106T110000Z-111111111111.benchmark.json"
-            newer.write_text(json.dumps({**good,"status":"BENCH_PARTIAL_RESTORED"}))
-            found,error=p3.latest_p2_benchmark(root)
-            self.assertIsNone(found)
-            self.assertEqual(error,"P2_BENCHMARK_NOT_QUALIFIED")
+            result, issue = legacy.latest_p2_benchmark(root)
+            self.assertIsNone(issue)
+            self.assertEqual(result["path"], str(path))
+            bad = root / "20261106T120000Z-receipt.benchmark.json"
+            bad.write_text(json.dumps({**good, "status":"BENCH_PARTIAL_RESTORED"}))
+            result, issue = legacy.latest_p2_benchmark(root)
+            self.assertIsNone(result)
+            self.assertEqual(issue, "P2_BENCHMARK_NOT_QUALIFIED")
 
-    def test_untrusted_symlinked_receipt_is_not_opened(self):
-        with tempfile.TemporaryDirectory() as temp:
-            root=Path(temp)
-            external=root/"external.txt"
-            external.write_text("{}")
-            link=root/"newest.benchmark.json"
-            link.symlink_to(external)
-            doc,issue=p3.latest_p2_benchmark(root)
-            self.assertIsNone(doc)
-            self.assertEqual(issue,"P2_BENCHMARK_RECEIPT_UNTRUSTED")
+    def test_wizard_sequence_route_is_plan_only_and_explicit(self):
+        with patch("scripts.manager.p3_transition_sequence.plan", return_value={
+                "status": "BLOCKED", "executed": False,
+                "operations_enabled": False, "plan_id": None,
+                "issues": ["P3_SEPARATE_OPERATOR_ENTRY_REQUIRED"]}) as maker, \
+             contextlib.redirect_stdout(io.StringIO()) as out:
+            code = wizard.main(["switch", "flash-next-27b",
+                                "sequence", "--plan", "--json"])
+        self.assertEqual(code, 3)
+        self.assertFalse(json.loads(out.getvalue())["executed"])
+        maker.assert_called_once()
 
-    def test_wrong_ack_or_stale_plan_never_calls_core(self):
-        fail=lambda *a,**kw:self.fail("core must not run")
-        rc,out=p3.execute("bad",trial.ACK,core=fail)
-        self.assertEqual(rc,3)
-        self.assertFalse(out["executed"])
-        rc,out=p3.execute("a"*64,"WRONG_ACK",core=fail)
-        self.assertEqual(rc,3)
-        rc,out=p3.execute("a"*64,trial.ACK,
-                          planner=lambda:{"status":"BLOCKED","issues":["STALE"]},
-                          core=fail)
-        self.assertEqual(rc,3)
-        self.assertIn("P3_APPROVAL_STALE_OR_PREFLIGHT_CHANGED",out["issues"])
-
-    def test_two_cycles_each_restore_same_original_before_next(self):
-        with tempfile.TemporaryDirectory() as temp:
-            planned=p3.make_plan(base_planner=base,receipt_reader=receipt)
-            count=[]
-            def core(approved, ack, **kwargs):
-                self.assertEqual(approved,planned["plan_id"])
-                self.assertEqual(ack,trial.ACK)
-                self.assertEqual(kwargs["state_dir"],Path(temp))
-                self.assertIs(kwargs["inference"],trial.one_inference)
-                count.append(1)
-                return 0,{"status":"PASS_RESTORED","target_api_ready":True,
-                         "inference_ok":True, "executed":True,
-                         "restoration":{"status":"RESTORED","issues":[]},
-                         "evidence":"/private/roundtrip-"+str(len(count))+".json"}
-            check=[]
-            def verifier(original_id):
-                self.assertEqual(original_id,"2"*64)
-                check.append(1)
-                return {"status":"PASS","source_container_id_preserved":True}
-            rc,record=p3.execute(planned["plan_id"],trial.ACK,
-                                 planner=lambda:planned,core=core,
-                                 verifier=verifier,state_root=Path(temp))
-            self.assertEqual(rc,0)
-            self.assertEqual(len(count),2)
-            self.assertEqual(len(check),2)
-            self.assertEqual(record["completed_cycles"],2)
-            self.assertEqual(record["status"],"P3_TEMPORARY_ROUNDTRIP_PASS")
-            self.assertFalse(record["permanent_switch_qualified"])
-            self.assertTrue(Path(record["evidence"]).is_file())
-
-    def test_failed_first_restore_does_not_start_second_cycle(self):
-        with tempfile.TemporaryDirectory() as temp:
-            planned=p3.make_plan(base_planner=base,receipt_reader=receipt)
-            count=[]
-            def core(*args,**kwargs):
-                count.append(1)
-                return 4,{"status":"RECOVERY_FAILED","executed":True,
-                          "restoration":{"status":"RECOVERY_FAILED",
-                                         "issues":["ORIGINAL_RESTART_FAILED"]}}
-            rc,record=p3.execute(planned["plan_id"],trial.ACK,
-                                 planner=lambda:planned,core=core,
-                                 verifier=lambda *a:self.fail("should not verify"),
-                                 state_root=Path(temp))
-            self.assertEqual(rc,4)
-            self.assertEqual(len(count),1)
-            self.assertEqual(record["completed_cycles"],1)
-            self.assertEqual(record["status"],"P3_INCOMPLETE_OR_BLOCKED")
-
-    def test_postrestore_unverified_blocks_second_cycle(self):
-        with tempfile.TemporaryDirectory() as temp:
-            planned=p3.make_plan(base_planner=base,receipt_reader=receipt)
-            count=[]
-            def core(*args,**kwargs):
-                count.append(1)
-                return 0,{"status":"PASS_RESTORED","executed":True,
-                          "restoration":{"status":"RESTORED","issues":[]}}
-            rc,record=p3.execute(planned["plan_id"],trial.ACK,
-                                 planner=lambda:planned,core=core,
-                                 verifier=lambda *args:{"status":"BLOCKED"},
-                                 state_root=Path(temp))
-            self.assertEqual(rc,4)
-            self.assertEqual(len(count),1)
-
-    def test_verify_source_id_and_api_identity_both_required(self):
-        live = lambda: {"status":"LIVE_SERVICE_VERIFIED",
-                        "observed_model":"flash-next",
-                        "expected_served_id":trial.ORIGINAL_ID,
-                        "host_port":8000,"issues":[]}
-        docker = lambda name: {"Id":"a"*64,"State":{"Running":True}}
-        self.assertEqual(p3.verify_original_after_cycle(
-            "a"*64, inspector=live, docker_inspector=docker)["status"], "PASS")
-        self.assertEqual(p3.verify_original_after_cycle(
-            "b"*64, inspector=live, docker_inspector=docker)["status"], "BLOCKED")
-
-    def test_wizard_routes_explicit_p3_plan_but_not_unapproved_verify(self):
-        with patch("scripts.manager.p3_27b_roundtrip.main",return_value=0) as f, \
-             contextlib.redirect_stdout(io.StringIO()):
-            self.assertEqual(wizard.main(["switch","flash-next-27b",
-                                          "roundtrip","--plan","--json"]),0)
-            f.assert_called_once_with(["plan"])
-        with contextlib.redirect_stdout(io.StringIO()) as stream:
-            rc=wizard.main(["switch","flash-next-27b","roundtrip","--plan",
-                            "--approve-plan","b"*64,"--json"])
-        self.assertEqual(rc,2)
-        self.assertEqual(json.loads(stream.getvalue())["status"],"BLOCKED")
-        with contextlib.redirect_stdout(io.StringIO()) as stream:
-            rc=wizard.main(["switch","flash-next-27b","roundtrip","--execute",
-                            "--dry-run","--json"])
-        self.assertEqual(rc,3)
-        self.assertEqual(json.loads(stream.getvalue())["status"],"BLOCKED")
+        for command in (
+            ["switch", "flash-next-27b", "sequence", "--execute", "--json"],
+            ["switch", "flash-next-27b", "roundtrip", "--execute",
+             "--approve-plan", "a"*64, "--json"],
+        ):
+            with self.subTest(command=command), \
+                 contextlib.redirect_stdout(io.StringIO()) as out:
+                code = wizard.main(command)
+            self.assertEqual(code, 3)
+            self.assertEqual(json.loads(out.getvalue())["status"], "BLOCKED")
 
 
-if __name__=="__main__":
+if __name__ == "__main__":
     unittest.main()
