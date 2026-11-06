@@ -377,7 +377,7 @@ def _evidence_dir(arg: Path | None) -> Path:
 def _display_plan(plan: dict) -> None:
     """Operator-facing summary. Machine-readable full plan remains available."""
     action = plan["action"]
-    print("\\nNVIDIA Flash-Next — " + action.upper() + " preflight", flush=True)
+    print("\nNVIDIA Flash-Next — " + action.upper() + " preflight", flush=True)
     print("Model: " + SERVED + " | endpoint: :8000/v1", flush=True)
     print("Status: " + plan["status"], flush=True)
     if action == "benchmark":
@@ -395,7 +395,7 @@ def _display_plan(plan: dict) -> None:
 
 def _display_result(outcome: dict) -> None:
     action = outcome.get("action", "action")
-    print("\\n" + action.upper() + " result: " + str(outcome.get("status")),
+    print("\n" + action.upper() + " result: " + str(outcome.get("status")),
           flush=True)
     if action == "verify":
         print("Baseline: " + str(outcome.get("baseline_status"))
