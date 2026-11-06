@@ -1,3 +1,9 @@
+## 2026-11-06 — Record actual P2 27B benchmark PASS and Flash-Next restored, close P2 stage
+
+From operator-supplied DGX execution result: NVIDIA 27B model/API/inference and three bounded streaming requests succeeded (`BENCH_PASS_RESTORED_VERIFIED`); original Flash-Next was restored and independently observed by the Wizard as `LIVE_SERVICE_VERIFIED`. Recorded precise latency, TTFT, client throughput proxies and private DGX evidence paths in CURRENT-STATE and EVIDENCE-LEDGER. This corrects earlier plan-only `NOT_RUN` reporting without claiming direct inspection of private DGX files. No Docker/GPU state changed while editing sources. **P2 finished; P3 not auto-started; D-034 governs all future P3 stages.**
+
+---
+
 ## 2026-11-06 — User changed P3 sequence; P2→P3 no-auto boundary enforced in source
 
 Per D-034, retire old 2x temporary Flash-Next→27B→Flash-Next P3 plan/execute (now fail-closed even with past approval IDs). Add `scripts/manager/p3_transition_sequence.py` and `./wizard.sh switch flash-next-27b sequence --plan --json`: read-only, no executable plan, no automatic transition. P3 must be entered separately, establish verified active 27B, switch 27B→Flash-Next, resolve P1 deficiencies + real benchmark while Flash-Next running, then separately switch Flash-Next→27B as final state. The source code/CPU tests do NOT implement or verify permanent switching. P2 actual benchmark still awaited, and no operational Docker/GPU calls made while editing. D-033 superseded.
