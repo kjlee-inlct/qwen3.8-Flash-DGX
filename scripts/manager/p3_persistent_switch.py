@@ -146,7 +146,7 @@ def make_plan(stage: str, *, root: Path = ROOT, reader=latest_p2_benchmark,
         if (root / ("stage-" + stage + ".json")).exists() or (root / ("attempt-" + stage + ".json")).exists():
             issues.append("P3_STAGE_ALREADY_ATTEMPTED")
         snapshot = read_snapshot(root / "journal")
-        if snapshot and snapshot["phase"] not in ("COMMITTED", "RESTORED", "CANCELLED", "RECOVERY_FAILED"):
+        if snapshot and snapshot["phase"] not in ("COMMITTED", "RESTORED", "CANCELLED"):
             issues.append("UNRESOLVED_P3_TRANSITION_JOURNAL")
         if stage in ("b", "c"):
             first, _ = _read_receipt(root, "a")
@@ -268,6 +268,7 @@ def make_plan(stage: str, *, root: Path = ROOT, reader=latest_p2_benchmark,
             "flash_id": flash_id, "flash_image": flash_image,
             "image_27b": target_image, "id_27b": id_27b,
             "p2_receipt_sha256": evidence_sha,
+            "p3_a_plan_id": (first or {}).get("plan_id"),
             "p1_evidence": evidence,
             "required_downtime_acknowledgement": ACK,
             "required_p3_entry_acknowledgement": ENTRY_ACK if stage == "a" else None,
@@ -286,6 +287,7 @@ def _record(root: Path, phase: str, source: str, target: str,
 
 def _restore(stage: str, source: str, target: str, source_id: str,
              source_image: str, target_image: str, plan_id: str, *,
+             expected_target_id: str | None = None,
              run, inspect, waiter, live) -> dict[str, Any]:
     issues = []
     try:
@@ -296,8 +298,8 @@ def _restore(stage: str, source: str, target: str, source_id: str,
                 label = ((doc.get("Config") or {}).get("Labels") or {}).get(LABEL)
                 if label != plan_id or doc.get("Image") != target_image:
                     return {"status": "RECOVERY_FAILED", "issues": ["FOREIGN_TARGET_PRESERVED"]}
-            elif doc.get("Image") != target_image:
-                return {"status": "RECOVERY_FAILED", "issues": ["TARGET_IMAGE_CHANGED"]}
+            elif doc.get("Image") != target_image or doc.get("Id") != expected_target_id:
+                return {"status": "RECOVERY_FAILED", "issues": ["FOREIGN_TARGET_ID_OR_IMAGE_CHANGED"]}
             if (doc.get("State") or {}).get("Running"):
                 if run(["docker", "stop", "--time", "30", NAMES[target]], timeout=55).returncode:
                     return {"status": "RECOVERY_FAILED", "issues": ["TARGET_STOP_FAILED"]}
@@ -364,7 +366,7 @@ def execute(stage: str, plan_id: str | None, ack: str | None,
                         {"stage": stage, "plan_id": plan_id,
                          "started_at_utc": datetime.now(timezone.utc).isoformat()})
             previous = read_snapshot(root / "journal")
-            if previous is None or previous["phase"] in ("COMMITTED", "RESTORED", "CANCELLED", "RECOVERY_FAILED"):
+            if previous is None or previous["phase"] in ("COMMITTED", "RESTORED", "CANCELLED"):
                 _record(root, "OBSERVED", source, target, source, plan_id)
             _record(root, "PLANNED", source, target, source, plan_id)
             _record(root, "OLD_STOPPING", source, target, source, plan_id)
@@ -403,6 +405,7 @@ def execute(stage: str, plan_id: str | None, ack: str | None,
             target_doc = inspect(NAMES[target])
             if (target_doc.get("Image") != target_image or
                     target_doc.get("Name") != "/" + NAMES[target] or
+                    (stage != "a" and target_doc.get("Id") != fresh["target_container_id"]) or
                     not (target_doc.get("State") or {}).get("Running")):
                 raise RuntimeError("TARGET_IDENTITY_CHANGED")
             observed = live()
@@ -439,6 +442,13 @@ def execute(stage: str, plan_id: str | None, ack: str | None,
             error_code = "P3_EXECUTION_INTERRUPTED"
         except (OSError, RuntimeError, ValueError, subprocess.TimeoutExpired) as exc:
             error_code = str(exc) if isinstance(exc, RuntimeError) else "P3_EXECUTION_" + type(exc).__name__
+        if phase == "COMMITTED":
+            # Journal committed but immutable success receipt could not be written.
+            # Never secretly rollback a verified live target without a journal entry.
+            return 4, {"status": "COMMITTED_EVIDENCE_INCOMPLETE",
+                       "stage": stage, "executed": True, "active_model": target,
+                       "live_verified": True, "issues": [error_code],
+                       "notice": "Manual reconciliation; cannot proceed to next stage."}
         if phase != "COMMITTED":
             try:
                 if phase == "OLD_STOPPING":
@@ -451,8 +461,9 @@ def execute(stage: str, plan_id: str | None, ack: str | None,
                 error_code += ":JOURNAL_UPDATE_FAILED"
         if old_stop_attempted:
             recovered = _restore(stage, source, target, source_id, source_image,
-                                 target_image, plan_id, run=run, inspect=inspect,
-                                 waiter=waiter, live=live)
+                                 target_image, plan_id,
+                                 expected_target_id=fresh["target_container_id"],
+                                 run=run, inspect=inspect, waiter=waiter, live=live)
             try:
                 if phase == "ROLLBACK_STARTING":
                     _record(root, recovered["status"], source, target,
