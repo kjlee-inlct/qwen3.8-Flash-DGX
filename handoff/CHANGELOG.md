@@ -1,3 +1,9 @@
+## 2026-11-06 — P3-B real read-only inspection PASS; implement independent 27B downtime/entry gate (489 CPU PASS)
+
+Actual user DGX B inspector after P3-A returned `READY_FOR_SEPARATE_P3_B_APPROVAL`, `issues=[]`; verified running 27B API ID and container and preserved original Flash CID/image, P2/A hashes, `executed=false`. B originally inherited wrong Flash downtime ACK from shared canonical core; now B-specific `I_ACCEPT_27B_DOWNTIME` + `I_SEPARATELY_AUTHORIZE_P3_STAGE_B`, A/C unaffected. Created `p3-stage-b-operator.sh` and Python with default read-only, gated real B `--execute` requiring separate user scope approval + three exact terminal inputs, replan/expiry, independent Flash API check, no auto P1/C. Fake-DGX CPU PR [42190159738](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42190159738) SUCCESS **489/489** tests, source `59046c4e17a5094f2c80a84025a763c2a767edcb`. No GPU/Docker effects or user B consent from GitHub work; 27B remains live as of provided DGX evidence.
+
+---
+
 ## 2026-11-06 — DGX P3-A real PASS; 27B active, prepare B read-only inspection
 
 Actual operator-run persistent P3-A with exact latest plan and independently typed downtime/P3 entry acknowledgments succeeded: Wizard stage-A PASS/executed/live-verified; wrapper `P3_A_PASS_27B_ACTIVE`, `post_switch_status=LIVE_SERVICE_VERIFIED`, `post_switch_observed_model=27b`, no issues. Receipts `~/.local/state/blazux-wizard/p3/stage-a.json` and `~/blazux-p3-reports/p3-a-operator-20261106T074306Z-c99bf2ad.json`. 27B remains running. D-039 explicitly distinguishes this from prior stale-plan refused attempt and withholds B/C permission. Added tracked source/CPU-tested **read-only** B inspector verifying actual A receipt and preserved Flash identity through canonical Wizard API/plan; zero service mutation, no B execute mode, D-016 GitHub→DGX pull→single wrapper workflow. Post-B P1 verify and numeric benchmark + final C still pending; Draft PR not merged.
