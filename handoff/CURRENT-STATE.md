@@ -1,3 +1,11 @@
+## 2026-11-06 — New real DGX P3-A read-only readiness; Flash-Next still active (no P3 execution)
+
+2026-11-06 DGX operator read-only observation: current Flash-Next `qwen38-flash` on :8000/v1, `LIVE_SERVICE_VERIFIED`, served ID `qwen3.8-flash-next`, image `sha256:9479fc92a9244fcf137afb36ed778e07495e29663a81db193736fcaa1f15e137`, exact container ID `90f39a4dbccd0b5f97efa0ff163c61402ddace3dd3cb4da986a91dff7eb45ed5`. Manifest/API check array 8/8 true, `issues=[]`, `executed=false`; **GPU exclusivity and process ownership remain unverified**, and current identity is not historical rollback proof. `sequence --plan`: `status=BLOCKED` with only `P3_SEPARATE_OPERATOR_ENTRY_REQUIRED` by D-034 (expected), with successful local P2 receipt SHA-256 `80f109dbd7c9746065a36c8376f3ff440d1b0d58eee2024fcfad3f1733a82dc9`, evidence path `/home/inlc/.local/state/blazux-wizard/p2/20261106T042642Z-0cacd3f29370.benchmark.json`. `stage-a --plan`: `status=READY_TO_REQUEST_TRANSITION_APPROVAL`, `issues=[]`, source `flash-next`, target `27b`, `plan_id=79be6bf05cb02306ec9155ade317e06c457238de427417ebab8946e35449247a`, expiry epoch `1793943600` (2026-11-06 14:40 KST), target image equal to preserved local Docker image ID, expected target container ID null (not yet created), `executed=false` and `operations_enabled=false`. **This was a plan only, not scoped downtime approval or P3 entry**; plan IDs must be regenerated when stale and must never be reused across stages. No GPU/Docker/service mutation was performed by these read-only queries.
+
+**Current stage:** P2 closed; P3-A `PLAN_READY` but **P3 entry / actual stage execution NOT APPROVED and NOT_RUN**. Only the independent first-stage request for operational approval is eligible for review. Preserve `qwen38-flash`, both model snapshots, Docker image and :8000. Do not auto-run B, P1 remedial benchmark or C. Last provided actual DGX service state remains Flash-Next.
+
+---
+
 ## 2026-11-06 — P3 staged persistent switching SOURCE implemented; CPU CI 411/411 PASS; DGX P3 NOT_RUN
 
 Existing D-034 remains binding: P2 actual limited NVIDIA 27B benchmark `BENCH_PASS_RESTORED_VERIFIED` and original Flash-Next `LIVE_SERVICE_VERIFIED` were recorded below; P2 is CLOSED. No P3 live service change has been authorized or executed.
