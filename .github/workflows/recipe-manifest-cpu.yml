@@ -23,6 +23,7 @@ on:
       - 'tests/test_wizard_quickstart_cpu.py'
       - 'tests/test_wizard_workflow_cpu.py'
       - 'tests/test_wizard_roadmap_cpu.py'
+      - 'tests/test_wizard_operator_ux_cpu.py'
       - 'tests/test_flash_launch.py'
       - 'tests/test_manager_inventory_cpu.py'
       - 'tests/test_p1_*_cpu.py'
@@ -49,6 +50,7 @@ on:
       - 'wizard/**'
       - 'wizard.sh'
       - 'tests/test_wizard_router_cpu.py'
+      - 'tests/test_wizard_operator_ux_cpu.py'
       - 'tests/test_service_status_cpu.py'
       - 'schemas/**'
       - 'recipes/**'
@@ -97,6 +99,7 @@ jobs:
           python -m unittest discover -s tests -p 'test_wizard_quickstart_cpu.py' -v
           python -m unittest discover -s tests -p 'test_wizard_workflow_cpu.py' -v
           python -m unittest discover -s tests -p 'test_wizard_roadmap_cpu.py' -v
+          python -m unittest discover -s tests -p 'test_wizard_operator_ux_cpu.py' -v
           python -m wizard roadmap --json
           python -m wizard workflow 27b --json
           python -m wizard list --json
