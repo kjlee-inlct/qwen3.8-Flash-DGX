@@ -19,6 +19,7 @@ from uuid import uuid4
 from typing import Any
 
 from scripts.manager.p3_p1_evidence_gate import _expected_active_flash_collision
+from scripts.temporary.p1_post_download import cache_diagnosis_summary
 
 ROOT = Path(__file__).resolve().parents[2]
 HOME = Path.home()
@@ -175,7 +176,11 @@ def assessment(current: dict[str, Any], historic: dict[str, Any],
           and (pf.get("operator_process") or {}).get("blocked") is False)
     issue("CURRENT_GIT_BRANCH_OR_WORKTREE_NOT_VERIFIED",
           branch == BRANCH and git_clean and bool(re.fullmatch("[0-9a-f]{40}", git_head)))
-    wa = ((current.get("cache_diagnosis") or {}).get("wizard_audit") or {})
+    # The persisted P1 report stores command output under checks.*.stdout.
+    # The cache_diagnosis top-level object is printed as a console-only summary.
+    # Reuse the original reader so the audit matches the actual saved schema.
+    diagnosis = cache_diagnosis_summary(current.get("checks") or {})
+    wa = diagnosis.get("wizard_audit") or {}
     issue("P1_ASSET_AUDIT_NOT_READY",
           wa.get("state") == "READY" and wa.get("source_complete") is True
           and wa.get("hybrid_ready") is True
