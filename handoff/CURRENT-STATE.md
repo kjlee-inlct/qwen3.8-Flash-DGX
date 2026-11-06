@@ -1,3 +1,17 @@
+## 2026-11-06 — P3 staged persistent switching SOURCE implemented; CPU CI 411/411 PASS; DGX P3 NOT_RUN
+
+Existing D-034 remains binding: P2 actual limited NVIDIA 27B benchmark `BENCH_PASS_RESTORED_VERIFIED` and original Flash-Next `LIVE_SERVICE_VERIFIED` were recorded below; P2 is CLOSED. No P3 live service change has been authorized or executed.
+
+New **source-only** P3 stage-specific adapter `scripts/manager/p3_persistent_switch.py` and Wizard `switch flash-next-27b stage-a/stage-b/stage-c --plan`: A Flash→27B; B 27B→Flash; C final Flash→27B. Each stage has live Docker/Manifest/API identity checks, target ID/label preservation, independent short-lived plan SHA, explicit downtime acknowledgment, stage A separate P3 entry acknowledgment, stop-before-start, port :8000 release, single-GPU Docker guard, private receipt and append-only service journal. Success leaves target model active and never auto-advances. Failure attempts exact source container recovery; recovery-failed journal blocks automatic replay. Older `roundtrip` remains RETIRED/BLOCKED; global `sequence --plan` remains non-executable.
+
+New `scripts/manager/p3_p1_evidence_gate.py` blocks C until local P1 `verify` and `benchmark` PASS receipts are *newer* than stage B, include actual functional and numerical TTFT/latency/tokens/sec proof tied to original Flash-Next image, and actual reviewed resolution of historical `doctor/inventory-plan` rc=3. No fabricated P1 benchmark or rc=3 cause; **P1 REMEDIATION NOT_RUN / NO POST-B EVIDENCE**.
+
+CI after code/Wizard changes: [push](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42168518712) and [PR](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42168524464) **SUCCESS, 411/411 CPU tests, 19 groups** at code HEAD `27728045907a1f2111dc4b8340fbea2cc365ff1d`. CPU simulations include A/B/C successful transitions, target identity change rejection, failure recovery, explicit approvals and P1 acceptance gate; no actual DGX GPU, API switch or downtime. Some intermediate development commits had red CI (syntax and test doubles); these were corrected and preserved in Actions history. CI PASS does not certify production safety.
+
+Read [P3 source operation contract](../docs/P3-PERSISTENT-SWITCH-SOURCE-20261106.md) before read-only planning. Next runtime step requires independent operator approval, actual current DGX preflight and fallback arrangement; P3 stage A/B/C status remains **NOT_RUN/NOT_QUALIFIED** and Draft PR stays unmerged.
+
+---
+
 ## 2026-11-06 — Actual DGX P2 benchmark PASS (operator-supplied, supersedes earlier plan-only status)
 
 **P2 COMPLETED within the approved bounded trial scope.** Operator-provided DGX execution output, not independent access to the private report bytes: `BENCH_PASS_RESTORED_VERIFIED`, executed=true, target API ready=true, inference=true, benchmark 3/3 streaming requests (64 max output tokens, concurrency=1, seed=1234), original Flash-Next `RESTORED` without issues, and fresh Wizard post-restore `LIVE_SERVICE_VERIFIED` for `qwen3.8-flash-next`. Original Docker image ID `sha256:9479fc92a9244fcf137afb36ed778e07495e29663a81db193736fcaa1f15e137`. This **supersedes older sections below saying P2 benchmark NOT_RUN**; do not repeat P2/download/build.
