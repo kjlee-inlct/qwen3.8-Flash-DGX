@@ -176,6 +176,7 @@ class P3ExecuteCPU(unittest.TestCase):
                 "source_container_id": FLASH, "source_image": IMAGE,
                 "target_image": IMAGE, "flash_id": FLASH, "flash_image": IMAGE,
                 "image_27b": IMAGE, "id_27b": None,
+                "target_container_id": None, "p3_a_plan_id": None,
                 "p2_receipt_sha256": "c"*64, "p1_evidence": None}
 
     def test_exact_plan_and_downtime_and_separate_entry_required(self):
