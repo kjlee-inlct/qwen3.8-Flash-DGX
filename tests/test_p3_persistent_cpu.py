@@ -166,7 +166,7 @@ class P3ExecuteCPU(unittest.TestCase):
         self.commands.append(cmd[:])
         if cmd[:3] == ["docker", "ps", "-a"]:
             names = ["qwen38-flash"] + (["qwen38-27b"] if self.stageA_created else [])
-            return SimpleNamespace(returncode=0, stdout="\\n".join(names) + "\\n")
+            return SimpleNamespace(returncode=0, stdout=chr(10).join(names) + chr(10))
         if cmd[:2] == ["docker", "stop"]:
             self.states[cmd[-1]] = False
         if cmd[:2] == ["docker", "start"]:
