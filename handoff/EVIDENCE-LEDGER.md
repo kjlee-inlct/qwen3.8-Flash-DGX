@@ -1,3 +1,26 @@
+## E-20261106-P2-DGX-BENCH-PASS-RESTORED — actual operator-provided DGX stdout, private files not independently fetched
+
+Result: `status=BENCH_PASS_RESTORED_VERIFIED`, `trial=PASS`, `executed=true`, `target_api_ready=true`, `inference_ok=true`, `benchmark.status=PASS`, `restoration.status=RESTORED`, `restoration.issues=[]`, post-restore Wizard `LIVE_SERVICE_VERIFIED` with `observed_model=flash-next`, `expected_served_id=qwen3.8-flash-next`, `issues=[]`. NVIDIA `nvidia/Qwen3.8-27B-NVFP4` revision `482ca0f3832238542f8f5295dde86b5f22711d80`, exact served ID `qwen3.8-27b`, image ID `sha256:9479fc92a9244fcf137afb36ed778e07495e29663a81db193736fcaa1f15e137`. This overrides plan-only `P2_BENCHMARK_RECEIPT_NOT_FOUND` entries from earlier in the day, which remain historical.
+
+**Observed measured benchmark (3/3 successes, stream=true, concurrency=1, seed=1234, max_tokens=64):**
+
+| Request | TTFT (s) | E2E (s) | Completion tokens | Client decode proxy (tok/s) |
+|---|---:|---:|---:|---:|
+| #0 | 32.177839 | 37.808956 | 64 | 11.1878 |
+| #1 | 0.179349 | 5.818283 | 64 | 11.1723 |
+| #2 | 0.178962 | 5.813945 | 64 | 11.1802 |
+
+Aggregate TTFT P50=0.179349s, P95=28.977990s; latency P50=5.818283s, P95=34.609889s; mean E2E=7.9002 tok/s, mean client decode proxy=11.1801 tok/s, mean client prompt-ingest proxy=246.2744 tok/s. Do not conflate client proxies with vLLM engine metrics; first-request latency cause not yet established. GPU memory `UNAVAILABLE`; GPU peak and actual engine prefill/decode metrics `NOT_MEASURED`. Three small text requests do NOT prove broader feature/load readiness.
+
+Paths on the operator's DGX (not accessible through GitHub, exact file contents independently unverified):
+- `/home/inlc/.local/state/blazux-wizard/p2/20261106T042642Z-0cacd3f29370.benchmark.json`
+- `/home/inlc/.local/state/blazux-wizard/p2/20261106T042642Z-0cacd3f29370.json`
+- `/home/inlc/.local/state/blazux-wizard/p2/20261106T042642Z-0cacd3f29370.target.log`
+
+**Disposition:** P2 approved limited scope COMPLETE and STOP. P3 persistent switching is **NOT_RUN / NOT_QUALIFIED**. D-034 demands separate operator entry/transition approvals and P1 corrective/remeasurement evidence before final 27B. No GPU/service mutation from this documentation update.
+
+---
+
 ## E-20261106-P3-REORDERED-SOURCE-ONLY — user instruction, code/CI evidence; no new DGX runtime data
 
 **Operator's new instruction:** Do not automatically enter P3 after P2; when P3 successfully switches **27B→Flash-Next**, resolve P1 shortcomings and benchmark Flash-Next before switching **Flash-Next→27B**. Since previous P2 design restores Flash-Next, P3 must separately and explicitly establish 27B as the source model for the requested 27B→Flash-Next test. Final intended active service after P3 is **27B** (not Flash-Next).
