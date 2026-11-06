@@ -140,9 +140,11 @@ def plan_issues(plan: dict[str, Any], pre_a: dict[str, Any],
     active = live.get("active_container") or {}
     if (active.get("name") != SOURCE_NAME
             or active.get("image_id") != pre_a.get("current_model_image")
-            or (plan.get("source_container_id") and
-                not SHA64.fullmatch(str(plan["source_container_id"])))):
+            or not SHA64.fullmatch(str(plan.get("source_container_id") or ""))):
         issues.append("P3_A_CURRENT_FLASH_CONTAINER_NOT_PINNED")
+    if (not re.fullmatch(r"sha256:[0-9a-f]{64}", str(plan.get("target_image") or ""))
+            or not SHA64.fullmatch(str(plan.get("p2_receipt_sha256") or ""))):
+        issues.append("P3_A_TARGET_IMAGE_OR_P2_PROVENANCE_NOT_PINNED")
     return sorted(set(issues))
 
 
@@ -174,7 +176,10 @@ def summarize_runtime(doc: dict, plan: dict) -> bool:
 
 
 def persist(doc: dict[str, Any], *, root: Path = P3_REPORT_ROOT) -> str:
-    root = root.expanduser().resolve()
+    root = root.expanduser()
+    if root.is_symlink():
+        raise ValueError("P3_REPORT_ROOT_SYMLINK_UNSAFE")
+    root = root.resolve()
     cache = Path(os.environ.get(
         "HF_CACHE", str(HOME / ".cache/huggingface"))).expanduser().resolve()
     if root.is_relative_to(ROOT.resolve()) or root.is_relative_to(cache):
