@@ -1,3 +1,11 @@
+## 2026-11-07 — CURRENT: P1 VERIFY + BENCHMARK ACTUAL PASS; UX CI + OPERATOR RECHECK
+
+Supersedes previous "P1 POST-B audit then Verify/Benchmark NOT_RUN" instructions. The operator provided immutable actual DGX evidence: original Flash-Next still active and served on :8000, two post-B diagnostics PASS for expected original-own-port rc3; Verify baseline/extended + all probes PASS and separately approved 3-request Benchmark PASS with **37.9527 tok/s, TTFT p50/p95 1.384594/1.779602 sec, latency p50/p95 1.724560/1.813754 sec**. Both original receipts reside under OLD `~/.local/state/blazux-wizard/p1/` and MUST NOT be moved, overwritten or deleted. Source updated to show P3-style exact SHA prompts, remove duplicate action entry, display numeric metrics, use new Git-ignored project-local `reports/models/qwen3.8-flash-next/` for **future** evidence, and dual-read old/new for P3-C evidence qualification.
+
+**Next:** confirm fresh GitHub HEAD + BOTH CI checks (including new operator-UX tests) and Draft PR #1, then operator may `git pull --ff-only origin feature/recipe-wizard-handoff` and inspect the new Wizard UX. No additional real Verify/Benchmark inference is implied by an interface change; an actual re-run would require fresh distinct operator approvals. P3-C downtime/transition remains **separately NOT_AUTHORIZED**, even if the evidence prerequisite checker is now PASS. Never merge PR, clean models or restart/switch services automatically. See [UX/evidence contract](../docs/WIZARD-OPERATOR-UX-EVIDENCE-CONTRACT.md).
+
+---
+
 ## 2026-11-07 — READY FOR OPERATOR READ-ONLY CHECK (SOURCE CI PASS)
 
 The targeted source audit and P3-B operator metadata fix are implemented; latest source-tested `67ff9cc2e4ece0c89c911513673f7d5d55c98fa4` passed [GitHub CPU CI 42310408411](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42310408411): **501/501 PASS / 23 groups**. PR #1 has a review COMMENT (ID `5808289782`) and remains Draft/Unmerged. No new GPU/DGX execution. After checking the latest HEAD/CI and a clean DGX fast-forward pull, the ONE authorized next read-only action is `bash scripts/temporary/p1-post-b-audit.sh`. PASS with raw own Flash collision evidence is diagnostic readiness only; subsequent P1 Verify and Benchmark need individual approvals. P3-C NOT_AUTHORIZED.
