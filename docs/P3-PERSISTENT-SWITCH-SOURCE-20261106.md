@@ -1,3 +1,5 @@
+> **Actual DGX read-only observation, 2026-11-06:** Flash-Next `LIVE_SERVICE_VERIFIED` at :8000; qualified P2 benchmark receipt hash `80f109dbd7c9746065a36c8376f3ff440d1b0d58eee2024fcfad3f1733a82dc9` detected; P3 `sequence --plan` correctly `BLOCKED` by separate entry; `stage-a --plan` reported `READY_TO_REQUEST_TRANSITION_APPROVAL`, `issues=[]`, expiring 14:40 KST. **Actual P3 A/B/C transitions remain NOT_RUN, no new downtime approval.** These are operator-provided observations, not independent DGX runtime access. See [EVIDENCE-LEDGER](../handoff/EVIDENCE-LEDGER.md).
+
 # P3 persistent Flash-Next ↔ NVIDIA 27B switching — source contract
 
 **2026-11-06 (KST). Development status: SOURCE IMPLEMENTED; CPU regression required; DGX P3 actual switch NOT_RUN; production qualification NOT_GRANTED.** Binding decision: [D-034](../handoff/DECISIONS.md) and [manual transition sequence](P3-MANUAL-TRANSITION-SEQUENCE-20261106.md). P2 bounded NVIDIA 27B benchmark **COMPLETED** with `BENCH_PASS_RESTORED_VERIFIED`; original Flash-Next was verified after restoration. P2 completion does **not** authorize P3 runtime changes.
