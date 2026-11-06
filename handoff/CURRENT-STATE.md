@@ -1,3 +1,11 @@
+## 2026-11-07 — OPERATOR POST-B P1 ACTUAL PASS / MODEL-CENTERED WIZARD UX SOURCE UPDATE
+
+The operator supplied `blazux-wizard.zip`, confirming DGX **P1 Verify PASS** (baseline/extended + text/chat/tools/vision, UTC 2026-11-06T23:26:27Z) and **P1 Benchmark PASS** (UTC 23:30:31Z, 3 requests, 64 tokens, concurrency 1, seed 1234; 37.9527 tokens/sec; TTFT p50 1.384594 s, p95 1.779602 s; latency p50 1.724560 s, p95 1.813754 s). Both have distinct typed exact plan IDs and immutable old-path receipts under `~/.local/state/blazux-wizard/p1`. P3-B stage-B canonical state PASS, existing original NVIDIA Flash-Next serving :8000 and post-B read-only diagnostics PASS with expected own name/port collision rc3. **P3-C NOT_AUTHORIZED/NOT_RUN**; no automatic phase transition. Original historical receipts must never be rewritten.
+
+Source branch now changes Flash interactive UX to one chosen action, P3-style `Type exactly [SHA]` with the current SHA visible, and Verify/Benchmark metrics on screen. New Flash evidence writes into Git-ignored project `reports/models/qwen3.8-flash-next`; P3 evidence gate reads this and the legacy path without allowing old PASS to mask newer failed attempts. All operational changes were source-only GitHub edits; **no further GPU/runtime/transition/merge took place**. Review [operator UX/evidence contract](../docs/WIZARD-OPERATOR-UX-EVIDENCE-CONTRACT.md), confirm current HEAD and CI, then a clean operator fast-forward pull before using the updated Wizard. Do not rerun real GPU checks without separate operator authorization.
+
+---
+
 ## 2026-11-07 — CPU SOURCE VALIDATION CHECKPOINT
 
 GitHub source+documentation as of commit `67ff9cc2e4ece0c89c911513673f7d5d55c98fa4`: **501/501 CPU PASS, 23 test groups** ([Actions run 42310408411](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42310408411)). Draft PR #1 reviewed with COMMENT (review ID `5808289782`), remains OPEN/DRAFT/UNMERGED. This validates only source/CPU regressions, not new real DGX post-B P1 or C. Newest handoff-only commit SHA/CI must be checked live at next session. D-016 next: clean fast-forward pull then exactly one `bash scripts/temporary/p1-post-b-audit.sh`; no unapproved GPU call, model switch or cache cleanup.
