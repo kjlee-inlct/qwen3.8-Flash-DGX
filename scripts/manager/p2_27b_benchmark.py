@@ -228,25 +228,33 @@ def execute(plan_id, ack, *, planner=make_plan, core=trial.execute,
             post_status = {"status": "UNAVAILABLE"}
     result = {**outcome, "benchmark": measured,
               "post_restore_wizard_status": post_status}
-    # Store bounded metric-only report in same operator-private evidence directory.
+    if (result["status"] == "PASS_RESTORED"
+            and measured is not None and measured["status"] == "PASS"
+            and post_status and post_status.get("status") == "LIVE_SERVICE_VERIFIED"
+            and post_status.get("observed_model") == "flash-next"
+            and post_status.get("expected_served_id") == "qwen3.8-flash-next"
+            and not post_status.get("issues")):
+        result["status"] = "BENCH_PASS_RESTORED_VERIFIED"
+    elif result["status"] == "PASS_RESTORED":
+        result["status"] = "BENCH_PARTIAL_RESTORED"
+        rc = 4
+
+    # Save bounded metric-only report AFTER computing final status.
     evidence = outcome.get("evidence")
     if isinstance(evidence, str) and evidence.endswith(".json"):
         path = Path(evidence).with_suffix(".benchmark.json")
+        result["benchmark_evidence"] = str(path)
         try:
             fd = os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
             with os.fdopen(fd, "w", encoding="utf-8") as stream:
                 stream.write(json.dumps(result, indent=2, sort_keys=True) + "\n")
-            result["benchmark_evidence"] = str(path)
         except OSError:
+            result.pop("benchmark_evidence", None)
             result["benchmark_evidence_error"] = "UNAVAILABLE"
+            result["status"] = "BENCHMARK_EVIDENCE_WRITE_FAILED" if rc == 0 else result["status"]
             rc = 4
-    if (result["status"] == "PASS_RESTORED"
-            and measured is not None and measured["status"] == "PASS"
-            and post_status and post_status.get("status") == "LIVE_SERVICE_VERIFIED"
-            and post_status.get("observed_model") == "flash-next"):
-        result["status"] = "BENCH_PASS_RESTORED_VERIFIED"
-    elif result["status"] == "PASS_RESTORED":
-        result["status"] = "BENCH_PARTIAL_RESTORED"
+    else:
+        result["benchmark_evidence_error"] = "ORIGINAL_EVIDENCE_PATH_UNAVAILABLE"
         rc = 4
     return rc, result
 
