@@ -6,7 +6,7 @@ from ..common import Stage, run as run_stage
 
 SPEC = Stage(
     "p3", "Flash-Next and 27B switching",
-    ("inspect", "switch", "rollback", "verify", "sequence"),
+    ("inspect", "switch", "rollback", "verify", "sequence", "stage-a", "stage-b", "stage-c"),
     ("Actual P2 DGX benchmark PASS and fresh service status",
      "Separate P3 operator entry, scoped approval for each switch",
      "27B->Flash-Next success, P1 remediation+benchmark, final 27B verification"),
@@ -17,6 +17,11 @@ SPEC = Stage(
 
 def run(argv, *, as_json=False, dry_run=False):
     args = list(argv)
+    if args and args[0] in ("stage-a", "stage-b", "stage-c"):
+        # Persistent switching is a distinct P3 executor. The individual
+        # stage must receive its own exact-plan approval; never chain stages.
+        from scripts.manager.p3_persistent_switch import main
+        return main([args[0][-1], *args[1:]])
     if args == ["sequence", "--plan"]:
         from scripts.manager.p3_transition_sequence import main
         return main(["plan"])
