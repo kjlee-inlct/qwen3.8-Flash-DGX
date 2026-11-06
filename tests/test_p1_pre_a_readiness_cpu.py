@@ -42,7 +42,10 @@ def report(*, timestamp="2026-11-06T06:09:41+00:00"):
         "cache_diagnosis": {"wizard_audit": {
             "state": "READY", "model_repo": audit.REPO,
             "source_complete": True, "hybrid_ready": True,
-            "source_issues": [], "hybrid_issues": []}},
+            "source_issues": [], "hybrid_issues": [],
+            "revision": "f" * 40}},
+        "plans": {k: {"ready": True, "plan": {"issues": []}}
+                  for k in ("verify", "benchmark")},
         "actions": {
             "verify": {"status": "BLOCKED", "reason": "inspection_only"},
             "benchmark": {"status": "BLOCKED", "reason": "inspection_only"}},
@@ -55,6 +58,7 @@ def report(*, timestamp="2026-11-06T06:09:41+00:00"):
 def verify():
     return {
         "status": "PASS", "action": "verify", "executed": True,
+        "model_revision": "f" * 40,
         "approval": "explicit_plan_id", "model_repo": audit.REPO,
         "served_model": audit.SERVED, "image_id": IMAGE,
         "result": {
@@ -67,6 +71,7 @@ def verify():
 def benchmark():
     return {
         "status": "PASS", "action": "benchmark", "executed": True,
+        "model_revision": "f" * 40,
         "approval": "explicit_plan_id", "model_repo": audit.REPO,
         "served_model": audit.SERVED, "image_id": IMAGE,
         "result": {
@@ -148,6 +153,18 @@ class PreAP1AuditCPU(unittest.TestCase):
         ver["result"]["probes"]["vision"]["status"] = "FAIL"
         d = assess(ver=ver)
         self.assertIn("P1_VERIFY_RECEIPT_NOT_QUALIFIED", d["issues"])
+
+    def test_changed_checkpoint_revision_blocks(self):
+        v = verify()
+        v["model_revision"] = "e" * 40
+        d = assess(ver=v)
+        self.assertIn("P1_RECEIPT_CHECKPOINT_REVISION_DRIFT", d["issues"])
+
+    def test_blocked_latest_verify_plan_blocks(self):
+        cur = report()
+        cur["plans"]["verify"]["ready"] = False
+        d = assess(cur=cur)
+        self.assertIn("P1_FUNCTIONAL_AND_BENCH_PLANS_NOT_READY", d["issues"])
 
     def test_stale_inspection_report_blocks_without_gpu(self):
         d = assess(cur=report(timestamp="2026-11-01T00:00:00+00:00"))
