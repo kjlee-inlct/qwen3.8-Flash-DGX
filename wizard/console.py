@@ -29,14 +29,14 @@ def _display_workflow(doc: dict) -> None:
     print("\n" + doc["title"] + " | state: " + str(doc["status"]))
     print("  Active observed: " + str(doc["observed_model"] or "none/unknown"))
     print("  API port: :8000/v1 | model identity verification is separate")
-    print("  Recommended: " + str(doc["next_action"]))
+    print("  Recommended: " + ("Open model actions / diagnostics" if doc["next_action"] == "none" else str(doc["next_action"])))
     for step in doc["selection"].get("steps", []):
         print("   - " + step["action"] + ": " + step["state"]
               + " — " + step["reason"])
     preview = doc["selection"].get("transition_preview")
     if preview:
         print("  Transition: BLOCKED pending source/target qualification and recovery")
-    print("  Full action menu exists for prepare/start/wait/verify/bench/restore.")
+    print("  Use All model actions for verification, benchmark and guarded lifecycle operations.")
 
 
 def _actions_menu(model: str) -> None:
@@ -163,11 +163,11 @@ def _advanced_menu() -> None:
     ]
     while True:
         print("\nAdvanced management (0 back)")
-        print(" 1. Model lifecycle actions (P1/P2/P5)")
+        print(" 1. Model lifecycle actions")
         for i, row in enumerate(rows, 2):
             print(f" {i}. {row[0]}")
         print(" 6. Legacy group / stage tools")
-        print(" 7. P1–P7 readiness dashboard")
+        print(" 7. Readiness dashboard")
         selected = _input("Choice (0 back): ")
         if selected in (None, "0"):
             return
