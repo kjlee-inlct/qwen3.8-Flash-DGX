@@ -138,7 +138,10 @@ def assess_p1(*, stage_b: dict[str, Any], flash_image: str,
                     if (not isinstance(probes, dict)
                             or result.get("baseline_status") != "PASS"
                             or result.get("extended_status") != "PASS"
-                            or identity.get("status") != "PASS"
+                            or not isinstance(identity, dict)
+                            or identity.get("health") != "PASS"
+                            or not isinstance(identity.get("models"), list)
+                            or FLASH_ID not in identity["models"]
                             or not all((probes.get(key) or {}).get("status") == "PASS"
                                        for key in ("default_completion", "chat", "tools", "vision"))):
                         issues.append("P1_FUNCTIONAL_PROBES_INCOMPLETE")
