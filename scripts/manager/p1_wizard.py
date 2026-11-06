@@ -360,49 +360,141 @@ def execute_approved(plan: dict, approval: str | None, *, cache_root: Path,
         "baseline_status": (record.get("result") or {}).get("baseline_status"),
         "extended_status": (record.get("result") or {}).get("extended_status"),
         "probes": (record.get("result") or {}).get("probes"),
+        "benchmark": (record.get("result") or {}).get("benchmark"),
     }
 
 
+
 def _evidence_dir(arg: Path | None) -> Path:
-    return Path(arg or Path(os.environ.get(
-        "XDG_STATE_HOME", str(Path.home() / ".local/state"))) / "blazux-wizard/p1")
+    """New runs are local to the repo and grouped by the served model ID.
+
+    Existing ~/.local/state/blazux-wizard/p1 records remain immutable and
+    readable by the P3 evidence gate; do not move or delete those receipts.
+    """
+    return Path(arg) if arg is not None else ROOT / "reports" / "models" / SERVED
+
+
+def _display_plan(plan: dict) -> None:
+    """Operator-facing summary. Machine-readable full plan remains available."""
+    action = plan["action"]
+    print("\\nNVIDIA Flash-Next — " + action.upper() + " preflight", flush=True)
+    print("Model: " + SERVED + " | endpoint: :8000/v1", flush=True)
+    print("Status: " + plan["status"], flush=True)
+    if action == "benchmark":
+        p = plan["parameters"]
+        print("Workload: " + str(p["requests"]) + " requests, max "
+              + str(p["max_tokens"]) + " tokens, seed " + str(p["seed"])
+              + ", concurrency 1", flush=True)
+    if plan.get("issues"):
+        print("Blockers: " + ", ".join(plan["issues"]), flush=True)
+    print("Plan ID: " + plan["plan_id"], flush=True)
+    if plan["status"] == "READY_TO_REQUEST_APPROVAL":
+        print("Only this action is approved by typing its exact current ID."
+              " Enter alone cancels.", flush=True)
+
+
+def _display_result(outcome: dict) -> None:
+    action = outcome.get("action", "action")
+    print("\\n" + action.upper() + " result: " + str(outcome.get("status")),
+          flush=True)
+    if action == "verify":
+        print("Baseline: " + str(outcome.get("baseline_status"))
+              + " | Extended: " + str(outcome.get("extended_status")), flush=True)
+        probes = outcome.get("probes") or {}
+        for name in ("default_completion", "chat", "tools", "vision"):
+            if name in probes:
+                print("  " + name + ": " + str(probes[name].get("status")),
+                      flush=True)
+    elif action == "benchmark":
+        benchmark = outcome.get("benchmark") or {}
+        metrics = benchmark.get("metrics") or {}
+        if metrics:
+            print("Requests: " + str(benchmark.get("requests"))
+                  + " | Concurrency: " + str(benchmark.get("concurrency")),
+                  flush=True)
+            for key, label, unit in (
+                ("ttft_p50_sec", "TTFT P50", "s"),
+                ("ttft_p95_sec", "TTFT P95", "s"),
+                ("latency_p50_sec", "Latency P50", "s"),
+                ("latency_p95_sec", "Latency P95", "s"),
+                ("mean_tokens_per_sec", "Mean throughput", "tokens/s"),
+                ("total_completion_tokens", "Total output", "tokens"),
+            ):
+                if metrics.get(key) is not None:
+                    print("  " + label + ": " + str(metrics[key]) + " " + unit,
+                          flush=True)
+            for sample in benchmark.get("samples") or []:
+                print("  request #" + str(sample.get("index"))
+                      + ": TTFT=" + str(sample.get("ttft_sec"))
+                      + "s, latency=" + str(sample.get("latency_sec"))
+                      + "s, throughput=" + str(sample.get("tokens_per_sec"))
+                      + " tokens/s", flush=True)
+    if outcome.get("evidence"):
+        print("Evidence: " + str(outcome["evidence"]), flush=True)
+    if outcome.get("error_type"):
+        print("Error: " + str(outcome["error_type"]), flush=True)
 
 
 def guided(args: argparse.Namespace) -> int:
+    """One direct action when called from the unified model menu.
+
+    Bare guided entry retains the historical P1 action selection loop.
+    Never executes without matching the freshly re-checked exact plan ID.
+    """
     actions = {"1": "prepare", "2": "start", "3": "wait",
                "4": "verify", "5": "benchmark"}
-    print("Blazux P1 Wizard: 1 prepare, 2 start, 3 wait, 4 verify, 5 benchmark, 0 exit")
+    selected_action = args.for_action
+    if selected_action is None:
+        print("NVIDIA Flash-Next Wizard: 1 prepare, 2 start, 3 wait,"
+              " 4 verify, 5 benchmark, 0 exit")
     while True:
-        choice = input("Action (0 exits): ").strip()
-        if choice == "0":
-            return 0
-        if choice not in actions:
-            print("Unknown action, nothing executed.")
-            continue
-        action = actions[choice]
+        if selected_action is None:
+            try:
+                choice = input("Action (0 exits): ").strip()
+            except (EOFError, KeyboardInterrupt):
+                return 0
+            if choice == "0":
+                return 0
+            if choice not in actions:
+                print("Unknown action, nothing executed.")
+                continue
+            action = actions[choice]
+        else:
+            action = selected_action
         plan = build_plan(action, cache_root=args.cache_root,
                           requests=args.requests, max_tokens=args.max_tokens,
                           seed=args.seed)
-        print(json.dumps(plan, indent=2, sort_keys=True))
+        _display_plan(plan)
         if plan["status"] == "BLOCKED":
+            if selected_action is not None:
+                return 3
             continue
-        approval = input("Type full plan_id to execute, or Enter to cancel: ").strip()
+        try:
+            approval = input(
+                "Type exactly [" + plan["plan_id"] + "] (Enter cancels): "
+            ).strip()
+        except (EOFError, KeyboardInterrupt):
+            approval = ""
         if approval != plan["plan_id"]:
-            print("Cancelled.")
+            print("Cancelled. No action executed.")
+            if selected_action is not None:
+                return 0
             continue
         cache = Path(args.cache_root or os.environ.get(
             "HF_CACHE", str(Path.home() / ".cache/huggingface")))
-        _, outcome = execute_approved(plan, approval, cache_root=cache,
-                                      evidence_dir=_evidence_dir(args.evidence_dir),
-                                      requests=args.requests,
-                                      max_tokens=args.max_tokens, seed=args.seed)
-        print(json.dumps(outcome, indent=2, sort_keys=True))
+        rc, outcome = execute_approved(plan, approval, cache_root=cache,
+                                       evidence_dir=_evidence_dir(args.evidence_dir),
+                                       requests=args.requests,
+                                       max_tokens=args.max_tokens, seed=args.seed)
+        _display_result(outcome)
+        if selected_action is not None:
+            return rc
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="P1 Flash-Next Wizard; default is read-only")
     parser.add_argument("action", choices=("status", "plan", "guided", *ACTIONS))
-    parser.add_argument("--for-action", choices=ACTIONS, default="prepare")
+    parser.add_argument("--for-action", choices=ACTIONS, default=None)
     parser.add_argument("--cache-root", type=Path)
     parser.add_argument("--requests", type=int, default=3)
     parser.add_argument("--max-tokens", type=int, default=64)
@@ -415,7 +507,7 @@ def main(argv: list[str] | None = None) -> int:
         if args.execute or args.approve_plan:
             parser.error("guided asks its own confirmation")
         return guided(args)
-    action = args.for_action if args.action in ("plan", "status") else args.action
+    action = (args.for_action or "prepare") if args.action in ("plan", "status") else args.action
     try:
         plan = build_plan(action, cache_root=args.cache_root,
                           requests=args.requests, max_tokens=args.max_tokens,
