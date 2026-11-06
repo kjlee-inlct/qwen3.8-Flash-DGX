@@ -42,6 +42,52 @@ def _read_private(path: Path, root: Path) -> tuple[dict[str, Any], str]:
     return parsed, hashlib.sha256(raw).hexdigest()
 
 
+
+def _expected_active_flash_collision(output: Any, flash_image: str) -> bool:
+    """A launch preflight exits 3 when Flash-Next already occupies :8000.
+
+    Do not accept rc=3 without parsed doctor/plan observation. Inventory
+    errors and foreign Docker/port owners are never benign collisions.
+    """
+    if not isinstance(output, dict):
+        return False
+    if (output.get("status") != "PASS" or output.get("errors") != []
+            or output.get("name_conflict") is not True
+            or output.get("port_conflict") is not True
+            or output.get("collision_free") is not False
+            or output.get("scope") != "SOURCE"
+            or output.get("dry_run") is not True):
+        return False
+    proposed = output.get("proposed")
+    if (not isinstance(proposed, dict)
+            or proposed.get("container_name") != "qwen38-flash"
+            or proposed.get("port") != 8000
+            or proposed.get("served_model_name") != FLASH_ID):
+        return False
+    containers = output.get("containers")
+    if not isinstance(containers, list):
+        return False
+    originals = [item for item in containers
+                 if isinstance(item, dict) and item.get("name") == "qwen38-flash"]
+    if len(originals) != 1:
+        return False
+    observed = originals[0]
+    return (observed.get("image_id") == flash_image
+            and isinstance(observed.get("status"), str)
+            and observed["status"].startswith("Up")
+            and isinstance(observed.get("ports"), str)
+            and "8000->8000/tcp" in observed["ports"])
+
+
+def _diagnostic_checks_qualify(doc: dict[str, Any], flash_image: str) -> bool:
+    """An active Flash service correctly makes both launch probes return 3."""
+    return (doc.get("doctor_exit_code") == 3
+            and doc.get("inventory_plan_exit_code") == 3
+            and _expected_active_flash_collision(doc.get("doctor_output"), flash_image)
+            and _expected_active_flash_collision(doc.get("inventory_plan_output"),
+                                                 flash_image))
+
+
 def assess_p1(*, stage_b: dict[str, Any], flash_image: str,
               p1_root: Path = P1_ROOT, p3_root: Path = P3_ROOT) -> dict[str, Any]:
     """Fail closed until both real P1 actions and rc=3 disposition exist.
@@ -121,8 +167,7 @@ def assess_p1(*, stage_b: dict[str, Any], flash_image: str,
         doc, digest = _read_private(diagnostic, p3_root)
         disposition = doc.get("historical_rc3_disposition")
         if (doc.get("status") != "PASS"
-                or doc.get("doctor_exit_code") != 0
-                or doc.get("inventory_plan_exit_code") != 0
+                or not _diagnostic_checks_qualify(doc, flash_image)
                 or not isinstance(disposition, str) or len(disposition.strip()) < 20
                 or _time(doc.get("finished_at_utc")) <= cutoff):
             issues.append("P1_HISTORIC_RC3_DISPOSITION_NOT_VERIFIED")
