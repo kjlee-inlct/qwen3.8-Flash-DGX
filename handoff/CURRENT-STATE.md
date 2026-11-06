@@ -1,3 +1,17 @@
+## 2026-11-06 — ACTUAL DGX installed-model inventory PASS; legacy Orcarouter confirmed preserved
+
+Operator executed **`./wizard.sh model list --installed --json`** on DGX after pulling the new Wizard. Actual result `status=READ_ONLY_INVENTORY`, `scope=CONFIGURED_CACHE_ROOTS_ONLY`, `service_status=LIVE_SERVICE_VERIFIED`, `active_model_observed=flash-next`, `active_api_identity_verified=true`, `executed=false`, `operations_enabled=false`, `other_cached_repos_truncated=false`, `service_issues=[]`.
+
+The scanner checked `/home/inlc/.cache/huggingface` and `/home/inlc/Workspace/llm/yslab-qwen38-bf16ple-dgx-spark/hf-cache`. Registered original NVIDIA Flash-Next revision `fc694b54fb0174e0913e6adf86691ef85a4ead47` has **11/11** indexed nonempty shards and `source_files_present=true` in the default cache; it is also the **only observed active/verified API model**. Registered NVIDIA Qwen3.8-27B revision `482ca0f3832238542f8f5295dde86b5f22711d80` has **3/3** indexed shards and `source_files_present=true` in the default cache, but is not currently serving. Previous actual 27B one-shot GPU trial separately returned `PASS_RESTORED`; scanner's individual `runtime_qualified=false` only means source inventory does not requalify GPU runtime.
+
+**Crucial newly observed fact:** The original `orcarouter/Qwen3.8-Flash-Next-Uncensored-NVFP4` revision `3a3b63161c0745390e5270179af42e46efc70799` is **still present** in the legacy `yslab-qwen38-bf16ple-dgx-spark/hf-cache`: **17/17** nonempty indexed shards, tokenizer/config/index true, `issues=[]`, `source_files_present=true`. Its existing `recipe-views/orca-uncensored-bf16-mtp/ee5b6b553f1226d2` directory is **also present**. Therefore the source/recipe directory is **not deleted**, and redownload must not be performed merely because Orcarouter is inactive. **NOT** yet established: recipe file completeness/identity, BF16 PLE/MTP build/runtime compatibility, reinstallation feasibility, API functionality or benchmarks. Orcarouter remains inactive and runtime-unqualified.
+
+Four **unregistered snapshot sightings only**, not verified full checkpoints: `maurienne-ai/Qwen3.8-27B-DFlash2-NVFP4-RTNcal` rev `bd7a934213c47a9e7ef69eef36bb3325f47fd1f1`; `RadixArk/Qwen3.8-27B-NVFP4` rev `52d1adc5f38aa5ebf099c29ed7025ba34cfbb854`; `dealignai/Qwen3.8-Flash-Next-ABLITERATED-NVFP4` rev `be794b990578ef3031eccf9f28e675a289a09ee9`; `RadixArk/Qwen3.8-Flash-Next-NVFP4` rev `7b719225242aacd3dbd3f9407468c2ee9a9d2594`. Do **not** automatically register, switch to or delete any of these.
+
+This is actual DGX source-preservation and current-service evidence, **not** permission to move/delete files, switch models, benchmark GPU, or modify the operational Flash-Next container. It supersedes prior `NOT_YET_RUN` references to the installed-model CLI below.
+
+---
+
 ## 2026-11-06 — Read-only installed model inventory, including protected legacy Orcarouter
 
 An earlier example `./wizard.sh model list --installed --json` was suggested **before implementation** and gave `{"status":"BLOCKED","error":"choose a valid submenu item for model"}` when the operator tried it. That error was a **missing Wizard route**, NOT evidence that any model was deleted.

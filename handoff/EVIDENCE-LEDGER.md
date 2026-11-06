@@ -1,3 +1,16 @@
+## E-20261106-ACTUAL-DGX-MODEL-INVENTORY — Orcarouter original and BF16/MTP recipe still exist
+
+**Actual operator JSON:** `./wizard.sh model list --installed --json` => `status=READ_ONLY_INVENTORY`, two cache roots checked, three registered sources observed, `other_cached_repos_truncated=false`, `service_status=LIVE_SERVICE_VERIFIED`, active `flash-next`, `executed=false`. Model revisions/shards/metadata/missing shards:
+- `nvidia/Qwen3.8-Flash-Next-NVFP4` `fc694b54fb0174e0913e6adf86691ef85a4ead47`: **11**, missing **0**, `source_files_present=true`, active + API verified.
+- `nvidia/Qwen3.8-27B-NVFP4` `482ca0f3832238542f8f5295dde86b5f22711d80`: **3**, missing **0**, `source_files_present=true`, inactive.
+- `orcarouter/Qwen3.8-Flash-Next-Uncensored-NVFP4` `3a3b63161c0745390e5270179af42e46efc70799`: **17**, missing **0**, `source_files_present=true`, inactive; original legacy HF cache `/home/inlc/Workspace/llm/yslab-qwen38-bf16ple-dgx-spark/hf-cache`; recipe view directory `/home/inlc/Workspace/llm/yslab-qwen38-bf16ple-dgx-spark/recipe-views/orca-uncensored-bf16-mtp/ee5b6b553f1226d2` has `directory_present=true`. This **directly confirms preservation, not runtime functionality**.
+
+Also **4 unregistered cache snapshots**: `maurienne-ai/Qwen3.8-27B-DFlash2-NVFP4-RTNcal`, `RadixArk/Qwen3.8-27B-NVFP4`, `dealignai/Qwen3.8-Flash-Next-ABLITERATED-NVFP4`, `RadixArk/Qwen3.8-Flash-Next-NVFP4`. These were only discovered by revision listing; **index/shards not validated** for unregistered cache entries. Unknown locations beyond the two configured roots were not searched.
+
+**Evidence boundary:** source inventory and current Flash-Next API confirmed, no GPU operations performed here. Orcarouter BF16 PLE/MTP recipe contents not audited and no Orcarouter runtime qualification yet. No cleanup/re-download.
+
+---
+
 ## 2026-11-06 — Read-only installed model inventory, including protected legacy Orcarouter
 
 An earlier example `./wizard.sh model list --installed --json` was suggested **before implementation** and gave `{"status":"BLOCKED","error":"choose a valid submenu item for model"}` when the operator tried it. That error was a **missing Wizard route**, NOT evidence that any model was deleted.

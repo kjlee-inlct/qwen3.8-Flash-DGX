@@ -1,3 +1,14 @@
+## 2026-11-06 — After real installed model inventory: preserve Orcarouter, advance P2 benchmarks
+
+- [x] DGX ran `./wizard.sh model list --installed --json` and returned `READ_ONLY_INVENTORY`, `executed=false`; source snapshots Flash-Next **11/11**, NVIDIA 27B **3/3**, Orcarouter **17/17** with zero missing indexed shards.
+- [x] **Actual legacy Orcarouter assets are preserved** at previous YSLAB HF cache revision `3a3b63161c0745390e5270179af42e46efc70799`; matching historical `orca-uncensored-bf16-mtp/ee5b6b553f1226d2` recipe directory observed. **No model removal or redownload needed** for source discovery; no GPU/recipe qualification yet.
+- [x] Current Flash-Next API confirmed by manifest-led live status (`LIVE_SERVICE_VERIFIED`); 27B remains inactive after prior `PASS_RESTORED` first GPU trial.
+- [ ] **Read-only future Orcarouter qualification:** inspect legacy recipe directory's exact manifests, referenced files, symlinks and model provenance without moving/modifying legacy files; distinguish original NVFP4 cache versus BF16 PLE recipe view and avoid claiming ready based on directory presence.
+- [ ] Continue **P2 27B benchmark** in a separately approved, bounded GPU maintenance window with strict stop→test→restore; measure TTFT, prefill/decode tokens/s, memory and functional behavior. Never silently restart 27B based on file availability.
+- [ ] P3 repeated Flash-Next ↔ 27B transition, P5 Orcarouter run/benchmark and P6 Orcarouter ↔ 27B transitions remain separately gated. Keep production service, legacy model caches, and 4 unregistered snapshots untouched.
+
+---
+
 ## 2026-11-06 — Read-only installed model inventory, including protected legacy Orcarouter
 
 An earlier example `./wizard.sh model list --installed --json` was suggested **before implementation** and gave `{"status":"BLOCKED","error":"choose a valid submenu item for model"}` when the operator tried it. That error was a **missing Wizard route**, NOT evidence that any model was deleted.

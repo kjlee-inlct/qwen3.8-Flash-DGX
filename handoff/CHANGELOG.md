@@ -1,3 +1,9 @@
+## 2026-11-06 — Real DGX installed-model scan confirms preserved original Orcarouter
+
+User ran Wizard `model list --installed --json` and supplied `READ_ONLY_INVENTORY`: 3 registered model snapshots (Flash-Next 11/11 shards, 27B 3/3, original Orcarouter 17/17; no missing weight shards), and 4 unregistered HF cache snapshot sightings. Legacy Orcarouter BF16/MTP recipe directory **present**. Current Flash-Next API `LIVE_SERVICE_VERIFIED`. No changes to GPU/service/weights. Orcarouter source presence is empirical; recipe/runtime qualification remains unverified. Record separately from prior actual 27B GPU `PASS_RESTORED` and from yet-to-run 27B benchmark.
+
+---
+
 ## 2026-11-06 — Read-only installed model inventory, including protected legacy Orcarouter
 
 An earlier example `./wizard.sh model list --installed --json` was suggested **before implementation** and gave `{"status":"BLOCKED","error":"choose a valid submenu item for model"}` when the operator tried it. That error was a **missing Wizard route**, NOT evidence that any model was deleted.
