@@ -1,3 +1,11 @@
+## R1N — 2026-11-06 — Actual P3-A PASS means 27B is ACTIVE; mandatory STOP before separate P3-B authorization (LATEST)
+
+Operator reported real `P3_A_PASS_27B_ACTIVE` and `LIVE_SERVICE_VERIFIED` after `stage-a --execute` with exact newly generated SHA and downtime+entry acknowledgments, stored `~/blazux-p3-reports/p3-a-operator-20261106T074306Z-c99bf2ad.json`, Wizard immutable receipt `~/.local/state/blazux-wizard/p3/stage-a.json`. This supersedes R1M's "A not run" state. **P3-A PASS (actual runtime)** is distinct from GitHub source CI success. Keep the active 27B service untouched until user explicitly approves B; sharing A's PASS is not a second-stage approval. No automatic B, P1 after B, or C, no hidden GPU tests, no cache/image cleanup, no Draft PR merge. Original Flash image/container must be preserved.
+
+Per D-016, agent may push a **read-only** B preparation wrapper `scripts/temporary/p3-stage-b-inspect.sh`, fake-DGX CPU tests, docs; DGX user pulls fast-forward and runs the single read-only wrapper to ground 27B API and preserved Flash IDs. No `--execute` is supported by the inspector. A fresh B exact plan, source ID, stopped preserved Flash ID and separate operator downtime acknowledgment must still be reviewed before any future dedicated B execution procedure; old A SHA and A permission never apply to B. Follow D-039 and D-034's later post-B P1 rebenchmark then separately approved final C.
+
+---
+
 ## R1M — 2026-11-06 — P1 PRE-A now PASS; scoped conditional P3-A entry must be freshly and interactively authorized (LATEST)
 
 Actual DGX P1 report `~/blazux-p1-reports/p1-pre-a-20261106T065104Z-aaed31b2.json` returns `PRE_A_P1_REVIEW_READY`, `issues=[]`, same verified Flash source/image, P1 functional PASS, 3-request numeric benchmark PASS and exact own-container historical/current rc3 resolution. Initial P1 backlog in older R1K/R1L is **superseded for pre-A only**. User's explicit condition "P1에 추가로 하지 않은 것이 없다면 27B 전환 승인" is met for **P3-A stage only**, not B/C and not permission for an automated model interruption. Read-only P1 receipt's `p3_a_execution_authorized=false` is intentional and does not reflect a failed P1 audit.
