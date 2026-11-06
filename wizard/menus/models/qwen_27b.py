@@ -20,6 +20,21 @@ SPEC = Stage(
 
 def run(argv, *, as_json=False, dry_run=False):
     args = list(argv)
+    # This scope is separate from P2 model download and generic blocked
+    # benchmark execution. No implicit consent; fixed active-service trial only.
+    if args and args[0] == "benchmark" and len(args) >= 2 and args[1] in ("--plan", "--execute"):
+        from scripts.manager import p2_27b_benchmark
+        mode = "plan" if args[1] == "--plan" else "execute"
+        tail = args[2:]
+        if dry_run and mode == "execute":
+            print(json.dumps({"status": "BLOCKED", "executed": False,
+                              "issues": ["DRY_RUN_EXECUTION_CONFLICT"]}))
+            return 3
+        if mode == "plan" and tail:
+            print(json.dumps({"status": "BLOCKED", "executed": False,
+                              "issues": ["PLAN_CANNOT_ACCEPT_EXECUTE_OPTIONS"]}))
+            return 2
+        return p2_27b_benchmark.main([mode, *tail])
     # Model acquisition is independent of GPU service operation and switching.
     if args and (args[0] == "download"
                  or (args[0] == "plan" and "--for-action" in args
