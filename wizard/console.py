@@ -189,6 +189,10 @@ def _stage_actions(module) -> None:
         if not selected:
             print("Unknown option.")
             continue
+        if spec.key == "p3" and selected == "roundtrip":
+            # Plan-only preview never interrupts live Flash-Next.
+            module.run(["roundtrip", "--plan"])
+            continue
         args = ["plan", "--for-action", selected]
         if spec.key in ("p3", "p6") and selected in ("switch", "rollback"):
             # Explicit pair selection from the known stage contract.
