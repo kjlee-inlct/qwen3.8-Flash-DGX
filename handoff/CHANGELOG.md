@@ -1,3 +1,9 @@
+## 2026-11-06 — P1 pre-A tracked audit / genuine identity schema fix, 435 CPU PASS
+
+D-016 operator correction honored: GitHub tracked pre-A wrapper and unit tests first, DGX fast-forward pull then one wrapper; no ad hoc pasted Python. Wrapper reconciles local original P1 verify/bench receipts (3 samples, actual 38.2968 tok/s etc) with 2026-11-05/06 doctor/inventory raw outputs and fresh Flash service API; outputs private 0600 evidence with no GPU/Docker lifecycle. Corrected pre-A and post-B P3 P1 identity gate to match `require_model`'s real `{"health":"PASS","models":[...]}` rather than nonexistent `identity.status`. [Latest tested PR CI](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42173805888) **435/435 CPU PASS** at `75d22ce4303736ee84563a0f388a978379e4f228`. No actual DGX wrapper execution or P3-A transition occurred.
+
+---
+
 ## 2026-11-06 — P1 numeric evidence received; D-016 script-first workflow restored
 
 User supplied actual P1 benchmark receipt 3/3 PASS, 192 completion tokens, TTFT P50/P95 1.398707/1.751198s, latency P50/P95 1.687357/1.780142s and 38.2968 tokens/s mean. New actual 2026-11-06 P1 `--inspect-only` report source/Hybrid READY and API original ID; inspect-only BLOCKED actions are non-execution by design, not P1 failure. Doctor/inventory rc3 raw not yet available. D-016 mandates temporary script → GitHub push/CI → DGX pull → one wrapper, not pasted one-off terminal code. Added `p1-pre-a-readiness.sh` + Python and CPU fake DGX tests to reconcile both raw rc3 reports, original P1 receipts and fresh live API; writes private JSON, cannot perform actual model switching. Conditional P3-A approval remains pending evidence review; D-034 B then P1 rebenchmark then C still binding.
