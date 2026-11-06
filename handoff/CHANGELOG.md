@@ -1,3 +1,9 @@
+## 2026-11-06 — P1 numeric evidence received; D-016 script-first workflow restored
+
+User supplied actual P1 benchmark receipt 3/3 PASS, 192 completion tokens, TTFT P50/P95 1.398707/1.751198s, latency P50/P95 1.687357/1.780142s and 38.2968 tokens/s mean. New actual 2026-11-06 P1 `--inspect-only` report source/Hybrid READY and API original ID; inspect-only BLOCKED actions are non-execution by design, not P1 failure. Doctor/inventory rc3 raw not yet available. D-016 mandates temporary script → GitHub push/CI → DGX pull → one wrapper, not pasted one-off terminal code. Added `p1-pre-a-readiness.sh` + Python and CPU fake DGX tests to reconcile both raw rc3 reports, original P1 receipts and fresh live API; writes private JSON, cannot perform actual model switching. Conditional P3-A approval remains pending evidence review; D-034 B then P1 rebenchmark then C still binding.
+
+---
+
 ## 2026-11-06 — P1 pending audit / conditional P3-A approval unmet; correct active-service rc3 validation
 
 Reviewed P1 operator proof: functional Flash-Next verify and bounded benchmark PASS, but numerical timing/tokens-per-second not supplied and doctor/inventory rc3 raw cause unresolved. User approval for Flash→27B is conditional on nothing remaining in P1, so no live switch. Audited `inventory.main`: an already running Flash container and occupied :8000 intentionally causes rc3 without read errors. Replaced post-B P1 diagnostic gate's impossible rc0 check with strict full doctor/plan JSON collision evidence for exact active Flash name/image/:8000, retaining historical reviewed disposition and new post-B verify and measured benchmark receipt prerequisites. Five negative CPU tests added (missing raw output, read errors, wrong image, wrong port, rc0 shortcut). [CI 418/418 PASS](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42172127412) on source `26a6950`. No GPU or service action.
