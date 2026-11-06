@@ -121,6 +121,20 @@ class P3StageAOperatorCPU(unittest.TestCase):
         answers = iter([PLAN, op.DOWNTIME_ACK, op.P3_ENTRY_ACK])
         self.assertTrue(op.prompts(plan(), input_fn=lambda _: next(answers)))
 
+    def test_prompt_shows_every_exact_character_not_just_an_abstract_label(self):
+        labels = []
+        answers = iter([PLAN, op.DOWNTIME_ACK, op.P3_ENTRY_ACK])
+        def answer(label):
+            labels.append(label)
+            return next(answers)
+        with contextlib.redirect_stdout(io.StringIO()) as output:
+            self.assertTrue(op.prompts(plan(), input_fn=answer))
+        self.assertEqual(len(labels), 3)
+        for literal in (PLAN, op.DOWNTIME_ACK, op.P3_ENTRY_ACK):
+            self.assertIn(literal, output.getvalue())
+            self.assertTrue(any(literal in item for item in labels))
+        self.assertIn("KST", output.getvalue())
+
     def test_post_execution_api_identity_must_match_27b(self):
         self.assertTrue(op.summarize_runtime(live(source=False), plan()))
         wrong = live(source=False)
@@ -128,18 +142,28 @@ class P3StageAOperatorCPU(unittest.TestCase):
         self.assertFalse(op.summarize_runtime(wrong, plan()))
 
     def _invoke(self, *, execute=False, ready=True, tty=False,
-                confirmations=False, execute_pass=True):
+                confirmations=False, execute_pass=True, seconds_left=300,
+                rotate_after_confirmation=False, wizard_refuses_stale=False):
         calls = []
         now = datetime.now(timezone.utc)
+        plan_count = 0
         def fake_run(argv, **kwargs):
             calls.append(list(argv))
             if argv[:4] == ["./wizard.sh", "service", "manager", "status"]:
                 return 0, live(source=False) if any("--execute" in c for c in calls) and execute_pass else live()
             if "--plan" in argv:
+                nonlocal plan_count
+                plan_count += 1
                 p = plan()
-                p["expires_at_epoch_seconds"] = int(now.timestamp()) + 300
+                p["expires_at_epoch_seconds"] = int(now.timestamp()) + seconds_left
+                if rotate_after_confirmation and plan_count >= 2:
+                    p["plan_id"] = "f" * 64
                 return 0, p if ready else {**p, "status": "BLOCKED", "issues": ["TARGET_ALREADY_EXISTS"]}
             if "--execute" in argv:
+                if wizard_refuses_stale:
+                    return 3, {"status": "BLOCKED", "stage": "a",
+                               "executed": False,
+                               "issues": ["P3_STALE_PLAN_OR_CHANGED_PREFLIGHT"]}
                 return (0, {"status": "PASS", "stage": "a", "executed": True,
                             "active_model": "27b", "live_verified": True}) if execute_pass else (
                     4, {"status": "RECOVERY_FAILED", "executed": True,
@@ -195,6 +219,34 @@ class P3StageAOperatorCPU(unittest.TestCase):
         self.assertIn(op.P3_ENTRY_ACK, executions[0])
         self.assertEqual(reports[-1]["status"], "P3_A_PASS_27B_ACTIVE")
         self.assertFalse(any("stage-b" in c for c in calls))
+
+    def test_not_enough_manual_approval_time_stops_before_prompt(self):
+        rc, calls, reports = self._invoke(execute=True, tty=True,
+                                          confirmations=True, seconds_left=40)
+        self.assertEqual(rc, 3)
+        self.assertFalse(any("--execute" in c for c in calls))
+        self.assertIn("P3_A_NOT_ENOUGH_TIME_FOR_MANUAL_CONFIRMATIONS",
+                      reports[-1]["issues"])
+
+    def test_changed_plan_after_typing_is_not_auto_substituted(self):
+        rc, calls, reports = self._invoke(
+            execute=True, tty=True, confirmations=True,
+            rotate_after_confirmation=True)
+        self.assertEqual(rc, 3)
+        self.assertFalse(any("--execute" in c for c in calls))
+        self.assertIn("P3_A_PLAN_EXPIRED_OR_CHANGED_DURING_OPERATOR_INPUT",
+                      reports[-1]["issues"])
+
+    def test_stale_plan_refusal_in_wizard_is_blocked_not_recovery_failed(self):
+        rc, calls, reports = self._invoke(
+            execute=True, tty=True, confirmations=True,
+            wizard_refuses_stale=True)
+        self.assertEqual(rc, 3)
+        self.assertEqual(reports[-1]["status"], "BLOCKED")
+        self.assertFalse(reports[-1]["executed"])
+        self.assertIn("P3_A_WIZARD_REJECTED_STALE_OR_CHANGED_PLAN",
+                      reports[-1]["issues"])
+        self.assertEqual(len([c for c in calls if "--execute" in c]), 1)
 
     def test_execute_failed_recovery_does_not_auto_retry(self):
         rc, calls, reports = self._invoke(execute=True, tty=True, confirmations=True,
