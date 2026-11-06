@@ -1,3 +1,11 @@
+## 2026-11-07 — CURRENT operator state: Post-B Flash Verify + Benchmark REAL PASS, UX source fixes
+
+The operator supplied a ZIP containing actual Flash-Next GPU Verify and Benchmark executed after successful P3-B. Both PASS with distinct explicit SHA approvals; measured 3-request mean 37.9527 tokens/sec, TTFT p50 1.384594 sec, latency p50 1.724560 sec. Last known actual API served `qwen3.8-flash-next` on :8000. Older statements that POST-B P1 is NOT_RUN are superseded. `P3-C` is still NOT_AUTHORIZED; no model switch/restart/repeat inferred.
+
+The open Draft PR #1 working branch includes a model-centric interactive UX change: operator sees the exact approval SHA, avoids the duplicate action selection, sees Verify and Benchmark metrics, and stores future P1 receipts under Git-ignored project `reports/models/qwen3.8-flash-next`. Historical receipts stay immutable; gate reads both legacy and project paths. Source CI includes new approval/UI and mixed-path tests. **Never confuse CPU CI success with actual DGX UX rerun.** See [current state](CURRENT-STATE.md), [next actions](NEXT-ACTIONS.md), [evidence ledger](EVIDENCE-LEDGER.md), [operating decisions](DECISIONS.md), [UX/evidence contract](../docs/WIZARD-OPERATOR-UX-EVIDENCE-CONTRACT.md).
+
+---
+
 ## 2026-11-07 — CURRENT: P3-A/B actual DGX PASS; Flash-Next restored; POST-B P1 pending
 
 **Supersedes all older headings below that say "P3-B NOT_RUN" or "27B ACTIVE".** Operator-provided actual DGX P3-B output: `P3_B_PASS_FLASH_NEXT_ACTIVE`, `executed=true`, `wizard_result.status=PASS`, `live_verified=true`, `post_switch_status=LIVE_SERVICE_VERIFIED`, and original served ID `qwen3.8-flash-next`. The immutable Wizard receipt is `~/.local/state/blazux-wizard/p3/stage-b.json`. The old B operator report was **misnamed** `~/blazux-p3-reports/p3-a-operator-20261106T223124Z-14861d75.json` due to imported A persistence; do not delete or rename it. Source fix now uses B-specific filenames and reports independent manual consent and execution dispatch.
