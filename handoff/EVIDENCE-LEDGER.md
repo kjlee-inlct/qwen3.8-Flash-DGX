@@ -1,3 +1,13 @@
+## E-20261106-P3-PERSISTENT-SOURCE-CI — source and CPU only, no DGX P3 operation
+
+New P3 standalone stages in `scripts/manager/p3_persistent_switch.py`, `p3_p1_evidence_gate.py` and Wizard menu. Durable approval boundary: P2 benchmark evidence does not automatically open P3; A requires a separate explicit operator-entry acknowledgment and exact current A plan; B, C each need new stage-specific plans and downtime approvals. A/B/C mock Docker implementations have been tested; label and ID tampering fails closed; successful C remains on 27B. Post-B fresh P1 numerical/functional receipts and rc=3 diagnostics required; absent data remains BLOCKED, no invented TTFT/throughput values.
+
+**GitHub Actions, actual code HEAD `27728045907a1f2111dc4b8340fbea2cc365ff1d`:** [push run 42168518712](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42168518712) SUCCESS and [Draft PR run 42168524464](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42168524464) SUCCESS. Logs report 411 passing CPU unittest cases across 19 test groups. Earlier intermediate red CI steps were genuine syntax/new-mock issues and were fixed, not hidden. They are not runtime GPU test outcomes.
+
+**P3 DGX actual:** A/B/C `NOT_RUN`; actual service state last provided after P2 was Flash-Next `LIVE_SERVICE_VERIFIED`. No updated DGX direct observation after source/doc commits. **P1 post-B remedy/verify/rebenchmark actual:** `NOT_RUN`; doctor/inventory-plan historical return code 3 reason still UNKNOWN. No model start/stop, Docker system cleanup, port change, cache mutation or PR merge occurred from code work.
+
+---
+
 ## E-20261106-P2-DGX-BENCH-PASS-RESTORED — actual operator-provided DGX stdout, private files not independently fetched
 
 Result: `status=BENCH_PASS_RESTORED_VERIFIED`, `trial=PASS`, `executed=true`, `target_api_ready=true`, `inference_ok=true`, `benchmark.status=PASS`, `restoration.status=RESTORED`, `restoration.issues=[]`, post-restore Wizard `LIVE_SERVICE_VERIFIED` with `observed_model=flash-next`, `expected_served_id=qwen3.8-flash-next`, `issues=[]`. NVIDIA `nvidia/Qwen3.8-27B-NVFP4` revision `482ca0f3832238542f8f5295dde86b5f22711d80`, exact served ID `qwen3.8-27b`, image ID `sha256:9479fc92a9244fcf137afb36ed778e07495e29663a81db193736fcaa1f15e137`. This overrides plan-only `P2_BENCHMARK_RECEIPT_NOT_FOUND` entries from earlier in the day, which remain historical.
