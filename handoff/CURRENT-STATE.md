@@ -1,3 +1,15 @@
+## 2026-11-06 — P2 bounded GPU benchmark and P3 gated two-cycle trial implemented in SOURCE; DGX NOT RUN
+
+**Priority corrected:** stop feature drift into model inventory/Orcarouter; original target is **P2 27B benchmark, then P3 Flash-Next ↔ 27B verification**. Existing real DGX P2 first-launch `PASS_RESTORED` and latest live `LIVE_SERVICE_VERIFIED` remain valid. P2 timed benchmark **NOT_RUN**; P3 repeated roundtrip **NOT_RUN**; permanent production switch remains unimplemented.
+
+Added `scripts/manager/p2_27b_benchmark.py`, Wizard `./wizard.sh model 27b benchmark --plan --json` and exact-scoped `--execute` route. P2 benchmark plans have a **different ID** from one-shot smoke. Execute reuses the real proven `p2_27b_gpu_trial.execute` original-container lock/restore; measures 3 bounded streaming text prompts, client TTFT/latency, e2e throughput and separate explicitly labeled prefill/decode **proxies** (not engine metrics), best-effort point GPU memory samples (not peak). Actual 27B text benchmark measures yet **not available**. Local private JSON `*.benchmark.json` records final result and fresh Wizard post-restore API identity.
+
+Added `scripts/manager/p3_27b_roundtrip.py` and Wizard `./wizard.sh switch flash-next-27b roundtrip --plan --json`. It **fails closed until a real latest P2 benchmark receipt reports `BENCH_PASS_RESTORED_VERIFIED`**. Its optional separately approved `--execute` reuses the guarded trial executor exactly twice, requiring the original Flash-Next container ID and API service state to be verified after **every** cycle, aborting on failure. This is **two temporary forward-and-return cycles**, NOT a persistent model-switch implementation and NOT automatically qualified without actual DGX evidence. No GPU/service changed by source-only development.
+
+Canonical new instructions: [P2-27B-BENCHMARK-AND-P3-ROUNDTRIP.md](../docs/P2-27B-BENCHMARK-AND-P3-ROUNDTRIP.md). The next DGX action is **read-only P2 benchmark --plan** after clean fast-forward; use no GPU execute until new explicit downtime approval.
+
+---
+
 ## 2026-11-06 — ACTUAL DGX installed-model inventory PASS; legacy Orcarouter confirmed preserved
 
 Operator executed **`./wizard.sh model list --installed --json`** on DGX after pulling the new Wizard. Actual result `status=READ_ONLY_INVENTORY`, `scope=CONFIGURED_CACHE_ROOTS_ONLY`, `service_status=LIVE_SERVICE_VERIFIED`, `active_model_observed=flash-next`, `active_api_identity_verified=true`, `executed=false`, `operations_enabled=false`, `other_cached_repos_truncated=false`, `service_issues=[]`.

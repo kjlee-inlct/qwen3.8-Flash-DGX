@@ -1,3 +1,11 @@
+## E-20261106-P2-BENCH-P3-ROUNDTRIP-SOURCE — no new DGX GPU execution
+
+**Source on `feature/recipe-wizard-handoff` only:** new P2 distinct-hash benchmark plan and 3 sequential SSE timing requests; original one-shot stop/restore executor reused, protected local metric evidence, post-restore Wizard status; new P3 exactly two temporary roundtrips conditional on real P2 benchmark success. CPU fake-backend tests verify approval separation, invalid and stale approval fail-closed, no HTTP/GPU from plans, SSE bounds, recording measured TTFT/e2e vs proxies, and source ID/API restore checks. **Do not record any actual performance numbers until real DGX execution.**
+
+**Existing real DGX evidence remains separate:** first 27B GPU one-shot API/inference `PASS_RESTORED` and actual Flash-Next `LIVE_SERVICE_VERIFIED`. Neither is a timed benchmark nor a two-cycle result. P3 plan is deliberately BLOCKED until `*.benchmark.json` produced by the newly approved real benchmark. Source CPU CI does not qualify either GPU runtime command, persistent P3 switch, GPU peak memory or true engine prefill throughput.
+
+---
+
 ## E-20261106-ACTUAL-DGX-MODEL-INVENTORY — Orcarouter original and BF16/MTP recipe still exist
 
 **Actual operator JSON:** `./wizard.sh model list --installed --json` => `status=READ_ONLY_INVENTORY`, two cache roots checked, three registered sources observed, `other_cached_repos_truncated=false`, `service_status=LIVE_SERVICE_VERIFIED`, active `flash-next`, `executed=false`. Model revisions/shards/metadata/missing shards:

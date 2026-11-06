@@ -1,3 +1,16 @@
+## 2026-11-06 — REFOCUS on P2 actual benchmark and P3 repeated temporary roundtrip
+
+- [x] First actual DGX NVIDIA 27B GPU text smoke and return-to-original `PASS_RESTORED`, plus independent manifest-led Flash-Next `LIVE_SERVICE_VERIFIED`.
+- [x] **Source implementation** P2 exact-approved bounded benchmark, 3 sequential 64-token SSE prompts, client TTFT/latency/proxy throughput and point-memory sampling with private evidence, then same-original restore + Wizard check. Distinct approval from first smoke trial.
+- [x] **Source implementation** P3 conditional two-cycle temporary roundtrip plan/executor, blocked absent successful current P2 `*.benchmark.json`; each cycle uses same original-recovery protections; two-cycle run does not qualify permanent switching.
+- [ ] DGX **read-only**: `git status -sb` and `git pull --ff-only origin feature/recipe-wizard-handoff`; `./wizard.sh model 27b benchmark --plan --json`. Record status/plan parameters/issues. If BLOCKED, debug before requesting downtime; no repeated source-only import checks.
+- [ ] When explicitly approved, run real P2 benchmark during maintenance with exact live plan and typed downtime acknowledgment. Share measured JSON/status; confirm `BENCH_PASS_RESTORED_VERIFIED`, metrics, original API, source ID and real `*.benchmark.json`. **No approval inferred from this handoff.**
+- [ ] **Only after P2 DGX benchmark PASS**, read-only `./wizard.sh switch flash-next-27b roundtrip --plan --json`. Then separately obtain full P3 two-cycle downtime approval and test both cycles; record original-container and API identity after each.
+- [ ] Full permanent Flash-Next ↔ 27B service switch, extended performance/profiles, abnormal-path fault recovery and rollback remain independently gated. Orcarouter work remains for P5, not current scope.
+- [ ] Keep Draft PR #1 unmerged, original Flash-Next container and API :8000 intact until scoped actual test.
+
+---
+
 ## 2026-11-06 — After real installed model inventory: preserve Orcarouter, advance P2 benchmarks
 
 - [x] DGX ran `./wizard.sh model list --installed --json` and returned `READ_ONLY_INVENTORY`, `executed=false`; source snapshots Flash-Next **11/11**, NVIDIA 27B **3/3**, Orcarouter **17/17** with zero missing indexed shards.

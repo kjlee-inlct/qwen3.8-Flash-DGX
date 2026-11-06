@@ -1,3 +1,9 @@
+## 2026-11-06 — P2 exact-approved 27B benchmark and P3 gated two-roundtrip source implementations
+
+Created `scripts/manager/p2_27b_benchmark.py` with separate benchmark plan/ack, 3 bounded streaming requests, client metrics and private final success+restore evidence, delegating all GPU/container transitions to existing approved one-shot executor. Wired `./wizard.sh model 27b benchmark --plan/--execute` and `scripts/serve_27b.sh --bench-*`. Added `scripts/manager/p3_27b_roundtrip.py` with plan blocked until real P2 benchmark PASS, exact separate approval and two sequential, original-ID-checked return-to-original cycles. Wired `./wizard.sh switch flash-next-27b roundtrip --plan/--execute`. Added CPU fake-backend tests and CI. **Source only: no new DGX GPU benchmark, P3 cycle or permanent service switch executed.** See [P2/P3 procedure](../docs/P2-27B-BENCHMARK-AND-P3-ROUNDTRIP.md).
+
+---
+
 ## 2026-11-06 — Real DGX installed-model scan confirms preserved original Orcarouter
 
 User ran Wizard `model list --installed --json` and supplied `READ_ONLY_INVENTORY`: 3 registered model snapshots (Flash-Next 11/11 shards, 27B 3/3, original Orcarouter 17/17; no missing weight shards), and 4 unregistered HF cache snapshot sightings. Legacy Orcarouter BF16/MTP recipe directory **present**. Current Flash-Next API `LIVE_SERVICE_VERIFIED`. No changes to GPU/service/weights. Orcarouter source presence is empirical; recipe/runtime qualification remains unverified. Record separately from prior actual 27B GPU `PASS_RESTORED` and from yet-to-run 27B benchmark.

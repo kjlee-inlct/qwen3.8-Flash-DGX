@@ -1,3 +1,13 @@
+## D-033 — 2026-11-06 — P3 acceptance starts with two temporary verified roundtrips, not permanent switch
+
+P3 first acceptance instrument is **exactly two** sequential Flash-Next → temporary NVIDIA 27B → original Flash-Next cycles using the existing proven one-shot recovery executor. It is **blocked absent actual P2 benchmark receipt** `BENCH_PASS_RESTORED_VERIFIED` and additionally requires **new P3-specific plan ID plus explicit downtime acknowledgment**. After every cycle, recheck actual original container identity, running state and Manifest-based API served ID; on first failure never begin another cycle. Reporting P3 temporary-roundtrip PASS must **not** be called persistent production model-switch readiness. Persistent switch, failure injection and recoverability remain later independent work. No service, image or model change authorized by source-level readiness.
+
+## D-032 — 2026-11-06 — P2 benchmark must reuse the proven exact-identity restoration path
+
+The actual 27B DGX smoke `PASS_RESTORED` means do not repeat source import probes. Add bounded 3-request/64-token **benchmark-specific** approval that cannot reuse the first smoke trial's plan ID. Reuse the original one-shot target launch, exclusive GPU container policy, preserved original identity and mandatory original restore; capture client metrics, not generated text, and local 0600 evidence including fresh Manifest/API check after restore. Mark client TTFT, decode/prefill **proxies** separately from engine speed, and memory point sample distinctly from peak. Any result absent real measured data or independent return-to-Flash proof is not benchmark PASS. Disruptive execution still needs fresh exact plan and new typed downtime approval; no user "continue" instruction by itself grants a service interruption.
+
+---
+
 ## D-031 — 2026-11-06 — Wizard must use Manifest-led live service status as primary operator interface
 
 After real one-shot Qwen3.8-27B GPU `PASS_RESTORED`, the user chose **Manifest-based Wizard** instead of manual `docker ps` + `curl` for verifying original Flash-Next recovery and future switching. Keep a **single** `./wizard.sh service manager status --json` command with fresh actual Docker/socket observation + declared `runtimes/service-policy.json` expectations + localhost `/health` and `/v1/models` exact model ID. Return `LIVE_SERVICE_VERIFIED` or fail closed `BLOCKED`, never infer operation authority or API identity from a stale manifest. Preserve `inventory`, `health`, `logs` for diagnostics. Do not conflate current API verification with prior trial provenance, GPU exclusivity, permanent switch readiness, memory/latency measurements or user authorization to stop production. No Docker or GPU mutation from any status command.
