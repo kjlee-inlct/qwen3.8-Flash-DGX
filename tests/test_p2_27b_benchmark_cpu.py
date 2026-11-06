@@ -96,6 +96,7 @@ class BenchmarkCPU(unittest.TestCase):
         self.assertEqual(len(doc["samples"]), 3)
         self.assertEqual(doc["metrics"]["ttft_p50_sec"], 0.2)
         self.assertAlmostEqual(doc["metrics"]["mean_decode_tokens_per_sec_proxy"], 6.25)
+        self.assertEqual(doc["metrics"]["mean_prompt_ingest_tokens_per_sec_proxy"], 40.0)
         self.assertIsNone(doc["metrics"]["prefill_tokens_per_sec"])
         self.assertIsNone(doc["metrics"]["gpu_peak_mib"])
         self.assertEqual(len(self.requests), 3)
@@ -138,6 +139,27 @@ class BenchmarkCPU(unittest.TestCase):
             record = Path(result["benchmark_evidence"])
             self.assertTrue(record.is_file())
             self.assertIn("ttft_p50_sec", record.read_text())
+            self.assertEqual(json.loads(record.read_text())["status"],
+                             "BENCH_PASS_RESTORED_VERIFIED")
+
+    def test_inconsistent_restored_api_identity_blocks_full_benchmark_pass(self):
+        with tempfile.TemporaryDirectory() as temp:
+            evidence = Path(temp) / "base.json"
+            evidence.write_text("{}")
+            def core(plan, ack, **kwargs):
+                self.assertTrue(kwargs["inference"]())
+                return 0, {"status": "PASS_RESTORED", "trial": "PASS",
+                           "executed": True, "evidence": str(evidence),
+                           "restoration": {"status": "RESTORED", "issues": []}}
+            rc, result = bench.execute("f"*64, trial.ACK, core=core,
+                measurement=lambda: {"status": "PASS", "metrics": {}},
+                status_inspector=lambda: {
+                    "status": "LIVE_SERVICE_VERIFIED", "observed_model": "flash-next",
+                    "expected_served_id": "qwen3.8-27b", "issues": []})
+            self.assertEqual(rc, 4)
+            self.assertEqual(result["status"], "BENCH_PARTIAL_RESTORED")
+            self.assertEqual(json.loads(Path(result["benchmark_evidence"]).read_text())["status"],
+                             "BENCH_PARTIAL_RESTORED")
 
     def test_no_execute_never_creates_benchmark_evidence(self):
         rc, obj = bench.execute(

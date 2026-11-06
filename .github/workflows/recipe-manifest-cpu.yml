@@ -76,7 +76,6 @@ jobs:
           python -m unittest discover -s tests -p 'test_script_modes_cpu.py' -v
           python -m unittest discover -s tests -p 'test_p1_*_cpu.py' -v
           python -m unittest discover -s tests -p 'test_p2_*_cpu.py' -v
-          python -m unittest discover -s tests -p 'test_p2_27b_benchmark_cpu.py' -v
           python -m unittest discover -s tests -p 'test_service_manifest_cpu.py' -v
           python -m unittest discover -s tests -p 'test_service_journal_cpu.py' -v
           python -m unittest discover -s tests -p 'test_service_health_cpu.py' -v
