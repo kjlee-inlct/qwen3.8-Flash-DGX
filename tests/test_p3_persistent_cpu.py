@@ -154,6 +154,7 @@ class P3ExecuteCPU(unittest.TestCase):
         self.root = Path(self.temp.name)
         self.states = {"qwen38-flash": True, "qwen38-27b": False}
         self.commands = []
+        self.stageA_created = False
 
     def tearDown(self):
         self.temp.cleanup()
@@ -163,20 +164,27 @@ class P3ExecuteCPU(unittest.TestCase):
 
     def _run(self, cmd, timeout=35):
         self.commands.append(cmd[:])
+        if cmd[:3] == ["docker", "ps", "-a"]:
+            names = ["qwen38-flash"] + (["qwen38-27b"] if self.stageA_created else [])
+            return SimpleNamespace(returncode=0, stdout="\\n".join(names) + "\\n")
         if cmd[:2] == ["docker", "stop"]:
             self.states[cmd[-1]] = False
         if cmd[:2] == ["docker", "start"]:
             self.states[cmd[-1]] = True
         if cmd[:2] == ["docker", "run"]:
             self.states["qwen38-27b"] = True
+            self.stageA_created = True
         return SimpleNamespace(returncode=0, stdout="")
 
     def _planner(self, stage, root):
+        source, target = p3.DIRECTIONS[stage]
         return {"status": p3.SUCCESS, "plan_id": A_PLAN, "issues": [],
-                "source_container_id": FLASH, "source_image": IMAGE,
-                "target_image": IMAGE, "flash_id": FLASH, "flash_image": IMAGE,
-                "image_27b": IMAGE, "id_27b": None,
-                "target_container_id": None, "p3_a_plan_id": None,
+                "source_container_id": FLASH if source == "flash-next" else B27,
+                "source_image": IMAGE, "target_image": IMAGE,
+                "flash_id": FLASH, "flash_image": IMAGE,
+                "image_27b": IMAGE, "id_27b": B27 if stage != "a" else None,
+                "target_container_id": None if stage == "a" else (FLASH if target == "flash-next" else B27),
+                "p3_a_plan_id": A_PLAN if stage != "a" else None,
                 "p2_receipt_sha256": "c"*64, "p1_evidence": None}
 
     def test_exact_plan_and_downtime_and_separate_entry_required(self):
@@ -224,6 +232,58 @@ class P3ExecuteCPU(unittest.TestCase):
         self.assertEqual(out["status"], "FAIL_RESTORED")
         self.assertTrue((self.root / "attempt-a.json").exists())
         self.assertFalse((self.root / "stage-a.json").exists())
+
+
+    def test_stage_b_keeps_original_flash_running_and_preserves_27b(self):
+        self.stageA_created = True
+        self.states = {"qwen38-flash": False, "qwen38-27b": True}
+        with patch.object(p3, "_record") as journal, \
+             patch.object(p3.gpu, "running", side_effect=lambda name, run: self.states[name]), \
+             patch.object(p3.gpu, "port_free", return_value=True):
+            rc, out = p3.execute("b", A_PLAN, p3.ACK, root=self.root,
+                planner=self._planner, run=self._run, inspect=self._inspect,
+                waiter=lambda name, model, seconds, run: self.states[name],
+                live=lambda: live("flash-next"))
+        self.assertEqual(rc, 0, out)
+        self.assertFalse(self.states["qwen38-27b"])
+        self.assertTrue(self.states["qwen38-flash"])
+        self.assertEqual(json.loads((self.root / "stage-b.json").read_text())["target_id"], FLASH)
+        self.assertEqual(journal.call_args_list[-1].args[1], "COMMITTED")
+
+    def test_stage_c_preserves_flash_and_ends_on_27b(self):
+        self.stageA_created = True
+        self.states = {"qwen38-flash": True, "qwen38-27b": False}
+        with patch.object(p3, "_record"), \
+             patch.object(p3.gpu, "running", side_effect=lambda name, run: self.states[name]), \
+             patch.object(p3.gpu, "port_free", return_value=True):
+            rc, out = p3.execute("c", A_PLAN, p3.ACK, root=self.root,
+                planner=self._planner, run=self._run, inspect=self._inspect,
+                waiter=lambda name, model, seconds, run: self.states[name],
+                live=lambda: live("27b"))
+        self.assertEqual(rc, 0, out)
+        self.assertFalse(self.states["qwen38-flash"])
+        self.assertTrue(self.states["qwen38-27b"])
+        self.assertEqual(out["active_model"], "27b")
+        self.assertEqual(json.loads((self.root / "stage-c.json").read_text())["target_id"], B27)
+
+    def test_stage_c_refuses_foreign_preserved_27b_target_before_start(self):
+        self.stageA_created = True
+        self.states = {"qwen38-flash": True, "qwen38-27b": False}
+        def inspect_changed(name):
+            doc = self._inspect(name)
+            if name == "qwen38-27b":
+                doc["Id"] = "9" * 64
+            return doc
+        with patch.object(p3, "_record"), \
+             patch.object(p3.gpu, "running", side_effect=lambda name, run: self.states[name]), \
+             patch.object(p3.gpu, "port_free", return_value=True):
+            rc, out = p3.execute("c", A_PLAN, p3.ACK, root=self.root,
+                planner=self._planner, run=self._run, inspect=inspect_changed,
+                waiter=lambda *a, **kw: False, live=lambda: live("flash-next"))
+        self.assertEqual(rc, 4)
+        self.assertIn("PRESERVED_TARGET_CHANGED_BEFORE_START", out["error_code"])
+        self.assertFalse(any(cmd[:2] == ["docker", "start"] and cmd[-1] == "qwen38-27b"
+                             for cmd in self.commands))
 
 
 class P1GateCPU(unittest.TestCase):
