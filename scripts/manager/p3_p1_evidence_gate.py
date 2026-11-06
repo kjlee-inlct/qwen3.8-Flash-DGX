@@ -165,7 +165,11 @@ def assess_p1(*, stage_b: dict[str, Any], flash_image: str,
         except (OSError, ValueError, TypeError, KeyError, json.JSONDecodeError):
             issues.append("P1_" + action.upper() + "_EVIDENCE_UNTRUSTED")
 
-    diagnostic = p3_root / "p1-diagnostics.json"
+    # New D-016 evidence is append-only; choose the newest attempt, including
+    # BLOCKED attempts, so an older PASS cannot mask later diagnostics.
+    # Preserve the legacy fixed-name input for existing evidence/test fixtures.
+    attempts = sorted(p3_root.glob("p1-diagnostics-*.json"), reverse=True)
+    diagnostic = attempts[0] if attempts else p3_root / "p1-diagnostics.json"
     try:
         doc, digest = _read_private(diagnostic, p3_root)
         disposition = doc.get("historical_rc3_disposition")
