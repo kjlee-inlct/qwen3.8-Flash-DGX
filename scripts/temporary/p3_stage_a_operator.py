@@ -195,7 +195,10 @@ def persist(doc: dict[str, Any], *, root: Path = P3_REPORT_ROOT) -> str:
     root.mkdir(mode=0o700, parents=True, exist_ok=True)
     if root.is_symlink() or root.stat().st_mode & 0o077:
         raise ValueError("P3_REPORT_ROOT_PERMISSIONS_UNSAFE")
-    path = root / ("p3-a-operator-" + datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    # Stage-aware prefix retains the original A contract and fixes imported B persist().
+    prefix = ("p3-b-operator-" if doc.get("stage") == "P3_B_OPERATOR_GUARDED_HANDOFF"
+              else "p3-a-operator-")
+    path = root / (prefix + datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
                    + "-" + uuid4().hex[:8] + ".json")
     fd = os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY | os.O_NOFOLLOW, 0o600)
     with os.fdopen(fd, "w", encoding="utf-8") as stream:

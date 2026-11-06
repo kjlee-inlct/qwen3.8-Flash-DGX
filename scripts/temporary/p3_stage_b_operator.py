@@ -126,7 +126,7 @@ def main(argv: list[str] | None = None) -> int:
         "stage_a_plan_id": areceipt.get("plan_id"),
         "stage_a_receipt": str(A_RECEIPT),
         "executed": False, "operations_enabled": False,
-        "approval_accepted": False,
+        "execution_dispatched": False, "approval_accepted": False,
         "notice": (
             "No stage-B authorization from P3-A. Plan-only mode is strictly "
             "read-only. Execution requires live terminal, independent current "
@@ -162,6 +162,9 @@ def main(argv: list[str] | None = None) -> int:
         report["evidence_file"] = persist(report)
         print(json.dumps(report, indent=2, sort_keys=True))
         return 3
+    # Three exact terminal inputs were accepted, but this is NOT proof of
+    # dispatch or a successful service change. Stale rechecks still fail closed.
+    report["approval_accepted"] = True
     # Re-observe before the service-changing core; never silently substitute
     # a newly rotated plan for the value actually typed by the operator.
     now = time.time()
@@ -179,6 +182,8 @@ def main(argv: list[str] | None = None) -> int:
            "--execute", "--approve-plan", plan["plan_id"],
            "--ack-downtime", DOWNTIME_ACK,
            "--enter-p3", ENTRY_ACK, "--json"]
+    report["operations_enabled"] = True
+    report["execution_dispatched"] = True
     run_rc, done = run_readonly(cmd, timeout=900)
     report["wizard_result"] = done
     report["execute_command_exit_code"] = run_rc

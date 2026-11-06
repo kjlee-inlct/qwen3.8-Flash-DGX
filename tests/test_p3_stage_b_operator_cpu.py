@@ -189,6 +189,19 @@ class StageBOperatorCPU(unittest.TestCase):
         self.assertEqual(calls, [])
         self.assertIn("P3_B_APPROVED_PLAN_EXPIRED_OR_SOURCE_CHANGED",
                       reports[-1]["issues"])
+        self.assertTrue(reports[-1]["approval_accepted"])
+        self.assertFalse(reports[-1]["execution_dispatched"])
+        self.assertFalse(reports[-1]["executed"])
+
+    def test_stage_b_persist_uses_b_specific_prefix_and_preserves_a_prefix(self):
+        from scripts.temporary import p3_stage_a_operator as a
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "private-p3"
+            for stage, prefix in (("P3_A_OPERATOR_GUARDED_HANDOFF", "p3-a-operator-"),
+                                  ("P3_B_OPERATOR_GUARDED_HANDOFF", "p3-b-operator-")):
+                path = Path(a.persist({"stage": stage, "status": "BLOCKED"}, root=root))
+                self.assertTrue(path.name.startswith(prefix))
+                self.assertEqual(path.stat().st_mode & 0o777, 0o600)
 
     def test_execute_success_delegates_only_B_and_verifies_flash(self):
         rc, calls, reports, count = self.invoke(
@@ -202,6 +215,9 @@ class StageBOperatorCPU(unittest.TestCase):
         self.assertIn(op.ENTRY_ACK, cmds[0])
         self.assertNotIn("stage-c", " ".join(cmds[0]))
         self.assertEqual(reports[-1]["status"], "P3_B_PASS_FLASH_NEXT_ACTIVE")
+        self.assertTrue(reports[-1]["approval_accepted"])
+        self.assertTrue(reports[-1]["operations_enabled"])
+        self.assertTrue(reports[-1]["execution_dispatched"])
 
     def test_failed_restoration_does_not_retry_or_auto_run_C(self):
         rc, calls, reports, _ = self.invoke(
