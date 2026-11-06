@@ -239,7 +239,7 @@ def make_plan(stage: str, *, root: Path = ROOT, reader=latest_p2_benchmark,
             if (target == "27b" and
                     ((tgt_doc.get("Config") or {}).get("Labels") or {}).get(LABEL) != first.get("plan_id")):
                 issues.append("TARGET_27B_PROVENANCE_UNVERIFIED")
-            if source == "27b" and
+            if (source == "27b" and
                     ((src_doc.get("Config") or {}).get("Labels") or {}).get(LABEL) != first.get("plan_id")):
                 issues.append("SOURCE_27B_PROVENANCE_UNVERIFIED")
     except (OSError, RuntimeError, ValueError, TypeError, subprocess.TimeoutExpired):
