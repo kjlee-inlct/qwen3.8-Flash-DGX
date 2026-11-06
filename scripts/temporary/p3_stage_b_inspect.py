@@ -96,8 +96,9 @@ def preflight_issues(receipt: dict[str, Any], live: dict[str, Any],
             or plan.get("p2_receipt_sha256") != receipt.get("p2_receipt_sha256")):
         issues.append("P3_B_PRESERVED_CONTAINERS_OR_PROVENANCE_DRIFT")
     if (plan.get("required_downtime_acknowledgement")
-            != "I_ACCEPT_FLASH_NEXT_DOWNTIME"
-            or plan.get("required_p3_entry_acknowledgement") is not None):
+            != "I_ACCEPT_27B_DOWNTIME"
+            or plan.get("required_p3_entry_acknowledgement")
+            != "I_SEPARATELY_AUTHORIZE_P3_STAGE_B"):
         issues.append("P3_B_APPROVAL_CONTRACT_CHANGED")
     expires = plan.get("expires_at_epoch_seconds")
     if type(expires) not in (int, float) or expires <= now:
