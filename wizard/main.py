@@ -11,7 +11,7 @@ from wizard.menus import (
 USAGE = """Blazux Wizard (vLLM 0.32 only)
 
   ./wizard.sh                                simple model-first interactive menu\n  ./wizard.sh select 27b --json              read-only lifecycle selection plan\n  ./wizard.sh model choose flash-next --json same planner
-  ./wizard.sh list --json                    model/switch/storage/operations catalog\n  ./wizard.sh workflow 27b --json            full model lifecycle actions and gates\n  ./wizard.sh roadmap --json                 complete P1-P7 acceptance checklist\n  ./wizard.sh workflow 27b --for-action start --json  read-only action capability
+  ./wizard.sh list --json                    model/switch/storage/operations catalog\n  ./wizard.sh model list --installed --json   read-only pinned and legacy cache discovery\n  ./wizard.sh workflow 27b --json            full model lifecycle actions and gates\n  ./wizard.sh roadmap --json                 complete P1-P7 acceptance checklist\n  ./wizard.sh workflow 27b --for-action start --json  read-only action capability
   ./wizard.sh model flash-next status --json
   ./wizard.sh model 27b plan --for-action prepare --json
   ./wizard.sh model orcarouter-flash-next status --json
@@ -199,7 +199,7 @@ def main(argv: list[str] | None = None) -> int:
         return 3
     try:
         args = _normalized(args)
-        if not (len(args) >= 2 and args[:2] == ["model", "choose"]):
+        if not (len(args) >= 2 and args[:2] in (["model", "choose"], ["model", "list"])):
             args = _resolve_stage(args)
     except ValueError as exc:
         print(json.dumps({"status": "BLOCKED", "error": str(exc)}))
@@ -211,6 +211,38 @@ def main(argv: list[str] | None = None) -> int:
     if args[0] in ("help", "--help", "-h"):
         print(USAGE)
         return 0
+    if len(args) >= 2 and args[:2] == ["model", "list"]:
+        if args[2:] != ["--installed"]:
+            print(json.dumps({"status": "BLOCKED", "executed": False,
+                              "issues": ["ONLY_MODEL_LIST_INSTALLED_READ_ONLY_SUPPORTED"]}))
+            return 2
+        from scripts.manager.installed_models import installed_models
+        try:
+            document = installed_models()
+        except (OSError, RuntimeError, ValueError) as exc:
+            document = {"status": "BLOCKED", "executed": False,
+                        "issues": ["INSTALLED_MODELS_UNAVAILABLE:" + type(exc).__name__]}
+        if dry_run:
+            document["dry_run"] = True
+        if as_json:
+            print(json.dumps(document, ensure_ascii=False, indent=2, sort_keys=True))
+        else:
+            if document["status"] == "BLOCKED":
+                print("Model inventory unavailable: " + ", ".join(document["issues"]))
+            else:
+                print("Installed models — read-only cache / recipe inventory")
+                for entry in document["models"]:
+                    active = " [ACTIVE API VERIFIED]" if entry["active_api_identity_verified"] else ""
+                    print("  " + entry["model"] + ": " + entry["source_state"] + active)
+                    for snap in entry["cache_snapshots"][:4]:
+                        print("     " + snap["snapshot"] + " (" + snap["state"] + ")")
+                    view = entry.get("legacy_recipe_view")
+                    if view and view["directory_present"]:
+                        print("     legacy recipe view: " + view["path"])
+                for other in document["other_cached_repos"]:
+                    print("  [unregistered] " + other["repo_id"] +
+                          ": snapshot observed, unqualified")
+        return 0 if document["status"] == "READ_ONLY_INVENTORY" else 3
     if args[0] == "select" or (len(args) >= 2 and args[:2] == ["model", "choose"]):
         from wizard.quickstart import run_cli
         model_args = args[1:] if args[0] == "select" else args[2:]

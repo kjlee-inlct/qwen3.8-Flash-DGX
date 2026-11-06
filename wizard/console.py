@@ -104,7 +104,13 @@ def _model_selector() -> None:
     print("\nSelect a model (0 back)")
     for i, name in enumerate(names, 1):
         print(f" {i}. {MODEL_CHOICES[name]['title']}")
-    selection = _choice(_input("Model: "), names)
+    print(f" {len(names) + 1}. Installed models (read only / legacy caches)")
+    typed = _input("Model: ")
+    if typed in (str(len(names) + 1), "installed", "list"):
+        from wizard.main import main as cli_main
+        cli_main(["model", "list", "--installed"])
+        return
+    selection = _choice(typed, names)
     if selection is None:
         return
     if not selection:
