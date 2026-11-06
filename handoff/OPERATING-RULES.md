@@ -1,3 +1,13 @@
+## R1P — 2026-11-07 — P3-B ACTUAL PASS; POST-B P1 is the only current work
+
+Supersedes historical R1O/R1N "B pending, 27B active" positions: real DGX operator returned `P3_B_PASS_FLASH_NEXT_ACTIVE`, executed/live verified by canonical stage-B and a separate Flash API check. Flash-Next is the latest verified active model, API `:8000/v1`. P3-A/B **must not be repeated**. Do not retroactively edit the historically misnamed old P3-B report or infer failure from its stale `approval_accepted=false` field.
+
+D-016: GitHub source + Fake DGX CPU tests + CI + tracked docs first, then clean DGX fast-forward pull and **one** read-only `bash scripts/temporary/p1-post-b-audit.sh`. This script never requests or accepts `--execute`/GPU approvals; it checks current stage-B receipt and Flash API, existing P1 plan readiness, raw doctor/inventory rc=3 cause, and exact original image/revision. Append-only private 0600 evidence only; failures BLOCKED and no automatic retry/transition. No cache/model/container cleanups, no change to vLLM 0.32, port 8000 or ONE_ACTIVE_MODEL_ONLY.
+
+Even a diagnostic PASS only qualifies **P1 POST-B diagnostics**, NOT new P1 Verify/Benchmark or P3-C. Each live API inference step requires a newly scoped approval and current action-bound SHA; P3-C separately requires explicit downtime approval and all real post-B evidence. Draft PR #1 remains Open/Draft/Unmerged until user authorizes merge.
+
+---
+
 ## R1O — 2026-11-06 — P3-B read-only READY, 27B remains ACTIVE until newly scoped B approval (LATEST)
 
 Actual DGX read-only B inspection (17:41:56 KST) reported `READY_FOR_SEPARATE_P3_B_APPROVAL`, `issues=[]`, active API ID `qwen3.8-27b`, immutable 27B running container and original preserved Flash container identities; `executed=false`. **Do not treat READY as permission to stop the live 27B service.** B's operator approval must be separately given, with an unexpired fresh SHA and **correctly named shutdown target**: `I_ACCEPT_27B_DOWNTIME` plus independent `I_SEPARATELY_AUTHORIZE_P3_STAGE_B`; neither P3-A's SHA nor `I_ACCEPT_FLASH_NEXT_DOWNTIME` is valid for B. Record the change under D-040.

@@ -1,3 +1,20 @@
+## 2026-11-07 — POST-B P1 operator audit (read-only, D-016, P3-A/B already ACTUAL PASS)
+
+**Observed upstream DGX outcome:** canonical `stage-b.json` PASS and `P3_B_PASS_FLASH_NEXT_ACTIVE`; original Flash-Next `qwen3.8-flash-next` restored to :8000. User's post-B P1 inspect-only `20261106T224010Z-d2095867/result.json` PASS/Verify+Benchmark plans READY; it did **not** execute Verify or Benchmark. Old B wrapper evidence filename is incorrectly `p3-a-operator-20261106T223124Z-14861d75.json` and must be preserved; source naming and approval field fixes affect only newly generated reports.
+
+**After latest CPU CI SUCCESS and clean DGX fast-forward pull**:
+```bash
+cd ~/Workspace/llm/blazux-orcarouter
+git pull --ff-only origin feature/recipe-wizard-handoff
+bash scripts/temporary/p1-post-b-audit.sh
+```
+
+The only operator inspection command is the final tracked `bash scripts/temporary/p1-post-b-audit.sh`; it exposes **no --execute/auto-gpu/approval options**. It checks immutable P3-B receipt, current Flash service/API on :8000 and original image, branch/clean/plan readiness, cached original/Hybrid checkpoint revision, and **both RAW JSON** launch preflight outputs for exactly own Flash container/port collision when rc=3. Calls existing `p1_post_download.session(inspect_only=True)`; no completion/chat/vision/tool generation, benchmark or Docker lifecycle mutation. Creates unique private 0600 `~/.local/state/blazux-wizard/p3/p1-diagnostics-YYYYMMDDTHHMMSSZ-<nonce>.json` on every attempt; never overwrites `p1-diagnostics.json` or old receipts.
+
+Expected clean preflight: `status=PASS`, `issues=[]`, `doctor_exit_code=3`, `inventory_plan_exit_code=3`, `post_b_verify=NOT_RUN`, `post_b_benchmark=NOT_RUN`, `p3_c_authorized=false`, `executed=false`. Fail or BLOCKED: stop and send compact JSON with `evidence_file`, no retest/mutation. PASS validates diagnostics and read-only readiness **only**. Actual P1 Verify and numeric Benchmark need new individually approved action-specific SHA plans; P3-C additionally needs independently scoped explicit downtime consent and all source/revision/image/timestamp/numeric evidence gate PASS. PR #1 stays Draft.
+
+---
+
 ## 2026-11-06 — Actual B inspection READY, new stage-B-specific exact approvals (SOURCE ONLY)
 
 User ran the tracked read-only B inspector on actual DGX after successful P3-A: `READY_FOR_SEPARATE_P3_B_APPROVAL`, `issues=[]`, `executed=false`; live `qwen3.8-27b`, original Flash container `90f39...` and running 27B `6d9ede...` preserved. Receipt `~/blazux-p3-reports/p3-b-inspect-20261106T084156Z-f48d7da9.json`. A shared Docker runtime IMAGE digest for these models is expected; only exact model ID/containers and pinned resources prove which runs.

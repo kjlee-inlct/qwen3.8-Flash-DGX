@@ -1,3 +1,7 @@
+> **2026-11-07 POST-B P1 SCOPE:** After successful actual P3-B 27B→Flash return, the operator's `p1-post-download.sh --inspect-only` report `/home/inlc/blazux-p1-reports/20261106T224010Z-d2095867/result.json` confirms original Flash/Hybrid assets, API model identity, clean branch and Verify/Benchmark plan READY. Its `actions.*=BLOCKED/reason=inspection_only` means **NOT_RUN**, not a failed GPU check. Newly tracked `bash scripts/temporary/p1-post-b-audit.sh` does read-only doctor/inventory raw JSON rc3 reconciliation and persists append-only private 0600 diagnostics after verifying actual B receipt. It never runs actual Verify or Benchmark, does not approve P3-C and does not affect vLLM 0.32 or API :8000. Distinct fresh Wizard plan IDs and explicit operator approvals remain mandatory for each actual P1 GPU action. Existing original P1 numerics are pre-B history, not valid post-B samples.
+
+---
+
 # P1 NVIDIA Flash-Next Wizard operator runbook
 
 Source commit: c625a49276272e90d19ab6367f580a0230754890. Two GitHub Actions jobs PASS, 80/80 CPU tests per job. Actual DGX Wizard GPU/API/benchmark remains NOT_RUN.

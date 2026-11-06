@@ -1,3 +1,14 @@
+## 2026-11-07 — P3-B actual completion reconciliation and POST-B read-only audit
+
+- Received user-supplied DGX actual P3-B success: canonical stage-B `PASS/executed=true/live_verified=true`, wrapper `P3_B_PASS_FLASH_NEXT_ACTIVE`, active `qwen3.8-flash-next`. Original wrapper report historically misnamed `p3-a-operator-20261106T223124Z-14861d75.json` and contains stale `approval_accepted=false`; preserve it unchanged.
+- Source commit `23cf10de47ab85417e646a06245d8a70e0b2e849`: stage-aware operator evidence prefix, correct manually accepted approval vs execution dispatched fields, regression tests; no actual P3-B replay.
+- Source commit `ea1a4ca1629acfd519fbfa839b615f45dd91c86e`: GitHub-tracked P1 POST-B audit (read-only only), exact raw rc3 diagnosis, private append-only receipts, latest-attempt P3-C evidence gate and fake-DGX tests. Initial CI reported SUCCESS; subsequent hardening commit `94622bc100a6f34b26603ac736b8b672ba26d24e` requires latest CI outcome check.
+- Reconciled handoff CURRENT-STATE/NEXT-ACTIONS/EVIDENCE-LEDGER/DECISIONS and operating docs. Old records preserved below for chronology.
+- Actual user-reported P1 post-B inspect-only PASS/Verify+Benchmark plan READY at `/home/inlc/blazux-p1-reports/20261106T224010Z-d2095867/result.json`. This is NOT a fresh post-B functional or performance execution. Full post-B rc3 evidence remains pending a **new DGX read-only audit**.
+- P3-C NOT_RUN/NOT_AUTHORIZED. No Docker, GPU inference, service stop/start, model/cache deletion, PR merge, or old receipt overwrite performed by GitHub-only source work.
+
+---
+
 ## 2026-11-06 — P3-B real read-only inspection PASS; implement independent 27B downtime/entry gate (489 CPU PASS)
 
 Actual user DGX B inspector after P3-A returned `READY_FOR_SEPARATE_P3_B_APPROVAL`, `issues=[]`; verified running 27B API ID and container and preserved original Flash CID/image, P2/A hashes, `executed=false`. B originally inherited wrong Flash downtime ACK from shared canonical core; now B-specific `I_ACCEPT_27B_DOWNTIME` + `I_SEPARATELY_AUTHORIZE_P3_STAGE_B`, A/C unaffected. Created `p3-stage-b-operator.sh` and Python with default read-only, gated real B `--execute` requiring separate user scope approval + three exact terminal inputs, replan/expiry, independent Flash API check, no auto P1/C. Fake-DGX CPU PR [42190159738](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42190159738) SUCCESS **489/489** tests, source `59046c4e17a5094f2c80a84025a763c2a767edcb`. No GPU/Docker effects or user B consent from GitHub work; 27B remains live as of provided DGX evidence.
