@@ -293,10 +293,10 @@ class P3RecoveryForeignGPUGuardCPU(unittest.TestCase):
             calls.append(args[:])
             if args[:3] == ["docker", "ps", "-a"]:
                 return SimpleNamespace(returncode=0,
-                    stdout="qwen38-flash\\nqwen38-27b\\n")
+                    stdout=chr(10).join(("qwen38-flash", "qwen38-27b")) + chr(10))
             if args[:2] == ["docker", "ps"]:
                 return SimpleNamespace(returncode=0,
-                    stdout="foreign-inference\\n" if foreign else "")
+                    stdout="foreign-inference" + chr(10) if foreign else "")
             return SimpleNamespace(returncode=0, stdout="")
 
         def inspect(name):
