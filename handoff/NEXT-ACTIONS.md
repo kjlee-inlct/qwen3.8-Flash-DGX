@@ -1,3 +1,13 @@
+## 2026-11-06 — Actual DGX P2 plan READY / P3 correctly BLOCKED; next is specifically approved P2 measured run
+
+- [x] Actual DGX read-only `./wizard.sh model 27b benchmark --plan --json` returned `READY_TO_REQUEST_TRIAL_APPROVAL`, `issues=[]`, `executed=false`, correct model/image/source. Returned ID `2f76c3b03865b6a15a5c2fe8f316231f532fbf8b7fe178ffd00db8383edc3399` **expires 2026-11-06 12:20 KST** and must be regenerated.
+- [x] Actual DGX read-only `./wizard.sh switch flash-next-27b roundtrip --plan --json` returned `BLOCKED`, `P2_BENCHMARK_RECEIPT_NOT_FOUND`; this is intended until a real P2 benchmark success receipt exists.
+- [ ] After separately authorizing a Flash-Next :8000 downtime, create a **fresh** P2 benchmark `./wizard.sh model 27b benchmark --plan --json` and review `status=READY_TO_REQUEST_TRIAL_APPROVAL`, `issues=[]`, exact plan ID. During approved window execute via Wizard with fresh full ID and `I_ACCEPT_FLASH_NEXT_DOWNTIME`. Confirm `BENCH_PASS_RESTORED_VERIFIED`, actual TTFT/throughput proxy metrics, private benchmark evidence and Wizard Flash-Next restore identity before moving on. Any startup/restore failure => do not start P3.
+- [ ] ONLY THEN generate the P3 two-cycle roundtrip plan; require separate explicit downtime approval and validated fresh P3 plan. No automatic P3 switching or model re-download.
+- [ ] Keep original Flash-Next container, HTTP :8000, PR Draft and model caches untouched by preparatory plan queries.
+
+---
+
 ## 2026-11-06 — REFOCUS on P2 actual benchmark and P3 repeated temporary roundtrip
 
 - [x] First actual DGX NVIDIA 27B GPU text smoke and return-to-original `PASS_RESTORED`, plus independent manifest-led Flash-Next `LIVE_SERVICE_VERIFIED`.

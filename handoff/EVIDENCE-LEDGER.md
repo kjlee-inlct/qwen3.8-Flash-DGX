@@ -1,3 +1,13 @@
+## E-20261106-DGX-P2-BENCH-PLAN-READY-P3-PLAN-BLOCKED — actual operator stdout
+
+**P2 read-only plan evidence:** `action=Qwen3.8-27B-bounded-benchmark-and-original-restore`, `status=READY_TO_REQUEST_TRIAL_APPROVAL`, `issues=[]`, `executed=false`, `gpu_verified=false`, `image_id=sha256:9479fc92a9244fcf137afb36ed778e07495e29663a81db193736fcaa1f15e137`, `source_container_id=90f39a4dbccd0b5f97efa0ff163c61402ddace3dd3cb4da986a91dff7eb45ed5`, `plan_id=2f76c3b03865b6a15a5c2fe8f316231f532fbf8b7fe178ffd00db8383edc3399` (expired 2026-11-06 **12:20 KST**), benchmark `requests=3`, `max_tokens=64`, `concurrency=1`, `seed=1234`, `stream=true`. This is a **read-only plan**; no actual GPU benchmark result or performance numbers.
+
+**P3 read-only prerequisite evidence:** `action=P3-two-temporary-roundtrips-with-original-restore`, `status=BLOCKED`, `plan_id=null`, `issues=["P2_BENCHMARK_RECEIPT_NOT_FOUND"]`, `executed=false`, `cycles=2`. Expected fail-closed behavior until a successful real P2 `BENCH_PASS_RESTORED_VERIFIED` private evidence file exists.
+
+Do not call P2 bench PASS, repeat P3 plans as a workaround, reuse expired P2 plan, or interpret these logs as operator approval to interrupt Flash-Next.
+
+---
+
 ## E-20261106-P2-BENCH-P3-ROUNDTRIP-SOURCE — no new DGX GPU execution
 
 **Source on `feature/recipe-wizard-handoff` only:** new P2 distinct-hash benchmark plan and 3 sequential SSE timing requests; original one-shot stop/restore executor reused, protected local metric evidence, post-restore Wizard status; new P3 exactly two temporary roundtrips conditional on real P2 benchmark success. CPU fake-backend tests verify approval separation, invalid and stale approval fail-closed, no HTTP/GPU from plans, SSE bounds, recording measured TTFT/e2e vs proxies, and source ID/API restore checks. **Do not record any actual performance numbers until real DGX execution.**

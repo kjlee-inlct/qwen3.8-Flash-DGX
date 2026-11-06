@@ -1,3 +1,13 @@
+## 2026-11-06 — Actual DGX P2 benchmark READ-ONLY plan READY; P3 prerequisite BLOCKED as designed
+
+Operator ran `./wizard.sh model 27b benchmark --plan --json` on the actual DGX and received `status=READY_TO_REQUEST_TRIAL_APPROVAL`, `issues=[]`, `executed=false`, `gpu_verified=false`, benchmark profile `p2-27b-api-benchmark-v1` (3 requests, 64 max tokens, seed 1234, concurrency 1, model `qwen3.8-27b`, stream). Verified source exact Docker ID `90f39a4dbccd0b5f97efa0ff163c61402ddace3dd3cb4da986a91dff7eb45ed5`; original image ID `sha256:9479fc92a9244fcf137afb36ed778e07495e29663a81db193736fcaa1f15e137`. The plan ID `2f76c3b03865b6a15a5c2fe8f316231f532fbf8b7fe178ffd00db8383edc3399` expired **2026-11-06 12:20 KST** (epoch 1793935200), and MUST NOT be reused for execution. **This was read-only readiness, not actual P2 GPU benchmark PASS**.
+
+Operator also ran `./wizard.sh switch flash-next-27b roundtrip --plan --json`: `status=BLOCKED`, `issues=["P2_BENCHMARK_RECEIPT_NOT_FOUND"]`, `plan_id=null`, `executed=false`, `cycles=2`. This is the **correct** P3 prerequisite guard; P3 cannot begin until actual approved P2 benchmark returns `BENCH_PASS_RESTORED_VERIFIED` and a private `*.benchmark.json` receipt exists.
+
+**Next**: operator authorizes a fresh Flash-Next service downtime separately. During that maintenance window, regenerate the **new** P2 benchmark plan ID using the read-only Wizard, then explicitly execute with fresh `--approve-plan` and `--ack-downtime I_ACCEPT_FLASH_NEXT_DOWNTIME`. Any nonempty issues/blocker prevents execution. An approved P2 run interrupts :8000 and must attempt original Flash-Next restoration. Read its actual metrics + evidence and independently verify restored model before any P3 plan/execute. Preserve original Flash-Next until authorized; no GPU test was performed merely by these two plan queries.
+
+---
+
 ## 2026-11-06 — P2 bounded GPU benchmark and P3 gated two-cycle trial implemented in SOURCE; DGX NOT RUN
 
 **Priority corrected:** stop feature drift into model inventory/Orcarouter; original target is **P2 27B benchmark, then P3 Flash-Next ↔ 27B verification**. Existing real DGX P2 first-launch `PASS_RESTORED` and latest live `LIVE_SERVICE_VERIFIED` remain valid. P2 timed benchmark **NOT_RUN**; P3 repeated roundtrip **NOT_RUN**; permanent production switch remains unimplemented.
