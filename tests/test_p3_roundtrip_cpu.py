@@ -46,6 +46,11 @@ class P3ManualSequenceCPU(unittest.TestCase):
         self.assertEqual(result["intended_final_model"], "27b")
         self.assertIsNone(result["plan_id"])
         self.assertFalse(result["permanent_switch_executor_ready"])
+        self.assertTrue(result["persistent_switch_source_implemented"])
+        self.assertFalse(result["persistent_switch_dgx_qualified"])
+        self.assertEqual(len(result["stage_plan_commands"]), 3)
+        self.assertTrue(all("--plan" in command for command in result["stage_plan_commands"]))
+        self.assertIn("not DGX-qualified", result["notice"])
 
     def test_order_targets_flash_next_p1_remediation_then_final_27b(self):
         result = p3.plan(receipt_reader=good_receipt,
