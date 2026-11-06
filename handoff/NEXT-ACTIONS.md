@@ -1,3 +1,14 @@
+## 2026-11-06 — P1 PRE-A proof complete; next P3-A only via D-016 interactive exact-gate wrapper
+
+- [x] Actual operator-reported P1 audit source HEAD `834f823`: `PRE_A_P1_REVIEW_READY`, `issues=[]`, both historical/current expected own-Flash :8000 rc3 collisions, functional Verify PASS, numerical benchmark 3/3 PASS (38.2968 tokens/s, TTFT/latency included), original model/image still active. Evidence: `~/blazux-p1-reports/p1-pre-a-20261106T065104Z-aaed31b2.json`. No need to repeat initial P1 GPU benchmark.
+- [x] Original operator **conditional** approval (P1 initial work resolved ⇒ 27B transition) is now eligible for **P3-A only**; no blanket GPU/Docker authorization from P1 read-only status itself. D-037 supersedes earlier pre-A hold. P3-A/B/C are not yet executed.
+- [x] Add tracked `scripts/temporary/p3-stage-a-operator.sh` and Python helper with default `--plan`, independent `--execute` TTY exact fresh SHA plan, downtime and entry strings, fake-DGX tests, Actions CI and docs; preserves original image/container, does not auto-run B/C.
+- [ ] **Only after latest GitHub CPU CI PASS and fast-forward pull**, DGX operator runs `bash scripts/temporary/p3-stage-a-operator.sh --execute` if choosing real P3-A downtime. Review fresh printed `source_model=flash-next`, `target_model=27b`, exact source image/container, immutable P2 receipt; type full fresh plan ID, `I_ACCEPT_FLASH_NEXT_DOWNTIME`, `I_SEPARATELY_AUTHORIZE_P3_ENTRY` at three prompts. The Wizard rechecks its plan immediately before actual stop/start; any changed state/expired plan cancels without action. This interrupts port :8000 and GPU and may fail to restore on host/Docker outage; P3 source-only pass not a production qualification.
+- [ ] Check return `P3_A_PASS_27B_ACTIVE` only with independent manifest/API served `qwen3.8-27b` and local stage-A receipt. On `BLOCKED`, `CANCELLED` or `OPERATOR_REVIEW_REQUIRED`, stop; DO NOT auto retry or run B/C. Report concise summary and evidence path.
+- [ ] D-034 next: B 27B→Flash-Next needs separate actual scoped approval; fresh post-B P1 functional+TTFT/tokens/sec benchmark and rc3 reviewed `p1-diagnostics.json`; only then C new separate approval to 27B final active. Keep Draft PR unmerged and don't clean caches.
+
+---
+
 ## 2026-11-06 — Fix verified source-report schema error; DGX only reruns tracked P1 audit
 
 - [x] Real DGX first P1 pre-A audit HEAD `3a594193` returned `BLOCKED` **only** for `P1_ASSET_AUDIT_NOT_READY` / `P1_RECEIPT_CHECKPOINT_REVISION_DRIFT`. All historic/current expected active Flash collision checks, original Verify and 3-sample numerical benchmark, current API ID/image were confirmed; no P3 runtime mutation.
