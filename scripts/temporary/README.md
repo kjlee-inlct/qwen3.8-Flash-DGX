@@ -1,3 +1,13 @@
+## 2026-11-06 — Display actual approval literals at EVERY P3-A prompt, block stale ten-minute IDs
+
+Operator real DGX stage-A attempt after `git pull`: all three requested values typed **correctly**, but `P3_STALE_PLAN_OR_CHANGED_PREFLIGHT` with `executed=false`. No live transition. Old plan SHA `94b4dedae21eb72b12443029257931e123e33404c32898d9ae2bad52954c064f` expired at **16:30:00 KST**; evidence `~/blazux-p3-reports/p3-a-operator-20261106T073049Z-4dc8be1b.json` written at 16:30:49 KST. This is a plan expiry or fresh preflight mismatch, **not an incorrect operator-typed string**.
+
+**New D-016 wrapper behavior:** `bash scripts/temporary/p3-stage-a-operator.sh --execute` prints the **current live SHA** directly in step 1/3; prints `I_ACCEPT_FLASH_NEXT_DOWNTIME` beside step 2/3; prints `I_SEPARATELY_AUTHORIZE_P3_ENTRY` beside step 3/3; shows plan expires `YYYY-MM-DD HH:MM:SS KST` and seconds remaining. The operator still has to type each independently; no implicit consent. If less than 120 seconds left at initial execution prompt, return `BLOCKED/P3_A_NOT_ENOUGH_TIME_FOR_MANUAL_CONFIRMATIONS` with no input and no stop. After all typed strings, call read-only Wizard plan again and refuse a new/different/expired SHA before executing. Canonical Wizard final preflight remains mandatory. If Wizard returns `P3_STALE_PLAN_OR_CHANGED_PREFLIGHT`, `executed=false`, operator report now `BLOCKED`, not ambiguous recovery warning. This does not auto-retry, auto-replace plan, start 27B or chain B/C.
+
+**GitHub testing:** [push CI 42181851452](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42181851452), [PR CI 42181858236](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42181858236), **459/459 CPU PASS**, source `fb34ce0ce985824cecd9c63159bf6f1eed408279`. Real DGX fresh plan rerun NOT_RUN. Original Flash/27B images, containers, model cache and :8000 unchanged by GitHub updates.
+
+---
+
 ## 2026-11-06 — P3-A conditional operator approval now eligible; one GitHub-tracked exact-gated wrapper
 
 Operator provided **actual** tracked P1 pre-A receipt `/home/inlc/blazux-p1-reports/p1-pre-a-20261106T065104Z-aaed31b2.json` with `PRE_A_P1_REVIEW_READY`, `issues=[]`, both historical/current `doctor/inventory-plan` rc3 confirmed as own active Flash collisions, P1 Verify PASS and 3-sample numerical benchmark PASS. This closes the earlier pre-A P1 diagnostic gaps. The operator's previous "**if no P1 work remains, approve 27B transition**" is eligible as **P3-A only**, not B/C and not an automatic service stop. Local pre-A receipt `p3_a_execution_authorized=false` is expected for read-only evidence.
