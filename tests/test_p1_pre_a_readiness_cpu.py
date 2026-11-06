@@ -63,7 +63,7 @@ def verify():
         "served_model": audit.SERVED, "image_id": IMAGE,
         "result": {
             "status": "PASS", "baseline_status": "PASS",
-            "extended_status": "PASS", "identity": {"status": "PASS"},
+            "extended_status": "PASS", "identity": {"health": "PASS", "models": ["qwen3.8-flash-next"]},
             "probes": {k: {"status": "PASS"} for k in
                        ("default_completion", "chat", "tools", "vision")}}}
 
@@ -147,6 +147,12 @@ class PreAP1AuditCPU(unittest.TestCase):
         d = assess(bench=bench)
         self.assertIn("P1_BENCHMARK_NUMERICAL_EVIDENCE_NOT_QUALIFIED",
                       d["issues"])
+
+    def test_identity_health_pass_without_correct_served_id_blocks(self):
+        ver = verify()
+        ver["result"]["identity"]["models"] = ["unknown"]
+        d = assess(ver=ver)
+        self.assertIn("P1_VERIFY_RECEIPT_NOT_QUALIFIED", d["issues"])
 
     def test_historical_verified_legacy_features_missing_blocks(self):
         ver = verify()
