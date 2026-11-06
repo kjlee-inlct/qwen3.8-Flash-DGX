@@ -1,3 +1,15 @@
+## 2026-11-06 — Use tracked temporary wrapper, not pasted DGX code (P1 pre-A reconciliation)
+
+- [x] Actual P1 initial benchmark values shared: 3 samples / 192 tokens; latency P50=1.687357s/P95=1.780142s, TTFT P50=1.398707s/P95=1.751198s, mean 38.2968 tokens/sec; no repeat GPU benchmark needed just to obtain these numbers.
+- [x] Actual P1 `--inspect-only` report shows source+Hybrid READY, API `qwen3.8-flash-next`, no active transfer, clean Git branch, both verify/benchmark plans READY; `actions.*.status=BLOCKED` because inspection-only is expected and **does not revoke earlier verify/benchmark PASS**.
+- [x] Reaffirm D-016: temporary DGX logic goes through tracked `scripts/temporary/p1-pre-a-readiness.sh` → GitHub commit/CPU CI → operator `git pull --ff-only` → one wrapper execution → local private JSON evidence → reviewed handoff. No ad hoc pasted shell/Python code; script never does git pull, GPU tests, Docker mutation or model switch.
+- [ ] Operator runs `bash scripts/temporary/p1-pre-a-readiness.sh` **after** CI and clean fast-forward pull. It reconciles historic 2026-11-05 and latest current 2026-11-06 doctor/inventory raw stdout, verifies current Flash image+API and original P1 functional/numeric receipts. If past/current reports are missing, use a new separately approved/read-only inspection report, not fabricated evidence. Return the small JSON.
+- [ ] Check whether raw historical doctor/inventory rc3 was only expected own `qwen38-flash` / :8000 occupancy with `status=PASS`, `errors=[]`. If not, diagnose actual read failure and keep P3-A blocked. If pre-A baseline accepted, re-evaluate the operator's **conditional** P3-A downtime approval with a newly generated short-lived plan. No automatic stage execute.
+- [ ] Post-B P1 functional+nonnumeric? **Numeric** full benchmark and reviewed diagnostic `p1-diagnostics.json` still required by D-034 before final stage C. No initial P1 result substitutes for actual post-B proof.
+- [ ] Draft PR #1 stays unmerged, Flash-Next host :8000 unchanged, no GPU/daemon mutation and no cleanup.
+
+---
+
 ## 2026-11-06 — Conditional switch approval NOT MET; finish read-only P1 evidence review first
 
 - [x] Check actual P1 historical evidence before P3-A: 2026-11-05 `verify=PASS` for baseline+extended completion/chat/tools/vision; `benchmark=PASS` bounded, original Flash source/Hybrid ready.
