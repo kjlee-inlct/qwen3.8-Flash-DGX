@@ -268,6 +268,16 @@ def main(argv: list[str] | None = None) -> int:
         report["evidence_file"] = persist(report)
         print(json.dumps(report, indent=2, sort_keys=True))
         return 3
+    # Fixed ten-minute plans can have seconds left even when the preflight
+    # itself is READY. Do not invite typing into an almost-expired window.
+    remaining = int(plan["expires_at_epoch_seconds"] - time.time())
+    if remaining < 120:
+        report["status"] = "BLOCKED"
+        report["issues"] = ["P3_A_NOT_ENOUGH_TIME_FOR_MANUAL_CONFIRMATIONS"]
+        report["plan_remaining_seconds"] = max(0, remaining)
+        report["evidence_file"] = persist(report)
+        print(json.dumps(report, indent=2, sort_keys=True))
+        return 3
     print(json.dumps(report, indent=2, sort_keys=True), flush=True)
     print("\nP3-A will stop the LIVE Flash-Next service on :8000, attempt "
           "27B startup, and try original-container recovery if the stage fails. "
