@@ -1,3 +1,13 @@
+## 2026-11-06 — P3-A exact-input UX fixed; previous approved input refused as stale, no transition
+
+- [x] Operator had typed **all three correct** P3-A strings. Wizard returned `P3_STALE_PLAN_OR_CHANGED_PREFLIGHT`, `executed=false`, `approval_accepted=false`; former wrapper displayed ambiguous `OPERATOR_REVIEW_REQUIRED`. Plan expiration `1793950200` was **16:30:00 KST**; report time `16:30:49 KST`. No P3-A Docker stop/start, Flash→27B NOT_RUN. Preserve original Flash.
+- [x] Fix tracked `scripts/temporary/p3-stage-a-operator.sh`: terminal prompts now print exact current plan SHA and **both exact ACK strings**, 10-minute plan expiry KST and remaining seconds; stop when <120s remain for input, replan read-only after three typed confirmations and block changed/expired SHA. A Wizard reject with `executed=false` is `BLOCKED`, never false recovery warning. No auto retry/plan swap.
+- [x] Fake-DGX tests for old failure, exact prompt literals, short plan window and after-typing SHA change. [Source CI 459/459 PASS](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42181858236) on code `fb34ce0ce985824cecd9c63159bf6f1eed408279`.
+- [ ] D-016 only: operator DGX clean fast-forward pull then rerun **one** `bash scripts/temporary/p3-stage-a-operator.sh --execute` if still explicitly choosing P3-A downtime. Read actual **NEW** plan SHA printed at prompt; DO NOT reuse the old SHA. Enter three independent typed current literals; cancel on unfamiliar model/image or plan expiry. If `P3_A_NOT_ENOUGH_TIME_FOR_MANUAL_CONFIRMATIONS` then rerun wrapper in a later fresh plan window; do not auto-cycle.
+- [ ] Only `P3_A_PASS_27B_ACTIVE` plus independent live model ID and stage A receipt qualifies actual A completion. On `BLOCKED`, `CANCELLED`, `OPERATOR_REVIEW_REQUIRED`, `RECOVERY_FAILED`, STOP and review evidence. D-034 B, post-B P1 rebenchmark, C independently approved and NOT_RUN. No automatic merge/cleanup.
+
+---
+
 ## 2026-11-06 — P1 PRE-A proof complete; next P3-A only via D-016 interactive exact-gate wrapper
 
 - [x] Actual operator-reported P1 audit source HEAD `834f823`: `PRE_A_P1_REVIEW_READY`, `issues=[]`, both historical/current expected own-Flash :8000 rc3 collisions, functional Verify PASS, numerical benchmark 3/3 PASS (38.2968 tokens/s, TTFT/latency included), original model/image still active. Evidence: `~/blazux-p1-reports/p1-pre-a-20261106T065104Z-aaed31b2.json`. No need to repeat initial P1 GPU benchmark.
