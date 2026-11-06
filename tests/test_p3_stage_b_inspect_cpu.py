@@ -56,8 +56,8 @@ def plan():
         "flash_id": FLASH_CID, "image_27b": IMG,
         "p3_a_plan_id": A_PLAN,
         "p2_receipt_sha256": P2_SHA,
-        "required_downtime_acknowledgement": "I_ACCEPT_FLASH_NEXT_DOWNTIME",
-        "required_p3_entry_acknowledgement": None,
+        "required_downtime_acknowledgement": "I_ACCEPT_27B_DOWNTIME",
+        "required_p3_entry_acknowledgement": "I_SEPARATELY_AUTHORIZE_P3_STAGE_B",
         "expires_at_epoch_seconds": 1900000200,
     }
 
@@ -105,6 +105,12 @@ class P3BReadOnlyCPU(unittest.TestCase):
     def test_explicit_manual_B_ack_cannot_be_reused_from_A_entry(self):
         p = plan()
         p["required_p3_entry_acknowledgement"] = "I_SEPARATELY_AUTHORIZE_P3_ENTRY"
+        self.assertIn("P3_B_APPROVAL_CONTRACT_CHANGED",
+                      audit.preflight_issues(stage_a(), status(), p, now_epoch=1900000000))
+
+    def test_stage_A_flash_downtime_ack_cannot_authorize_B_27B_shutdown(self):
+        p = plan()
+        p["required_downtime_acknowledgement"] = "I_ACCEPT_FLASH_NEXT_DOWNTIME"
         self.assertIn("P3_B_APPROVAL_CONTRACT_CHANGED",
                       audit.preflight_issues(stage_a(), status(), p, now_epoch=1900000000))
 
