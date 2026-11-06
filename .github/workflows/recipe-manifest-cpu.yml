@@ -34,6 +34,7 @@ on:
       - 'tests/test_p2_27b_benchmark_cpu.py'
       - 'tests/test_p3_roundtrip_cpu.py'
       - 'tests/test_p3_persistent_cpu.py'
+      - 'tests/test_p3_stage_a_operator_cpu.py'
       - 'tests/test_installed_models_cpu.py'
       - 'tests/test_service_transition_preview_cpu.py'
       - 'tests/test_service_logs_cpu.py'
@@ -80,6 +81,7 @@ jobs:
           python -m unittest discover -s tests -p 'test_p2_*_cpu.py' -v
           python -m unittest discover -s tests -p 'test_p3_roundtrip_cpu.py' -v
           python -m unittest discover -s tests -p 'test_p3_persistent_cpu.py' -v
+          python -m unittest discover -s tests -p 'test_p3_stage_a_operator_cpu.py' -v
           python -m unittest discover -s tests -p 'test_service_manifest_cpu.py' -v
           python -m unittest discover -s tests -p 'test_service_journal_cpu.py' -v
           python -m unittest discover -s tests -p 'test_service_health_cpu.py' -v
@@ -98,7 +100,7 @@ jobs:
           python -m wizard p2 status --json
           python -m wizard model 27b status --inspect-cache --json
           python -m unittest discover -s tests -p 'test_serve_split_cpu.py' -v
-          bash -n flash scripts/serve.sh scripts/serve_flash-next.sh scripts/serve_27b.sh wizard/00-doctor.sh wizard/10-plan.sh wizard/p1.sh wizard.sh scripts/temporary/p1-post-download.sh scripts/temporary/p1-pre-a-readiness.sh
+          bash -n flash scripts/serve.sh scripts/serve_flash-next.sh scripts/serve_27b.sh wizard/00-doctor.sh wizard/10-plan.sh wizard/p1.sh wizard.sh scripts/temporary/p1-post-download.sh scripts/temporary/p1-pre-a-readiness.sh scripts/temporary/p3-stage-a-operator.sh
       - name: Confirm 27B candidate is not launchable
         run: |
           if python -m scripts.manager.manifest validate recipes/qwen38-27b.candidate.yaml; then
