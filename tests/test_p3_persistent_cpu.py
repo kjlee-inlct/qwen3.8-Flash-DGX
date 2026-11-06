@@ -356,10 +356,22 @@ class P1GateCPU(unittest.TestCase):
                                           "metrics": {"latency_p50_sec": 5.9,
                                                       "ttft_p50_sec": 0.2,
                                                       "mean_tokens_per_sec": benchmark_tokens_per_sec}}}}
-        diagnosis = {"status": "PASS", "doctor_exit_code": 0,
-                     "inventory_plan_exit_code": 0,
+        collision = {
+            "scope": "SOURCE", "dry_run": True, "status": "PASS",
+            "name_conflict": True, "port_conflict": True,
+            "collision_free": False, "errors": [],
+            "proposed": {"container_name": "qwen38-flash", "port": 8000,
+                         "served_model_name": "qwen3.8-flash-next"},
+            "containers": [{"name": "qwen38-flash", "image_id": IMAGE,
+                            "status": "Up About an hour",
+                            "ports": "0.0.0.0:8000->8000/tcp"}],
+        }
+        diagnosis = {"status": "PASS", "doctor_exit_code": 3,
+                     "inventory_plan_exit_code": 3,
+                     "doctor_output": collision,
+                     "inventory_plan_output": collision,
                      "historical_rc3_disposition":
-                         "Historical rc=3 root causes reviewed with original logs and current preflight.",
+                         "Historical rc=3 reasons reviewed against full raw active-source collision output.",
                      "finished_at_utc": p1_finished}
         for path, value in ((home / "verify.json", verify),
                             (home / "bench.json", bench),
@@ -395,6 +407,45 @@ class P1GateCPU(unittest.TestCase):
         self.assertIn("P1_VERIFY_RECEIPT_UNQUALIFIED", status["issues"])
         self.assertIn("P1_BENCHMARK_RECEIPT_UNQUALIFIED", status["issues"])
         self.assertIn("P1_HISTORIC_RC3_DISPOSITION_NOT_VERIFIED", status["issues"])
+
+
+    def _recheck_mutated_collision(self, mutate):
+        with tempfile.TemporaryDirectory() as directory:
+            p1, p3root = self._positive_p1_fixture(Path(directory) / "p1")
+            diag_path = p3root / "p1-diagnostics.json"
+            doc = json.loads(diag_path.read_text())
+            mutate(doc)
+            diag_path.write_text(json.dumps(doc))
+            status = assess_p1(stage_b={"finished_at_utc": "2026-11-06T06:00:00+00:00"},
+                               flash_image=IMAGE, p1_root=p1, p3_root=p3root)
+        self.assertEqual(status["status"], "BLOCKED", status)
+        self.assertIn("P1_HISTORIC_RC3_DISPOSITION_NOT_VERIFIED",
+                      status["issues"])
+
+    def test_rc3_without_actual_json_output_does_not_qualify(self):
+        self._recheck_mutated_collision(
+            lambda doc: doc.pop("doctor_output"))
+
+    def test_rc3_with_inventory_errors_does_not_qualify(self):
+        def corrupt(doc):
+            doc["doctor_output"]["errors"] = ["docker_inventory_incomplete:ValueError"]
+        self._recheck_mutated_collision(corrupt)
+
+    def test_rc3_foreign_image_does_not_qualify(self):
+        def corrupt(doc):
+            doc["doctor_output"]["containers"][0]["image_id"] = "sha256:" + "f"*64
+        self._recheck_mutated_collision(corrupt)
+
+    def test_rc3_wrong_port_does_not_qualify(self):
+        def corrupt(doc):
+            doc["doctor_output"]["proposed"]["port"] = 7000
+        self._recheck_mutated_collision(corrupt)
+
+    def test_rc0_launch_probe_does_not_prove_running_source(self):
+        def corrupt(doc):
+            doc["doctor_exit_code"] = 0
+            doc["inventory_plan_exit_code"] = 0
+        self._recheck_mutated_collision(corrupt)
 
 
 if __name__ == "__main__":
