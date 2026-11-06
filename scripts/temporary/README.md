@@ -1,3 +1,20 @@
+## 2026-11-06 — P1 pre-P3-A evidence reconciliation: tracked wrapper after user workflow correction
+
+**Mandatory D-016 reinforced:** agent writes and pushes the temporary operator script, CPU fake-backend tests and handoff first. DGX operator uses `git pull --ff-only origin feature/recipe-wizard-handoff` and **one tracked command**; do not paste ad hoc multi-step Python/curl snippets or edit the DGX workspace to add temporary logic. Script NEVER performs `git pull`, Docker/GPU/HTTP inference, lifecycle actions, stage A execution or cleanup.
+
+**New temporary wrapper:** `scripts/temporary/p1-pre-a-readiness.sh` (Python module `p1_pre_a_readiness.py`). It examines the latest **already saved** `~/blazux-p1-reports/20*/result.json` inspect-only report and the older P1 acceptance report `20261105T113110Z-fdc179fa/result.json`; validates private P1 Wizard verify/benchmark receipts `20261105T113119Z-eca4ec724ede.json` and `20261105T113125Z-586b2b46d93e.json` with actual numerical TTFT/latency/tokens/sec and each sample; then performs **one fresh read-only** `./wizard.sh service manager status --json` plus `git` branch/HEAD/clean checks. It parses complete **both** raw doctor and inventory-plan JSON for both inspection dates. rc=3 is recognized only when expected `qwen38-flash` is Up, exact same immutable image and published :8000, `status=PASS`, `errors=[]`, and launch-preview collision facts match. No P1 inference, no service mutation, no automatic P3-A plan or approval.
+
+**DGX use (after tracked script commit/CI):**
+```bash
+cd ~/Workspace/llm/blazux-orcarouter
+git pull --ff-only origin feature/recipe-wizard-handoff
+bash scripts/temporary/p1-pre-a-readiness.sh
+```
+
+Optional `--report <path>`, `--historical-report <path>` to select exact reports if default source differs; use existing verified local records, never fabricate raw P1 evidence. Report writes `~/blazux-p1-reports/p1-pre-a-<UTC>-<id>.json` with 0600 permissions and prints a **small JSON summary**. `PRE_A_P1_REVIEW_READY` means historical initial P1 evidence is complete **for pre-A review only**, not approval for downtime or stage A, full production acceptance, independent GPU exclusivity, or post-B rebenchmark. `BLOCKED` includes explicit issues. The P3-C post-B P1 verify/rebenchmark and historical collision disposition remain separately required by D-034. Do not infer that an old `inspect_only` `actions.verify/benchmark.status=BLOCKED` erased the genuine November 5 P1 PASS receipts.
+
+---
+
 ## First one-shot Qwen3.8-27B GPU trial (separate operator approval)
 
 Actual DGX CPU-only module/registry audit PASS 9/9. An EXPERIMENTAL GPU trial is available through `./scripts/serve_27b.sh --trial-plan` (read-only) and `--trial-execute --approve-plan FULL_SHA64 --ack-downtime I_ACCEPT_FLASH_NEXT_DOWNTIME` (operator-initiated real service interruption). This is a **single-GPU stop→trial→restore** experiment, *not* production model switching. It keeps `qwen38-flash` intact and tries to restore it automatically with exact served ID verification even if 27B fails. No guarantee on host/Docker fault, manual inspection on `RECOVERY_FAILED`. See `docs/P2-27B-WIZARD-OPERATIONS.md`.
