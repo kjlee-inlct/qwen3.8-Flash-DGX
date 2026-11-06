@@ -1,3 +1,9 @@
+## 2026-11-06 — P1 pending audit / conditional P3-A approval unmet; correct active-service rc3 validation
+
+Reviewed P1 operator proof: functional Flash-Next verify and bounded benchmark PASS, but numerical timing/tokens-per-second not supplied and doctor/inventory rc3 raw cause unresolved. User approval for Flash→27B is conditional on nothing remaining in P1, so no live switch. Audited `inventory.main`: an already running Flash container and occupied :8000 intentionally causes rc3 without read errors. Replaced post-B P1 diagnostic gate's impossible rc0 check with strict full doctor/plan JSON collision evidence for exact active Flash name/image/:8000, retaining historical reviewed disposition and new post-B verify and measured benchmark receipt prerequisites. Five negative CPU tests added (missing raw output, read errors, wrong image, wrong port, rc0 shortcut). [CI 418/418 PASS](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42172127412) on source `26a6950`. No GPU or service action.
+
+---
+
 ## 2026-11-06 — Correct P3 sequence-status wording; guard foreign GPU during rollback; 413 CPU PASS
 
 Kept global P3 `sequence --plan` BLOCKED/no plan ID while displaying accurate existence of separately approval-gated A/B/C source adapters, not-yet-qualified DGX runtime. Hardened `p3_persistent_switch._restore` to abort original model restart if new unexpected GPU-enabled Docker containers appear after failed target stop; added bounded fake-Docker tests for collision and normal restoration. On source commit `02bf94c1628828ce22fa338dd5a8e5a0955f9179`, GitHub Actions [push](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42170050031) and [PR](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42170056860) **413/413 CPU PASS**, 19 suites. An intermediate test fixture newline failure was resolved. No actual DGX P3 switch executed.
