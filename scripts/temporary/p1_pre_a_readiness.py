@@ -194,10 +194,15 @@ def assessment(current: dict[str, Any], historic: dict[str, Any],
               and (planned[k].get("plan") or {}).get("issues") == []
               for k in ("verify", "benchmark")))
     revision = wa.get("revision")
-    issue("P1_RECEIPT_CHECKPOINT_REVISION_DRIFT",
-          isinstance(revision, str) and len(revision) == 40
-          and verify.get("model_revision") == revision
-          and benchmark.get("model_revision") == revision)
+    revision_verified = (isinstance(revision, str)
+                         and bool(re.fullmatch("[0-9a-f]{40}", revision)))
+    issue("P1_CURRENT_CHECKPOINT_REVISION_UNAVAILABLE", revision_verified)
+    # Missing revision means UNKNOWN, not observed drift. Do not report drift
+    # until two actual revisions are available for comparison.
+    if revision_verified:
+        issue("P1_RECEIPT_CHECKPOINT_REVISION_DRIFT",
+              verify.get("model_revision") == revision
+              and benchmark.get("model_revision") == revision)
     issue("CURRENT_MANIFEST_API_NOT_VERIFIED",
           live.get("status") == "LIVE_SERVICE_VERIFIED"
           and live.get("observed_model") == "flash-next"
