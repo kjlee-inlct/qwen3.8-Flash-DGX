@@ -170,7 +170,7 @@ def main(argv: list[str] | None = None) -> int:
                    "interrupt the live 27B API on :8000, restore preserved "
                    "Flash-Next and need fresh operator approval."),
     }
-    report["evidence_file"] = str(save_summary(report))
+    report["evidence_file"] = str(save_summary(report, root=REPORTS))
     print(json.dumps(report, indent=2, sort_keys=True, ensure_ascii=False))
     return 0 if not report["issues"] else 3
 
