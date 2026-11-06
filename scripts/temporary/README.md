@@ -1,3 +1,19 @@
+## 2026-11-06 — P3-A real DGX PASS; P3-B preparation is strictly READ-ONLY
+
+Actual DGX operator `scripts/temporary/p3-stage-a-operator.sh --execute` at `20261106T074306Z` succeeded: `P3_A_PASS_27B_ACTIVE`, `issues=[]`, canonical Wizard stage-A `status=PASS`, `executed=true`, `live_verified=true`, independent API/Manifest `LIVE_SERVICE_VERIFIED` with `observed_model=27b`. Real receipts: `~/.local/state/blazux-wizard/p3/stage-a.json` and `~/blazux-p3-reports/p3-a-operator-20261106T074306Z-c99bf2ad.json`. The active target is **27B**, not Flash; keep running. P3-B has **not** been approved, and P3-C and post-B P1 are pending.
+
+New D-016 tracked inspector: `scripts/temporary/p3-stage-b-inspect.sh` / `p3_stage_b_inspect.py`. It has **NO `--execute` option** and only invokes `./wizard.sh service manager status --json` plus `./wizard.sh switch flash-next-27b stage-b --plan --json`, both read-only. It compares the local immutable stage-A success receipt, observed active 27B ID and image, original Flash ID/image, 27B target ID, immutable P2 receipt and the 10-minute fresh B planning record; writes a 0600 local `~/blazux-p3-reports/p3-b-inspect-*.json`, reporting `READY_FOR_SEPARATE_P3_B_APPROVAL` or `BLOCKED`. READY proves B preflight, not permission for B interruption, rollback fault resilience, or P1 GPU performance after B.
+
+**DGX after GitHub source/CI:**
+```bash
+cd ~/Workspace/llm/blazux-orcarouter
+git pull --ff-only origin feature/recipe-wizard-handoff
+bash scripts/temporary/p3-stage-b-inspect.sh
+```
+No background work, no automatic transition, no raw Docker or ad hoc Python. Report concise JSON `status`, `issues`, observed ID, original Flash container and P2 hash. If a plan expires, re-run read-only check when appropriate; do not reuse its plan SHA for any approved live action. Stage B if approved later will get a NEW stage-specific plan and explicitly typed downtime ACK. Existing P3-A triple-ACK is not B consent.
+
+---
+
 ## 2026-11-06 — Display actual approval literals at EVERY P3-A prompt, block stale ten-minute IDs
 
 Operator real DGX stage-A attempt after `git pull`: all three requested values typed **correctly**, but `P3_STALE_PLAN_OR_CHANGED_PREFLIGHT` with `executed=false`. No live transition. Old plan SHA `94b4dedae21eb72b12443029257931e123e33404c32898d9ae2bad52954c064f` expired at **16:30:00 KST**; evidence `~/blazux-p3-reports/p3-a-operator-20261106T073049Z-4dc8be1b.json` written at 16:30:49 KST. This is a plan expiry or fresh preflight mismatch, **not an incorrect operator-typed string**.
