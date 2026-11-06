@@ -1,3 +1,11 @@
+## 2026-11-06 — Implement P3 A/B/C persistent switching source and P1 evidence gate; CPU CI green
+
+Introduced `scripts/manager/p3_persistent_switch.py` with distinct guarded P3 phases A/B/C, fresh observed Docker/API source and preserved target identity checks, short-lived exact approval plan, safe stop-before-start, rollback attempts, private stage receipts, attempt lock and append-only service journal. Added `scripts/manager/p3_p1_evidence_gate.py` to require new post-B P1 functional, numerical benchmark and reviewed historical rc=3 root-cause proof before C. Wired `wizard/menus/switching/flash_next_27b.py`, interactive `wizard/console.py` **plan-only** stage choices and `wizard/main.py` help. Preserved legacy read-only `sequence --plan`, blocked retired `roundtrip`. Extended CPU regression in `tests/test_p3_persistent_cpu.py` and added it to CI YAML.
+
+CI after fixes: [push 42168518712](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42168518712) and [PR 42168524464](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42168524464) SUCCESS, **411/411 CPU tests**, 19 groups. Recorded failed interim runs and their corrected syntax/mock fixture causes in Actions history, no test weakening. New [P3 source runbook](../docs/P3-PERSISTENT-SWITCH-SOURCE-20261106.md) details approval and known limitations. **No actual DGX P3 transition or P1 rerun.**
+
+---
+
 ## 2026-11-06 — Record actual P2 27B benchmark PASS and Flash-Next restored, close P2 stage
 
 From operator-supplied DGX execution result: NVIDIA 27B model/API/inference and three bounded streaming requests succeeded (`BENCH_PASS_RESTORED_VERIFIED`); original Flash-Next was restored and independently observed by the Wizard as `LIVE_SERVICE_VERIFIED`. Recorded precise latency, TTFT, client throughput proxies and private DGX evidence paths in CURRENT-STATE and EVIDENCE-LEDGER. This corrects earlier plan-only `NOT_RUN` reporting without claiming direct inspection of private DGX files. No Docker/GPU state changed while editing sources. **P2 finished; P3 not auto-started; D-034 governs all future P3 stages.**
