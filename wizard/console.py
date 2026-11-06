@@ -31,7 +31,7 @@ def _display_workflow(doc: dict) -> None:
     print("  API port: :8000/v1 | model identity verification is separate")
     print("  Recommended: " + ("Open model actions / diagnostics" if doc["next_action"] == "none" else str(doc["next_action"])))
     for step in doc["selection"].get("steps", []):
-        print("   - " + step["action"] + ": " + step["state"]
+        print("   - " + ("review model" if step["action"] == "review_p1" else step["action"]) + ": " + step["state"]
               + " — " + step["reason"])
     preview = doc["selection"].get("transition_preview")
     if preview:
@@ -156,10 +156,10 @@ def _advanced_menu() -> None:
     from wizard.menus.storage import flash_next_cleanup
     from wizard.menus.operations import system
     rows = [
-        ("Switch Flash-Next ↔ 27B (P3)", flash_next_27b),
-        ("Storage / selective cleanup (P4)", flash_next_cleanup),
-        ("Switch Orcarouter ↔ 27B (P6)", orcarouter_27b),
-        ("System acceptance / proxy / gateway (P7)", system),
+        ("Switch Flash-Next ↔ 27B", flash_next_27b),
+        ("Storage / selective cleanup", flash_next_cleanup),
+        ("Switch Orcarouter ↔ 27B", orcarouter_27b),
+        ("System acceptance / proxy / gateway", system),
     ]
     while True:
         print("\nAdvanced management (0 back)")
