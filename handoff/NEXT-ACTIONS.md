@@ -1,3 +1,15 @@
+## 2026-11-06 — One tracked DGX wrapper after GitHub push/CI (D-016)
+
+- [x] Original P1 numerical benchmark 3/3 PASS evidence supplied, including TTFT/latency/throughput, and 2026-11-06 inspect-only source/Hybrid/API READY; no pre-A rerun of P1 inference needed just to obtain metrics.
+- [x] New `scripts/temporary/p1-pre-a-readiness.sh`, Python implementation, fake-DGX tests, workflow shell syntax and docs pushed under `feature/recipe-wizard-handoff`; [source CPU CI 435/435 PASS](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42173805888) at `75d22ce4303736ee84563a0f388a978379e4f228`.
+- [x] Fix P3-C evidence gate and pre-A audit using REAL `identity.health` and `identity.models` output, not nonexistent `identity.status`; historical doctor rc3 raw checks still required and NOT assumed.
+- [ ] **DGX operator only after GitHub fast-forward pull**: `bash scripts/temporary/p1-pre-a-readiness.sh` once; review printed `status`, `issues`, `historical_rc3`, `current_rc3`, `p1_verify`, `p1_benchmark` and `evidence_file`. The wrapper reads original P1 local reports and receipts; it does no GPU, inference, Docker lifecycle or model transitions. Do not repeat pasted Python snippets.
+- [ ] Only if actual DGX evidence is `PRE_A_P1_REVIEW_READY` with empty issues, consider the operator's conditional pre-A approval and fresh stage A plan / scoped downtime, **without automatic execution**. A blocked result needs targeted diagnosis. Do not claim that pre-A implies production qualification or P3-C readiness.
+- [ ] D-034: stage B independently approved, post-B P1 full functional and actual measured rebenchmark plus reviewed historical collision disposition, then independent C to 27B. Keep original service, :8000 and source preserved until authorized.
+- [ ] Draft PR #1 stays Open/Unmerged. No auto PR merge or cache cleanup.
+
+---
+
 ## 2026-11-06 — Use tracked temporary wrapper, not pasted DGX code (P1 pre-A reconciliation)
 
 - [x] Actual P1 initial benchmark values shared: 3 samples / 192 tokens; latency P50=1.687357s/P95=1.780142s, TTFT P50=1.398707s/P95=1.751198s, mean 38.2968 tokens/sec; no repeat GPU benchmark needed just to obtain these numbers.
