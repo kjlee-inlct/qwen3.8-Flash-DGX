@@ -1,3 +1,17 @@
+## 2026-11-06 — UPDATED NEXT ACTIONS: P2 COMPLETE; SOURCE-ONLY P3 engineering
+
+- [x] P2 27B bounded **actual DGX** GPU/API/streaming benchmark: `BENCH_PASS_RESTORED_VERIFIED`, 3/3; original Flash-Next `RESTORED` and `LIVE_SERVICE_VERIFIED` (operator-supplied JSON). See EVIDENCE-LEDGER. **Do not rerun P2.**
+- [x] P2 STOP boundary enforced; D-034 supersedes old D-033 two-roundtrip plan.
+- [ ] Read latest GitHub HEAD/CI and existing manager code. Implement safe **separate P3 staged persistent switching** with per-stage current-state plan, exact scoped approval, fresh observed Docker/API/GPU source, target image/checkpoint/recipe, stop-before-start, port 8000, source-ID preservation, failure restore, append-only evidence and duplicate/stale block. CPU fake-backend tests BEFORE attempting any DGX execution.
+- [ ] Integrate P3 phase evidence and **P1 remedial functional + actual rebenchmark evidence gate** into final stage C. Historical P1 doctor/inventory-plan rc=3 remains unexplained and P1 numeric metrics still unprovided; do not assume PASS. Retain existing P1 executor.
+- [ ] Commit safe source/tests/docs into existing Draft PR #1, review CI. Keep PR unmerged.
+- [ ] **Separate operational approval required** for each P3 transition A/B/C; no `--execute` on live DGX under this documentation/engineering instruction. A must verify 27B live, B Flash-Next live; after P1 remediation/rebench accepted, C must finish on 27B.
+- [ ] Preserve original Docker images/containers, both pinned checkpoints, Orcarouter assets and :8000 external API. No deletion, redownload, image rebuild or parallel GPU models.
+
+Earlier P2 checklist blocks below are historical and **superseded** by this completed result; never treat their unchecked P2 benchmark item as a current next action.
+
+---
+
 ## 2026-11-06 — P2 then STOP; separate P3 entry; remediate/rebench P1 before final 27B
 
 - [ ] **P2 first**: operator separately approves a new Flash-Next downtime plan; execute actual bounded NVIDIA 27B benchmark, record measured client TTFT/latency/decode/ingest proxies and restored original Flash-Next `LIVE_SERVICE_VERIFIED`; **STOP at P2 regardless of PASS**. No auto P3 plan or execute.
