@@ -1,3 +1,12 @@
+## 2026-11-06 — User approved ONE P3-B shutdown/return; execute only with fresh exact interactive B gates
+
+- [x] Operator separately answered **"승인"** to explicitly scoped P3-B **NVIDIA 27B downtime → preserved Flash-Next restoration** question after actual B-read-only PASS; D-041 records this approval. Original P3-A approval alone was not used.
+- [x] Latest tracked P3-B execution wrapper `scripts/temporary/p3-stage-b-operator.sh` is source and CPU CI PASS (489 tests), current branch HEAD at permission check `2f914242ae98ef678477386e1a26b1d6668d717e`. Distinct B exact ACKs required: `I_ACCEPT_27B_DOWNTIME`, `I_SEPARATELY_AUTHORIZE_P3_STAGE_B` and a freshly generated full B plan SHA. CI does not prove any live runtime execution.
+- [ ] Operator DGX `git pull --ff-only origin feature/recipe-wizard-handoff`, then **one** `bash scripts/temporary/p3-stage-b-operator.sh --execute`; read current source=27b, target=flash-next and exact immutable container/image. Type all three currently displayed strings, do not reuse expired 17:50 inspection SHA. Port :8000 will experience downtime; on BLOCKED/RECOVERY_FAILED/OPERATOR_REVIEW_REQUIRED stop and report evidence, never retry blindly.
+- [ ] After actual `P3_B_PASS_FLASH_NEXT_ACTIVE` and `LIVE_SERVICE_VERIFIED` for `qwen3.8-flash-next`, stop at B. D-034 requires **new post-B P1 Verify + measured Benchmark + rc3 diagnosis** under independent action-specific approval and evidence, then independently authorize C final 27B; no hidden chain.
+
+---
+
 ## 2026-11-06 — P3-B DGX preflight PASS; require explicit NEW permission before any live 27B shutdown
 
 - [x] Actual DGX tracked B inspector HEAD `e5d4171`: `READY_FOR_SEPARATE_P3_B_APPROVAL`, `issues=[]`, active API `qwen3.8-27b`, source CID `6d9ede...`, preserved original Flash CID `90f39...`, actual A/P2 provenance complete. Evidence `~/blazux-p3-reports/p3-b-inspect-20261106T084156Z-f48d7da9.json`. `executed=false`, `approval_accepted=false`, no 27B interruption. Old inspection-only plan `7af40f...` expired Nov 6 17:50 KST and must not be reused.
