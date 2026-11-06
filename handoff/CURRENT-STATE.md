@@ -1,3 +1,9 @@
+## 2026-11-07 — CPU SOURCE VALIDATION CHECKPOINT
+
+GitHub source+documentation as of commit `67ff9cc2e4ece0c89c911513673f7d5d55c98fa4`: **501/501 CPU PASS, 23 test groups** ([Actions run 42310408411](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42310408411)). Draft PR #1 reviewed with COMMENT (review ID `5808289782`), remains OPEN/DRAFT/UNMERGED. This validates only source/CPU regressions, not new real DGX post-B P1 or C. Newest handoff-only commit SHA/CI must be checked live at next session. D-016 next: clean fast-forward pull then exactly one `bash scripts/temporary/p1-post-b-audit.sh`; no unapproved GPU call, model switch or cache cleanup.
+
+---
+
 ## 2026-11-07 — LATEST AUTHORITATIVE STAGE: P3-B ACTUAL DGX PASS; Flash-Next ACTIVE
 
 **This section supersedes older `P3-B NOT_RUN` / `27B ACTIVE` sections below.** Actual DGX outputs supplied by the operator, NOT inferred from CPU CI:

@@ -1,3 +1,9 @@
+## 2026-11-07 — FINAL SOURCE CI / DRAFT PR REVIEW CHECKPOINT
+
+Source, regressions, permanent docs and read-only DGX audit workflow have been committed to existing `feature/recipe-wizard-handoff` and Draft PR #1. Source-tested HEAD `67ff9cc2e4ece0c89c911513673f7d5d55c98fa4`: GitHub Actions [push 42310408411](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42310408411) **SUCCESS, 501/501 CPU tests across 23 groups**; PR run 42310415255 also checked separately. Explicit [Draft PR review #5808289782](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/pull/1) recorded, with live DGX P1/ P3-C blockers, not approved/merged. The subsequent handoff documentation commit does not authorize runtime work; latest branch HEAD/CI must always be rechecked. Only permitted next operator check is `bash scripts/temporary/p1-post-b-audit.sh` after fast-forward pull and CI pass.
+
+---
+
 ## 2026-11-07 — P3-B actual completion reconciliation and POST-B read-only audit
 
 - Received user-supplied DGX actual P3-B success: canonical stage-B `PASS/executed=true/live_verified=true`, wrapper `P3_B_PASS_FLASH_NEXT_ACTIVE`, active `qwen3.8-flash-next`. Original wrapper report historically misnamed `p3-a-operator-20261106T223124Z-14861d75.json` and contains stale `approval_accepted=false`; preserve it unchanged.

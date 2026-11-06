@@ -1,3 +1,9 @@
+## 2026-11-07 — SOURCE CI VERIFIED, NEXT DGX ACTION STILL READ-ONLY
+
+`67ff9cc2e4ece0c89c911513673f7d5d55c98fa4` passed GitHub Actions [run 42310408411](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42310408411), **501/501 CPU PASS in 23 groups**. Draft PR #1 reviewed and not merged. New read-only `bash scripts/temporary/p1-post-b-audit.sh` has **not yet run on real DGX**; P1 POST-B Verify/Benchmark and P3-C are not authorized. After clean fast-forward pull, this one script is the next operator step; no GPU inference, service mutations or auto approvals.
+
+---
+
 ## 2026-11-07 — POST-B P1 operator audit (read-only, D-016, P3-A/B already ACTUAL PASS)
 
 **Observed upstream DGX outcome:** canonical `stage-b.json` PASS and `P3_B_PASS_FLASH_NEXT_ACTIVE`; original Flash-Next `qwen3.8-flash-next` restored to :8000. User's post-B P1 inspect-only `20261106T224010Z-d2095867/result.json` PASS/Verify+Benchmark plans READY; it did **not** execute Verify or Benchmark. Old B wrapper evidence filename is incorrectly `p3-a-operator-20261106T223124Z-14861d75.json` and must be preserved; source naming and approval field fixes affect only newly generated reports.
