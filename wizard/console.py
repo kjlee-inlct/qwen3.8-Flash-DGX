@@ -189,9 +189,9 @@ def _stage_actions(module) -> None:
         if not selected:
             print("Unknown option.")
             continue
-        if spec.key == "p3" and selected == "roundtrip":
-            # Plan-only preview never interrupts live Flash-Next.
-            module.run(["roundtrip", "--plan"])
+        if spec.key == "p3" and selected == "sequence":
+            # Display proposed stages only. Never auto-enter P3 or switch models.
+            module.run(["sequence", "--plan"])
             continue
         args = ["plan", "--for-action", selected]
         if spec.key in ("p3", "p6") and selected in ("switch", "rollback"):
