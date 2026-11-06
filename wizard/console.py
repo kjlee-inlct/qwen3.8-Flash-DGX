@@ -179,6 +179,10 @@ def _advanced_menu() -> None:
 def _stage_actions(module) -> None:
     spec = module.SPEC
     actions = list(spec.actions)
+    if spec.key == "p3":
+        # P3 stage planning is available in the TTY. Never infer approval to
+        # switch from selecting a menu item; no automatic phase advancement.
+        actions.extend(("stage-a", "stage-b", "stage-c"))
     while True:
         print("\n" + spec.title + " (0 back)")
         for i, action in enumerate(actions, 1):
@@ -189,9 +193,12 @@ def _stage_actions(module) -> None:
         if not selected:
             print("Unknown option.")
             continue
-        if spec.key == "p3" and selected == "sequence":
-            # Display proposed stages only. Never auto-enter P3 or switch models.
-            module.run(["sequence", "--plan"])
+        if spec.key == "p3" and selected in ("sequence", "stage-a", "stage-b", "stage-c"):
+            # Read-only P3 planning only. Each actual service transfer requires
+            # its own separately reviewed plan ID and downtime acknowledgment.
+            module.run([selected, "--plan"])
+            if selected.startswith("stage-"):
+                print("Execution NOT initiated. Review plan and request independent downtime approval.")
             continue
         args = ["plan", "--for-action", selected]
         if spec.key in ("p3", "p6") and selected in ("switch", "rollback"):
