@@ -105,6 +105,15 @@ class P3StageAOperatorCPU(unittest.TestCase):
         self.assertIn("P3_A_PLAN_SOURCE_OR_TARGET_CHANGED",
                       op.plan_issues(wrong, p1(), live(), now_epoch=1000000))
 
+    def test_missing_provenance_and_source_id_block(self):
+        p = plan()
+        p["p2_receipt_sha256"] = None
+        p["source_container_id"] = None
+        p["target_image"] = "unqualified"
+        issues = op.plan_issues(p, p1(), live(), now_epoch=1000000)
+        self.assertIn("P3_A_CURRENT_FLASH_CONTAINER_NOT_PINNED", issues)
+        self.assertIn("P3_A_TARGET_IMAGE_OR_P2_PROVENANCE_NOT_PINNED", issues)
+
     def test_manual_prompts_reject_wrong_or_missing_confirmation(self):
         self.assertFalse(op.prompts(plan(), input_fn=lambda _: ""))
         answers = iter([PLAN, op.DOWNTIME_ACK, "NOT_THE_P3_ACK"])
@@ -193,6 +202,15 @@ class P3StageAOperatorCPU(unittest.TestCase):
         self.assertEqual(rc, 4)
         self.assertEqual(reports[-1]["status"], "OPERATOR_REVIEW_REQUIRED")
         self.assertEqual(len([c for c in calls if "--execute" in c]), 1)
+
+    def test_symlinked_report_directory_is_rejected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            actual = Path(tmp) / "actual"
+            actual.mkdir()
+            shortcut = Path(tmp) / "shortcut"
+            shortcut.symlink_to(actual, target_is_directory=True)
+            with self.assertRaises(ValueError):
+                op.persist({"status": "BLOCKED"}, root=shortcut)
 
     def test_local_private_report_is_0600_and_no_repo_cache_paths(self):
         with tempfile.TemporaryDirectory() as tmp:
