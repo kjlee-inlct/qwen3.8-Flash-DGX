@@ -1,3 +1,13 @@
+## 2026-11-06 — Fix verified source-report schema error; DGX only reruns tracked P1 audit
+
+- [x] Real DGX first P1 pre-A audit HEAD `3a594193` returned `BLOCKED` **only** for `P1_ASSET_AUDIT_NOT_READY` / `P1_RECEIPT_CHECKPOINT_REVISION_DRIFT`. All historic/current expected active Flash collision checks, original Verify and 3-sample numerical benchmark, current API ID/image were confirmed; no P3 runtime mutation.
+- [x] Root cause in source: `p1_post_download.session` persists raw `checks.cache_diagnosis.stdout`, while console-only short summary prints top-level `cache_diagnosis`. New pre-A script read the wrong place and falsely labeled missing SHA as real `DRIFT`.
+- [x] Reuse canonical `cache_diagnosis_summary` to parse real persisted raw JSON; report missing revision as `P1_CURRENT_CHECKPOINT_REVISION_UNAVAILABLE` and actual mismatch only if both concrete SHA values exist. Update tests to match actual report schema and prove malformed/changed/checks fail closed. [Code CI 439/439 PASS](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42176224898) on `9adc9ab282a91c02e959dcb5c62f98527b556391`.
+- [ ] **Operator DGX:** use D-016: `git pull --ff-only origin feature/recipe-wizard-handoff`, then **single** `bash scripts/temporary/p1-pre-a-readiness.sh`. Provide compact JSON `status`, `issues`, `p1_verify`, `p1_benchmark`, `historical_rc3`, `current_rc3`; script has no GPU inference or live-model mutation.
+- [ ] If real `PRE_A_P1_REVIEW_READY` and `issues=[]`, review the operator's earlier conditional P3-A approval and refresh exact stage A plan; **do not execute stage A automatically or reuse expired plan**. Independently check downtime boundary and GPU/process ownership. D-034 post-B P1 retest and separately approved B/C remain mandatory. Keep Draft PR unmerged.
+
+---
+
 ## 2026-11-06 — One tracked DGX wrapper after GitHub push/CI (D-016)
 
 - [x] Original P1 numerical benchmark 3/3 PASS evidence supplied, including TTFT/latency/throughput, and 2026-11-06 inspect-only source/Hybrid/API READY; no pre-A rerun of P1 inference needed just to obtain metrics.
