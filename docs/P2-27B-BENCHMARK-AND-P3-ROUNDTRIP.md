@@ -1,3 +1,5 @@
+> **SUPERSEDED P3 PROCEDURE (2026-11-06):** The user changed the required P3 order. P2 must **STOP** after actual bench/Flash-Next restore; it must NOT auto-enter P3. Separately enter P3, establish 27B active, verify **27B → Flash-Next**, then resolve P1 deficiencies and rebenchmark Flash-Next, then finish **Flash-Next → 27B** with 27B active. The old two-roundtrip commands below are **RETIRED/BLOCKED**. Follow [P3-MANUAL-TRANSITION-SEQUENCE-20261106.md](P3-MANUAL-TRANSITION-SEQUENCE-20261106.md). P2 benchmark instructions below are still applicable.
+
 # P2 27B bounded GPU benchmark, followed by P3 two-cycle roundtrip acceptance
 
 Date: 2026-11-06. Branch: `feature/recipe-wizard-handoff`. **SOURCE READY/CPU CI**, GPU benchmark and repeated P3 trials **NOT RUN**.

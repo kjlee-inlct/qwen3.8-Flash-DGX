@@ -1,3 +1,14 @@
+## R1K — 2026-11-06 — P2 STOP boundary / manually entered revised P3 sequence (LATEST OVERRIDES old R1H/J and D-033)
+
+- **P2 bench PASS must not auto-start P3.** End P2 with actual metrics evidence + original Flash-Next `LIVE_SERVICE_VERIFIED`; wait for explicit operator request and new scoped approval before P3 planning/execution. A general instruction to "continue" is not downtime approval.
+- **P3 order is immutable unless user changes it:** after P2 restored Flash-Next, separately activate 27B and verify; switch **27B → Flash-Next** with approval and verify; **while Flash-Next runs resolve outstanding P1 verification/measurement issues, then rebenchmark P1 and preserve actual numeric evidence**; finally switch **Flash-Next → 27B** with a new scoped approval and verify **27B active** as intended final service. Every transition is an independent guard/rollback unit, no automatic chaining or hidden start/stop.
+- P1 initial backlog: historical `doctor=3` and `inventory_plan=3` issues not explained; earlier P1 verify and bounded benchmark PASS but **actual TTFT/latency/tokens/sec measurements not supplied**. Retest existing functional probes and collect measured benchmark evidence after verified 27B→Flash-Next transition. Block final 27B switch until P1 evidence accepted.
+- Existing P3 two-roundtrip `roundtrip --execute` and direct legacy module execution are **RETIRED/BLOCKED** because they always restore Flash-Next and conflict with final 27B goal. Canonical source-only read-only plan: `./wizard.sh switch flash-next-27b sequence --plan --json`; `plan_id=null`, `operations_enabled=false`. No real persistent switch executor approved yet.
+- Continue single active GPU model on :8000, stable public API, preserved original containers/images/checkpoints, fresh actual Manifest and API served ID, exact scoped approval and mandatory rollback. No P2/P3 automatic handoff, no cache cleanup, no Orcarouter work and no Draft PR merge as side effect.
+- Binding document: `docs/P3-MANUAL-TRANSITION-SEQUENCE-20261106.md`. Older D-033 and `docs/P2-27B-BENCHMARK-AND-P3-ROUNDTRIP.md` are historical/superseded on P3 ordering; do not use their P3 execute instructions.
+
+---
+
 ## R1J — Full Wizard source first, P2–P7 qualify later (2026-11-06)
 
 - D-021 operator direction: finish **all user-facing model / service / advanced / P1–P7 lifecycle menu pathways now**, while execution adapters for P2–P7 remain deliberately blocked until independently qualified. Source-level completeness, CPU CI and DGX acceptance must be tracked as three different statuses.

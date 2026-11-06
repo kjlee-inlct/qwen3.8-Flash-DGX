@@ -1,3 +1,13 @@
+## 2026-11-06 — REVISED P3 MANUAL sequence; P2 must STOP, never auto enter P3
+
+User decision D-034 supersedes previous P3 two-cycle roundtrip. **P2 benchmark still NOT RUN** on DGX; previous latest actual DGX only `--plan READY_TO_REQUEST_TRIAL_APPROVAL` with `issues=[]`, and prior first GPU smoke `PASS_RESTORED` plus Flash-Next `LIVE_SERVICE_VERIFIED`. No change to live model. After separately approved actual P2 measured PASS, **terminate P2 workflow** and wait for explicit P3 instruction and a new separate scoped approval.
+
+P3 revised order: explicit operator P3 entry; because P2 leaves Flash-Next running, separately approve **Flash-Next → 27B** to establish 27B source; verify **27B → Flash-Next**; address outstanding P1 issues/redo functional probes and actual benchmark on verified Flash-Next; only then approve **Flash-Next → 27B** and verify 27B as final active model. No phase auto-chaining. P1 pending: historic `doctor`/`inventory-plan` rc=3 causes unresolved, actual numeric TTFT/throughput metrics not supplied (despite earlier P1 smoke and bounded bench PASS). No P1 metrics invented.
+
+Source changes: old `scripts/manager/p3_27b_roundtrip.py` plan/execute now **permanently BLOCKED**; Wizard `roundtrip` route retired. New `./wizard.sh switch flash-next-27b sequence --plan --json` provides read-only manual-entry plan and **never** an executable ID; new persistent P3 service-switch executor not yet implemented/qualified. This change is policy/source-only and does not alter P2's measured benchmark/restore executor. See `docs/P3-MANUAL-TRANSITION-SEQUENCE-20261106.md`.
+
+---
+
 ## 2026-11-06 — Actual DGX P2 benchmark READ-ONLY plan READY; P3 prerequisite BLOCKED as designed
 
 Operator ran `./wizard.sh model 27b benchmark --plan --json` on the actual DGX and received `status=READY_TO_REQUEST_TRIAL_APPROVAL`, `issues=[]`, `executed=false`, `gpu_verified=false`, benchmark profile `p2-27b-api-benchmark-v1` (3 requests, 64 max tokens, seed 1234, concurrency 1, model `qwen3.8-27b`, stream). Verified source exact Docker ID `90f39a4dbccd0b5f97efa0ff163c61402ddace3dd3cb4da986a91dff7eb45ed5`; original image ID `sha256:9479fc92a9244fcf137afb36ed778e07495e29663a81db193736fcaa1f15e137`. The plan ID `2f76c3b03865b6a15a5c2fe8f316231f532fbf8b7fe178ffd00db8383edc3399` expired **2026-11-06 12:20 KST** (epoch 1793935200), and MUST NOT be reused for execution. **This was read-only readiness, not actual P2 GPU benchmark PASS**.

@@ -1,3 +1,9 @@
+## 2026-11-06 — User changed P3 sequence; P2→P3 no-auto boundary enforced in source
+
+Per D-034, retire old 2x temporary Flash-Next→27B→Flash-Next P3 plan/execute (now fail-closed even with past approval IDs). Add `scripts/manager/p3_transition_sequence.py` and `./wizard.sh switch flash-next-27b sequence --plan --json`: read-only, no executable plan, no automatic transition. P3 must be entered separately, establish verified active 27B, switch 27B→Flash-Next, resolve P1 deficiencies + real benchmark while Flash-Next running, then separately switch Flash-Next→27B as final state. The source code/CPU tests do NOT implement or verify permanent switching. P2 actual benchmark still awaited, and no operational Docker/GPU calls made while editing. D-033 superseded.
+
+---
+
 ## 2026-11-06 — P2 exact-approved 27B benchmark and P3 gated two-roundtrip source implementations
 
 Created `scripts/manager/p2_27b_benchmark.py` with separate benchmark plan/ack, 3 bounded streaming requests, client metrics and private final success+restore evidence, delegating all GPU/container transitions to existing approved one-shot executor. Wired `./wizard.sh model 27b benchmark --plan/--execute` and `scripts/serve_27b.sh --bench-*`. Added `scripts/manager/p3_27b_roundtrip.py` with plan blocked until real P2 benchmark PASS, exact separate approval and two sequential, original-ID-checked return-to-original cycles. Wired `./wizard.sh switch flash-next-27b roundtrip --plan/--execute`. Added CPU fake-backend tests and CI. **Source only: no new DGX GPU benchmark, P3 cycle or permanent service switch executed.** See [P2/P3 procedure](../docs/P2-27B-BENCHMARK-AND-P3-ROUNDTRIP.md).

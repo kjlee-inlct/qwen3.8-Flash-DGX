@@ -1,3 +1,9 @@
+## D-034 — 2026-11-06 — P2 stops; P3 separately entered; Flash-Next P1 remediation then final 27B (OVERRIDES D-033)
+
+User explicitly specifies: **P2 completion MUST NOT automatically enter P3**. P3 must first verify 27B as the source state, then **27B → Flash-Next** transition. Only after that succeeds, **address P1 deficiencies and rebenchmark Flash-Next** using actual measured evidence. Then **Flash-Next → 27B** transition and verification; final expected active model is **27B**. Because P2 currently restores original Flash-Next, 27B must be made active through its own approved gate before the requested 27B→Flash-Next verification. Do not imply this preliminary activation is automatic. Independent plan/approval/restore on each transition; pause at each phase, no auto chaining. Old P3 two temporary roundtrips conflict with this order and are retired/fail-closed. New read-only `sequence --plan` is not a persistent switch executor, never issues an execution plan or starts GPU. D-033 is explicitly superseded. No new live downtime authorized.
+
+---
+
 ## D-033 — 2026-11-06 — P3 acceptance starts with two temporary verified roundtrips, not permanent switch
 
 P3 first acceptance instrument is **exactly two** sequential Flash-Next → temporary NVIDIA 27B → original Flash-Next cycles using the existing proven one-shot recovery executor. It is **blocked absent actual P2 benchmark receipt** `BENCH_PASS_RESTORED_VERIFIED` and additionally requires **new P3-specific plan ID plus explicit downtime acknowledgment**. After every cycle, recheck actual original container identity, running state and Manifest-based API served ID; on first failure never begin another cycle. Reporting P3 temporary-roundtrip PASS must **not** be called persistent production model-switch readiness. Persistent switch, failure injection and recoverability remain later independent work. No service, image or model change authorized by source-level readiness.

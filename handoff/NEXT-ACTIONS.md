@@ -1,3 +1,16 @@
+## 2026-11-06 — P2 then STOP; separate P3 entry; remediate/rebench P1 before final 27B
+
+- [ ] **P2 first**: operator separately approves a new Flash-Next downtime plan; execute actual bounded NVIDIA 27B benchmark, record measured client TTFT/latency/decode/ingest proxies and restored original Flash-Next `LIVE_SERVICE_VERIFIED`; **STOP at P2 regardless of PASS**. No auto P3 plan or execute.
+- [ ] Wait for explicit P3 entry authorization. Do not recycle the P2 benchmark plan ID; require fresh live Manifest/API and separate transition plan + approval.
+- [ ] In P3, since P2 restores Flash-Next, separately activate 27B and verify `qwen3.8-27b` to establish the source for the next test.
+- [ ] Separately switch **27B → Flash-Next**, verify `qwen3.8-flash-next` and preserve original container/rollback evidence.
+- [ ] While Flash-Next is active resolve outstanding P1 `doctor/inventory-plan` nonzero reasons, repeat functional probes and **measure real P1 TTFT/latency/tokens/sec** with saved benchmark evidence. If not satisfied, block final transition.
+- [ ] With P1 PASS, separately approve and perform final **Flash-Next → 27B**; verify API `qwen3.8-27b` and preserve safe rollback resources, record P3 outcome. **Final target 27B active**, not automatic Flash-Next restore.
+- [x] Source-only: retire old P3 two-roundtrip executor, expose new read-only `sequence --plan`; persistent P3 switching executor **NOT IMPLEMENTED**, no new GPU actions.
+- [ ] Retain existing Flash-Next API, original images and both caches; keep Draft PR unmerged. No Orcarouter/extra model scope.
+
+---
+
 ## 2026-11-06 — Actual DGX P2 plan READY / P3 correctly BLOCKED; next is specifically approved P2 measured run
 
 - [x] Actual DGX read-only `./wizard.sh model 27b benchmark --plan --json` returned `READY_TO_REQUEST_TRIAL_APPROVAL`, `issues=[]`, `executed=false`, correct model/image/source. Returned ID `2f76c3b03865b6a15a5c2fe8f316231f532fbf8b7fe178ffd00db8383edc3399` **expires 2026-11-06 12:20 KST** and must be regenerated.
