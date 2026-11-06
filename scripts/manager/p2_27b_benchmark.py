@@ -94,7 +94,10 @@ def _stream_sample(response, start, *, clock=time.perf_counter):
     usage = None
     generated = False
     done = False
+    deadline = time.monotonic() + 180  # hard per-request ceiling, in addition to socket timeout
     for i, raw in enumerate(response):
+        if time.monotonic() > deadline:
+            raise TimeoutError("BENCHMARK_REQUEST_DEADLINE_EXCEEDED")
         if i >= 20000 or not isinstance(raw, bytes) or len(raw) > 262144:
             raise ValueError("SSE_BOUND_EXCEEDED")
         line = raw.decode("utf-8").strip()
@@ -162,6 +165,9 @@ def measure(*, opener=urlopen, clock=time.perf_counter,
             "ttft_sec": round(ttft, 6) if ttft is not None else None,
             "end_to_end_tokens_per_sec": (round(tokens/elapsed, 4)
                                           if tokens and elapsed > 0 else None),
+            "prompt_ingest_tokens_per_sec_proxy": (
+                round(prompt_tokens / ttft, 4)
+                if prompt_tokens is not None and ttft and ttft > 0 else None),
             "decode_tokens_per_sec_proxy": decode_proxy,
             "stream_complete": parsed["stream_complete"],
             "success": bool(parsed["stream_complete"] and parsed["generated"]
@@ -188,13 +194,19 @@ def measure(*, opener=urlopen, clock=time.perf_counter,
             "mean_decode_tokens_per_sec_proxy": (
                 round(statistics.mean(r["decode_tokens_per_sec_proxy"] for r in samples), 4)
                 if all(r["decode_tokens_per_sec_proxy"] is not None for r in samples) else None),
+            "mean_prompt_ingest_tokens_per_sec_proxy": (
+                round(statistics.mean(r["prompt_ingest_tokens_per_sec_proxy"] for r in samples), 4)
+                if all(r["prompt_ingest_tokens_per_sec_proxy"] is not None
+                       for r in samples) else None),
             "prefill_tokens_per_sec": None,
             "gpu_peak_mib": None,
         },
         "gpu_memory": {"before": before, "after": after},
         "limitations": ("Client TTFT includes queue/network/prefill. Decode proxy is "
-                        "not engine-measured throughput. Prefill throughput and peak "
-                        "GPU memory are NOT measured; GB10 may lack memory counters."),
+                        "not engine-measured throughput. Prompt-ingest proxy is "
+                        "prompt_tokens/TTFT, not engine prefill throughput. True prefill "
+                        "throughput and peak GPU memory are NOT measured; GB10 may "
+                        "lack memory counters."),
     }
 
 
