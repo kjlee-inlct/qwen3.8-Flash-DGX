@@ -8,6 +8,7 @@ on:
       - 'scripts/temporary/**'
       - 'tests/test_p1_temporary_cpu.py'
       - 'tests/test_manager_manifest_cpu.py'
+      - 'runtimes/model-discovery.json'
       - 'tests/fixtures/**'
       - 'requirements-manager.txt'
       - 'flash'
@@ -30,6 +31,7 @@ on:
       - 'tests/test_service_journal_cpu.py'
       - 'tests/test_service_health_cpu.py'
       - 'tests/test_service_status_cpu.py'
+      - 'tests/test_installed_models_cpu.py'
       - 'tests/test_service_transition_preview_cpu.py'
       - 'tests/test_service_logs_cpu.py'
       - 'tests/test_script_modes_cpu.py'
@@ -77,6 +79,7 @@ jobs:
           python -m unittest discover -s tests -p 'test_service_journal_cpu.py' -v
           python -m unittest discover -s tests -p 'test_service_health_cpu.py' -v
           python -m unittest discover -s tests -p 'test_service_status_cpu.py' -v
+          python -m unittest discover -s tests -p 'test_installed_models_cpu.py' -v
           python -m unittest discover -s tests -p 'test_service_transition_preview_cpu.py' -v
           python -m unittest discover -s tests -p 'test_service_logs_cpu.py' -v
           python -m unittest discover -s tests -p 'test_wizard_router_cpu.py' -v
@@ -86,6 +89,7 @@ jobs:
           python -m wizard roadmap --json
           python -m wizard workflow 27b --json
           python -m wizard list --json
+          python -m wizard model list --installed --json
           python -m wizard p2 status --json
           python -m wizard model 27b status --inspect-cache --json
           python -m unittest discover -s tests -p 'test_serve_split_cpu.py' -v
