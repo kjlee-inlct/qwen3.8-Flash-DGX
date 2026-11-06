@@ -1,3 +1,11 @@
+## R1Q — 2026-11-07 — Model-centric UX change; actual post-B P1 PASS and private evidence continuity
+
+Operator ZIP contains actual POST-B P1 Verify PASS (baseline/extended plus all four functional probes) and 3-request numeric Benchmark PASS, distinct fresh action SHA approvals; the latest earlier read-only doctor/inventory rc=3 diagnosis PASS for the original Flash own-name/own-port collision. These facts supersede old P1 NOT_RUN entries. They **do not** grant P3-C downtime authorization. Keep Flash-Next service API :8000 active, ONE_ACTIVE_MODEL_ONLY, vLLM 0.32, SGLang unused.
+
+Roll out UX source only after CPU CI and a clean DGX fast-forward pull; no hidden inference re-runs, service transitions, cleanup, or PR merge. Operator-facing Wizard menus show model/action instead of P1/P2/P3 and repeat exact current SHA in the approval prompt, retaining rechecked action-specific approval. Future P1 JSON receipts write append-only, 0600 into ignored `<repo>/reports/models/qwen3.8-flash-next`; historical `~/.local/state/blazux-wizard/p1` never moves or gets overwritten. P3-C gate checks both roots and latest finish timestamps including failures. P2/P3 state and locks must **not** be naively relocated; their readers require a separate staged migration and CPU/fake-DGX tests. See [contract](../docs/WIZARD-OPERATOR-UX-EVIDENCE-CONTRACT.md).
+
+---
+
 ## R1P — 2026-11-07 — P3-B ACTUAL PASS; POST-B P1 is the only current work
 
 Supersedes historical R1O/R1N "B pending, 27B active" positions: real DGX operator returned `P3_B_PASS_FLASH_NEXT_ACTIVE`, executed/live verified by canonical stage-B and a separate Flash API check. Flash-Next is the latest verified active model, API `:8000/v1`. P3-A/B **must not be repeated**. Do not retroactively edit the historically misnamed old P3-B report or infer failure from its stale `approval_accepted=false` field.
