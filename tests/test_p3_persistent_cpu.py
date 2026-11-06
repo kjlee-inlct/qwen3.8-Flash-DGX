@@ -345,7 +345,7 @@ class P1GateCPU(unittest.TestCase):
                   "served_model": "qwen3.8-flash-next", "image_id": IMAGE,
                   "finished_at_utc": p1_finished}
         verify = {"action": "verify", **common,
-                  "result": {"status": "PASS", "identity": {"status": "PASS"},
+                  "result": {"status": "PASS", "identity": {"health": "PASS", "models": ["qwen3.8-flash-next"]},
                              "baseline_status": "PASS", "extended_status": "PASS",
                              "probes": {key: {"status": "PASS"} for key in
                                         ("default_completion", "chat", "tools", "vision")}}}
@@ -387,6 +387,18 @@ class P1GateCPU(unittest.TestCase):
                                flash_image=IMAGE, p1_root=p1, p3_root=p3root)
         self.assertEqual(status["status"], "PASS", status["issues"])
         self.assertEqual(set(status["evidence_hashes"]), {"verify", "benchmark", "diagnostics"})
+
+    def test_wrong_p1_served_id_in_real_identity_blocks_stage_c(self):
+        with tempfile.TemporaryDirectory() as directory:
+            p1, p3root = self._positive_p1_fixture(Path(directory) / "p1")
+            file = p1 / "verify.json"
+            receipt = json.loads(file.read_text())
+            receipt["result"]["identity"]["models"] = ["foreign-id"]
+            file.write_text(json.dumps(receipt))
+            status = assess_p1(stage_b={"finished_at_utc": "2026-11-06T06:00:00+00:00"},
+                               flash_image=IMAGE, p1_root=p1, p3_root=p3root)
+        self.assertEqual(status["status"], "BLOCKED")
+        self.assertIn("P1_FUNCTIONAL_PROBES_INCOMPLETE", status["issues"])
 
     def test_missing_numerical_throughput_blocks_c(self):
         with tempfile.TemporaryDirectory() as directory:
