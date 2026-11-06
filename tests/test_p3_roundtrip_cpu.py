@@ -153,15 +153,15 @@ class P3RoundtripCPU(unittest.TestCase):
             self.assertEqual(len(count),1)
 
     def test_verify_source_id_and_api_identity_both_required(self):
-        with patch("scripts.manager.p3_27b_roundtrip.inspect_live_status",
-                   return_value={"status":"LIVE_SERVICE_VERIFIED",
-                                 "observed_model":"flash-next",
-                                 "expected_served_id":trial.ORIGINAL_ID,
-                                 "host_port":8000,"issues":[]}), \
-             patch("scripts.manager.p3_27b_roundtrip.trial.docker_info",
-                   return_value={"Id":"a"*64,"State":{"Running":True}}):
-            self.assertEqual(p3.verify_original_after_cycle("a"*64)["status"],"PASS")
-            self.assertEqual(p3.verify_original_after_cycle("b"*64)["status"],"BLOCKED")
+        live = lambda: {"status":"LIVE_SERVICE_VERIFIED",
+                        "observed_model":"flash-next",
+                        "expected_served_id":trial.ORIGINAL_ID,
+                        "host_port":8000,"issues":[]}
+        docker = lambda name: {"Id":"a"*64,"State":{"Running":True}}
+        self.assertEqual(p3.verify_original_after_cycle(
+            "a"*64, inspector=live, docker_inspector=docker)["status"], "PASS")
+        self.assertEqual(p3.verify_original_after_cycle(
+            "b"*64, inspector=live, docker_inspector=docker)["status"], "BLOCKED")
 
     def test_wizard_routes_explicit_p3_plan_but_not_unapproved_verify(self):
         with patch("scripts.manager.p3_27b_roundtrip.main",return_value=0) as f, \
