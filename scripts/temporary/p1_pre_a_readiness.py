@@ -107,7 +107,9 @@ def check_verify(doc: dict[str, Any], flash_image: str) -> bool:
             and result.get("baseline_status") == "PASS"
             and result.get("extended_status") == "PASS"
             and isinstance(identity, dict)
-            and identity.get("status") == "PASS"
+            and identity.get("health") == "PASS"
+            and isinstance(identity.get("models"), list)
+            and SERVED in identity["models"]
             and isinstance(probes, dict)
             and all((probes.get(k) or {}).get("status") == "PASS"
                     for k in ("default_completion", "chat", "tools", "vision")))
