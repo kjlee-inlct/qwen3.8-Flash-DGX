@@ -1,3 +1,5 @@
+> **Source/CPU acceptance for new pre-A wrapper, 2026-11-06:** tested code SHA `75d22ce4303736ee84563a0f388a978379e4f228`, [push CI 42173798547](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42173798547) and [PR CI 42173805888](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42173805888) **SUCCESS — 435/435 CPU tests, 19 groups**. This includes exact original P1 Wizard identity receipt contract (`identity.health=PASS`, `identity.models` contains the served ID), not a fictitious `identity.status`. Wrapper actual DGX execution **NOT_RUN**; CI never inspected private operator report bytes.
+
 ## 2026-11-06 — P1 pre-P3-A evidence reconciliation: tracked wrapper after user workflow correction
 
 **Mandatory D-016 reinforced:** agent writes and pushes the temporary operator script, CPU fake-backend tests and handoff first. DGX operator uses `git pull --ff-only origin feature/recipe-wizard-handoff` and **one tracked command**; do not paste ad hoc multi-step Python/curl snippets or edit the DGX workspace to add temporary logic. Script NEVER performs `git pull`, Docker/GPU/HTTP inference, lifecycle actions, stage A execution or cleanup.
