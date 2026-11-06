@@ -149,17 +149,25 @@ def plan_issues(plan: dict[str, Any], pre_a: dict[str, Any],
 
 
 def prompts(plan: dict, *, input_fn=input) -> bool:
-    """No auto-approval: action-specific SHA, downtime and entry each typed."""
+    """Show the precise live plan and three separate literal typed strings."""
+    expires = plan.get("expires_at_epoch_seconds")
     try:
-        for label, expected in (
-            ("Type the complete CURRENT P3-A plan_id (Enter cancels): ", plan["plan_id"]),
-            ("Type downtime acknowledgment exactly: ", DOWNTIME_ACK),
-            ("Type independent P3-entry acknowledgment exactly: ", P3_ENTRY_ACK),
-        ):
-            if input_fn(label).strip() != expected:
+        kst = datetime.fromtimestamp(
+            expires, timezone(timedelta(hours=9))).strftime("%Y-%m-%d %H:%M:%S KST")
+        approval = (
+            ("1/3 CURRENT P3-A plan_id", plan["plan_id"]),
+            ("2/3 Flash-Next downtime acknowledgment", DOWNTIME_ACK),
+            ("3/3 Separate P3-entry acknowledgment", P3_ENTRY_ACK),
+        )
+        print("\\nCopy or type EXACTLY the value printed below each step.", flush=True)
+        print(f"Plan expires at: {kst} (approximately "
+              f"{max(0, int(expires - time.time()))} seconds left).", flush=True)
+        for label, expected in approval:
+            print(f"{label}: {expected}", flush=True)
+            if input_fn(f"Enter {label} [exactly: {expected}]: ").strip() != expected:
                 return False
         return True
-    except (EOFError, KeyboardInterrupt, KeyError, TypeError):
+    except (EOFError, KeyboardInterrupt, KeyError, TypeError, ValueError, OverflowError):
         return False
 
 
