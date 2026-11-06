@@ -1,3 +1,9 @@
+## 2026-11-06 — Correct P1 pre-A cache diagnosis persisted JSON location (439 CPU PASS)
+
+Operator's real pre-A audit with both historical/current rc3 exact own-model collisions and P1 verify+numeric benchmark PASS returned `BLOCKED` on asset audit and revision drift. Found both arose because temporary script read console-only `cache_diagnosis` rather than persisted `checks.cache_diagnosis.stdout`. Fixed to reuse original JSON reader, classify unobservable revision separately from actual mismatch, and fake-DGX test actual persisted schema and negative evidence paths. [CI 439/439 PASS](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42176224898) on code `9adc9ab282a91c02e959dcb5c62f98527b556391`. No DGX model, GPU or :8000 mutation; await D-016 single script recheck after pull.
+
+---
+
 ## 2026-11-06 — P1 pre-A tracked audit / genuine identity schema fix, 435 CPU PASS
 
 D-016 operator correction honored: GitHub tracked pre-A wrapper and unit tests first, DGX fast-forward pull then one wrapper; no ad hoc pasted Python. Wrapper reconciles local original P1 verify/bench receipts (3 samples, actual 38.2968 tok/s etc) with 2026-11-05/06 doctor/inventory raw outputs and fresh Flash service API; outputs private 0600 evidence with no GPU/Docker lifecycle. Corrected pre-A and post-B P3 P1 identity gate to match `require_model`'s real `{"health":"PASS","models":[...]}` rather than nonexistent `identity.status`. [Latest tested PR CI](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42173805888) **435/435 CPU PASS** at `75d22ce4303736ee84563a0f388a978379e4f228`. No actual DGX wrapper execution or P3-A transition occurred.
