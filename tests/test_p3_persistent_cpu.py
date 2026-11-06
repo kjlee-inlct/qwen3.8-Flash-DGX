@@ -298,5 +298,67 @@ class P1GateCPU(unittest.TestCase):
         self.assertIn("P1_HISTORIC_RC3_DIAGNOSTIC_EVIDENCE_MISSING", result["issues"])
 
 
+    def _positive_p1_fixture(self, home, *, benchmark_tokens_per_sec=12.25,
+                             p1_finished="2026-11-06T08:00:00+00:00"):
+        home.mkdir(parents=True, exist_ok=True)
+        state = home / "p3"
+        state.mkdir()
+        common = {"executed": True, "approval": "explicit_plan_id",
+                  "status": "PASS", "model_repo": "nvidia/Qwen3.8-Flash-Next-NVFP4",
+                  "served_model": "qwen3.8-flash-next", "image_id": IMAGE,
+                  "finished_at_utc": p1_finished}
+        verify = {"action": "verify", **common,
+                  "result": {"status": "PASS", "identity": {"status": "PASS"},
+                             "baseline_status": "PASS", "extended_status": "PASS",
+                             "probes": {key: {"status": "PASS"} for key in
+                                        ("default_completion", "chat", "tools", "vision")}}}
+        bench = {"action": "benchmark", **common,
+                 "result": {"status": "PASS",
+                            "benchmark": {"status": "PASS",
+                                          "samples": [{"completion_tokens": 64, "ttft_sec": 0.2}] * 3,
+                                          "metrics": {"latency_p50_sec": 5.9,
+                                                      "ttft_p50_sec": 0.2,
+                                                      "mean_tokens_per_sec": benchmark_tokens_per_sec}}}}
+        diagnosis = {"status": "PASS", "doctor_exit_code": 0,
+                     "inventory_plan_exit_code": 0,
+                     "historical_rc3_disposition":
+                         "Historical rc=3 root causes reviewed with original logs and current preflight.",
+                     "finished_at_utc": p1_finished}
+        for path, value in ((home / "verify.json", verify),
+                            (home / "bench.json", bench),
+                            (state / "p1-diagnostics.json", diagnosis)):
+            path.write_text(json.dumps(value))
+            path.chmod(0o600)
+        return home, state
+
+    def test_real_shaped_post_b_p1_receipts_qualify_c_without_gpu(self):
+        with tempfile.TemporaryDirectory() as directory:
+            p1, p3root = self._positive_p1_fixture(Path(directory) / "p1")
+            status = assess_p1(stage_b={"finished_at_utc": "2026-11-06T06:00:00+00:00"},
+                               flash_image=IMAGE, p1_root=p1, p3_root=p3root)
+        self.assertEqual(status["status"], "PASS", status["issues"])
+        self.assertEqual(set(status["evidence_hashes"]), {"verify", "benchmark", "diagnostics"})
+
+    def test_missing_numerical_throughput_blocks_c(self):
+        with tempfile.TemporaryDirectory() as directory:
+            p1, p3root = self._positive_p1_fixture(Path(directory) / "p1",
+                                                    benchmark_tokens_per_sec=None)
+            status = assess_p1(stage_b={"finished_at_utc": "2026-11-06T06:00:00+00:00"},
+                               flash_image=IMAGE, p1_root=p1, p3_root=p3root)
+        self.assertEqual(status["status"], "BLOCKED")
+        self.assertIn("P1_ACTUAL_BENCHMARK_METRICS_INCOMPLETE", status["issues"])
+
+    def test_p1_legacy_pass_before_b_does_not_qualify_c(self):
+        with tempfile.TemporaryDirectory() as directory:
+            p1, p3root = self._positive_p1_fixture(
+                Path(directory) / "p1", p1_finished="2026-11-06T05:00:00+00:00")
+            status = assess_p1(stage_b={"finished_at_utc": "2026-11-06T06:00:00+00:00"},
+                               flash_image=IMAGE, p1_root=p1, p3_root=p3root)
+        self.assertEqual(status["status"], "BLOCKED")
+        self.assertIn("P1_VERIFY_RECEIPT_UNQUALIFIED", status["issues"])
+        self.assertIn("P1_BENCHMARK_RECEIPT_UNQUALIFIED", status["issues"])
+        self.assertIn("P1_HISTORIC_RC3_DISPOSITION_NOT_VERIFIED", status["issues"])
+
+
 if __name__ == "__main__":
     unittest.main()
