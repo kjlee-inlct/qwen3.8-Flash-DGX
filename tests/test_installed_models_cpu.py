@@ -121,9 +121,19 @@ class InstalledModelsCPU(unittest.TestCase):
         row = self.model(self.scan(), "orcarouter")
         # The test creates a symlink; a dangling symlink cannot qualify.
         self.assertTrue((snap / "model-00001-of-00001.safetensors").is_symlink())
-        self.assertFalse(row["source_files_present"] if
-                         not (snap / "model-00001-of-00001.safetensors").exists()
-                         else False)
+        self.assertTrue(row["source_files_present"])
+
+    def test_dangling_symlink_cannot_qualify_source(self):
+        legacy = self.home / LEGACY
+        snap = create_snapshot(legacy / "hf-cache",
+                               "orcarouter/Qwen3.8-Flash-Next-Uncensored-NVFP4",
+                               ORCA_REV)
+        shard = snap / "model-00001-of-00001.safetensors"
+        shard.unlink()
+        shard.symlink_to(snap / "nonexistent-blob")
+        row = self.model(self.scan(), "orcarouter")
+        self.assertFalse(row["source_files_present"])
+        self.assertEqual(row["source_state"], "SNAPSHOT_INCOMPLETE_OR_UNVERIFIED")
 
     def test_env_cache_27b_immutable_snapshot(self):
         cache = self.home / "custom"
