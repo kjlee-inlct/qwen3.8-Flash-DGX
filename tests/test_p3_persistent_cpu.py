@@ -1,0 +1,241 @@
+"""CPU-only P3 persistent switch simulation. No Docker, GPU, API or network."""
+from __future__ import annotations
+
+import json
+from pathlib import Path
+from types import SimpleNamespace
+import tempfile
+import unittest
+from unittest.mock import patch
+
+from scripts.manager import p3_persistent_switch as p3
+from scripts.manager.p3_p1_evidence_gate import assess_p1
+
+
+FLASH = "f" * 64
+B27 = "b" * 64
+IMAGE = "sha256:" + "9" * 64
+A_PLAN = "a" * 64
+
+
+def inspect_doc(name: str, active: bool):
+    return {
+        "Name": "/" + name,
+        "Id": FLASH if name == p3.NAMES["flash-next"] else B27,
+        "Image": IMAGE,
+        "State": {"Running": active},
+        "HostConfig": {"AutoRemove": False, "RestartPolicy": {"Name": "no"},
+                       "PortBindings": {"8000/tcp": [{"HostPort": "8000"}]}},
+        "Config": {"Labels": {p3.LABEL: A_PLAN}, "Env": []},
+    }
+
+
+def live(model):
+    return {"status": "LIVE_SERVICE_VERIFIED", "observed_model": model,
+            "expected_served_id": p3.IDS[model], "issues": []}
+
+
+def fake_p2():
+    return {"status": "READY_TO_REQUEST_TRIAL_APPROVAL",
+            "issues": [], "source_container_id": FLASH,
+            "image_id": IMAGE}
+
+
+def write_stage(root, stage, **changes):
+    doc = {"schema_version": 1, "stage": stage, "status": "PASS",
+           "plan_id": A_PLAN, "live_verified": True,
+           "source_model": "flash-next" if stage == "a" else "27b",
+           "target_model": "27b" if stage == "a" else "flash-next",
+           "flash_id": FLASH, "flash_image": IMAGE,
+           "id_27b": B27, "image_27b": IMAGE,
+           "p2_receipt_sha256": "c" * 64,
+           "finished_at_utc": "2026-11-06T06:00:00+00:00",
+           **changes}
+    p3._write_once(root, "stage-" + stage + ".json", doc)
+
+
+class P3StagedPlanCPU(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.root = Path(self.temp.name)
+        self.receipt = lambda: ({"sha256": "c" * 64, "path": "private"}, None)
+
+    def tearDown(self):
+        self.temp.cleanup()
+
+    def plan(self, stage, observed, **kwargs):
+        name = p3.NAMES[observed]
+        def run(argv, timeout=35):
+            if argv[1] == "ps":
+                return SimpleNamespace(returncode=0, stdout="qwen38-flash\nqwen38-27b\n")
+            raise AssertionError("unexpected command: " + str(argv))
+        result = p3.make_plan(
+            stage, root=self.root, reader=self.receipt,
+            live=lambda: live(observed), trial_planner=fake_p2,
+            inspect=lambda n: inspect_doc(n, n == name),
+            run=run, now=1793935000, **kwargs)
+        return result
+
+    def test_a_requires_no_p2_auto_progression(self):
+        # A requires receipt, verified Flash source, and a free 27B name.
+        out = self.plan("a", "flash-next")
+        self.assertEqual(out["status"], "BLOCKED")
+        self.assertIn("P3_A_TARGET_CONTAINER_ALREADY_EXISTS", out["issues"])
+        self.assertIsNone(out["plan_id"])
+        self.assertFalse(out["operations_enabled"])
+
+    def test_a_happy_plan_only_with_explicit_entry_contract(self):
+        def run(argv, timeout=35):
+            return SimpleNamespace(returncode=0, stdout="qwen38-flash\n")
+        with patch.object(p3, "_gpu_conflicts", return_value=[]):
+            out = p3.make_plan(
+                "a", root=self.root, reader=self.receipt,
+                live=lambda: live("flash-next"), trial_planner=fake_p2,
+                inspect=lambda n: inspect_doc(n, True), run=run, now=1793935000)
+        self.assertEqual(out["status"], p3.SUCCESS, out["issues"])
+        self.assertRegex(out["plan_id"], r"^[0-9a-f]{64}$")
+        self.assertEqual(out["required_p3_entry_acknowledgement"], p3.ENTRY_ACK)
+        self.assertFalse(out["operations_enabled"])
+        self.assertFalse(out["executed"])
+
+    def test_b_requires_stage_a_receipt_and_27b_source(self):
+        out = self.plan("b", "27b")
+        self.assertEqual(out["status"], "BLOCKED")
+        self.assertTrue(any("P3_LOCAL_EVIDENCE" in i for i in out["issues"]))
+        self.root.mkdir(exist_ok=True)
+        write_stage(self.root, "a")
+        with patch.object(p3, "_gpu_conflicts", return_value=[]):
+            out = self.plan("b", "27b")
+        self.assertEqual(out["status"], p3.SUCCESS, out["issues"])
+        self.assertEqual(out["source_model"], "27b")
+        self.assertEqual(out["target_model"], "flash-next")
+        self.assertEqual(out["target_container_id"], FLASH)
+
+    def test_c_blocked_until_p1_evidence_after_b(self):
+        write_stage(self.root, "a")
+        write_stage(self.root, "b")
+        with patch.object(p3, "_gpu_conflicts", return_value=[]):
+            out = self.plan("c", "flash-next")
+        self.assertEqual(out["status"], "BLOCKED")
+        self.assertTrue(any(i.startswith("P1_") for i in out["issues"]))
+        self.assertIsNone(out["plan_id"])
+
+    def test_c_passes_when_injected_p1_gate_passes(self):
+        write_stage(self.root, "a")
+        write_stage(self.root, "b")
+        with patch.object(p3, "_gpu_conflicts", return_value=[]):
+            out = self.plan("c", "flash-next", p1_gate=lambda **_:
+                           {"status": "PASS", "issues": [], "evidence_hashes": {
+                               "verify": "d"*64, "benchmark": "e"*64, "diagnostics": "f"*64}})
+        self.assertEqual(out["status"], p3.SUCCESS, out["issues"])
+        self.assertEqual(out["target_container_id"], B27)
+        self.assertEqual(out["target_model"], "27b")
+
+    def test_attempt_marker_blocks_replay(self):
+        (self.root / "attempt-a.json").write_text("{}")
+        out = self.plan("a", "flash-next")
+        self.assertIn("P3_STAGE_ALREADY_ATTEMPTED", out["issues"])
+
+    def test_mismatched_p2_receipt_blocks_b(self):
+        write_stage(self.root, "a")
+        with patch.object(p3, "_gpu_conflicts", return_value=[]):
+            out = p3.make_plan("b", root=self.root,
+                reader=lambda: ({"sha256": "1"*64}, None),
+                live=lambda: live("27b"), trial_planner=fake_p2,
+                inspect=lambda n: inspect_doc(n, n == p3.NAMES["27b"]),
+                run=lambda cmd, **kw: SimpleNamespace(returncode=0, stdout="qwen38-flash\nqwen38-27b\n"),
+                now=1793935000)
+        self.assertIn("P2_RECEIPT_CHANGED_SINCE_STAGE_A", out["issues"])
+
+
+class P3ExecuteCPU(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.root = Path(self.temp.name)
+        self.states = {"qwen38-flash": True, "qwen38-27b": False}
+        self.commands = []
+
+    def tearDown(self):
+        self.temp.cleanup()
+
+    def _inspect(self, name):
+        return inspect_doc(name, self.states.get(name, False))
+
+    def _run(self, cmd, timeout=35):
+        self.commands.append(cmd[:])
+        if cmd[:2] == ["docker", "stop"]:
+            self.states[cmd[-1]] = False
+        if cmd[:2] == ["docker", "start"]:
+            self.states[cmd[-1]] = True
+        if cmd[:2] == ["docker", "run"]:
+            self.states["qwen38-27b"] = True
+        return SimpleNamespace(returncode=0, stdout="")
+
+    def _planner(self, stage, root):
+        return {"status": p3.SUCCESS, "plan_id": A_PLAN, "issues": [],
+                "source_container_id": FLASH, "source_image": IMAGE,
+                "target_image": IMAGE, "flash_id": FLASH, "flash_image": IMAGE,
+                "image_27b": IMAGE, "id_27b": None,
+                "p2_receipt_sha256": "c"*64, "p1_evidence": None}
+
+    def test_exact_plan_and_downtime_and_separate_entry_required(self):
+        for plan, ack, entry in [(None, p3.ACK, p3.ENTRY_ACK),
+                                 (A_PLAN, "wrong", p3.ENTRY_ACK),
+                                 (A_PLAN, p3.ACK, None)]:
+            rc, out = p3.execute("a", plan, ack, entry, root=self.root,
+                                 planner=self._planner, run=self._run)
+            self.assertEqual(rc, 3)
+            self.assertFalse(out["executed"])
+        self.assertEqual(self.commands, [])
+
+    def test_happy_a_keeps_27b_active_and_flash_preserved(self):
+        with patch.object(p3, "_record") as journal, \
+             patch.object(p3.gpu, "trial_command", return_value=["docker", "run", "target"]), \
+             patch.object(p3.gpu, "running", side_effect=lambda name, run: self.states[name]), \
+             patch.object(p3.gpu, "port_free", return_value=True):
+            rc, out = p3.execute("a", A_PLAN, p3.ACK, p3.ENTRY_ACK,
+                root=self.root, planner=self._planner,
+                run=self._run, inspect=self._inspect,
+                waiter=lambda name, model, seconds, run: self.states[name],
+                live=lambda: live("27b"))
+        self.assertEqual(rc, 0, out)
+        self.assertEqual(out["status"], "PASS")
+        self.assertTrue(self.states["qwen38-27b"])
+        self.assertFalse(self.states["qwen38-flash"])
+        self.assertTrue((self.root / "stage-a.json").exists())
+        self.assertIn("COMMITTED", [c.args[1] for c in journal.call_args_list])
+
+    def test_failed_target_api_restores_source_and_blocks_retry(self):
+        def fake_restore(*args, **kwargs):
+            self.states["qwen38-27b"] = False
+            self.states["qwen38-flash"] = True
+            return {"status": "RESTORED", "issues": []}
+        with patch.object(p3, "_record"), \
+             patch.object(p3, "_restore", side_effect=fake_restore), \
+             patch.object(p3.gpu, "trial_command", return_value=["docker", "run", "target"]), \
+             patch.object(p3.gpu, "running", side_effect=lambda name, run: self.states[name]), \
+             patch.object(p3.gpu, "port_free", return_value=True):
+            rc, out = p3.execute("a", A_PLAN, p3.ACK, p3.ENTRY_ACK,
+                root=self.root, planner=self._planner, run=self._run,
+                inspect=self._inspect, waiter=lambda *a, **kw: False,
+                live=lambda: live("flash-next"))
+        self.assertEqual(rc, 4)
+        self.assertEqual(out["status"], "FAIL_RESTORED")
+        self.assertTrue((self.root / "attempt-a.json").exists())
+        self.assertFalse((self.root / "stage-a.json").exists())
+
+
+class P1GateCPU(unittest.TestCase):
+    def test_no_new_evidence_fails_closed(self):
+        with tempfile.TemporaryDirectory() as root:
+            path = Path(root)
+            result = assess_p1(stage_b={"finished_at_utc": "2026-11-06T06:00:00+00:00"},
+                               flash_image=IMAGE, p1_root=path / "p1", p3_root=path)
+        self.assertEqual(result["status"], "BLOCKED")
+        self.assertIn("P1_VERIFY_RECEIPT_NOT_FOUND", result["issues"])
+        self.assertIn("P1_BENCHMARK_RECEIPT_NOT_FOUND", result["issues"])
+        self.assertIn("P1_HISTORIC_RC3_DIAGNOSTIC_EVIDENCE_MISSING", result["issues"])
+
+
+if __name__ == "__main__":
+    unittest.main()
