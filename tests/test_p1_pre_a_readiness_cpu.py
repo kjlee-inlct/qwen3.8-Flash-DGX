@@ -39,17 +39,22 @@ def report(*, timestamp="2026-11-06T06:09:41+00:00"):
                       "expected_api_model_present": True,
                       "runtime_allowed": True,
                       "operator_process": {"blocked": False}},
-        "cache_diagnosis": {"wizard_audit": {
-            "state": "READY", "model_repo": audit.REPO,
-            "source_complete": True, "hybrid_ready": True,
-            "source_issues": [], "hybrid_issues": [],
-            "revision": "f" * 40}},
         "plans": {k: {"ready": True, "plan": {"issues": []}}
                   for k in ("verify", "benchmark")},
         "actions": {
             "verify": {"status": "BLOCKED", "reason": "inspection_only"},
             "benchmark": {"status": "BLOCKED", "reason": "inspection_only"}},
         "checks": {
+            # Real p1_post_download.session saves raw command output here;
+            # console cache_diagnosis is NOT saved as a top-level report key.
+            "cache_diagnosis": {"returncode": 0, "truncated": False,
+                "stdout": json.dumps({
+                    "type": "P1_READ_ONLY_CACHE_DIAGNOSIS",
+                    "wizard_audit": {
+                        "state": "READY", "model_repo": audit.REPO,
+                        "source_complete": True, "hybrid_ready": True,
+                        "source_issues": [], "hybrid_issues": [],
+                        "revision": "f" * 40}})},
             "doctor": {"returncode": 3, "stdout": raw, "truncated": False},
             "inventory_plan": {"returncode": 3, "stdout": raw, "truncated": False}}
     }
@@ -118,6 +123,39 @@ class PreAP1AuditCPU(unittest.TestCase):
         self.assertTrue(d["post_p3_b_p1_rebenchmark_required"])
         self.assertEqual(d["p1_benchmark"]["metrics"]["mean_tokens_per_sec"], 38.2968)
         self.assertEqual(d["p1_benchmark"]["sample_count"], 3)
+
+    def test_persisted_report_has_raw_cache_diagnosis_not_console_summary(self):
+        cur = report()
+        self.assertNotIn("cache_diagnosis", cur)
+        self.assertEqual(cur["checks"]["cache_diagnosis"]["returncode"], 0)
+        result = assess(cur=cur)
+        self.assertEqual(result["status"], "PRE_A_P1_REVIEW_READY", result["issues"])
+        self.assertNotIn("P1_ASSET_AUDIT_NOT_READY", result["issues"])
+        self.assertNotIn("P1_RECEIPT_CHECKPOINT_REVISION_DRIFT", result["issues"])
+
+    def test_corrupt_raw_cache_diagnosis_blocks_but_does_not_invent_drift(self):
+        cur = report()
+        cur["checks"]["cache_diagnosis"]["stdout"] = "{not-json"
+        result = assess(cur=cur)
+        self.assertIn("P1_ASSET_AUDIT_NOT_READY", result["issues"])
+        self.assertIn("P1_CURRENT_CHECKPOINT_REVISION_UNAVAILABLE", result["issues"])
+        self.assertNotIn("P1_RECEIPT_CHECKPOINT_REVISION_DRIFT", result["issues"])
+
+    def test_incomplete_raw_cache_diagnosis_blocks(self):
+        cur = report()
+        cur["checks"]["cache_diagnosis"]["returncode"] = 3
+        result = assess(cur=cur)
+        self.assertIn("P1_ASSET_AUDIT_NOT_READY", result["issues"])
+        self.assertIn("P1_CURRENT_CHECKPOINT_REVISION_UNAVAILABLE", result["issues"])
+
+    def test_actual_checkpoint_revision_mismatch_is_reported_as_drift(self):
+        cur = report()
+        diag = json.loads(cur["checks"]["cache_diagnosis"]["stdout"])
+        diag["wizard_audit"]["revision"] = "e" * 40
+        cur["checks"]["cache_diagnosis"]["stdout"] = json.dumps(diag)
+        result = assess(cur=cur)
+        self.assertIn("P1_RECEIPT_CHECKPOINT_REVISION_DRIFT", result["issues"])
+        self.assertNotIn("P1_CURRENT_CHECKPOINT_REVISION_UNAVAILABLE", result["issues"])
 
     def test_historical_rc3_without_raw_stdout_blocks(self):
         old = report()
