@@ -2,8 +2,9 @@
 
 P2 completion MUST NOT launch P3. Once a separately approved P3 begins,
 the intended order is: 27B active -> Flash-Next active -> finish P1
-remediation/benchmark -> 27B active. No persistent switch executor is
-implemented here; no plan ID is issued, and no GPU or Docker mutation.
+remediation/benchmark -> 27B active. This sequence-only interface never
+issues an executable plan ID or mutates GPU/Docker. Separate stage A/B/C
+source adapters exist, but their real DGX transitions remain unqualified.
 """
 from __future__ import annotations
 
@@ -84,6 +85,13 @@ def plan(*, receipt_reader: Callable[..., tuple[dict | None, str | None]] = late
         "source_stage": "P2", "next_stage": "P3",
         "p3_entries_require_new_explicit_approval": True,
         "permanent_switch_executor_ready": False,
+        "persistent_switch_source_implemented": True,
+        "persistent_switch_dgx_qualified": False,
+        "stage_plan_commands": [
+            "./wizard.sh switch flash-next-27b stage-a --plan --json",
+            "./wizard.sh switch flash-next-27b stage-b --plan --json",
+            "./wizard.sh switch flash-next-27b stage-c --plan --json",
+        ],
         "p1_remediation_and_rebenchmark_required": True,
         "phases": list(PHASES),
         "p1_open_checks": list(P1_OPEN_CHECKS),
@@ -91,7 +99,9 @@ def plan(*, receipt_reader: Callable[..., tuple[dict | None, str | None]] = late
         "notice": ("P2 completion is a stop point, never an automatic P3 trigger. "
                    "Old two-roundtrip script is retired. The sequence is "
                    "27B->Flash-Next, P1 gap closure and benchmark, then 27B. "
-                   "No persistent switch executor or live service operation is authorized."),
+                   "Stage A/B/C source adapters exist but are not DGX-qualified. "
+                   "This sequence is never execution authorization; every live "
+                   "stage requires its own fresh exact plan and downtime approval."),
     }
 
 
