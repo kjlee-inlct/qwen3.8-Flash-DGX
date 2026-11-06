@@ -1,3 +1,15 @@
+## 2026-11-06 — Conditional switch approval NOT MET; finish read-only P1 evidence review first
+
+- [x] Check actual P1 historical evidence before P3-A: 2026-11-05 `verify=PASS` for baseline+extended completion/chat/tools/vision; `benchmark=PASS` bounded, original Flash source/Hybrid ready.
+- [ ] Review actual prior local P1 benchmark JSON under `~/.local/state/blazux-wizard/p1/` and capture numerical TTFT, latency and usage-backed tokens/sec; historical summary had no numbers. **Do not rerun GPU benchmark merely to invent missing evidence.**
+- [ ] Inspect actual read-only `doctor`/ `inventory-plan` JSON and earlier raw report, distinguish benign active `qwen38-flash`/port :8000 collision from Docker/socket/disk/cache observation failures. Exit 3 alone is not a fault diagnosis nor proof of benign collision. `bash scripts/temporary/p1-post-download.sh --inspect-only` captures these checks without GPU inference or service mutation; review output before any change.
+- [x] Fix incompatible `P3-C` source gate that required both raw launch preflights to exit zero while the original model is already running. Only accept both rc3 under exact raw parsed/no-error same Flash-Next source-image and port ownership conditions. New negative tests forbid missing JSON, errors, wrong image/port or rc0 shortcut. [CI 418/418 PASS](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42172127412).
+- [ ] Treat operator's "**if no P1 outstanding, approve 27B**" as condition **currently NOT met**, NOT authorization for P3-A `--execute` or Flash downtime. No model change, PR merge, or auto progression.
+- [ ] Preserve D-034 separate P3 stage A, B, post-B P1 verify/numerical rebenchmark, C order. Any P1 check now cannot replace genuine post-B receipts. Require fresh explicit authorization and current exact P3-A plan after a reviewed safe boundary.
+- [ ] Preserve Draft PR, checkpoint/image/container, and :8000; no auto GPU benchmark or file cleanup.
+
+---
+
 ## 2026-11-06 — Source hardening/CPU 413 PASS; P3-A runtime requires new explicit approval
 
 - [x] Operator-supplied real DGX `sequence --plan` P2 receipt and P3-A read-only plan READY recorded below, including exact 14:40 KST expiry; **NOT_EXECUTED**.
