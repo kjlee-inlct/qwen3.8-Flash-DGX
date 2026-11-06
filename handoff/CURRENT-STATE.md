@@ -1,3 +1,13 @@
+## 2026-11-06 — Conditional P3-A consent NOT MET: P1 missing metrics/rc3 evidence; 418/418 CPU PASS for guard correction
+
+User requested P1 remaining-work inspection before any P3-A Flash→27B interruption and explicitly granted **conditional** approval only if no P1 work remains. Latest recorded P1 actual DGX on 2026-11-05 has `verify=PASS`, baseline+extended `PASS`, default_completion/chat/tools/vision `PASS`, `benchmark=PASS`, Flash image/source/Hybrid ready; **P1 numeric TTFT/latency/throughput values have never been shared or independently reviewed, doctor and inventory-plan rc=3 raw reasons unexamined, and required post-B P1 rerun NOT_RUN**. Condition is not met. P3-A NOT_RUN, no new service-change approval; original Flash service retained.
+
+Source audit shows both `wizard/00-doctor.sh` and `wizard/10-plan.sh` delegate to `scripts.manager.inventory`; its CLI returns 3 when `collision_free=false`. When the expected `qwen38-flash` is already running on :8000, collision is expected even if inventory's `status=PASS` and `errors=[]`. Previous post-B P1 gate required both return codes zero, contradictory to active source service. Corrected to accept only raw-proven exact owned active Flash collision (both rc3, parsed doctor+inventory JSON with no inventory errors, correct image/name/API port/launch preview), not merely any rc3; genuine read errors or foreign containers fail closed. **Historic raw rc3 cause still UNKNOWN**, so it remains open. New post-B actual P1 verify/benchmark/diagnosis receipt requirement unchanged.
+
+Source commit `26a69507983dbcb2a7ab4c569f9d8baa6162e25c`: [push 42172119698](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42172119698) and [Draft PR 42172127412](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42172127412) **SUCCESS**, 418/418 CPU tests over 19 groups. Actual DGX P3 A/B/C NOT_RUN, stage-A previous plan IDs must not be reused after expiry; Draft PR remains unmerged.
+
+---
+
 ## 2026-11-06 — P3 read-only plan UX and recovery collision guard corrected (413 CPU PASS)
 
 With actual DGX P3-A read-only READY evidence preserved below, SOURCE-only development continued without service interruption. Global `sequence --plan` now distinguishes staged switch code implemented from actual DGX qualification: `persistent_switch_source_implemented=true`, `persistent_switch_dgx_qualified=false`, and independent stage A/B/C read-only commands while retaining `status=BLOCKED`, no `plan_id` and `operations_enabled=false`. This corrects stale "no persistent switch executor" notice, without authorizing P3 entry or live execution.
