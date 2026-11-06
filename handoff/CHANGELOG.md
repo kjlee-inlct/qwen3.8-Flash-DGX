@@ -1,3 +1,9 @@
+## 2026-11-06 — P1 pre-A real DGX PASS; first persistent P3-A D-016 operator runner SOURCE tested
+
+User ran the fixed GitHub-tracked P1 pre-A script on actual DGX HEAD `834f823a76556a37a982e3dbf7f243db3edad6df` and supplied `PRE_A_P1_REVIEW_READY`, no issues; historical/current expected own Flash collision 2/2, original verify PASS and measured benchmark PASS (3 samples, mean 38.2968 tok/s). Original condition for P3-A now satisfied for **eligibility**. Added GitHub-tracked `p3-stage-a-operator.sh` Python wrapper: default read-only, separate `--execute` with TTY and exact typed stage A plan ID, downtime and P3 entry acknowledgment; canonical Wizard does actual stop→start→observe, wrapper verifies 27B live model/image independently and writes 0600 local report. Fake DGX tests cover wrong IDs, foreign service, missing P1, expired plan, no TTY, cancel, success postcheck and failure/no retry. D-034 B→Flash, full post-B P1 rebenchmark and C→27B remain separately approved steps; no P3 actual GPU run or GitHub PR merge here.
+
+---
+
 ## 2026-11-06 — Correct P1 pre-A cache diagnosis persisted JSON location (439 CPU PASS)
 
 Operator's real pre-A audit with both historical/current rc3 exact own-model collisions and P1 verify+numeric benchmark PASS returned `BLOCKED` on asset audit and revision drift. Found both arose because temporary script read console-only `cache_diagnosis` rather than persisted `checks.cache_diagnosis.stdout`. Fixed to reuse original JSON reader, classify unobservable revision separately from actual mismatch, and fake-DGX test actual persisted schema and negative evidence paths. [CI 439/439 PASS](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42176224898) on code `9adc9ab282a91c02e959dcb5c62f98527b556391`. No DGX model, GPU or :8000 mutation; await D-016 single script recheck after pull.
