@@ -1,3 +1,13 @@
+## D-044 / D-045 / D-046 — 2026-11-07 — Operator UX and model-centric evidence
+
+**D-044 (evidence path):** New NVIDIA Flash-Next Wizard execution receipts are stored under Git-ignored `<repo>/reports/models/qwen3.8-flash-next/`, named by the *served model ID* rather than an unmemorable stage code. Keep unique append-only JSON (0600; directory 0700). Do not alter historical `~/.local/state/blazux-wizard/p1/` receipts. P3 stage-C evidence gate reads both roots and evaluates newest finished UTC action receipts, including FAIL; no historical PASS masking. P2/P3 state/locks/reports require their own safety-qualified migration, NOT moved now.
+
+**D-045 (approval UX):** Model menu already selected the action; direct guarded entry performs only that action. Show `Type exactly [<current SHA>]` like P3; empty/wrong cancels, fresh plan revalidated immediately before execution. Show human-readable preflight/Verify outcomes/Benchmark metrics and evidence path. Keep machine JSON/CLI and exact-plan SHA safety boundaries intact. User-facing labels identify model/action, not P1/P2/P3 implementation phases.
+
+**D-046 (source versus runtime):** User-provided 2026-11-06 post-B Flash Verify + Benchmark are *actual* PASS; their distinct approvals and real bounded measurements supersede prior `NOT_RUN` positions. New GitHub source UX changes and CPU-only CI are **not** DGX validation. P3-C authorization requires independent downtime approval even when the evidence prerequisite test passes. No unapproved GPU run or service modification, no automatic PR merge.
+
+---
+
 ## D-043 — 2026-11-07 — POST-B P1 diagnostic is append-only; final P3-C remains separately approved
 
 Use D-016 GitHub-tracked `scripts/temporary/p1-post-b-audit.sh` as the next **read-only** DGX action after CPU CI PASS and operator fast-forward pull. It reuses the P1 inspect-only collection and verifies actual P3-B receipt + current Flash service/API/source image, both exact doctor/inventory launch preflight raw JSON outputs (benign own Flash collision only), readiness of Verify/Benchmark plans and pinned original asset revision. Every attempt produces a new private 0600 `p1-diagnostics-<UTC>-<nonce>.json` outside Git/HF cache; no overwrites. P3-C gate assesses the newest diagnostic attempt (including BLOCKED), with legacy fixed-name fallback, and still requires **separately approved actual post-B P1 Verify and measured numeric Benchmark** newer than B. Source tests are not DGX/GPU evidence and this audit conveys no GPU or P3-C authorization. On any mismatch stop; preserve caches/containers/images and unmerged Draft PR.
