@@ -45,7 +45,10 @@ def _actions_menu(model: str) -> None:
         doc = model_workflow(model)
         print("\n" + doc["title"] + " — actions (0 back)")
         for i, cap in enumerate(doc["actions"], 1):
-            print(f" {i:2}. {cap['action']:<11} [{cap['status']}]")
+            # Internal rollout identifiers belong in plans, not operator menus.
+            display = ("APPROVAL_REQUIRED" if cap["status"] == "GUARDED_P1"
+                       else cap["status"])
+            print(f" {i:2}. {cap['action']:<11} [{display}]")
         action = _choice(_input("Action (0 back): "), actions)
         if action is None:
             return
@@ -53,8 +56,18 @@ def _actions_menu(model: str) -> None:
             print("Unknown action; nothing executed.")
             continue
         capability = next(cap for cap in doc["actions"] if cap["action"] == action)
-        if capability["status"] in ("GUARDED_P1", "APPROVAL_REQUIRED"):
-            print("Operation uses the existing separate, exact-plan approval Wizard.")
+        if capability["status"] == "GUARDED_P1" and model == "flash-next":
+            # The operator already chose the action above: do not ask for it
+            # again inside the legacy P1 submenu. Execution stays in the
+            # existing exact-plan/rechecked-backend approval boundary.
+            if _input("Review current NVIDIA Flash-Next " + action
+                      + " plan for approval? [y/N]: ") != "y":
+                print("Cancelled.")
+                continue
+            from wizard.menus.models import flash_next
+            flash_next.run(["guided", "--for-action", action])
+        elif capability["status"] == "APPROVAL_REQUIRED":
+            print("Operation uses a separate exact-plan approval Wizard.")
             if _input("Open its guarded Wizard? [y/N]: ") != "y":
                 print("Cancelled.")
                 continue
