@@ -288,6 +288,19 @@ def main(argv: list[str] | None = None) -> int:
         report["evidence_file"] = persist(report)
         print(json.dumps(report, indent=2, sort_keys=True))
         return 3
+    # The human may take several minutes to type. Never submit an expired
+    # or changed plan after those inputs. A new hash needs new user input.
+    fresh_rc, refreshed = run_readonly([
+        "./wizard.sh", "switch", "flash-next-27b", "stage-a", "--plan", "--json"])
+    if (time.time() >= plan["expires_at_epoch_seconds"] - 15
+            or fresh_rc != 0
+            or refreshed.get("status") != "READY_TO_REQUEST_TRANSITION_APPROVAL"
+            or refreshed.get("plan_id") != plan["plan_id"]):
+        report["status"] = "BLOCKED"
+        report["issues"] = ["P3_A_PLAN_EXPIRED_OR_CHANGED_DURING_OPERATOR_INPUT"]
+        report["evidence_file"] = persist(report)
+        print(json.dumps(report, indent=2, sort_keys=True))
+        return 3
     # Only the canonical Wizard executor may perform service mutations.
     cmd = ["./wizard.sh", "switch", "flash-next-27b", "stage-a", "--execute",
            "--approve-plan", plan["plan_id"], "--ack-downtime", DOWNTIME_ACK,
