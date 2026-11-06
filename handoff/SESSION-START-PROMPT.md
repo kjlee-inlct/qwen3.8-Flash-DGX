@@ -1,3 +1,5 @@
+> **SUPERSEDING 2026-11-06 HANDOFF (read this first):** P2 NVIDIA 27B actual DGX benchmark **BENCH_PASS_RESTORED_VERIFIED** and Flash-Next recovery **LIVE_SERVICE_VERIFIED**; no further P2 GPU/download/build work. Stage P3 governed by D-034: separately approved Flash→27B (A) → separately approved 27B→Flash (B) → P1 rc=3 gap closure, functional re-verify and real measured Flash benchmark → separately approved final Flash→27B (C). Source P3 manual switch executor and P1 evidence gate are added, with CPU tests; P3 actual GPU service changes **NOT_RUN/NOT_QUALIFIED**. The older P1/P2/P3 roadmap below is historical where conflicting. Use [CURRENT-STATE](CURRENT-STATE.md), [DECISIONS](DECISIONS.md), [P3 source runbook](../docs/P3-PERSISTENT-SWITCH-SOURCE-20261106.md) and latest GitHub HEAD/CI. PR #1 Draft/unmerged; no GPU change, cleanup or merge without separate authorization.
+
 # New conversation starter — copy as a single prompt
 
 아래 저장소의 **레시피/Wizard/서비스 관리 개발**을 이전 작업에서 이어서 수행해주세요.
