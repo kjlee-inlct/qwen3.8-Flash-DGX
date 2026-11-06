@@ -1,3 +1,11 @@
+## 2026-11-06 — Correct persisted P1 cache diagnosis schema in pre-A wrapper
+
+Real operator `bash scripts/temporary/p1-pre-a-readiness.sh` at prior HEAD `3a594193` reported P1 Verify PASS, benchmark PASS with real 3-sample numerical metrics, and historic/current expected Flash collision on :8000. It nevertheless returned `P1_ASSET_AUDIT_NOT_READY` and `P1_RECEIPT_CHECKPOINT_REVISION_DRIFT`. **Source bug:** the stored `p1-post-download.sh --inspect-only` `result.json` contains `checks.cache_diagnosis.stdout` (full JSON as captured command output), **not** the ephemeral console-summary field `cache_diagnosis`. `p1-pre-a-readiness.py` read the latter and treated the absent revision as actual drift.
+
+Fixed to use canonical `cache_diagnosis_summary(current["checks"])`; missing or corrupt diagnosis now returns `P1_CURRENT_CHECKPOINT_REVISION_UNAVAILABLE` + asset audit not ready, **without inventing drift**. Genuine mismatch of sourced snapshot revision vs P1 Wizard receipt still blocks. Real-schema CPU tests plus missing/corrupt and true-drift cases: [push CI 42176219970](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42176219970) / [PR CI 42176224898](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42176224898) **439/439 PASS** on code commit `9adc9ab282a91c02e959dcb5c62f98527b556391`. Actual DGX validation still needed. D-016 remains unchanged: GitHub commit/CI first, operator pulls `feature/recipe-wizard-handoff`, then runs **one** tracked wrapper; no pasted Python and no automatic model switching.
+
+---
+
 > **Source/CPU acceptance for new pre-A wrapper, 2026-11-06:** tested code SHA `75d22ce4303736ee84563a0f388a978379e4f228`, [push CI 42173798547](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42173798547) and [PR CI 42173805888](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42173805888) **SUCCESS — 435/435 CPU tests, 19 groups**. This includes exact original P1 Wizard identity receipt contract (`identity.health=PASS`, `identity.models` contains the served ID), not a fictitious `identity.status`. Wrapper actual DGX execution **NOT_RUN**; CI never inspected private operator report bytes.
 
 ## 2026-11-06 — P1 pre-P3-A evidence reconciliation: tracked wrapper after user workflow correction
