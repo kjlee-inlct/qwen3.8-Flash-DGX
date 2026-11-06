@@ -1,3 +1,14 @@
+## 2026-11-06 — Actual P3-A DGX read-only plan READY; next gate requires explicit downtime approval
+
+- [x] Operator supplied real `./wizard.sh service manager status --json`: Flash-Next `LIVE_SERVICE_VERIFIED` on :8000, exact API ID `qwen3.8-flash-next`, `issues=[]`; **no mutation** and GPU/process exclusivity not independently qualified.
+- [x] Operator supplied real `./wizard.sh switch flash-next-27b sequence --plan --json`: P2 successful private receipt SHA `80f109dbd7c9746065a36c8376f3ff440d1b0d58eee2024fcfad3f1733a82dc9` observed, P3 separate-entry `BLOCKED` expected, not a failure.
+- [x] Operator supplied real `./wizard.sh switch flash-next-27b stage-a --plan --json`: `READY_TO_REQUEST_TRANSITION_APPROVAL`, `issues=[]`, source exact ID `90f39a4dbccd0b5f97efa0ff163c61402ddace3dd3cb4da986a91dff7eb45ed5`, plan `79be6bf05cb02306ec9155ade317e06c457238de427417ebab8946e35449247a` expires 2026-11-06 **14:40 KST**. **Do not reuse this plan after expiry.**
+- [ ] Request **separate explicit P3-A maintenance-window / downtime authorization**. Only then regenerate a fresh stage-A `--plan` on the actual DGX, independently review exact source/target IDs, foreign GPU consumers, current port ownership, fallback, and approval ID. No generic `continue` counts as authorization.
+- [ ] Only after scoped explicit authorization execute stage A and independently verify `qwen3.8-27b` ACTIVE using fresh Manifest/API and stage-A local journal. Pause after A; stage B needs a *new* approval. P1 post-B remediation and final C remain blocked until preceding receipts exist.
+- [ ] Do not merge Draft PR, touch model/cache, auto-advance P3 or restart the current service as a side effect of GitHub/docs/source activity.
+
+---
+
 ## 2026-11-06 — P3 SOURCE/CPU gates ready; hold at operational approval boundary
 
 - [x] P2 completed and recorded as `BENCH_PASS_RESTORED_VERIFIED`, original Flash-Next restored/verified. Do not run again.
