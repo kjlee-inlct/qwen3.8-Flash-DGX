@@ -13,11 +13,12 @@ import math
 from pathlib import Path
 from typing import Any
 
-P1_ROOT = Path.home() / ".local/state/blazux-wizard/p1"
-P3_ROOT = Path.home() / ".local/state/blazux-wizard/p3"
 FLASH_REPO = "nvidia/Qwen3.8-Flash-Next-NVFP4"
 FLASH_ID = "qwen3.8-flash-next"
 FLASH_REVISION = "fc694b54fb0174e0913e6adf86691ef85a4ead47"
+P1_ROOT = Path(__file__).resolve().parents[2] / "reports" / "models" / FLASH_ID
+LEGACY_P1_ROOT = Path.home() / ".local/state/blazux-wizard/p1"
+P3_ROOT = Path.home() / ".local/state/blazux-wizard/p3"
 
 
 def _time(value: Any) -> datetime:
@@ -91,7 +92,8 @@ def _diagnostic_checks_qualify(doc: dict[str, Any], flash_image: str) -> bool:
 
 
 def assess_p1(*, stage_b: dict[str, Any], flash_image: str,
-              p1_root: Path = P1_ROOT, p3_root: Path = P3_ROOT) -> dict[str, Any]:
+              p1_root: Path = P1_ROOT, p3_root: Path = P3_ROOT,
+              legacy_p1_root: Path | None = None) -> dict[str, Any]:
     """Fail closed until both real P1 actions and rc=3 disposition exist.
 
     P1 verify/benchmark evidence must be newer than successful P3 stage B,
@@ -99,6 +101,13 @@ def assess_p1(*, stage_b: dict[str, Any], flash_image: str,
     """
     issues = []
     hashes: dict[str, str] = {}
+    # Keep old immutable receipts readable; never copy, rewrite or delete them.
+    # When tests inject an alternate p1_root, do not read the operator's home.
+    roots = [p1_root]
+    if legacy_p1_root is not None:
+        roots.append(legacy_p1_root)
+    elif p1_root == P1_ROOT:
+        roots.append(LEGACY_P1_ROOT)
     try:
         cutoff = _time(stage_b["finished_at_utc"])
     except (KeyError, ValueError, TypeError):
@@ -106,10 +115,14 @@ def assess_p1(*, stage_b: dict[str, Any], flash_image: str,
                 "evidence_hashes": hashes}
     for action in ("verify", "benchmark"):
         try:
-            files = sorted(p1_root.glob("*.json"), reverse=True)
+            # Choose the newest attempt across both locations, even when its
+            # result is FAIL: older successes must never mask newer failures.
+            files = sorted(
+                ((path, root) for root in roots for path in root.glob("*.json")),
+                key=lambda item: item[0].name, reverse=True)
             records = []
-            for path in files[:256]:
-                doc, digest = _read_private(path, p1_root)
+            for path, root in files[:256]:
+                doc, digest = _read_private(path, root)
                 if doc.get("action") == action:
                     records.append((doc, digest))
             if not records:
