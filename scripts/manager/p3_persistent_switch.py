@@ -387,6 +387,25 @@ def execute(stage: str, plan_id: str | None, ack: str | None,
                 time.sleep(1)
             else:
                 raise RuntimeError("PORT_8000_NOT_RELEASED")
+            # Re-observe before mutating another Docker object. A free name
+            # or a preserved target ID from the plan is never sufficient on
+            # its own at execution time.
+            names_before_start = _docker_names(run)
+            if stage == "a":
+                if NAMES[target] in names_before_start:
+                    raise RuntimeError("P3_A_TARGET_NAME_BECAME_OCCUPIED")
+            else:
+                if NAMES[target] not in names_before_start:
+                    raise RuntimeError("PRESERVED_TARGET_DISAPPEARED")
+                target_before = inspect(NAMES[target])
+                if _container_checks(
+                        target_before, name=NAMES[target], image=target_image,
+                        expected_id=fresh["target_container_id"], running=False):
+                    raise RuntimeError("PRESERVED_TARGET_CHANGED_BEFORE_START")
+                if (target == "27b" and
+                        ((target_before.get("Config") or {}).get("Labels") or {}).get(LABEL)
+                        != fresh.get("p3_a_plan_id")):
+                    raise RuntimeError("P3_TARGET_27B_PROVENANCE_CHANGED")
             _record(root, "NEW_STARTING", source, target, None, plan_id)
             phase = "NEW_STARTING"
             if stage == "a":
