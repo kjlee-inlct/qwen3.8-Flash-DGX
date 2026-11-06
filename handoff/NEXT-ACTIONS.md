@@ -17,7 +17,7 @@
 - [x] Reaffirm D-016: temporary DGX logic goes through tracked `scripts/temporary/p1-pre-a-readiness.sh` → GitHub commit/CPU CI → operator `git pull --ff-only` → one wrapper execution → local private JSON evidence → reviewed handoff. No ad hoc pasted shell/Python code; script never does git pull, GPU tests, Docker mutation or model switch.
 - [ ] Operator runs `bash scripts/temporary/p1-pre-a-readiness.sh` **after** CI and clean fast-forward pull. It reconciles historic 2026-11-05 and latest current 2026-11-06 doctor/inventory raw stdout, verifies current Flash image+API and original P1 functional/numeric receipts. If past/current reports are missing, use a new separately approved/read-only inspection report, not fabricated evidence. Return the small JSON.
 - [ ] Check whether raw historical doctor/inventory rc3 was only expected own `qwen38-flash` / :8000 occupancy with `status=PASS`, `errors=[]`. If not, diagnose actual read failure and keep P3-A blocked. If pre-A baseline accepted, re-evaluate the operator's **conditional** P3-A downtime approval with a newly generated short-lived plan. No automatic stage execute.
-- [ ] Post-B P1 functional+nonnumeric? **Numeric** full benchmark and reviewed diagnostic `p1-diagnostics.json` still required by D-034 before final stage C. No initial P1 result substitutes for actual post-B proof.
+- [ ] Post-B P1 functional verification, **numeric** full benchmark and reviewed diagnostic `p1-diagnostics.json` are still required by D-034 before final stage C. No initial P1 result substitutes for actual post-B proof.
 - [ ] Draft PR #1 stays unmerged, Flash-Next host :8000 unchanged, no GPU/daemon mutation and no cleanup.
 
 ---
