@@ -1,3 +1,15 @@
+## 2026-11-06 — Actual DGX P2 benchmark PASS (operator-supplied, supersedes earlier plan-only status)
+
+**P2 COMPLETED within the approved bounded trial scope.** Operator-provided DGX execution output, not independent access to the private report bytes: `BENCH_PASS_RESTORED_VERIFIED`, executed=true, target API ready=true, inference=true, benchmark 3/3 streaming requests (64 max output tokens, concurrency=1, seed=1234), original Flash-Next `RESTORED` without issues, and fresh Wizard post-restore `LIVE_SERVICE_VERIFIED` for `qwen3.8-flash-next`. Original Docker image ID `sha256:9479fc92a9244fcf137afb36ed778e07495e29663a81db193736fcaa1f15e137`. This **supersedes older sections below saying P2 benchmark NOT_RUN**; do not repeat P2/download/build.
+
+Actual client metrics supplied: TTFT P50=0.179349s, P95=28.977990s; E2E latency P50=5.818283s, P95=34.609889s; mean E2E throughput=7.9002 tok/s; mean **client decode proxy**=11.1801 tok/s; mean **prompt-ingest proxy**=246.2744 tok/s. Per-request TTFT 32.177839/0.179349/0.178962s; latency 37.808956/5.818283/5.813945s, each 64 completion tokens. First-request cold overhead hypothesis is NOT confirmed. GPU memory/peak unavailable, engine decode/prefill throughput unmeasured, no extended concurrency/vision/tools acceptance for 27B.
+
+DGX private evidence paths: `/home/inlc/.local/state/blazux-wizard/p2/20261106T042642Z-0cacd3f29370.benchmark.json`, `/home/inlc/.local/state/blazux-wizard/p2/20261106T042642Z-0cacd3f29370.json`, `/home/inlc/.local/state/blazux-wizard/p2/20261106T042642Z-0cacd3f29370.target.log`. These are operator-reported paths, not contents independently read by GitHub tools. Source revision `482ca0f3832238542f8f5295dde86b5f22711d80`.
+
+**P2 STAGE CLOSED. P3 NOT STARTED** and not authorized for live changes. D-034 manual order: independent approval Flash-Next→27B (A), independent 27B→Flash-Next (B), resolve P1 doctor/inventory-plan rc=3 and functional/TTFT/tokens/sec evidence on Flash-Next, then independent final Flash-Next→27B (C); expected final 27B active. Old `roundtrip` executor is retired. Source-only P3 engineering is permissible but no GPU/service mutation, no auto progression, no PR merge.
+
+---
+
 ## 2026-11-06 — REVISED P3 MANUAL sequence; P2 must STOP, never auto enter P3
 
 User decision D-034 supersedes previous P3 two-cycle roundtrip. **P2 benchmark still NOT RUN** on DGX; previous latest actual DGX only `--plan READY_TO_REQUEST_TRIAL_APPROVAL` with `issues=[]`, and prior first GPU smoke `PASS_RESTORED` plus Flash-Next `LIVE_SERVICE_VERIFIED`. No change to live model. After separately approved actual P2 measured PASS, **terminate P2 workflow** and wait for explicit P3 instruction and a new separate scoped approval.
