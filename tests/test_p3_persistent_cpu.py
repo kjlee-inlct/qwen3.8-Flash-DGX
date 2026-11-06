@@ -355,6 +355,7 @@ class P1GateCPU(unittest.TestCase):
         common = {"executed": True, "approval": "explicit_plan_id",
                   "status": "PASS", "model_repo": "nvidia/Qwen3.8-Flash-Next-NVFP4",
                   "served_model": "qwen3.8-flash-next", "image_id": IMAGE,
+                  "model_revision": "fc694b54fb0174e0913e6adf86691ef85a4ead47",
                   "finished_at_utc": p1_finished}
         verify = {"action": "verify", **common,
                   "result": {"status": "PASS", "identity": {"health": "PASS", "models": ["qwen3.8-flash-next"]},
@@ -411,6 +412,42 @@ class P1GateCPU(unittest.TestCase):
                                flash_image=IMAGE, p1_root=p1, p3_root=p3root)
         self.assertEqual(status["status"], "BLOCKED")
         self.assertIn("P1_FUNCTIONAL_PROBES_INCOMPLETE", status["issues"])
+
+    def test_nan_throughput_and_missing_revision_fail_closed(self):
+        with tempfile.TemporaryDirectory() as directory:
+            p1, p3root = self._positive_p1_fixture(Path(directory) / "p1",
+                                                    benchmark_tokens_per_sec=float("nan"))
+            status = assess_p1(stage_b={"finished_at_utc": "2026-11-06T06:00:00+00:00"},
+                               flash_image=IMAGE, p1_root=p1, p3_root=p3root)
+            self.assertIn("P1_ACTUAL_BENCHMARK_METRICS_INCOMPLETE", status["issues"])
+            receipt_path = p1 / "verify.json"
+            doc = json.loads(receipt_path.read_text())
+            doc.pop("model_revision")
+            receipt_path.write_text(json.dumps(doc))
+            status = assess_p1(stage_b={"finished_at_utc": "2026-11-06T06:00:00+00:00"},
+                               flash_image=IMAGE, p1_root=p1, p3_root=p3root)
+            self.assertIn("P1_VERIFY_RECEIPT_UNQUALIFIED", status["issues"])
+
+    def test_latest_immutable_diagnostics_must_not_fall_back_to_old_pass(self):
+        with tempfile.TemporaryDirectory() as directory:
+            p1, p3root = self._positive_p1_fixture(Path(directory) / "p1")
+            old = p3root / "p1-diagnostics.json"
+            newest = p3root / "p1-diagnostics-20261107T000000Z-aaa.json"
+            newest.write_text(json.dumps({"status": "BLOCKED", "finished_at_utc":
+                                          "2026-11-07T00:00:00Z"}))
+            newest.chmod(0o600)
+            status = assess_p1(stage_b={"finished_at_utc": "2026-11-06T06:00:00+00:00"},
+                               flash_image=IMAGE, p1_root=p1, p3_root=p3root)
+            self.assertEqual(status["status"], "BLOCKED")
+            self.assertIn("P1_HISTORIC_RC3_DISPOSITION_NOT_VERIFIED", status["issues"])
+            newest.unlink()
+            new_pass = p3root / "p1-diagnostics-20261107T000001Z-bbb.json"
+            new_pass.write_bytes(old.read_bytes())
+            new_pass.chmod(0o600)
+            old.unlink()
+            status = assess_p1(stage_b={"finished_at_utc": "2026-11-06T06:00:00+00:00"},
+                               flash_image=IMAGE, p1_root=p1, p3_root=p3root)
+            self.assertEqual(status["status"], "PASS", status["issues"])
 
     def test_missing_numerical_throughput_blocks_c(self):
         with tempfile.TemporaryDirectory() as directory:

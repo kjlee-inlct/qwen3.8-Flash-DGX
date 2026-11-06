@@ -9,6 +9,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 import hashlib
 import json
+import math
 from pathlib import Path
 from typing import Any
 
@@ -16,6 +17,7 @@ P1_ROOT = Path.home() / ".local/state/blazux-wizard/p1"
 P3_ROOT = Path.home() / ".local/state/blazux-wizard/p3"
 FLASH_REPO = "nvidia/Qwen3.8-Flash-Next-NVFP4"
 FLASH_ID = "qwen3.8-flash-next"
+FLASH_REVISION = "fc694b54fb0174e0913e6adf86691ef85a4ead47"
 
 
 def _time(value: Any) -> datetime:
@@ -119,6 +121,7 @@ def assess_p1(*, stage_b: dict[str, Any], flash_image: str,
                     or doc.get("model_repo") != FLASH_REPO
                     or doc.get("served_model") != FLASH_ID
                     or doc.get("image_id") != flash_image
+                    or doc.get("model_revision") != FLASH_REVISION
                     or _time(doc.get("finished_at_utc")) <= cutoff):
                 issues.append("P1_" + action.upper() + "_RECEIPT_UNQUALIFIED")
                 continue
@@ -152,12 +155,14 @@ def assess_p1(*, stage_b: dict[str, Any], flash_image: str,
                 samples = bench.get("samples") or []
                 if (bench.get("status") != "PASS" or len(samples) < 3
                         or not isinstance(metrics, dict)
-                        or any(not isinstance(metrics.get(key), (int, float))
+                        or any(type(metrics.get(key)) not in (int, float)
+                               or not math.isfinite(metrics[key])
                                or metrics[key] <= 0 for key in
                                ("latency_p50_sec", "ttft_p50_sec", "mean_tokens_per_sec"))
                         or not all((isinstance(s.get("completion_tokens"), int)
                                     and s["completion_tokens"] > 0
-                                    and isinstance(s.get("ttft_sec"), (float, int))
+                                    and type(s.get("ttft_sec")) in (float, int)
+                                    and math.isfinite(s["ttft_sec"])
                                     and s["ttft_sec"] >= 0) for s in samples)):
                     issues.append("P1_ACTUAL_BENCHMARK_METRICS_INCOMPLETE")
                     continue
