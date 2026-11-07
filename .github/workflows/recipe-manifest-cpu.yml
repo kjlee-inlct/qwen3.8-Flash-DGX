@@ -23,7 +23,9 @@ on:
       - 'tests/test_wizard_quickstart_cpu.py'
       - 'tests/test_wizard_workflow_cpu.py'
       - 'tests/test_wizard_roadmap_cpu.py'
+      - 'tests/test_operational_switch_cpu.py'
       - 'tests/test_wizard_operator_ux_cpu.py'
+      - 'tests/test_operational_switch_cpu.py'
       - 'tests/test_evidence_catalog_cpu.py'
       - 'tests/test_benchmark_publication_cpu.py'
       - 'benchmarks/published/**'
@@ -108,6 +110,7 @@ jobs:
           python -m unittest discover -s tests -p 'test_wizard_quickstart_cpu.py' -v
           python -m unittest discover -s tests -p 'test_wizard_workflow_cpu.py' -v
           python -m unittest discover -s tests -p 'test_wizard_roadmap_cpu.py' -v
+          python -m unittest discover -s tests -p 'test_operational_switch_cpu.py' -v
           python -m unittest discover -s tests -p 'test_wizard_operator_ux_cpu.py' -v
           python -m unittest discover -s tests -p 'test_evidence_catalog_cpu.py' -v
           python -m unittest discover -s tests -p 'test_benchmark_publication_cpu.py' -v
