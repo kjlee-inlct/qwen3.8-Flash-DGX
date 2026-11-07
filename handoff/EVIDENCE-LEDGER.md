@@ -1,3 +1,15 @@
+## E-20261107-OPERATING-FLASH-POSTCHECK-AND-REVERSE-READINESS — REAL DGX, NO NEW SWITCH
+
+After the **actual first ordinary 27B→Flash PASS** the operator provided independent read-only outputs:
+
+`service manager status --json`: `status=LIVE_SERVICE_VERIFIED`, active `qwen38-flash`, `observed_model=flash-next`, only `qwen3.8-flash-next` served, `API_IDENTITY_CONFIRMED`, 8 checks true, `:8000`, `issues=[]`. `gpu_exclusivity_verified=false` denotes the read-only service checker did not establish GPU exclusivity, not that a foreign GPU user was found.
+
+`operational_audit --json`: `status=VERIFIED`, `phase=COMMITTED`, `event_count=7`, `issues=[]`, final SHA `575197bd7fedcadf39751da4becdf7ca052943f37115b33b9398d736fa43a66a`. This independently confirms full event/snapshot/receipt consistency after first physical switch.
+
+`operational-switch-acceptance.sh --target 27b --plan --json`: `READY_FOR_SEPARATE_TRIAL_APPROVAL`, source `flash-next`, target `27b`, `qwen3.8-27b` served ID, `issues=[]`, `executed=false`, `approval_accepted=false`, `production_release=false`, ephemeral SHA prefix `c2fed6bf`, `seconds_remaining=276` at capture. **No reverse GPU action has been attempted in this evidence.** Plans expire; do not use captured SHA as a future approval. Last live model = Flash-Next. Real reverse and failure-injection/rollback acceptance still outstanding.
+
+---
+
 ## E-20261107-OPERATING-27B-TO-FLASH-REAL-DGX-PASS — first recurring Wizard trial
 
 **Actual DGX source `4054eb2` after fast-forward, operator console supplied in conversation:**
