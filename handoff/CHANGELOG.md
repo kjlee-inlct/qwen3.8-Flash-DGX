@@ -1,3 +1,9 @@
+## 2026-11-07 — Real DGX 27B curl verification PASS, formatting anomaly isolated
+
+User supplied successful actual localhost /health, single /v1/models identity and two chat-completion probes (direct raw request and tracked shell smoke); tracked script emitted `27B_CURL_SMOKE_PASS`. Recorded actual active 27B pinned NVIDIA revision, vLLM 0.32.0 and 26-token direct reply. Reply contains reasoning-like prose and literal `</think>` in `content` despite `reasoning=null`: distinguish healthy inference from failed exact-format compliance, no speculative server-side repair. Follow-up `FORMAT_PASS` / `FORMAT_DEVIATION` classifier and offline fake-curl tests source-only. Maintained Draft PR, 27B state, Flash preservation and unqualified general operating switch.
+
+---
+
 ## 2026-11-07 — Separate current 27B curl inference smoke from identity-only switch preview (source only)
 
 Added one-command non-disruptive localhost `curl` 27B smoke with explicit /health, /v1/models and one bounded /v1/chat/completions verification; Fake-CPU failure modes and CI; Wizard ordinary-switch hint; operating switch UX doc and permanent handoff updates. Does **not** enable ordinary switch dispatch, perform real DGX curl, repeat P3 A/B/C or alter Docker/GPU service state. Await operator's actual 27B smoke output.
