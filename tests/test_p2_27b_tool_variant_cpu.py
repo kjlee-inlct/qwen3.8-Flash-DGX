@@ -17,7 +17,8 @@ def fixtures():
         "State": {"Running": True},
         "Config": {"Cmd": ["/hf/hub/models--nvidia--Qwen3.8-27B-NVFP4/snapshots/"
                            + mod.REVISION,
-                           "--served-model-name", mod.SERVED]},
+                           "--served-model-name", mod.SERVED,
+                           "--quantization", "modelopt_mixed"]},
         "HostConfig": {"AutoRemove": False, "DeviceRequests": [{"Count": -1}],
                        "PortBindings": {"8000/tcp": [{"HostPort": "8000"}]}},
         "Mounts": [{"Destination": "/hf", "Source": "/protected/hf-cache",
@@ -39,7 +40,8 @@ def fixtures():
         "status": "LIVE_SERVICE_VERIFIED", "issues": [],
         "observed_model": "27b", "expected_served_id": mod.SERVED,
         "observed_model_ids": [mod.SERVED], "host_port": 8000,
-        "active_container": {"name": mod.SOURCE_CONTAINER},
+        "active_container": {"name": mod.SOURCE_CONTAINER,
+                             "image_id": "sha256:" + "b" * 64},
     }
     return {"source": source, "flash": flash, "webui": webui, "live": live,
             "all": [mod.SOURCE_CONTAINER, mod.FALLBACK_CONTAINER, "webui"],
@@ -118,6 +120,16 @@ class ProtectedVariantCPU(unittest.TestCase):
         f["live"]["observed_model_ids"] = ["qwen3.8-flash-next"]
         self.assertIn("PRESERVED_27B_LIVE_IDENTITY_NOT_VERIFIED",
                       preview(f)["issues"])
+
+    def test_live_image_drift_denied(self):
+        f = fixtures()
+        f["live"]["active_container"]["image_id"] = "sha256:" + "0" * 64
+        self.assertIn("LIVE_STATUS_DOCKER_IMAGE_ID_MISMATCH", preview(f)["issues"])
+
+    def test_modelopt_loader_drift_denied(self):
+        f = fixtures()
+        f["source"]["Config"]["Cmd"].remove("modelopt_mixed")
+        self.assertIn("PINNED_MODEL_OPT_MIXED_LOADER_MISMATCH", preview(f)["issues"])
 
     def test_original_container_not_running_denied(self):
         f = fixtures()
