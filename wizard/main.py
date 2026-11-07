@@ -1,4 +1,4 @@
-"""Domain-grouped Wizard router, preserving legacy P1-P7 CLI aliases."""
+"""Domain-grouped Wizard router, preserving legacy P1-P8 CLI aliases."""
 from __future__ import annotations
 
 import json
@@ -11,13 +11,13 @@ from wizard.menus import (
 USAGE = """Blazux Wizard (vLLM 0.32 only)
 
   ./wizard.sh                                simple model-first interactive menu\n  ./wizard.sh select 27b --json              read-only lifecycle selection plan\n  ./wizard.sh model choose flash-next --json same planner
-  ./wizard.sh list --json                    model/switch/storage/operations catalog\n  ./wizard.sh model list --installed --json   read-only pinned and legacy cache discovery\n  ./wizard.sh workflow 27b --json            full model lifecycle actions and gates\n  ./wizard.sh roadmap --json                 complete P1-P7 acceptance checklist\n  ./wizard.sh workflow 27b --for-action start --json  read-only action capability
+  ./wizard.sh list --json                    model/switch/storage/operations catalog\n  ./wizard.sh model list --installed --json   read-only pinned and legacy cache discovery\n  ./wizard.sh workflow 27b --json            full model lifecycle actions and gates\n  ./wizard.sh roadmap --json                 complete P1-P8 acceptance checklist\n  ./wizard.sh workflow 27b --for-action start --json  read-only action capability
   ./wizard.sh model flash-next status --json
   ./wizard.sh model 27b recipe-diff --json  normalized desired/observed read-only diff\n  ./wizard.sh model 27b recipe-diff --cache-source /host/hf-cache --json  compare observed bind path\n  ./wizard.sh model 27b lifecycle restart --plan --json  read-only recreate decision\n  ./wizard.sh model 27b lifecycle remove --plan --json  scoped removal preview (no execute)\n  ./wizard.sh model 27b plan --for-action prepare --json
   ./wizard.sh model orcarouter-flash-next status --json
   ./wizard.sh switch flash-next-27b plan --for-action switch \
     --from-model flash-next --to-model 27b --json
-  ./wizard.sh storage flash-next status --json
+  ./wizard.sh operations recovery-acceptance status --json  P8 fault/recovery/final signoff (source-only)\n  ./wizard.sh storage flash-next status --json
   ./wizard.sh operations system status --json
   ./wizard.sh service manager status --json   manifest + local API identity (read-only)\n  ./wizard.sh service manager health --json  read-only local API identity\n  ./wizard.sh service manager logs --json    bounded local log tail
   ./wizard.sh service manager plan --for-action restart --json
@@ -31,7 +31,7 @@ Compatibility (same handler, same safety boundaries):
   ./wizard.sh p1 status --json
   ./wizard.sh --stage p3 --action switch --from-model flash-next --to-model 27b --json
 
-P1/P2 guarded actions retain original approval. Routine production switching remains release-gated; only the dedicated one-switch acceptance trial can request fresh independent TTY downtime consent. P3 A/B/C are historical and MUST NOT be replayed.
+P1/P2 guarded actions retain original approval. Routine production switching remains release-gated; only the dedicated one-switch acceptance trial can request fresh independent TTY downtime consent. P3 A/B/C are historical and MUST NOT be replayed. P3-G bidirectional transfer PASS and P8 final fault/recovery acceptance remain distinct. P8 is source-only and not executable.
 """
 
 
@@ -133,7 +133,7 @@ def _advanced_menu() -> int:
 
 
 def interactive() -> int:
-    """Delegate all P1–P7 operator navigation to the complete TTY console."""
+    """Delegate all P1–P8 operator navigation to the complete TTY console."""
     from wizard.console import run
     return run()
 
