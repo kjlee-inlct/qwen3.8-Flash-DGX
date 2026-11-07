@@ -1,3 +1,11 @@
+## 2026-11-07 — P3-C NEEDS NO OPERATOR CLOCK GUESSING AFTER NEW SOURCE ROLLOVER FIX
+
+Two real DGX `scripts/temporary/p3-stage-c-operator.sh --execute` calls at 10:08:14/10:09:30 KST safely `BLOCKED` with `P3_C_INSUFFICIENT_TIME_FOR_THREE_APPROVALS`, `executed=false`, `execution_dispatched=false`, Flash still observed current. Both used canonical plan expiring 10:10 KST. **Do not interpret as Stage-C failure after dispatch, actual 27B start, or P1/P2 evidence failure.**
+
+Latest source adds <=150s **READ-ONLY** plan-window rollover handling to tracked P3-C operator `--execute`, preserving no wait for `--plan`. Requires real TTY and unchanged canonical readiness; polls only `service manager status --json` / `stage-c --plan --json` until NEW 64-char SHA with >=120s remains and every original immutable A/B/P2/post-B-P1/Flash/27B provenance check still passes. On drift/timeout/interrupt BLOCK. Before any live mutation, request **all three fresh exact human approvals**; no previous SHA or string reused. Canonical original Wizard switch core unchanged, owns Docker/lock/recovery. This is GitHub source/fake CPU change, **actual DGX P3-C still NOT_RUN**. On new conversation: verify HEAD and CI, operator clean git pull and separately authorized `bash scripts/temporary/p3-stage-c-operator.sh --execute`, then review real result; preserve Flash and 27B containers/weights/cache. See [runbook](../docs/P3-STAGE-C-FINAL-27B-OPERATOR-20261107.md).
+
+---
+
 ## 2026-11-07 — CURRENT P3-C HANDOFF (SUPERSEDES OLDER "P1 NOT_RUN"/"B PENDING")
 
 User completed actual P3-A and P3-B transitions, original Flash-Next remains live on :8000. Post-B P1 Verify and numeric 3-request Benchmark PASS, original doctor/inventory own-port collision diagnosed as benign. Actual DGX `./wizard.sh switch flash-next-27b stage-c --plan --json` is `READY_TO_REQUEST_TRANSITION_APPROVAL`, `issues=[]`, `p1_evidence.status=PASS`, `executed=false`, original Flash CID `90f39a4dbccd0b5f97efa0ff163c61402ddace3dd3cb4da986a91dff7eb45ed5`, preserved 27B CID `6d9ede0904c2b8e9e632d45b51aba4acbaf4502ae648da60cca77677948b0e2d`. Its short-lived plan SHA must not be reused. Optional `evidence migrate --guided` received literal `COPY` and returned `CANCELLED/copied=0`; import optional, independent of C.
