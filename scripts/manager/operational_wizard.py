@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import json
 import sys
+import time
 from typing import Any, Callable
 
 from scripts.manager import operational_executor
@@ -28,14 +29,17 @@ def guided(
     executor: Callable[..., tuple[int, dict]] = operational_executor.execute,
     input_fn: Callable[[str], str] = input,
     emit: Callable[[str], None] = print,
-    release_qualified: bool = False,
+    release_qualified: bool | None = None,
+    review_only: bool = False,
     require_tty: bool = True,
     is_tty: Callable[[], bool] = lambda: sys.stdin.isatty(),
+    clock: Callable[[], float] = time.time,
 ) -> int:
-    """Review first; only test-injected qualified flows can dispatch.
+    """Review first; production dispatch stays locked pending DGX acceptance.
 
-    CLI/TTY always calls with the default non-executable release gate.
-    Acceptance tests inject a mock executor and release_qualified=True.
+    Tests explicitly inject a fake executor, clock and release_qualified=True.
+    After a future independently reviewed source release, the normal menu
+    needs no hidden second flag to reach the same approval flow.
     """
     if target not in SUPPORTED:
         emit("BLOCKED: target is not a qualified Flash-Next/27B model.")
@@ -66,12 +70,27 @@ def guided(
     if token is None:
         emit("BLOCKED: independent execution approval cannot be constructed.")
         return 3
+    expiry = preview.get("expires_at_epoch_seconds")
+    try:
+        remaining = int(float(expiry) - clock())
+    except (TypeError, ValueError, OverflowError):
+        emit("BLOCKED: invalid plan expiry; no operating action.")
+        return 3
+    emit("  Seconds remaining in plan window: " + str(max(0, remaining)))
+    if review_only:
+        emit("REVIEW_ONLY: no approval solicited, no service changes.")
+        return 0
+    if release_qualified is None:
+        release_qualified = PRODUCTION_EXECUTION_RELEASED
     if not release_qualified or not PRODUCTION_EXECUTION_RELEASED:
-        # Neither a menu click nor a typed preview SHA can release a real GPU.
-        # The fake-CPU tests patch PRODUCTION_EXECUTION_RELEASED while injecting
-        # a mock executor; the production constant stays false.
+        # Source gate is not a runtime environment toggle. An earlier P3
+        # successful transition is not approval to release this new backend.
         emit("RELEASE_GATED: guided review works; live execution NOT QUALIFIED.")
         emit("  No Docker stop/start, no P3 replay, no new operating journal.")
+        return 3
+    if remaining < 120:
+        emit("BLOCKED: approval window has less than 120 seconds remaining.")
+        emit("  Refresh the review after the plan window rotates; old SHA is invalid.")
         return 3
     if require_tty and not is_tty():
         emit("BLOCKED: independent approval requires an interactive TTY.")
@@ -115,7 +134,7 @@ def guided(
 
 
 def main(argv: list[str] | None = None) -> int:
-    """Only a read-only guided review is currently exposed to users."""
+    """Read-only by default; --execute always requires a released TTY Wizard."""
     import argparse
     parser = argparse.ArgumentParser(description="Guided routine operating switch")
     parser.add_argument("--target", required=True)
@@ -124,12 +143,16 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--ack-downtime")
     parser.add_argument("--ack-target")
     args = parser.parse_args(argv)
-    if (args.execute or args.approve_plan is not None
-            or args.ack_downtime is not None or args.ack_target is not None):
+    # No approval secrets may be supplied non-interactively on argv.
+    if (args.approve_plan is not None or args.ack_downtime is not None
+            or args.ack_target is not None or
+            (args.execute and not PRODUCTION_EXECUTION_RELEASED)):
         print(json.dumps({"status": "RELEASE_GATED", "executed": False,
-                          "issues": ["GENERAL_OPERATING_SWITCH_NOT_DGX_QUALIFIED"]}))
+                          "issues": ["GENERAL_OPERATING_SWITCH_NOT_DGX_QUALIFIED"
+                                     if args.execute and not PRODUCTION_EXECUTION_RELEASED
+                                     else "NONINTERACTIVE_APPROVAL_REFUSED"]}))
         return 3
-    return guided(args.target)
+    return guided(args.target, review_only=not args.execute)
 
 
 if __name__ == "__main__":
