@@ -18,7 +18,7 @@ USAGE = """Blazux Wizard (vLLM 0.32 only)
   ./wizard.sh switch flash-next-27b plan --for-action switch \
     --from-model flash-next --to-model 27b --json
   ./wizard.sh operations recovery-acceptance status --json  P8 fault/recovery/final signoff (source-only)\n  ./wizard.sh storage flash-next status --json
-  ./wizard.sh storage flash-next inventory --json  P4-A read-only capacity and model state (NO DELETE)
+  ./wizard.sh storage flash-next inventory --json  P4-A read-only capacity and model state (NO DELETE)\n  ./wizard.sh storage flash-next dry-run --json  P4-B + P4-C combined review (NO DELETE)\n  ./wizard.sh p4 candidates --dry-run --json  P4-B only\n  ./wizard.sh p4 retire --dry-run --json  P4-C rehearsal only
   ./wizard.sh operations system status --json
   ./wizard.sh service manager status --json   manifest + local API identity (read-only)\n  ./wizard.sh service manager health --json  read-only local API identity\n  ./wizard.sh service manager logs --json    bounded local log tail
   ./wizard.sh service manager plan --for-action restart --json

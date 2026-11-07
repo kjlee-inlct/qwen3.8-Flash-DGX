@@ -1,4 +1,4 @@
-"""P4: inventory FIRST (P4-A read-only); retirement is not authorized."""
+"""P4-A inventory plus P4-B/C gated read-only review and rehearsal."""
 from __future__ import annotations
 
 import argparse
@@ -16,6 +16,48 @@ SPEC = Stage(
 
 
 def run(argv, *, as_json=False, dry_run=False):
+    # Legacy candidates/retire WITHOUT --dry-run still use the blocked stage.
+    # Any execution/approval attempt is denied before probing the host.
+    if argv and (argv[0] == "dry-run" or
+                 (argv[0] in ("candidates", "retire") and
+                  (dry_run or "--dry-run" in argv))):
+        from scripts.manager.p4_bc_dry_run import inspect_both, deny_execution
+        parser = argparse.ArgumentParser(prog="wizard p4 dry-run", allow_abbrev=False)
+        parser.add_argument("--json", action="store_true")
+        parser.add_argument("--dry-run", action="store_true")
+        parser.add_argument("--target")
+        parser.add_argument("--execute", action="store_true")
+        parser.add_argument("--approve-plan")
+        opts = parser.parse_args(argv[1:])
+        as_json = as_json or opts.json
+        if opts.execute or opts.approve_plan:
+            doc = deny_execution()
+            rc = 3
+        elif opts.target not in (None, "flash-next"):
+            doc = {
+                "status": "BLOCKED", "stage": "P4-B+C",
+                "issues": ["NO_EXACT_FLASH_NEXT_TARGET_SELECTED"],
+                "executed": False, "operations_enabled": False,
+                "approval_accepted": False, "plan_id": None,
+            }
+            rc = 3
+        else:
+            both = inspect_both()
+            selected = argv[0]
+            doc = (both if selected == "dry-run" else
+                   both["candidate_review"] if selected == "candidates"
+                   else both["cleanup_rehearsal"])
+            rc = 0 if doc["status"] in (
+                "READ_ONLY_DRY_RUN_PASS", "READ_ONLY_REVIEW_COMPLETE",
+                "DRY_RUN_COMPLETE_RELEASE_GATED",
+            ) else 3
+        if as_json:
+            print(json.dumps(doc, ensure_ascii=False, sort_keys=True, indent=2))
+        else:
+            print("P4-B/C: " + doc["status"] + " (READ ONLY, NO DELETE)")
+            for issue in doc.get("issues", []):
+                print("  - " + issue)
+        return rc
     # Only a direct P4-A inventory command may probe the host. A "plan" for
     # inventory is still blocked; --execute/--approve-plan never invoke probes.
     if argv and argv[0] == "inventory":

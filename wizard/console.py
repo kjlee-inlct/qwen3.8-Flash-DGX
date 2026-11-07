@@ -392,6 +392,8 @@ def _advanced_menu() -> None:
 def _stage_actions(module) -> None:
     spec = module.SPEC
     actions = list(spec.actions)
+    if spec.key == "p4":
+        actions.append("dry-run")
     if spec.key == "p3":
         # One-off P3 A/B/C acceptance is complete. Keep CLI compatibility,
         # but do not invite operators to replay those stages from a menu.
@@ -422,8 +424,10 @@ def _stage_actions(module) -> None:
                 print("Execution NOT initiated. Review plan and request independent downtime approval.")
             continue
         if spec.key == "p4" and selected == "inventory":
-            # P4-A is read-only and does not issue any retirement plan.
             module.run(["inventory"])
+            continue
+        if spec.key == "p4" and selected in ("candidates", "dry-run"):
+            module.run([selected, "--dry-run"])
             continue
         args = ["plan", "--for-action", selected]
         if spec.key in ("p3", "p6") and selected in ("switch", "rollback"):
