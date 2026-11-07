@@ -239,8 +239,10 @@ def deny_execution() -> dict:
     }
 
 
-def inspect_both(*, inventory_fn: Callable[[], dict] = inspect_p4_a) -> dict:
+def inspect_both(*, inventory_fn: Callable[[], dict] | None = None) -> dict:
     """Perform P4-A once; then P4-B and P4-C as pure in-memory transforms."""
+    if inventory_fn is None:
+        inventory_fn = inspect_p4_a
     try:
         inventory = inventory_fn()
     except (OSError, RuntimeError, ValueError, TypeError, KeyError):
