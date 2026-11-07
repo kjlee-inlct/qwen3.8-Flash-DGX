@@ -1,3 +1,15 @@
+## 2026-11-07 — NEXT DGX OPERATOR READ-ONLY HISTORY AND P3-C PLAN (NO TRANSITION)
+
+1. Confirm latest branch HEAD / GitHub CPU CI; `git pull --ff-only origin feature/recipe-wizard-handoff`. Do not merge PR #1, delete models, or restart/stop any service.
+2. In `./wizard.sh` select NVIDIA Flash-Next or NVIDIA 27B → option **4 Past Verify / Benchmark / transitions**, read-only. Or `./wizard.sh evidence list --model flash-next --kind benchmark` and `--model 27b --kind benchmark`. Validate original 2026-11-06 metrics and both A/B transitions visible without GPU activity.
+3. Optional separate evidence COPY step: `./wizard.sh evidence migrate --plan` first; if READY with no issues, `./wizard.sh evidence migrate --guided` and type current literal SHA. This copies only JSON report snapshots into Git-ignored project `reports/`, no legacy state/lock/journal relocation. Operator approval is separate; do NOT preapprove the copy.
+4. **P3-C NOW THE NEXT POTENTIAL GPU OPERATION** (not dependent on doing optional copy): on same updated DGX run `./wizard.sh switch flash-next-27b stage-c --plan --json` **ONLY**. Report `status`, `issues`, `p1_evidence.status`, `source_model`, `target_model` and current observed IDs. If BLOCKED, STOP. If READY with current exact SHA and valid P1 gate, require a separately scoped decision/Flash-Next downtime approval before building/running C guided operator procedure. P3-C has **not** been authorized or executed.
+5. Only after independently approved C may original Flash be stopped and original preserved 27B started on :8000 with actual API identity verification; preserve all HF assets, Flash image and rollback container. No automatic restore on successful final 27B.
+   
+Source contract: [model history/migration](../docs/MODEL-EVIDENCE-HISTORY-MIGRATION-20261107.md). Actual post-B P1 Verify+Benchmark already PASS; do not repeat inference merely because history or copy code changed. P2/P3 future writer redirection and control-state relocation require separate design/test and are **not** part of this source PR.
+
+---
+
 ## 2026-11-07 — CURRENT: P1 VERIFY + BENCHMARK ACTUAL PASS; UX CI + OPERATOR RECHECK
 
 Supersedes previous "P1 POST-B audit then Verify/Benchmark NOT_RUN" instructions. The operator provided immutable actual DGX evidence: original Flash-Next still active and served on :8000, two post-B diagnostics PASS for expected original-own-port rc3; Verify baseline/extended + all probes PASS and separately approved 3-request Benchmark PASS with **37.9527 tok/s, TTFT p50/p95 1.384594/1.779602 sec, latency p50/p95 1.724560/1.813754 sec**. Both original receipts reside under OLD `~/.local/state/blazux-wizard/p1/` and MUST NOT be moved, overwritten or deleted. Source updated to show P3-style exact SHA prompts, remove duplicate action entry, display numeric metrics, use new Git-ignored project-local `reports/models/qwen3.8-flash-next/` for **future** evidence, and dual-read old/new for P3-C evidence qualification.
