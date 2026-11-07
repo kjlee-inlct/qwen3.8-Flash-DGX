@@ -1,3 +1,11 @@
+## Implementation status correction — 2026-11-07 after actual P3-C DGX PASS
+
+The historical planning section below was written **before** P3 A/B/C actual DGX execution. These three one-off stage switches subsequently passed on DGX and finished with NVIDIA 27B active on port 8000. This does **not** qualify a repeatable general operating switch or integrated model-first UX.
+
+Source iteration adds read-only \`operational_switch.py\` to inspect current live served ID, protected P3 history and preserved Docker identities, TTY model screen option **Review ordinary model switch (read only)**, and separate \`operational_executor.py\` protected transaction code with lock/journal/rollback. The latter has no CLI or menu execute route and remains **unqualified for live DGX deployment**. Source-only Fake-DGX tests cannot authorize model interruption. All original P3 A/B/C acceptance stages must remain immutable and unused for new operating approvals. See \`docs/OPERATING-SWITCH-UX-CONTRACT-20261107.md\` for the canonical current boundary.
+
+---
+
 # Unified Model-first Wizard — accepted design and implementation plan
 
 > Decision date: 2026-11-05. Target: DGX Spark, Blazux vLLM 0.32, one active GPU model on host port 8000. This document governs the consolidated Wizard UX. It does not authorize GPU or service mutation.
