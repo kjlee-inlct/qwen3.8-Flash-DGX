@@ -304,7 +304,17 @@ def perform(plan: dict, *, runner=subprocess.run, opener=urlopen) -> dict:
 
 
 def _write_evidence(directory: Path, document: dict) -> Path:
-    directory.mkdir(mode=0o700, parents=True, exist_ok=True)
+    # New model-local report roots must be private all the way down. Legacy
+    # --evidence-dir overrides retain their original leaf-only behavior.
+    if directory == ROOT / "reports" / "models" / SERVED:
+        chain = (ROOT / "reports", ROOT / "reports" / "models", directory)
+        for folder in chain:
+            folder.mkdir(mode=0o700, exist_ok=True)
+            if (folder.is_symlink() or not folder.is_dir()
+                    or folder.stat().st_mode & 0o077):
+                raise OSError("UNSAFE_MODEL_EVIDENCE_DIRECTORY")
+    else:
+        directory.mkdir(mode=0o700, parents=True, exist_ok=True)
     dest = directory / (datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
                         + "-" + uuid4().hex[:12] + ".json")
     descriptor = os.open(dest, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
