@@ -1,12 +1,13 @@
-"""P7 integrated system acceptance interfaces."""
+"""P7 service/proxy/gateway integration, NOT final P8 operating signoff."""
 from ..common import Stage, run as run_stage
 
 SPEC = Stage(
-    "p7", "Integrated system operations",
-    ("inventory", "service", "proxy", "gateway", "storage", "audit", "acceptance"),
-    ("P1-P6 qualified and P4 storage decision recorded",
-     "service/proxy/gateway/storage design", "CI and numerical release gates",
-     "operator signoff and rollback runbook"),
+    "p7", "Integrated service / proxy / gateway qualification",
+    ("inventory", "service", "proxy", "gateway", "storage", "audit", "integration"),
+    ("P1-P6 qualified and P4 storage disposition documented",
+     "service/proxy/gateway/storage integration design",
+     "integrated component checks and source/CI gates",
+     "final fault/restore and release signoff explicitly moved to P8"),
 )
 
 def run(argv, *, as_json=False, dry_run=False):
