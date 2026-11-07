@@ -163,7 +163,7 @@ class FakeOperatingTransactionCPU(unittest.TestCase):
                 self.commands.append(cmd)
                 return SimpleNamespace(returncode=1, stdout="")
             return self.runner(cmd, timeout=timeout)
-        good = self.planner("flash-next", root=self.fake.ops)["plan_id"]
+        good = exe.execution_plan_id(self.planner("flash-next", root=self.fake.ops))
         rc, doc = exe.execute(
             "flash-next", good, exe.ACK_DOWNTIME,
             exe.ACK_TARGET["flash-next"], root=self.fake.ops,
@@ -191,7 +191,7 @@ class FakeOperatingTransactionCPU(unittest.TestCase):
             if d.get("observed_model") == "flash-next":
                 d["expected_served_id"] = "incorrect"
             return d
-        good = self.planner("flash-next", root=self.fake.ops)["plan_id"]
+        good = exe.execution_plan_id(self.planner("flash-next", root=self.fake.ops))
         rc, doc = exe.execute(
             "flash-next", good, exe.ACK_DOWNTIME,
             exe.ACK_TARGET["flash-next"], root=self.fake.ops,
