@@ -1,6 +1,6 @@
 # P2-FINAL — One-shot NVIDIA 27B Native Tool Calling DGX operator procedure
 
-**Evidence status: SOURCE/Fake-DGX CI only for the one-shot executor.** The pinned NVIDIA Qwen3.8-27B-NVFP4 (revision `482ca0f3832238542f8f5295dde86b5f22711d80`) Jinja rendering on the REAL DGX passed five CPU checks; actual Native Tool Calling inference is **NOT RUN** as of this document.
+**Evidence status (updated 2026-11-07): REAL DGX one-shot native-tool inference PASS_RESTORED.** Actual operator TTY-approved trial returned `structured_tool_call=true`, `tool_result_continuation=true`, `streamed_tool_call=true`, `original_restored=true`, and `issues=[]`. Original `qwen38-27b` API/ordinary-journal postchecks passed. The originally planned procedure remains below for provenance; **do not repeat this already consumed one-shot test plan**. Full evidence: [P2-FINAL Native Tools LIVE evidence](P2-FINAL-NATIVE-TOOLS-LIVE-EVIDENCE-20261107.md). Open WebUI Native UI, production Wizard release and forced-error recovery remain unqualified.
 
 This procedure is deliberately separate from historical P2/P3 A/B/C and the ordinary `./wizard.sh` production switch. It never replays old P3 or removes the original containers, images or Hugging Face cache. It uses vLLM `0.32.0` and original image, exactly one GPU model, port `:8000`, and a separately named `qwen38-27b-native-tools-v1` container.
 
