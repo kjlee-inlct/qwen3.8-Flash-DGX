@@ -1,3 +1,12 @@
+## 2026-11-08 — Latest blocked Flash host assets after real DGX read-only trial
+
+- First actual DGX `flash_host_assets --json` returned a generic `ValueError` after pinned command/env/cache validation; shard count 0 and metadata hashes empty mean **unverified**, not necessarily absent. Prior `verified_model_revision=true` was misleading.
+- [Source-only diagnostic fix 9beb1d3](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/commit/9beb1d3f73675ac4a22daedfc2167b380742305c) tracks explicit sanitized failure stage/reason and separates pinned command from host prepared file evidence; `verified_model_revision=false` is conservative absent trusted hash/source validation.
+- [Actions 42391221418](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42391221418): **874/874 CPU/Fake-DGX PASS, 39 groups**, no hardware operations.
+- **Next** retrieve redacted actual failure using `python3 -m scripts.manager.flash_host_assets --json` after Git pull. **Do not** patch cache, regenerate model, adjust caps, or reinstall on a guessed diagnosis.
+
+---
+
 ## 2026-11-08 — P3-E host asset inventory next, no service mutation
 
 Operator's latest DGX read-only `--sudo-ss` P3-D/E/F/G output: **P3-D READ_ONLY_PASS**, independently attributed docker-proxy IPv4 PID `2560693` and IPv6 PID `2560708`, GPU PID `2560905`, no detected GPU ownership conflict. **P3-E DRAFT_REVIEW_REQUIRED** despite `cmd_normalized=true` using `FLASH_FP8HYBRID_READ_ONLY_V1`, `cmd_normalization_error=null`, draft-field `issues=[]`, because canonical reinstall remains unqualified. **P3-F 153/153 DGX-local CPU PASS**. P3-G preview in this particular runner does not invalidate previously completed real bidirectional G. `blocked_stages=[]` with total `DRAFT_PARTIAL_ACCEPTANCE_NOT_RELEASED` is expected.
