@@ -30,6 +30,7 @@ CPU_SUITES = (
     "test_operational_executor_cpu.py",
     "test_p3_dg_acceptance_cpu.py",
     "test_flash_recipe_draft_cpu.py",
+    "test_flash_host_assets_cpu.py",
 )
 PROC_ROOT = Path("/proc")
 MODEL_NAMES = ("27b", "flash-next")
