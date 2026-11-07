@@ -1,3 +1,9 @@
+## 2026-11-07 — NEW SESSION HEADNOTE: operational switch source implementation, unexposed and unqualified
+
+After P3-C actual DGX PASS, an ordinary operating switch **read-only preview** and **isolated guarded executor source** have been added to the existing feature branch. Read \`docs/OPERATING-SWITCH-UX-CONTRACT-20261107.md\`, \`scripts/manager/operational_switch.py\`, \`scripts/manager/operational_executor.py\`, and the Fake-DGX suites. The latter source is **NOT invoked by Wizard CLI or TTY** and has not switched any actual DGX model. Do not claim repeated operating switch UX acceptance or release. First refresh GitHub HEAD/PR/CI and fix any CPU regressions, then review guarded transaction/rollback design; only after separate user authorization may live DGX acceptance be planned. Keep NVIDIA 27B running at :8000, retain all original assets, do not re-run historical P3 stages/benchmarks and do not merge Draft PR #1. This headnote supersedes older "executor not yet written" statements only at the SOURCE level; live qualification remains pending.
+
+---
+
 # New Conversation Starter — Blazux P1~P3 실제 DGX PASS 이후 통합 Wizard UX 및 일반 운영 모델 전환 개발
 
 다음 GitHub 저장소의 **Blazux / vLLM 0.32 기반 DGX Spark 통합 모델 레시피·Wizard·서비스/프록시/게이트웨이 관리** 작업을 이전 대화에서 이어서 진행해주세요.
