@@ -1,3 +1,14 @@
+## LATEST REAL DGX POST-SWITCH CHECK — 2026-11-07: Flash-Next live VERIFIED, journal COMMITTED, reverse plan READY
+
+**New operator read-only evidence after the earlier real 27B→Flash ordinary `PASS`:**
+- `./wizard.sh service manager status --json`: `LIVE_SERVICE_VERIFIED`, `observed_model=flash-next`, `expected_served_id=qwen3.8-flash-next`, only `observed_model_ids=["qwen3.8-flash-next"]`, active `qwen38-flash` (Up 18 minutes), host port 8000, all eight API/manifest checks true, `issues=[]`. The field `gpu_exclusivity_verified=false` only means the status command does not independently claim GPU exclusivity; do not present it as GPU qualification.
+- `python3 -m scripts.manager.operational_audit --json`: `status=VERIFIED`, `phase=COMMITTED`, `event_count=7`, last event SHA `575197bd7fedcadf39751da4becdf7ca052943f37115b33b9398d736fa43a66a`, `issues=[]`. This independently corroborates the first ordinary switch's complete journal/receipt chain.
+- `scripts/temporary/operational-switch-acceptance.sh --target 27b --plan --json`: `READY_FOR_SEPARATE_TRIAL_APPROVAL`, `source_model=flash-next`, `target_model=27b`, `served_id=qwen3.8-27b`, `issues=[]`, `executed=false`, `approval_accepted=false`, `production_release=false`, `seconds_remaining=276` at the instant of this observation, plan SHA prefix `c2fed6bf`; expiry `1794023400` epoch. **That preview is temporary and is not permission to reuse its SHA after expiry.**
+
+**Acceptance now:** First operating 27B→Flash ACTUAL PASS including separately confirmed live API and committed audit. Reverse Flash→27B `READY` preview only, **ACTUAL REVERSE NOT RUN**. Normal production switch menu still hard gated, recovery fault-injection not run. **Last observed running model remains Flash-Next**. Do not execute reverse until separately approved live Flash downtime; any trial requires a new fresh plan and four manual TTY approvals. Old P3 A/B/C not rerun, original model/cache preserved; Open WebUI tool calling deferred.
+
+---
+
 ## LATEST ACTUAL DGX — 2026-11-07: ordinary operating switch 27B → Flash-Next PASS (first physical acceptance)
 
 **This operator-provided REAL DGX result supersedes earlier statements that all ordinary operating switches are NOT_RUN and that 27B remains active.** After clean Git fast-forward from `05c1968` to source commit `4054eb2`, operator independently checked `./wizard.sh service manager status --json`: `LIVE_SERVICE_VERIFIED`, only served model `qwen3.8-27b`, active container `qwen38-27b`, port 8000, issues `[]`; `python3 -m scripts.manager.operational_audit --json` returned `EMPTY`, `event_count=0`, issues `[]`. The new acceptance read-only plan reported `READY_FOR_SEPARATE_TRIAL_APPROVAL`, 27B → Flash-Next, `issues=[]`, `seconds_remaining=242`, fresh 10-minute approval expiry, independent execution SHA.
