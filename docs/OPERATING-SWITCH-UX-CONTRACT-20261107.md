@@ -1,3 +1,15 @@
+## Addendum — 2026-11-07: REAL DGX 27B smoke PASS; strict format deviation
+
+**Actual operator result, newer than the previous source-only NOT_RUN note below:** local `/health` and sole `/v1/models` ID `qwen3.8-27b` PASS; actual model `qwen3.8-27b` chat completion `finish_reason=stop` and 26 completion tokens under `vllm-0.32.0-bfe01fe9`. `bash scripts/temporary/operational-27b-curl-smoke.sh` emitted `HEALTH_PASS`, `IDENTITY_PASS`, `INFERENCE_PASS`, `27B_CURL_SMOKE_PASS`. This is **real hardware functional inference** (not mock). No Docker/service mutation.
+
+However, the direct response's `message.content` contained reasoning-like prose, a literal `</think>` marker, then `DGX_OK` while `message.reasoning=null`; an **exact-response assertion must fail**, even though generation completed normally. `FORMAT_PASS` / `FORMAT_DEVIATION` classification was subsequently added in source; it does not retrospectively claim new real DGX runtime testing of that updated script. Exit 0 and `27B_CURL_SMOKE_PASS` continue to mean **functional inference only**, not exact-format compliance. An inferred misconfigured reasoning parser is a hypothesis, not proven; investigate per-request chat-template controls separately and do not restart live vLLM solely on this observation.
+
+Qwen/vLLM background: [vLLM reasoning outputs](https://docs.vllm.ai/en/stable/features/reasoning_outputs/) and [Qwen vLLM deployment](https://github.com/QwenLM/Qwen3/blob/main/docs/source/deployment/vllm.md). Check version/model-specific compatibility before configuring `--reasoning-parser qwen3` or request-specific `chat_template_kwargs.enable_thinking=false`.
+
+**P3 A/B/C remain history only; general 27B↔Flash execution/rollback and Wizard approval UX are NOT yet qualified.** Preserve 27B active, Flash fallback and original private receipts.
+
+---
+
 ## Addendum — 2026-11-07: 27B real-generation curl smoke (DGX execution NOT_RUN)
 
 The operator correctly highlighted that `LIVE_SERVICE_VERIFIED` only proves running container, HTTP `/health` and `/v1/models` **identity**, not successful token generation. Before concluding NVIDIA 27B is functionally healthy **now**, run the one-shot, non-disruptive script from the actual DGX when 27B remains the current active model:
