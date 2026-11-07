@@ -1,3 +1,12 @@
+## 2026-11-08 — Current next-session checkpoint: P4-A read-only inventory
+
+Latest current branch audit and new conversation starter:
+- `docs/HANDOFF-DOCUMENT-AUDIT-20261108.md` (all 34 required core documents/recipes present; previous dated audits are historical).
+- `handoff/START-NEXT-P4A-20261108.md` (current comprehensive copy/paste starter).
+P3 E/F source, metadata and CPU handoff complete; P4-A **source implemented**, actual DGX inventory pending; P4-B/C unauthorized; P8 real reinstall/recovery/final operating signoff pending. Latest pre-audit GitHub state: branch `99ee6b8`, 887/887 CPU PASS / 40 groups, PR #1 Draft/Open/Unmerged. Re-fetch after any doc commit.
+
+---
+
 ## NEXT — ONLY P4-A READ-ONLY CAPACITY/STATE INVENTORY, NO DELETION
 
 P3-E and P3-F DGX verification have completed in their **source/metadata/CPU handoff scope**, NOT runtime reinstall or production lifecycle release. Actual: E 11 indexed shards / 129,771,270,410 apparent bytes / metadata-template hashes / issues=[], F 168/168 CPU PASS in 7 suites, 27B API 8/8. See `docs/P3-CLOSEOUT-AND-P8-HANDOFF-20261108.md`.

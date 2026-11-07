@@ -1,3 +1,12 @@
+## 2026-11-08 — Current next-session checkpoint: P4-A read-only inventory
+
+Latest current branch audit and new conversation starter:
+- `docs/HANDOFF-DOCUMENT-AUDIT-20261108.md` (all 34 required core documents/recipes present; previous dated audits are historical).
+- `handoff/START-NEXT-P4A-20261108.md` (current comprehensive copy/paste starter).
+P3 E/F source, metadata and CPU handoff complete; P4-A **source implemented**, actual DGX inventory pending; P4-B/C unauthorized; P8 real reinstall/recovery/final operating signoff pending. Latest pre-audit GitHub state: branch `99ee6b8`, 887/887 CPU PASS / 40 groups, PR #1 Draft/Open/Unmerged. Re-fetch after any doc commit.
+
+---
+
 ## 2026-11-08 — Actual DGX P3-E/F read-only closeout complete; P4-A inventory NEXT
 
 **Observed on actual DGX after fast-forward to `0421b46`:** P3-E `flash_host_assets` status `LOCAL_ASSET_METADATA_OBSERVED_REINSTALL_UNQUALIFIED`, issues=[], 31,907,813-byte index, 299,845 weight-map entries (400,000 cap), **11 shards** total apparent size **129,771,270,410 bytes**, metadata hashes and mounted template SHA-256 observed. Checkpoint weights not hashed (`large_shard_hashes_verified=false`), pinned published revision bytes not independently verified (`verified_model_revision=false`), reinstall not qualified. P3-F real DGX **168/168 CPU PASS (7 suites)**, `PRODUCTION_LIFECYCLE_RELEASED=false`. Current `qwen38-27b` API `qwen3.8-27b`, host :8000, 8/8 service checks true and `LIVE_SERVICE_VERIFIED`; service-status command does not independently validate GPU/PID ownership. All commands read-only and no service mutation.
