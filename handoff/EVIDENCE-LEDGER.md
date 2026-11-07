@@ -1,3 +1,11 @@
+## 2026-11-07 — TWO REAL P3-C PLAN-EXPIRY BLOCKS; SOURCE-ONLY ROLLOVER REPAIR
+
+Actual DGX operator `bash scripts/temporary/p3-stage-c-operator.sh --execute` emitted two private unique receipts: `reports/transitions/flash-next--to--27b/p3-c-operator-20261107T010814Z-dd8b2073f8cc.json` at 10:08:14 KST and `p3-c-operator-20261107T010930Z-62cf3383e227.json` at 10:09:30 KST. Both show **status=BLOCKED**, `issues=["P3_C_INSUFFICIENT_TIME_FOR_THREE_APPROVALS"]`, `approval_accepted=false`, `executed=false`, `execution_dispatched=false`, source served `qwen3.8-flash-next`, original pinned Flash image/CID `90f39a4d...`, preserved 27B CID `6d9ede09...`, post-B P1 `PASS`, P2 digest `80f109db...`. Canonical SHA `30b2b29bb715e2393b65152ea8d1da2db61956d631efce2248aee2e9690610de` expiry 2026-11-07 **10:10:00 KST**, leaving 106s then 30s (<120s required). These are valid pre-approval safe blocks; no GPU/service mutation or P3-C completion.
+
+Tracked source-only repair in `scripts/temporary/p3_stage_c_operator.py`: `--execute` with **TTY and fully READY initial stage-C provenance only** now runs bounded <=150s **read-only** re-observation across expiring window until a NEW different, still qualified SHA is available with >=120s remaining. Service/target/evidence/Git changes, unexpected before-boundary plan ID changes, non-rotating plans, Ctrl+C, timeout must block without dispatch. Only *new* exact SHA and independent two literals can authorize the unchanged canonical Stage C Wizard. `--plan` unchanged, no automatic consent or activation. New fake DGX virtual-time and full post-refresh C-dispatch tests under `tests/test_p3_stage_c_operator_cpu.py`. Source CI is distinct from **ACTUAL DGX** execution; current P3-C NOT_RUN. Original unmodified stage-A/B receipts and service containers preserved. See [runbook](../docs/P3-STAGE-C-FINAL-27B-OPERATOR-20261107.md).
+
+---
+
 ## 2026-11-07 — REAL DGX ORIGINAL-TO-GIT BENCHMARK ROUND-TRIP VERIFIED
 
 **New actual DGX operator result (not simulated CPU testing):** After Git fast-forward pull of the benchmark publication implementation, `bash scripts/temporary/verify-published-benchmarks.sh` returned **two `status=VERIFIED` records, each `issues=[]` and `executed=false`**, followed by `Published Flash-Next and NVIDIA 27B summaries match private DGX source receipts.`
