@@ -599,12 +599,85 @@ def execute(plan_id: str, downtime_ack: str, delete_ack: str, *,
                 os.close(fd)
 
 
+def inspect_promoted_service(*,
+        inspect: Callable[..., dict] = gpu.docker_info,
+        run: Callable[..., Any] = gpu.call,
+        api: Callable[[str], bool] = gpu.api_ready,
+        root: Path = ROOT) -> dict:
+    """Bounded read-only post-migration identity plus NEW benchmark evidence."""
+    report = {
+        "schema_version": 1, "action": "CANONICAL_27B_NATIVE_RECIPE_STATUS",
+        "status": "BLOCKED", "issues": [], "executed": False,
+        "api_model_id": SERVED, "api_port": 8000,
+        "native_tools_qualified_by_one_shot": False,
+        "latest_benchmark_verified": False,
+        "backup_container_deleted": False,
+    }
+    try:
+        recipe, recipe_sha = _load_recipe()
+        names = _run_names(run, all_containers=True)
+        active_names = _run_names(run, all_containers=False)
+        if SOURCE_CONTAINER not in active_names:
+            report["issues"].append("CANONICAL_27B_NOT_RUNNING")
+            return report
+        doc = inspect(SOURCE_CONTAINER)
+        labels = (doc.get("Config") or {}).get("Labels") or {}
+        cmd = (doc.get("Config") or {}).get("Cmd")
+        if (not _image_and_id(doc)
+                or doc.get("Image") != PINNED_IMAGE
+                or doc.get("Name") != "/" + SOURCE_CONTAINER
+                or labels.get("blazux.recipe") != "qwen38-27b"
+                or not p3.SHA.fullmatch(str(labels.get("blazux.migration") or ""))):
+            report["issues"].append("NEW_CANONICAL_CONTAINER_NOT_IDENTIFIED")
+        if (not isinstance(cmd, list)
+                or not all(flag in cmd for flag in TOOL_FLAGS)
+                or recipe["native_tools"]["chat_template"] not in cmd):
+            report["issues"].append("CANONICAL_NATIVE_TOOLS_FLAGS_NOT_OBSERVED")
+        if p3._gpu_conflicts(SOURCE_CONTAINER, run, inspect):
+            report["issues"].append("ANOTHER_GPU_CONTAINER_RUNNING")
+        if not api(SERVED):
+            report["issues"].append("CANONICAL_API_IDENTITY_UNVERIFIED")
+        latest = _safe_json(root / "latest-27b-benchmark.json")
+        if (latest.get("status") != "PASS"
+                or latest.get("model") != SERVED
+                or latest.get("container_id") != doc.get("Id")
+                or latest.get("recipe_sha256") != recipe_sha
+                or latest.get("plan_id") != labels.get("blazux.migration")
+                or (latest.get("benchmark") or {}).get("status") != "PASS"):
+            report["issues"].append("LATEST_BENCHMARK_IDENTITY_MISMATCH")
+        else:
+            report["latest_benchmark_verified"] = True
+            report["benchmark_metrics"] = latest["benchmark"].get("metrics")
+        backups = [name for name in names if name.startswith(BACKUP_PREFIX)]
+        report["backup_container_deleted"] = not backups
+        if backups:
+            report["issues"].append("OLD_BACKUP_CONTAINER_CLEANUP_PENDING")
+        if not report["issues"]:
+            report["status"] = "LIVE_CANONICAL_27B_NATIVE_TOOLS_VERIFIED"
+            report["native_tools_qualified_by_one_shot"] = True
+    except (OSError, ValueError, RuntimeError, KeyError, TypeError,
+            subprocess.TimeoutExpired):
+        report["issues"].append("CANONICAL_NATIVE_RUNTIME_AUDIT_UNAVAILABLE")
+    report["issues"] = sorted(set(report["issues"]))
+    report["notice"] = (
+        "Read-only current Docker/API and pinned benchmark identity. "
+        "Historical P3 receipts remain immutable and identify the retired "
+        "pre-native container; ordinary P3/operating switches are not "
+        "qualified to reuse those historical container IDs."
+    )
+    return report
+
+
 def main(argv: list[str] | None = None) -> int:
     import argparse
     parser = argparse.ArgumentParser(
         description="Migrate original canonical 27B to pinned Native Tools recipe")
-    parser.add_argument("action", choices=("plan", "execute"))
+    parser.add_argument("action", choices=("plan", "execute", "status"))
     args = parser.parse_args(argv)
+    if args.action == "status":
+        summary = inspect_promoted_service()
+        print(json.dumps(summary, indent=2, sort_keys=True))
+        return 0 if summary["status"] == "LIVE_CANONICAL_27B_NATIVE_TOOLS_VERIFIED" else 3
     plan = make_plan()
     if args.action == "plan":
         print(json.dumps(plan, indent=2, sort_keys=True))
