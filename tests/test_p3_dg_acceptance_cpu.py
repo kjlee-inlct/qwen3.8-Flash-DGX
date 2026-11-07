@@ -173,6 +173,54 @@ class DraftUnifiedRunnerCPU(unittest.TestCase):
                 a.encode() for a in argv) + bytes([0]))
             self.assertFalse(dg.docker_proxy_belongs(5, active, root=root))
 
+    def test_d_explicit_sudo_ss_resolves_hidden_listener_pids(self):
+        commands = []
+        def runner(args, timeout=12):
+            commands.append(args)
+            if args[0] == "ss":
+                return SimpleNamespace(returncode=0, stdout=(
+                    "LISTEN 0 4096 0.0.0.0:8000 0.0.0.0:*\n"
+                    "LISTEN 0 4096 [::]:8000 [::]:*\n"))
+            if args[0] == "sudo":
+                self.assertEqual(args[1:3], ["-n", "ss"])
+                return SimpleNamespace(returncode=0, stdout=(
+                    'LISTEN 0 4096 0.0.0.0:8000 0.0.0.0:* users:(("docker-proxy",pid=14,fd=3))\n'
+                    'LISTEN 0 4096 [::]:8000 [::]:* users:(("docker-proxy",pid=15,fd=3))\n'))
+            return SimpleNamespace(returncode=0, stdout="17, python\n")
+        out = dg.stage_d(snapshot(), verified_live(), run=runner,
+                         proc_owner=lambda pid, cid: pid in (14, 15, 17),
+                         allow_sudo_ss=True)
+        self.assertEqual(out["status"], "READ_ONLY_PASS")
+        self.assertEqual(out["observed_port_pids"], [14, 15])
+        self.assertTrue(out["sudo_ss_requested"])
+        self.assertEqual([x[0] for x in commands], ["ss", "sudo", "nvidia-smi"])
+
+    def test_d_privileged_ss_snapshot_cannot_replace_different_sockets(self):
+        def runner(args, timeout=12):
+            if args[0] == "ss":
+                return SimpleNamespace(returncode=0, stdout=
+                                       "LISTEN 0 4096 0.0.0.0:8000 0.0.0.0:*\n")
+            if args[0] == "sudo":
+                return SimpleNamespace(returncode=0, stdout=
+                                       'LISTEN 0 4096 [::]:8000 [::]:* users:(("docker-proxy",pid=14,fd=3))\n')
+            return SimpleNamespace(returncode=0, stdout="17, python\n")
+        out = dg.stage_d(snapshot(), verified_live(), run=runner,
+                         proc_owner=lambda pid, cid: True, allow_sudo_ss=True)
+        self.assertEqual(out["status"], "BLOCKED")
+        self.assertIn("HOST_PORT_PRIVILEGED_SS_SNAPSHOT_CHANGED", out["issues"])
+        self.assertIn("HOST_PORT_PROCESS_PID_UNAVAILABLE", out["issues"])
+
+    def test_d_sudo_is_never_called_implicitly(self):
+        def runner(args, timeout=12):
+            self.assertNotEqual(args[0], "sudo")
+            return SimpleNamespace(returncode=0, stdout=(
+                "LISTEN 0 4096 0.0.0.0:8000 0.0.0.0:*\n"
+                if args[0] == "ss" else "17, python\n"))
+        out = dg.stage_d(snapshot(), verified_live(), run=runner,
+                         proc_owner=lambda pid, cid: True)
+        self.assertEqual(out["status"], "BLOCKED")
+        self.assertIn("HOST_PORT_PROCESS_PID_UNAVAILABLE", out["issues"])
+
     def test_d_gpu_unknown_cannot_be_interpreted_as_pass(self):
         def runner(args, timeout=12):
             if args[0] == "ss":
@@ -256,6 +304,59 @@ class DraftUnifiedRunnerCPU(unittest.TestCase):
         self.assertIn("FLASH_CHECKPOINT_REVISION_UNVERIFIED", out["issues"])
         self.assertIn("FLASH_SERVED_ID_NOT_QUALIFIED", out["issues"])
 
+    def test_e_accepts_exact_prepared_nvidia_fp8hybrid_view_as_draft(self):
+        with tempfile.TemporaryDirectory() as directory:
+            snap = snapshot()
+            flash = snap["containers"]["qwen38-flash"]
+            source = flash["Config"]["Cmd"][0]
+            flash["Config"]["Cmd"][0] = source + "-fp8hybrid"
+            flash["Mounts"][0]["Source"] = directory
+            view = (Path(directory) / "hub" / dg.FLASH_REPO_CACHE
+                    / "snapshots" / (dg.FLASH_PINNED_REVISION + "-fp8hybrid"))
+            view.mkdir(parents=True)
+            for name in (".prepared", "config.json", "tokenizer.json",
+                         "tokenizer_config.json", "model.safetensors.index.json"):
+                (view / name).write_text("{}")
+            history = {"status": "LOCAL_P3_A_B_C_RECEIPTS_VERIFIED",
+                       "records": {"a": {"flash_id": IDENT, "flash_image": IMAGE}},
+                       "issues": []}
+            out = dg.stage_e(snap, historical=history)
+            self.assertEqual(out["status"], "DRAFT_REVIEW_REQUIRED")
+            candidate = out["observed_candidate"]
+            self.assertEqual(candidate["checkpoint_variant"],
+                             "LOCAL_PREPARED_FP8HYBRID")
+            self.assertTrue(candidate["hybrid_preparation_verified"])
+            self.assertEqual(candidate["source_revision"], dg.FLASH_PINNED_REVISION)
+            self.assertEqual(out["issues"],
+                             ["FLASH_CANONICAL_REINSTALL_RECIPE_NOT_QUALIFIED"])
+            self.assertFalse(out["canonical_recipe_registered"])
+
+    def test_e_hybrid_view_missing_preparation_marker_is_blocked(self):
+        with tempfile.TemporaryDirectory() as directory:
+            snap = snapshot()
+            flash = snap["containers"]["qwen38-flash"]
+            flash["Config"]["Cmd"][0] += "-fp8hybrid"
+            flash["Mounts"][0]["Source"] = directory
+            history = {"status": "LOCAL_P3_A_B_C_RECEIPTS_VERIFIED",
+                       "records": {"a": {"flash_id": IDENT, "flash_image": IMAGE}},
+                       "issues": []}
+            out = dg.stage_e(snap, historical=history)
+            self.assertEqual(out["status"], "BLOCKED")
+            self.assertIn("FLASH_HYBRID_PREPARED_VIEW_UNVERIFIED", out["issues"])
+            self.assertIn("FLASH_CANONICAL_REINSTALL_RECIPE_NOT_QUALIFIED", out["issues"])
+
+    def test_e_unknown_hybrid_revision_is_never_auto_accepted(self):
+        snap = snapshot()
+        flash = snap["containers"]["qwen38-flash"]
+        flash["Config"]["Cmd"][0] = flash["Config"]["Cmd"][0].replace(
+            dg.FLASH_PINNED_REVISION, "e"*40) + "-fp8hybrid"
+        history = {"status": "LOCAL_P3_A_B_C_RECEIPTS_VERIFIED",
+                   "records": {"a": {"flash_id": IDENT, "flash_image": IMAGE}},
+                   "issues": []}
+        out = dg.stage_e(snap, historical=history)
+        self.assertEqual(out["status"], "BLOCKED")
+        self.assertIn("FLASH_CHECKPOINT_REVISION_UNVERIFIED", out["issues"])
+
     def test_e_rejects_unrecognized_flash_docker_recreation(self):
         history = {"status": "LOCAL_P3_A_B_C_RECEIPTS_VERIFIED",
                    "records": {"a": {"flash_id": "b"*64, "flash_image": IMAGE}},
@@ -318,6 +419,27 @@ class DraftUnifiedRunnerCPU(unittest.TestCase):
                 "P3-G", "PREVIEW_PASS_REAL_SWITCH_NOT_RUN")))
         self.assertEqual(called, ["F", "G"])
         self.assertEqual(out["status"], "BLOCKED")
+        self.assertFalse(out["acceptance_complete"])
+
+    def test_sudo_ss_cli_rejects_plan_and_cpu_only_modes(self):
+        for mode in ("--plan", "--cpu-only"):
+            with contextlib.redirect_stderr(io.StringIO()):
+                with self.assertRaises(SystemExit) as caught:
+                    dg.main([mode, "--sudo-ss"])
+            self.assertNotEqual(caught.exception.code, 0)
+
+    def test_sudo_ss_is_opt_in_at_unified_dispatch_boundary(self):
+        invoked = []
+        out = dg.acceptance(
+            allow_sudo_ss=True,
+            snapshot_fn=snapshot, live_fn=verified_live,
+            p3_fn=lambda: {"status": "VERIFIED"},
+            d_fn=lambda a, b, allow_sudo_ss: (
+                invoked.append(allow_sudo_ss) or dg.result("P3-D", "BLOCKED")),
+            e_fn=lambda a, historical: dg.result("P3-E", "DRAFT_REVIEW_REQUIRED"),
+            f_fn=lambda: dg.result("P3-F", "SOURCE_CPU_PASS_NOT_RELEASED"),
+            g_fn=lambda live: dg.result("P3-G", "PREVIEW_PASS_REAL_SWITCH_NOT_RUN"))
+        self.assertEqual(invoked, [True])
         self.assertFalse(out["acceptance_complete"])
 
     def test_cpu_only_never_accesses_docker_or_network(self):
