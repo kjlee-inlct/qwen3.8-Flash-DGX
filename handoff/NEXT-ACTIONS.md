@@ -1,3 +1,14 @@
+## 2026-11-07 — SECOND ACTUAL DGX D–G BATCH + PINNED FP8 HYBRID / HIDDEN SOCKET PIDS
+
+Actual operator DGX batch (**read-only; no model changes**) after previous source fixes: **P3-D BLOCKED** because `ss` showed BOTH IPv4 0.0.0.0:8000 and IPv6 [::]:8000 LISTEN but no process PID; Docker reported only running `qwen38-27b` as GPU/8000 port owner, NVIDIA compute PID 2051842 verified to active 27B. **P3-E BLOCKED** because the observed preserved Flash checkpoint was pinned NVIDIA source revision `fc694b54fb0174e0913e6adf86691ef85a4ead47` plus **`-fp8hybrid` local prepared variant**, not a different HF revision; canonical Flash reinstall recipe still unqualified. Flash /hf mount observed writable and legacy argv preserved. **P3-F PASS 128/128 actual local CPU tests. P3-G preview PASS**, current Docker ID and VERIFIED/COMMITTED journal; actual transfer/rollback NOT executed. Overall exit=3, acceptance_complete=false.
+
+Subsequent SOURCE fix: E now recognizes only exact pinned NVIDIA source revision plus `-fp8hybrid` prepared view and verifies `.prepared`/essential files read-only; no recipe promotion. D now permits ONLY operator-selected `--sudo-ss` to run `sudo -n ss` (no prompt; no sudo by default) and independently reverify unchanged socket set and PID provenance. Unknown PID always BLOCKED. CPU CI [42371861344](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42371861344) **846/846 PASS / 37 groups**, SOURCE-ONLY, actual DGX rerun pending. Full evidence `docs/P3-D-G-SECOND-DGX-PID-HYBRID-DIAGNOSTIC-20261107.md`. No P3-A/B/C replay, no production switch release.
+
+NEXT read-only DGX retest after `git status --short` and clean `git pull --ff-only origin feature/recipe-wizard-handoff`: `bash scripts/temporary/p3-d-g-acceptance.sh --run --report /tmp/p3-d-g-v3-$(date +%Y%m%dT%H%M%S).json`. If D still hides socket PIDs and operator explicitly consents to privileged read-only socket diagnostics, run `sudo -v` THEN (nonroot) `bash scripts/temporary/p3-d-g-acceptance.sh --run --sudo-ss --report /tmp/p3-d-g-v3-sudo-ss-$(date +%Y%m%dT%H%M%S).json`. **Do not invoke the whole Wizard as sudo.** E expected DRAFT_REVIEW_REQUIRED only if actual prepared derivative assets are present. No real G switch.
+
+
+---
+
 ## 2026-11-07 — NEXT OPERATOR ACTION: READ-ONLY D/E DIAGNOSTIC RETEST
 
 The first actual DGX P3-D~G unified batch was run. F 119/119 CPU PASS and G current-ID/journal PREVIEW PASS. D host socket attribution and E Flash parser blocked (NOT demonstrated hardware/service failure). New source safely repairs dual-stack host PID recognition, Docker proxy attribution, and legacy Flash candidate collection; CI 42371091647 **838/838 PASS**.
