@@ -13,7 +13,7 @@ USAGE = """Blazux Wizard (vLLM 0.32 only)
   ./wizard.sh                                simple model-first interactive menu\n  ./wizard.sh select 27b --json              read-only lifecycle selection plan\n  ./wizard.sh model choose flash-next --json same planner
   ./wizard.sh list --json                    model/switch/storage/operations catalog\n  ./wizard.sh model list --installed --json   read-only pinned and legacy cache discovery\n  ./wizard.sh workflow 27b --json            full model lifecycle actions and gates\n  ./wizard.sh roadmap --json                 complete P1-P7 acceptance checklist\n  ./wizard.sh workflow 27b --for-action start --json  read-only action capability
   ./wizard.sh model flash-next status --json
-  ./wizard.sh model 27b recipe-diff --json  normalized desired/observed read-only diff\n  ./wizard.sh model 27b lifecycle restart --plan --json  read-only recreate decision\n  ./wizard.sh model 27b lifecycle remove --plan --json  scoped removal preview (no execute)\n  ./wizard.sh model 27b plan --for-action prepare --json
+  ./wizard.sh model 27b recipe-diff --json  normalized desired/observed read-only diff\n  ./wizard.sh model 27b recipe-diff --cache-source /host/hf-cache --json  compare observed bind path\n  ./wizard.sh model 27b lifecycle restart --plan --json  read-only recreate decision\n  ./wizard.sh model 27b lifecycle remove --plan --json  scoped removal preview (no execute)\n  ./wizard.sh model 27b plan --for-action prepare --json
   ./wizard.sh model orcarouter-flash-next status --json
   ./wizard.sh switch flash-next-27b plan --for-action switch \
     --from-model flash-next --to-model 27b --json
@@ -229,7 +229,16 @@ def main(argv: list[str] | None = None) -> int:
         else:
             action = tail[1] if len(tail) >= 2 else "status"
             options = tail[2:] if len(tail) >= 2 else []
-        if options not in ([], ["--plan"]):
+        cache_source = None
+        if options.count("--cache-source") == 1:
+            at = options.index("--cache-source")
+            if at + 1 < len(options):
+                cache_source = options[at + 1]
+                del options[at:at + 2]
+        valid_cache_source = (cache_source is None or (
+            isinstance(cache_source, str) and cache_source.startswith("/")
+            and not any(c in cache_source for c in ("\\n", "\\r", "\\0"))))
+        if options not in ([], ["--plan"]) or not valid_cache_source:
             print(json.dumps({
                 "status": "BLOCKED", "executed": False,
                 "approval_accepted": False, "plan_id": None,
@@ -237,7 +246,7 @@ def main(argv: list[str] | None = None) -> int:
             }, sort_keys=True))
             return 3
         from scripts.manager.recipe_drift import plan
-        doc = plan(model, action)
+        doc = plan(model, action, cache_source=cache_source) if cache_source else plan(model, action)
         if dry_run:
             doc["dry_run"] = True
         if as_json:
