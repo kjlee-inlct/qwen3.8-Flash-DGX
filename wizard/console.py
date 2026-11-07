@@ -236,6 +236,7 @@ def _advanced_menu() -> None:
             print(f" {i}. {row[0]}")
         print(" 6. Legacy group / stage tools")
         print(" 7. Readiness dashboard")
+        print(" 8. Copy historical reports into project (guarded, originals retained)")
         selected = _input("Choice (0 back): ")
         if selected in (None, "0"):
             return
@@ -249,6 +250,13 @@ def _advanced_menu() -> None:
         if selected == "7":
             from wizard.roadmap import run_cli
             run_cli()
+            continue
+        if selected == "8":
+            from scripts.manager.evidence_catalog import main as evidence_main
+            print("Copy-only legacy evidence import. No old record, lock, or "
+                  "service journal will be moved or removed.")
+            if _input("Review exact copy plan? [y/N]: ") == "y":
+                evidence_main(["migrate", "--guided"])
             continue
         if selected not in ("2", "3", "4", "5"):
             print("Unknown option.")
