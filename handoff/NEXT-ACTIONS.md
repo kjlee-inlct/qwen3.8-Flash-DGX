@@ -1,3 +1,14 @@
+## 2026-11-07 — NEXT: VERIFY PUBLISHED BENCHMARK SUMMARIES READ-ONLY, THEN SEPARATELY APPROVED C
+
+1. Confirm latest GitHub branch and CI, then on operator DGX `git pull --ff-only origin feature/recipe-wizard-handoff`. **Do not** restart GPU containers, merge PR or edit/copy original benchmark receipts.
+2. Validate both Git-published metric-only summaries against exact original local JSON with `bash scripts/temporary/verify-published-benchmarks.sh`. Expected TWO `VERIFIED` JSON records and final confirmation. If mismatch, STOP and compare allowlisted fields; do not overwrite source or hide discrepancy. This check is read-only and independent of P3-C.
+3. For future bench publications: `python3 -m scripts.manager.benchmark_publication --model <flash-next|27b> --source <private-original-json> --plan`, then operator-review summary (no paths/keys/requests/responses), use hash-approved `--write --approve-sha256 <actual source SHA>` to create **local** untracked Git-ready record, manually review before Git add/commit/push. Never auto-publish private evidence.
+4. P3-C prior `--execute` was CANCELLED **before dispatch** because typed SHA included a leading bracket; current observed model Flash-Next, Stage-C NOT_RUN. At separate explicit operator decision, re-run `bash scripts/temporary/p3-stage-c-operator.sh --plan` for fresh status then `--execute` only if accepting live Flash downtime and independently typing the full new SHA **without brackets**, `I_ACCEPT_FLASH_NEXT_DOWNTIME` and `I_SEPARATELY_AUTHORIZE_FINAL_27B_STAGE_C`. Expired old SHA must never be reused. Do not run Stage A/B or P1 benchmarks again.
+
+Documentation and sanitized entries: `benchmarks/published/README.md`. Original telemetry still stored locally in `~/.local/state/blazux-wizard/`. No model deletion, no automatic Git commit of new future runs, no P3-C execution in source work.
+
+---
+
 ## 2026-11-07 — NEXT OPERATOR: FAST-FORWARD PULL + TRACKED STAGE-C PLAN, THEN SEPARATE ACTUAL DOWNTIME CONSENT
 
 Operator has already shown **canonical** `./wizard.sh switch flash-next-27b stage-c --plan --json` READY/issues=[]/P1 gate PASS on actual DGX. Do NOT demand another P1 benchmark/diagnostic, repeat A/B or optional `evidence migrate`. The optional import was cancelled via input `COPY` and copied **0** files; Stage C does not depend on it.
