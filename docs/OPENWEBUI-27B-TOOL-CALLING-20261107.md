@@ -1,3 +1,9 @@
+## 2026-11-07 — Promoted to P2-FINAL qualification item (not yet DGX accepted)
+
+User selected formal Qwen3.8-27B Native Tool Calling as final P2 item. **Official Qwen3.8-27B vLLM recipe** specifies `--enable-auto-tool-choice --tool-call-parser qwen3_coder --reasoning-parser qwen3` (the model uses internal `Qwen3_5` config, but installed checkpoint/API is `nvidia/Qwen3.8-27B-NVFP4` / `qwen3.8-27b`). Implemented opt-in, isolated `tool_calling=True` candidate argv and `scripts/serve_27b.sh --tools-profile`/ `--tools-probe` with bounded localhost API test. **Nothing automatically changes preserved 27B Docker Cmd**; Open WebUI Native full tool cycle, parser compatibility and safe 27B migration still NOT_QUALIFIED. Earlier erroneous P3-C NOT_RUN statements are obsolete: P3-C one-off already **REAL PASS/CLOSED**. Ordinary two-way backend operator trials also both REAL PASS; normal menu production execution remains source-gated. Full detailed gate: `docs/P2-27B-FINAL-TOOL-CALLING-ACCEPTANCE-20261107.md`.
+
+---
+
 # Open WebUI 27B automatic tool-choice incompatibility — 2026-11-07
 
 ## Observed actual DGX (operator-provided)
