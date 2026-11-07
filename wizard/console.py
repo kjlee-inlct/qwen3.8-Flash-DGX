@@ -271,8 +271,8 @@ def _switch_selector() -> None:
 
 def _service_menu() -> None:
     from wizard.menus.operations import service as manager
-    actions = ["status", "health", "logs", "cleanup", "start", "stop",
-               "restart", "rollback", "proxy", "gateway"]
+    actions = ["status", "health", "logs", "start", "stop",
+               "restart", "rollback", "proxy", "gateway", "cleanup"]
     while True:
         print("\nService management: active inference model on :8000/v1")
         for i, name in enumerate(actions, 1):
