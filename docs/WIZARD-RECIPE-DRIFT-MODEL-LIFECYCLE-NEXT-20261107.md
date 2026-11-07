@@ -1,3 +1,9 @@
+## 2026-11-07 — STATUS UPDATE (original FUTURE WORK text below remains historical)
+
+Initial source implementation completed for generic 27B semantic recipe-vs-Docker comparison, read-only lifecycle UX and hard-gated guarded transaction/rollback scaffold. Source run 42355750124: **799/799 CPU/Fake-DGX PASS in 36 groups**. See docs/WIZARD-LIFECYCLE-SOURCE-IMPLEMENTATION-20261107.md. No actual DGX lifecycle acceptance or production release. Missing: current DGX read-only inventory assessment, trusted host HF mount pin, qualified Flash recipe, replace P3 historical IDs in ordinary switch, benchmark pointer promotion, independent backup cleanup, fault-tested journaling and separately approved DGX real acceptance. The original design below is retained for rationale and not an up-to-date NOT_IMPLEMENTED code inventory.
+
+---
+
 # Next-session scope — Recipe-diff-aware Wizard model lifecycle
 
 **Status as of 2026-11-07:** FUTURE WORK / NOT IMPLEMENTED / NO REAL DGX LIFECYCLE ACCEPTANCE. This is a design and acceptance handoff, not a new request to stop any service.
