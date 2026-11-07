@@ -1,3 +1,15 @@
+## D-047 / D-048 / D-049 — 2026-11-07 — Historical evidence view + staged copy migration / Stage C order
+
+**D-047** Model-centric report catalog uses the service-policy Manifest `served_id` and reports Verify/Benchmark/GPU trials/transitions independently of internal P1/P2/P3. It reads legacy plus project `reports/`, verifies source file regularity/size/private mode, deduplicates exact SHA256 bytes and uses original UTC completion/filename time. NVIDIA 27B mean end-to-end throughput and decode proxy must be distinctly labeled, not conflated with Flash-Next measured throughput. It is strictly read-only and shall never call Docker or perform inference.
+
+**D-048** P2/P3 report consolidation is **copy-only with current full plan approval**, not state relocation: new `./wizard.sh evidence migrate --plan|--guided` and Advanced 8. JSON bytes are copied with digest-bound names to project `reports/models/<served_id>`, `reports/transitions/<direction>`, and `reports/diagnostics/<served_id>`. Private 0700 folders, immutable O_EXCL 0600 records; originals, P2/P3 locks, stage state and journal, retry markers, raw target logs remain undisturbed and canonical. If preflight/source changes or destination collision, fail closed; later native writer mirroring/state relocation requires separate plan and actual DGX approval.
+
+**D-049** Actual post-B Flash P1 Verify + Benchmark are PASS and P3-A/B are PASS. This qualifies considering Stage C **now**, not approving it. After fresh source CI and clean DGX pull run **only** `./wizard.sh switch flash-next-27b stage-c --plan --json`; check current live source, preserved 27B, P1 evidence PASS and required downtime ack. P3-C execution requires a **new** exact SHA and explicit Flash-Next downtime consent, regardless of report importer completion. No automatic service transition, forced stage retry, model deletion or PR merge.
+
+[Detailed contract](../docs/MODEL-EVIDENCE-HISTORY-MIGRATION-20261107.md).
+
+---
+
 ## D-044 / D-045 / D-046 — 2026-11-07 — Operator UX and model-centric evidence
 
 **D-044 (evidence path):** New NVIDIA Flash-Next Wizard execution receipts are stored under Git-ignored `<repo>/reports/models/qwen3.8-flash-next/`, named by the *served model ID* rather than an unmemorable stage code. Keep unique append-only JSON (0600; directory 0700). Do not alter historical `~/.local/state/blazux-wizard/p1/` receipts. P3 stage-C evidence gate reads both roots and evaluates newest finished UTC action receipts, including FAIL; no historical PASS masking. P2/P3 state/locks/reports require their own safety-qualified migration, NOT moved now.
