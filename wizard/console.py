@@ -421,6 +421,10 @@ def _stage_actions(module) -> None:
             if selected.startswith("stage-"):
                 print("Execution NOT initiated. Review plan and request independent downtime approval.")
             continue
+        if spec.key == "p4" and selected == "inventory":
+            # P4-A is read-only and does not issue any retirement plan.
+            module.run(["inventory"])
+            continue
         args = ["plan", "--for-action", selected]
         if spec.key in ("p3", "p6") and selected in ("switch", "rollback"):
             # Explicit pair selection from the known stage contract.

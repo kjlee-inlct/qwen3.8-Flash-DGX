@@ -14,7 +14,7 @@ MILESTONES = (
     ("P1", "Flash-Next install / API / benchmark"),
     ("P2", "NVIDIA 27B download / runtime / API / benchmark"),
     ("P3", "Flash-Next <-> 27B real bidirectional transfers"),
-    ("P4", "Conditional storage / protected cleanup"),
+    ("P4", "P4-A inspect capacity/assets before optional cleanup"),
     ("P5", "Orcarouter Flash-Next runtime / benchmark"),
     ("P6", "Orcarouter <-> 27B real transfers"),
     ("P7", "Service / proxy / gateway integration qualification"),
@@ -108,7 +108,7 @@ def readiness_report(*, service: dict[str, Any] | None = None,
         # acceptance OR manufacture G PASS from a journal snapshot.
         "P3": ("ONE_OFF_A_B_C_RECEIPTS_PRESENT_G_LIVE_RECEIPTS_NOT_AUDITED_HERE"
                if p3_pass else "LOCAL_P3_RECEIPTS_UNAVAILABLE_G_LIVE_NOT_AUDITED_HERE"),
-        "P4": "CONDITIONAL_SOURCE_ONLY_NO_DELETE_APPROVAL",
+        "P4": "P4_A_READ_ONLY_SOURCE_PRESENT_DGX_RESULT_PENDING_NO_DELETE_APPROVAL",
         "P5": "ORCAROUTER_ADAPTER_UNQUALIFIED",
         "P6": "SWITCH_EXECUTOR_NOT_QUALIFIED",
         "P7": "SERVICE_PROXY_GATEWAY_INTEGRATION_NOT_QUALIFIED",
@@ -130,7 +130,7 @@ def readiness_report(*, service: dict[str, Any] | None = None,
     }
     milestones = [
         {"stage": stage, "title": title, "state": scopes[stage],
-         "source_implemented": stage in ("P1", "P2", "P3"),
+         "source_implemented": stage in ("P1", "P2", "P3", "P4"),
          "source_interface_present": True,
          "cpu_ci": "CHECK_GITHUB_ACTIONS_SEPARATELY",
          "historical_backend_evidence": evidence.get(stage, {"status": "UNVERIFIED"}),

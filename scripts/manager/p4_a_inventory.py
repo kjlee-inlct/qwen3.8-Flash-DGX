@@ -24,6 +24,8 @@ MAX_ROOTS = 8
 MAX_DF_OUTPUT = 32 * 1024
 MAX_SIZE_LINE = 1024
 UINT = re.compile(r"^[0-9]{1,24}$")
+SIZE = re.compile(r"^[0-9]+(?:\\.[0-9]+)?\\s?(?:B|kB|MB|GB|TB|PB|KiB|MiB|GiB|TiB|PiB)$")
+RECLAIM = re.compile(r"^[0-9]+(?:\\.[0-9]+)?\\s?(?:B|kB|MB|GB|TB|PB|KiB|MiB|GiB|TiB|PiB)(?: \\([0-9]{1,3}%\\))?$")
 
 
 def _run(cmd: list[str], *, timeout: int) -> subprocess.CompletedProcess:
@@ -55,8 +57,11 @@ def _docker_df(run: Callable[..., Any]) -> dict:
             # are NOT guaranteed unshared bytes or safe reclaimable amounts.
             size = entry.get("Size")
             reclaim = entry.get("Reclaimable")
-            if (not isinstance(size, str) or len(size) > 64
-                    or not isinstance(reclaim, str) or len(reclaim) > 64):
+            if (not isinstance(size, str) or not SIZE.fullmatch(size)
+                    or not isinstance(reclaim, str)
+                    or not RECLAIM.fullmatch(reclaim)
+                    or not UINT.fullmatch(str(entry.get("TotalCount", "")))
+                    or not UINT.fullmatch(str(entry.get("Active", "")))):
                 raise ValueError("DOCKER_DF_INVALID_SIZE")
             rows.append({
                 "type": kind,
@@ -159,7 +164,8 @@ def inspect_p4_a(*,
                     isinstance(doc, dict)
                     and isinstance(doc.get("Image"), str)
                     and re.fullmatch(r"sha256:[0-9a-f]{64}", doc["Image"])),
-                "reinstall_qualified": model == "27b",
+                "canonical_recipe_registered": model == "27b",
+                "real_reinstall_qualified_by_this_inventory": False,
                 "removal_authorized": False,
             })
         result["managed_containers"].sort(key=lambda r: r["model"])
@@ -188,11 +194,36 @@ def inspect_p4_a(*,
         roots = cache_roots_fn()
         if not isinstance(roots, list):
             raise ValueError("INVALID_CACHE_ROOT_LIST")
-        result["cache_roots_truncated"] = len(roots) > MAX_ROOTS
-        for index, candidate in enumerate(roots[:MAX_ROOTS]):
+        # The preserved Flash container's /hf bind may point to a cache
+        # outside discovery-manifest roots. Inspect only managed /hf mounts,
+        # never enumerate foreign container mounts. All source paths stay
+        # private and are only used as argv to a no-shell disk usage check.
+        configured = [(Path(p), "CONFIGURED_CACHE_ROOT") for p in roots]
+        for model, name in managed.items() if "managed" in locals() else []:
+            doc = docs.get(name) if "docs" in locals() else None
+            if not isinstance(doc, dict):
+                continue
+            for mount in doc.get("Mounts") or []:
+                if (isinstance(mount, dict) and mount.get("Destination") == "/hf"
+                        and mount.get("Type") == "bind"
+                        and isinstance(mount.get("Source"), str)
+                        and Path(mount["Source"]).is_absolute()):
+                    configured.append((Path(mount["Source"]), "MANAGED_CONTAINER_HF_BIND"))
+        seen: set[str] = set()
+        roots_uniq: list[tuple[Path, str]] = []
+        for path, origin in configured:
+            # The lexical path may differ for the same inode; realpath
+            # deduplication below prevents duplicate cache root readings.
+            canonical = str(path.resolve(strict=False))
+            if canonical not in seen:
+                seen.add(canonical)
+                roots_uniq.append((path, origin))
+        result["cache_roots_truncated"] = len(roots_uniq) > MAX_ROOTS
+        for index, (candidate, origin) in enumerate(roots_uniq[:MAX_ROOTS]):
             root = Path(candidate)
             item = {
                 "root_index": index + 1,
+                "source": origin,
                 "exists": False,
                 "filesystem_total_bytes": None,
                 "filesystem_free_bytes": None,

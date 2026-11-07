@@ -70,6 +70,8 @@ class WizardRouterCPU(unittest.TestCase):
                 if key == "p2" and action == "download":
                     continue  # source download has a separate mock preflight test
                 with self.subTest(stage=key, action=action):
+                    if key == "p4" and action == "inventory":
+                        continue  # P4-A is independently tested as read-only
                     rc, s = self.call([key, action, "--json"])
                     obj = json.loads(s)
                     self.assertEqual(rc, 3)
