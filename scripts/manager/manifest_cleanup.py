@@ -181,6 +181,31 @@ def make_plan(*, run: Callable[..., Any] = gpu.call,
     issues: list[str] = []
     try:
         cfg, manifest_sha = _load()
+        # A Git-tracked completion label is historical evidence, not proof:
+        # compare actual Docker/active API and immutable local result before
+        # declaring an already-executed batch safe to skip.
+        if isinstance(cfg.get("completion"), dict):
+            already = status(run=run, active_status=active_status, root=root)
+            if already.get("status") == DONE and already.get("issues") == []:
+                return {
+                    "schema_version": 1,
+                    "action": "MANIFEST_RETIRED_27B_CONTAINER_CLEANUP",
+                    "status": "ALREADY_CLEANED",
+                    "issues": [],
+                    "executed": False,
+                    "approval_accepted": False,
+                    "plan_id": None,
+                    "target_count": 0,
+                    "remaining": [],
+                    "verified_result_receipt": already.get(
+                        "verified_result_receipt"
+                    ),
+                    "notice": (
+                        "Previously approved two-container retirement is "
+                        "already verified. No new delete plan is issued."
+                    ),
+                }
+            return _deny("COMPLETED_MANIFEST_BUT_DOCKER_OR_RECEIPT_DRIFT")
         if root.is_symlink() or (root.exists() and list(root.glob("attempt-*.json"))):
             issues.append("PREVIOUS_CLEANUP_ATTEMPT_REQUIRES_MANUAL_RECONCILIATION")
         status = active_status()
@@ -388,6 +413,24 @@ def status(*, run: Callable[..., Any] = gpu.call,
     report["action"] = "MANIFEST_RETIRED_27B_CONTAINER_STATUS"
     report["scope"] = "EXACT_TWO_DIAGNOSTIC_CONTAINERS_NOT_MODEL_UNINSTALL_POLICY"
     try:
+        cfg, _ = _load()
+        completed = cfg.get("completion")
+        if not isinstance(completed, dict):
+            report["issues"] = ["NO_COMPLETED_MANIFEST_RETIREMENT_RECORD"]
+            return report
+        if (completed.get("state") != "OPERATOR_DGX_CLEANUP_COMPLETED_VERIFIED"
+                or completed.get("historical_entry_retained") is not True
+                or completed.get("new_cleanup_plan_after_completion") is not False
+                or not SHA.fullmatch(str(completed.get("consumed_plan_id") or ""))):
+            report["issues"] = ["COMPLETED_MANIFEST_RECORD_INVALID"]
+            return report
+        recorded_deletions = completed.get("deleted")
+        if (not isinstance(recorded_deletions, list)
+                or {x.get("name") for x in recorded_deletions
+                    if isinstance(x, dict)} != set(EXPECTED_NAMES)
+                or len(recorded_deletions) != 2):
+            report["issues"] = ["COMPLETED_MANIFEST_TARGETS_INVALID"]
+            return report
         names = _run_names(run, all_containers=True)
         report["remaining"] = [x for x in EXPECTED_NAMES if x in names]
         report["missing"] = [x for x in EXPECTED_NAMES if x not in names]
@@ -397,9 +440,13 @@ def status(*, run: Callable[..., Any] = gpu.call,
             receipt = migration._safe_json(item)
             if (receipt.get("status") == DONE
                     and receipt.get("issues") == []
-                    and len(receipt.get("deleted", [])) == 2
-                    and {row["name"] for row in receipt["deleted"]} ==
-                            set(EXPECTED_NAMES)):
+                    and receipt.get("plan_id") == completed["consumed_plan_id"]
+                    and item.name == completed["private_result_receipt"]
+                    and receipt.get("active_container_id") ==
+                            completed.get("verified_active_container_id")
+                    and receipt.get("preserved_original_model_service") is True
+                    and receipt.get("remaining") == []
+                    and receipt.get("deleted") == recorded_deletions):
                 approved.append(item.name)
         active = active_status()
         report["active_service_preserved"] = (
