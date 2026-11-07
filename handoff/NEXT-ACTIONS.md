@@ -1,3 +1,11 @@
+## 2026-11-07 — DGX READ-ONLY CURRENT-ID SWITCH PREVIEW NOW PASS; NEXT GATES
+
+**The earlier read-only DGX step is COMPLETE** on source `4189a79`: canonical 27B matches including explicit HF source; operating switch preview 27B -> Flash-Next has `status=READY_FOR_OPERATOR_REVIEW_ONLY`, `issues=[]`, `source_lineage=CANONICAL_RECIPE`, `target_lineage=HISTORICAL_P3_INSTANCE`, current Docker IDs sourced from live inspect; service manager remains `LIVE_SERVICE_VERIFIED`. Details in `docs/WIZARD-27B-OPERATIONAL-PREVIEW-DGX-PASS-20261107.md`. Do **not** repeat this read-only test absent drift.
+
+**Remaining work in priority order:** (1) source-only independent GPU process/host port ownership read-only audit; (2) qualify canonical Flash runtime recipe (do not reinterpret the P3 Flash historical instance as a reinstall-verified recipe); (3) strengthen generic executor crash/rollback journal and independent benchmark pointer/backup cleanup; (4) CPU/Fake-DGX tests and CI; (5) real DGX switch/rollback acceptance in separately authorized maintenance window; (6) only then consider releasing production operations. Service policy ONE_ACTIVE_MODEL_ONLY, vLLM 0.32 and :8000 remain unchanged. No Docker mutation/cleanup or P3 replay authorized.
+
+---
+
 ## 2026-11-07 — NEXT: VERIFY CURRENT-ID-AWARE SWITCH PREVIEW ON DGX (READ ONLY)
 
 Current operator DGX observation already confirms **canonical 27B `diff=[]`, API LIVE_SERVICE_VERIFIED**, exact actual host HF source `/home/inlc/.cache/huggingface`, and no need to recreate active 27B. Later source code updated ordinary switch preview/executor to accept fresh current canonical 27B ID, retaining old P3 receipts only as history; 814/814 CPU/Fake-DGX tests PASS, CI 42367665200.
