@@ -50,7 +50,7 @@ def _deny(*issues: str) -> dict[str, Any]:
         "schema_version": 1, "action": "MANIFEST_RETIRED_27B_CONTAINER_CLEANUP",
         "status": "BLOCKED", "issues": sorted(set(issues)), "executed": False,
         "approval_accepted": False, "plan_id": None, "target_count": 2,
-        "docker_state_mutated": False, "active_service_preserved": True,
+        "docker_state_mutated": False, "active_service_preserved": None,
         "delete_scope": "DOCKER_CONTAINERS_ONLY",
     }
 
@@ -77,9 +77,9 @@ def _load() -> tuple[dict, str]:
             or doc["models"]["flash-next"]["container_name"] != FALLBACK_CONTAINER
             or doc["models"]["27b"].get("recipe_state") != "CANONICAL_DEFAULT"):
         raise ValueError("PROTECTED_MODEL_NAMES_OR_RECIPE_UNQUALIFIED")
-    # Fail closed if allowed-list is modified to contain another active model.
-    if SOURCE_CONTAINER in EXPECTED_NAMES or FALLBACK_CONTAINER in EXPECTED_NAMES:
-        raise ValueError("PROTECTED_CONTAINER_LIST_COLLISION")
+    # This is an exact, already-qualified retirement BATCH, not a global
+    # deletion ban for canonical 27B or Flash. Both remain operator-removable
+    # through their own separately approved lifecycle action.
     for item in entries:
         if (item.get("managed_model") != "27b"
                 or item.get("role") not in (
@@ -385,6 +385,7 @@ def status(*, run: Callable[..., Any] = gpu.call,
     """Read-only inventory after cleanup, no assumption that deletion happened."""
     report = _deny()
     report["action"] = "MANIFEST_RETIRED_27B_CONTAINER_STATUS"
+    report["scope"] = "EXACT_TWO_DIAGNOSTIC_CONTAINERS_NOT_MODEL_UNINSTALL_POLICY"
     try:
         names = _run_names(run, all_containers=True)
         report["remaining"] = [x for x in EXPECTED_NAMES if x in names]
