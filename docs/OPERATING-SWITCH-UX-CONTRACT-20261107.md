@@ -1,3 +1,9 @@
+## Addendum — 2026-11-07: independent guarded transaction SOURCE now present, still NOT RELEASED
+
+The independent \`scripts/manager/operational_executor.py\` source has now been added, using a fresh plan recheck, two exact operator acknowledgments, private lock and single-use attempt marker, append-only journal separate from P3, stop-before-start, port release, exact container/image IDs, 27B label, target API served ID and original-container preservation, with best-effort restoration and explicit failure outcomes. It is **NOT routed through Wizard CLI/TTY** and is not authorized for live DGX use. CPU Fake-DGX tests in \`tests/test_operational_executor_cpu.py\` cover both directional successes, cancellation/invalid IDs, failure/recovery branches and one-time plan attempts. This updates the "required executor" portion below: **source implementation exists, but release qualification, guided approval flow and independently approved real DGX validation are still outstanding**. No running 27B service was altered, no P3 stage rerun or real operating transition occurred. CPU success never authorizes downtime.
+
+---
+
 # Ordinary model-switch preflight — Wizard source iteration (2026-11-07)
 
 **Source-only / read-only. Not a GPU or service acceptance certificate.** Historical P3-A/B/C passed on actual DGX but recurring operating switches and interactive UX have NOT passed acceptance. Do not replay completed one-off stages. Last observed DGX remains NVIDIA 27B on port 8000.
