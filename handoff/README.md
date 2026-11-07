@@ -1,3 +1,9 @@
+## 2026-11-07 — CURRENT P3-A-G TRACKING
+
+The user adopted **P3-D/E/F/G** as formal continuation of historical P3-A/B/C (all already passed, no replay). Read `docs/P3-D-G-UNIFIED-WIZARD-DRAFT-ACCEPTANCE-20261107.md` first for each gate and local `bash scripts/temporary/p3-d-g-acceptance.sh --run` automatic CPU + read-only DGX judge. D unknown process visibility is BLOCKED rather than invented PASS; E Flash canonical recipe unqualified until reviewed, F CPU-only does not release executor, G preview does not execute a real switch or rollback. P4 remains optional, then P5/6/7 as before.
+
+---
+
 ## 2026-11-07 — LATEST DGX ACTUAL READ-ONLY ACCEPTANCE: CURRENT-ID SWITCH PREVIEW PASS
 
 Read `docs/WIZARD-27B-OPERATIONAL-PREVIEW-DGX-PASS-20261107.md` for the second operator DGX read-only report after pulling 4189a79: canonical 27B `diff=[]`, `advisories=[]`; ordinary 27B -> preserved Flash-Next switch preflight `READY_FOR_OPERATOR_REVIEW_ONLY`, `issues=[]`, current IDs and source/target lineage validated; service `LIVE_SERVICE_VERIFIED`. **This is a PREVIEW PASS only**, not GPU exclusivity or port ownership and not actual model switch/rollback acceptance. Code CI 814/814 PASS. Never treat a preview plan hash as execution approval.
