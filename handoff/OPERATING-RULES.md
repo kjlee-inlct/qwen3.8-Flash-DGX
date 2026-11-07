@@ -1,3 +1,9 @@
+## R1W — 2026-11-07 — New ordinary operating switch source complete candidate; real DGX release distinct
+
+Binding priorities: model-centered `./wizard.sh` everyday Flash-Next↔NVIDIA 27B switching, independent preflight, exact scoped approval, stop-before-start, verified API+bounded chat, evidence and safe best-effort rollback. Defer 27B Tool Calling / Open WebUI and Orcarouter until separately requested. Keep P3 A/B/C immutable as historical provenance; never reuse their plan IDs or repeat one-off stages. New source-only normal UX is production `PRODUCTION_EXECUTION_RELEASED=False`, while a dedicated one-switch DGX acceptance route offers `--plan` by default and separately approved `--execute` with four manually typed TTY inputs; no unattended `--execute --json`, env approval overrides, forced plan reuse or automatic reverse switch. Do NOT treat generic source-development permission as consent for current 27B downtime. Actual user controls trial separately under `docs/OPERATING-SWITCH-DGX-ACCEPTANCE-RUNBOOK-20261107.md`; any unverified journal, model identity or rollback blocks subsequent switching. Original vLLM 0.32, single GPU model, API port 8000, active 27B, preserved Flash, HF cache, P3 private receipts, Draft PR unmerged remain binding.
+
+---
+
 ## R1V — 2026-11-07 — P3 최종 PASS 이후 일반 운영 UX 개발, one-off 전환 재실행 금지
 
 실제 DGX P3-A/B/C 전환이 모두 실행/검증되었고 최종 활성 모델은 **NVIDIA 27B :8000**. 원본 Flash 컨테이너/이미지/HF cache 및 27B 자산, 기존 canonical P3 journal/receipt/attempt marker를 그대로 보존한다. 아래 과거의 'P3-C 준비·별도 승인·NOT_RUN'은 **당시 승인 경계 기록**이지 완료된 Stage C를 다시 실행하라는 지시가 아니다. P1/P2/POST-B/P3 재시험·Flash 복귀·27B 중단은 새 작업 목적 및 신규 승인 없이는 금지.
