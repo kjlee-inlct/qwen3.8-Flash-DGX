@@ -94,6 +94,9 @@ def _stream_sample(response, start, *, clock=time.perf_counter):
     usage = None
     generated = False
     done = False
+    finish_reason = None
+    content_observed = False
+    reasoning_observed = False
     deadline = time.monotonic() + 180  # hard per-request ceiling, in addition to socket timeout
     for i, raw in enumerate(response):
         if time.monotonic() > deadline:
@@ -116,17 +119,26 @@ def _stream_sample(response, start, *, clock=time.perf_counter):
             if not isinstance(choice, dict) or not isinstance(choice.get("delta"), dict):
                 continue
             delta = choice["delta"]
-            if any(isinstance(delta.get(k), str) and delta[k]
-                   for k in ("content", "reasoning_content")):
+            if choice.get("finish_reason") is not None:
+                finish_reason = choice["finish_reason"]
+            if isinstance(delta.get("content"), str) and delta["content"]:
+                content_observed = True
+            if (isinstance(delta.get("reasoning_content"), str)
+                    and delta["reasoning_content"]):
+                reasoning_observed = True
+            if content_observed or reasoning_observed:
                 generated = True
                 if first_token is None:
                     first_token = clock()
     return {"first_token_at": first_token, "usage": usage,
-            "stream_complete": done, "generated": generated}
+            "stream_complete": done, "generated": generated,
+            "finish_reason": finish_reason, "content_observed": content_observed,
+            "reasoning_observed": reasoning_observed}
 
 
 def measure(*, opener=urlopen, clock=time.perf_counter,
-            memory_reader=memory_snapshot, identity=trial.api_ready) -> dict[str, Any]:
+            memory_reader=memory_snapshot, identity=trial.api_ready,
+            chat_template_kwargs: dict[str, Any] | None = None) -> dict[str, Any]:
     if identity(trial.SERVED) is not True:
         raise RuntimeError("TARGET_API_IDENTITY_CHANGED")
     before = memory_reader()
@@ -135,6 +147,12 @@ def measure(*, opener=urlopen, clock=time.perf_counter,
         payload = {"model": trial.SERVED, "messages": [{"role": "user", "content": prompt}],
                    "temperature": 0, "seed": SEED, "max_tokens": MAX_TOKENS,
                    "stream": True, "stream_options": {"include_usage": True}}
+        # The canonical Native Tools runtime is qualified with the exact
+        # NVIDIA Jinja non-thinking path. Keep historic benchmark defaults.
+        if chat_template_kwargs is not None:
+            if chat_template_kwargs != {"enable_thinking": False}:
+                raise ValueError("UNQUALIFIED_BENCHMARK_TEMPLATE_KWARGS")
+            payload["chat_template_kwargs"] = dict(chat_template_kwargs)
         request = Request("http://127.0.0.1:8000/v1/chat/completions",
                           data=json.dumps(payload).encode("utf-8"),
                           method="POST", headers={"Content-Type": "application/json"})
@@ -157,6 +175,17 @@ def measure(*, opener=urlopen, clock=time.perf_counter,
         decode_proxy = (round((tokens - 1) / (elapsed - ttft), 4)
                         if tokens is not None and tokens > 1
                         and ttft is not None and elapsed > ttft else None)
+        reasons = []
+        if not parsed["stream_complete"]:
+            reasons.append("STREAM_NOT_COMPLETED")
+        if not parsed["generated"]:
+            reasons.append("NO_TEXT_OR_REASONING_DELTAS")
+        if tokens is None:
+            reasons.append("COMPLETION_TOKEN_USAGE_MISSING_OR_ZERO")
+        if ttft is None:
+            reasons.append("TTFT_NOT_OBSERVED")
+        if parsed["finish_reason"] == "length":
+            reasons.append("MAX_TOKEN_LIMIT_REACHED")
         samples.append({
             "index": index,
             "prompt_sha256": hashlib.sha256(prompt.encode()).hexdigest(),
@@ -170,8 +199,14 @@ def measure(*, opener=urlopen, clock=time.perf_counter,
                 if prompt_tokens is not None and ttft and ttft > 0 else None),
             "decode_tokens_per_sec_proxy": decode_proxy,
             "stream_complete": parsed["stream_complete"],
+            "stream_finish_reason": parsed["finish_reason"],
+            "usage_reported": isinstance(parsed["usage"], dict),
+            "content_observed": parsed["content_observed"],
+            "reasoning_observed": parsed["reasoning_observed"],
+            "failure_reasons": reasons,
             "success": bool(parsed["stream_complete"] and parsed["generated"]
-                            and tokens and ttft is not None),
+                            and tokens and ttft is not None
+                            and parsed["finish_reason"] != "length"),
         })
     after = memory_reader()
     complete = all(row["success"] for row in samples)
@@ -180,6 +215,9 @@ def measure(*, opener=urlopen, clock=time.perf_counter,
         "benchmark_version": VERSION, "model": trial.SERVED,
         "requests": REQUEST_COUNT, "max_tokens": MAX_TOKENS,
         "seed": SEED, "concurrency": 1,
+        "chat_template_kwargs": (
+            dict(chat_template_kwargs) if chat_template_kwargs is not None else None
+        ),
         "samples": samples,
         "metrics": {
             "latency_p50_sec": _percentile([r["latency_sec"] for r in samples], .5),
