@@ -1,3 +1,9 @@
+## 2026-11-07 — IN-SESSION IMPLEMENTATION STATUS (NEWER THAN THE STARTER BELOW)
+
+The requested general Wizard lifecycle implementation has started on the existing GitHub branch. Generic 27B desired-vs-Docker runtime drift comparison, read-only model lifecycle plan/CLI, menu option 7 and guarded container-only lifecycle transaction/rollback scaffold are now implemented, with 799/799 CPU/Fake-DGX tests PASS in run 42355750124 (36 groups). **No actual DGX lifecycle operation was executed; production remains blocked.** See docs/WIZARD-LIFECYCLE-SOURCE-IMPLEMENTATION-20261107.md, handoff/CURRENT-STATE.md and NEXT-ACTIONS.md. The following original starter is historical at the time it was authored; do not treat its generic lifecycle NOT_IMPLEMENTED statements as describing the current source, nor assume real DGX acceptance. Complete fresh read-only DGX observation, old-P3-ID switch correction, Flash recipe, benchmark-promotion/backup cleanup, and separate authorized live acceptance next.
+
+---
+
 # New Conversation Starter — Blazux DGX Spark / Wizard 레시피 차이 감지·모델 수명주기 통합
 
 이전 대화에서 이어서 **실제 소스 개발과 GitHub 커밋**을 진행해주세요. 이 프롬프트는 새로운 대화에서 독립적으로 사용하기 위한 최신 인수인계입니다. 단순히 계획만 작성하지 말고, GitHub 연결 도구로 최신 상태를 조사하고 소스·테스트·문서 구현 및 기존 브랜치 커밋까지 수행하세요. 실제 DGX 서비스 변경은 별도 운영자 승인 없이 하지 마세요.
