@@ -267,6 +267,44 @@ class RecipeDriftCPU(unittest.TestCase):
         self.assertEqual(rc, 3)
         self.assertFalse(json.loads(out.getvalue())["executed"])
 
+    def test_cli_read_only_cache_source_binding_uses_supplied_path(self):
+        fake = preview(docker_doc(), running=True)
+        with patch("scripts.manager.recipe_drift.plan", return_value=fake) as planner:
+            output = io.StringIO()
+            with contextlib.redirect_stdout(output):
+                rc = router.main([
+                    "model", "27b", "recipe-diff",
+                    "--cache-source", "/home/inlc/.cache/huggingface", "--json"])
+        self.assertEqual(rc, 0)
+        planner.assert_called_once_with(
+            "27b", "status", cache_source="/home/inlc/.cache/huggingface")
+        self.assertFalse(json.loads(output.getvalue())["executed"])
+
+    def test_cli_malformed_cache_source_cannot_unlock_execution(self):
+        for extra in (
+            ["--cache-source"], ["--cache-source", "relative/path"],
+            ["--cache-source", "--execute"],
+            ["--cache-source", "/x", "--approve-plan", "a"*64],
+            ["--cache-source", "/x", "--cache-source", "/y"],
+        ):
+            with self.subTest(extra=extra):
+                out = io.StringIO()
+                with patch("scripts.manager.recipe_drift.plan") as planner, (
+                        contextlib.redirect_stdout(out)):
+                    rc = router.main(["model", "27b", "recipe-diff", *extra, "--json"])
+                self.assertEqual(rc, 3)
+                planner.assert_not_called()
+                self.assertFalse(json.loads(out.getvalue())["executed"])
+
+    def test_explicit_cache_source_resolves_no_advisory_when_mount_matches(self):
+        doc = docker_doc()
+        result = drift.plan("27b", "status",
+                            observer=lambda: observe(doc, running=True),
+                            cache_source="/hf-cache", now=1794050000)
+        self.assertEqual(result["status"], "READ_ONLY_STATUS")
+        self.assertEqual(result["diff"], [])
+        self.assertEqual(result["advisories"], [])
+
     def test_wizard_read_only_recipe_diff_route_and_legacy_preservation(self):
         fake = preview(docker_doc(), running=True)
         with patch("scripts.manager.recipe_drift.plan", return_value=fake):
