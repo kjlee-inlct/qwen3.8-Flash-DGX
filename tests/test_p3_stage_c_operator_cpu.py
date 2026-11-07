@@ -202,14 +202,15 @@ class StageCOperatorCPU(unittest.TestCase):
 
     def invoke(self, *, execute=False, tty=False, approved=False,
                expire_seconds=300, rotate=False, core_status="PASS",
-               post_model="27b", c_ok=True, clean=True, confirm_cb=None):
+               post_model="27b", c_ok=True, clean=True, confirm_cb=None,
+               refreshed_plan=None):
         pp = plan(datetime.now(timezone.utc).timestamp() + expire_seconds)
         calls, persisted = [], []
         probes = 0
         def get_plan_and_live():
             nonlocal probes
             probes += 1
-            value = dict(pp)
+            value = dict(refreshed_plan if refreshed_plan is not None and probes > 1 else pp)
             if rotate and probes > 1:
                 value["plan_id"] = "8" * 64
             return 0, live(), 0, value
@@ -220,7 +221,10 @@ class StageCOperatorCPU(unittest.TestCase):
             if path.name == "stage-b.json":
                 return b_receipt()
             if path.name == "stage-c.json":
-                return c_receipt() if c_ok else {}
+                c = c_receipt() if c_ok else {}
+                if c_ok and refreshed_plan is not None:
+                    c["plan_id"] = refreshed_plan["plan_id"]
+                return c
             raise AssertionError(str(path))
 
         def run(cmd, **kw):
@@ -434,6 +438,36 @@ class StageCOperatorCPU(unittest.TestCase):
         self.assertTrue(reports[-1]["approval_accepted"])
         self.assertTrue(reports[-1]["execution_dispatched"])
         self.assertEqual(reports[-1]["post_switch_observed_model"], "27b")
+
+    def test_real_stage_c_core_receives_new_sha_only_after_fresh_manual_consent(self):
+        # The window-rotation selection happens before confirming. The old
+        # plan SHA must NEVER be passed to the canonical Wizard executor.
+        current = plan(datetime.now(timezone.utc).timestamp() + 600)
+        current["plan_id"] = "8" * 64
+        approvals = []
+        def refreshed(a, b, lr, ll, pr, pp):
+            return {"live_rc": lr, "live": ll, "plan_rc": pr,
+                    "plan": current, "refreshed": True,
+                    "refresh_probes": 4, "wait_seconds": 20, "issues": []}
+        def accept_only_new_id(candidate):
+            approvals.append(candidate["plan_id"])
+            return candidate["plan_id"] == current["plan_id"]
+        with patch.object(op, "await_approval_window", side_effect=refreshed):
+            rc, calls, reports, _ = self.invoke(
+                execute=True, tty=True, approved=True, expire_seconds=30,
+                confirm_cb=accept_only_new_id, refreshed_plan=current)
+        self.assertEqual(rc, 0)
+        self.assertEqual(approvals, [current["plan_id"]])
+        self.assertEqual(reports[-1]["status"], "P3_C_PASS_FINAL_27B_ACTIVE")
+        self.assertEqual(reports[-1]["plan_id"], current["plan_id"])
+        self.assertEqual(reports[-1]["expires_at_epoch_seconds"],
+                         current["expires_at_epoch_seconds"])
+        self.assertTrue(reports[-1]["plan_refreshed"])
+        self.assertIn(current["plan_id"], calls[0])
+        self.assertNotIn(C_PLAN, calls[0])
+        self.assertIn(op.DOWNTIME_ACK, calls[0])
+        self.assertNotIn("--enter-p3", calls[0])
+        self.assertEqual(calls[1][:3], ["./wizard.sh", "service", "manager"])
 
     def test_fake_stale_core_and_recovery_failure_are_not_pass(self):
         for state in ("STALE", "RECOVERY_FAILED"):
