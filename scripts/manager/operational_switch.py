@@ -49,6 +49,8 @@ def historical_p3_receipts(*, root: Path = P3_ROOT) -> dict[str, Any]:
         issues.append("P3_IMMUTABLE_STAGE_RECEIPTS_UNAVAILABLE")
     if not issues:
         a, b, c = (records[s] for s in "abc")
+        if any(records[s].get("executed") is not True for s in "abc"):
+            issues.append("P3_STAGE_EXECUTION_NOT_PROVEN")
         if any((records[s].get("source_model"), records[s].get("target_model"))
                != p3.DIRECTIONS[s] for s in "abc"):
             issues.append("P3_STAGE_DIRECTION_MISMATCH")
