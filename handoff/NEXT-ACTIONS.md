@@ -1,3 +1,13 @@
+## 2026-11-07 — Current WebUI-vLLM 27B integration issue
+
+- [x] Real DGX 27B default chat/inference PASS; with `chat_template_kwargs.enable_thinking=false`, direct strict `DGX_OK` **PASS**. Distinguish formatting from actual generation.
+- [ ] On Open WebUI 27B model only, disable Builtin Tools and attached/chat Tools; retest plain text chat. **Real WebUI outcome NOT_RUN** as of evidence received.
+- [ ] Optionally `docker inspect qwen38-27b --format '{{json .Config.Cmd}}' | python3 -m json.tool` (read-only). Real live arguments not yet observed.
+- [ ] Source-only test per-model tool parser configuration using pinned vLLM 0.32 and NVIDIA 27B chat template; no parser assumption. Any new native tool-capable container requires a separately approved downtime/rollback plan, not restart of existing preserved container. Full Open WebUI tools and general operating switch NOT_QUALIFIED.
+- [ ] Preserve active 27B, Flash fallback assets, historical P3 A/B/C, API port 8000 and Draft PR #1 unmerged. See `docs/OPENWEBUI-27B-TOOL-CALLING-20261107.md`.
+
+---
+
 ## 2026-11-07 — Follow-up after actual DGX 27B curl PASS
 
 - [x] Real DGX 27B health, sole API model ID and actual chat completion **PASS** from operator console. `/v1/models=qwen3.8-27b`, completion model matches, stop finish, vLLM 0.32.0, original source at `05c1968`. Previous `curl smoke NOT_RUN` note is superseded.
