@@ -28,8 +28,10 @@ Canonical 27B Native Tools recipe migration:
     DOWNTIME: requires TTY, fresh plan SHA, downtime + container deletion
     acknowledgements. Stop original qwen38-27b, rename backup, RECREATE
     canonical qwen38-27b from pinned Native Tools recipe. Verify normal
-    chat + structured tool_calls + streaming, benchmark 3 requests with
-    TTFT/throughput, promote a NEW latest-benchmark pointer. ONLY AFTER
+    chat + structured tool_calls + streaming, benchmark 3 requests
+    (v2: 128-token cap, enable_thinking=false ONLY for benchmark) with
+    measured TTFT/throughput, promote a NEW latest-benchmark pointer.
+    ONLY AFTER
     full pass, remove the verified stopped OLD BACKUP DOCKER CONTAINER.
     Docker images, model files, old benchmarks and P3 receipts persist.
     On precommit failure, attempt original-container rollback; a host or
