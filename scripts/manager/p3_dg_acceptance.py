@@ -73,9 +73,64 @@ def _ss_port_listeners(output: str) -> list[str]:
     return [row for row in rows if _ss_local_port_8000(row)]
 
 
+def docker_proxy_belongs(pid: int, doc: dict, *, root: Path = PROC_ROOT) -> bool:
+    """Read-only Docker proxy attribution: exact target container IP + :8000.
+
+    docker-proxy runs in the HOST cgroup, so /proc/PID/cgroup never carries
+    the application container's Docker ID. Accept it only if its real /proc
+    argv is the TCP proxy for :8000 and forwards to an IP recorded by Docker
+    inspect for the qualified active container, with a matching published
+    HostConfig port. Missing/ambiguous evidence ALWAYS fails closed.
+    """
+    if not isinstance(pid, int) or pid < 1 or not isinstance(doc, dict):
+        return False
+    net = doc.get("NetworkSettings") or {}
+    networks = net.get("Networks") or {}
+    ips = set()
+    for details in networks.values() if isinstance(networks, dict) else []:
+        if isinstance(details, dict):
+            ips.update(x for x in (details.get("IPAddress"),
+                                   details.get("GlobalIPv6Address"))
+                       if isinstance(x, str) and x)
+    bindings = ((doc.get("HostConfig") or {}).get("PortBindings") or {}).get("8000/tcp")
+    if not ips or not isinstance(bindings, list) or not bindings:
+        return False
+    try:
+        raw = (root / str(pid) / "cmdline").read_bytes()
+        if not raw or len(raw) > 8192:
+            return False
+        argv = [x.decode("utf-8") for x in raw.split(bytes([0])) if x]
+        if not argv or Path(argv[0]).name not in ("docker-proxy", "docker-proxy-current"):
+            return False
+        opts: dict[str, str] = {}
+        i = 1
+        while i + 1 < len(argv):
+            if argv[i] in ("-proto", "-host-ip", "-host-port",
+                           "-container-ip", "-container-port"):
+                if argv[i] in opts:
+                    return False
+                opts[argv[i]] = argv[i + 1]
+                i += 2
+            else:
+                i += 1
+        if (opts.get("-proto") != "tcp"
+                or opts.get("-host-port") != "8000"
+                or opts.get("-container-port") != "8000"
+                or opts.get("-container-ip") not in ips):
+            return False
+        host_ip = opts.get("-host-ip")
+        return bool(host_ip and any(
+            isinstance(bind, dict) and str(bind.get("HostPort")) == "8000"
+            and bind.get("HostIp", "") in ("", host_ip)
+            for bind in bindings))
+    except (OSError, UnicodeError, ValueError, TypeError):
+        return False
+
+
 def stage_d(snapshot: dict, live: dict, *,
             run: Callable[..., Any] = gpu.call,
-            proc_owner: Callable[[int, str], bool] = proc_belongs) -> dict:
+            proc_owner: Callable[[int, str], bool] = proc_belongs,
+            proxy_owner: Callable[[int, dict], bool] = docker_proxy_belongs) -> dict:
     """GPU/container + host port/process checks; unknown is NOT a pass."""
     issues: list[str] = []
     running = snapshot.get("running")
@@ -106,6 +161,7 @@ def stage_d(snapshot: dict, live: dict, *,
     ss_returncode: int | None = None
     ss_diagnostic: str | None = None
     port_pid_verified = False
+    port_pid_attribution: dict[str, str] = {}
     gpu_pid_verified = False
     try:
         observed = run(["ss", "-H", "-ltnp", "sport = :8000"], timeout=12)
@@ -126,9 +182,16 @@ def stage_d(snapshot: dict, live: dict, *,
             else:
                 listener_pids = sorted({int(pid) for row in port_listener_rows
                                        for pid in PID.findall(row)})
-                if docker_id:
-                    port_pid_verified = all(proc_owner(pid, docker_id)
-                                            for pid in listener_pids)
+                if docker_id and isinstance(doc, dict):
+                    for pid in listener_pids:
+                        if proc_owner(pid, docker_id):
+                            port_pid_attribution[str(pid)] = "CONTAINER_CGROUP"
+                        elif proxy_owner(pid, doc):
+                            port_pid_attribution[str(pid)] = "QUALIFIED_DOCKER_PROXY"
+                        else:
+                            port_pid_attribution[str(pid)] = "UNVERIFIED"
+                    port_pid_verified = all(v != "UNVERIFIED"
+                                            for v in port_pid_attribution.values())
                     if not port_pid_verified:
                         issues.append("HOST_PORT_PROCESS_CONTAINER_OWNERSHIP_UNVERIFIED")
     except (OSError, RuntimeError, ValueError, subprocess.TimeoutExpired):
@@ -163,6 +226,7 @@ def stage_d(snapshot: dict, live: dict, *,
         docker_host_port_owners=ports, observed_port_pids=listener_pids,
         observed_port_listener_rows=[row[:350] for row in port_listener_rows],
         ss_returncode=ss_returncode, ss_diagnostic=ss_diagnostic,
+        port_pid_attribution=port_pid_attribution,
         observed_gpu_pids=sorted(set(gpu_pids)),
         port_process_ownership_verified=port_pid_verified,
         gpu_process_exclusivity_verified=gpu_pid_verified,
