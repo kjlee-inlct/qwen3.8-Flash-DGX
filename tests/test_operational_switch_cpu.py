@@ -189,6 +189,20 @@ class FakeDGX(unittest.TestCase):
         self.assertFalse(doc["executed"])
         self.assertIn("GENERAL_OPERATING_SWITCH_EXECUTOR_NOT_QUALIFIED", doc["issues"])
 
+    def test_review_shows_non_disruptive_27b_curl_instruction(self):
+        with patch("scripts.manager.operational_switch.make_plan",
+                   return_value={
+                       "source_model": "27b",
+                       "target_model": "flash-next",
+                       "current_live_status": "LIVE_SERVICE_VERIFIED",
+                       "status": op.READY, "plan_id": PLAN, "issues": [],
+                   }), contextlib.redirect_stdout(io.StringIO()) as output:
+            console._switch_preview("flash-next")
+        shown = output.getvalue()
+        self.assertIn("operational-27b-curl-smoke.sh", shown)
+        self.assertIn("not invoked", shown)
+        self.assertNotIn("docker stop", shown)
+
     def test_existing_router_operational_preview(self):
         with patch.object(op, "make_plan", return_value={
                 "status": op.READY, "executed": False, "issues": [],
