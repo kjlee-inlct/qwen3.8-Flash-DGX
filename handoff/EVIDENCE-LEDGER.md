@@ -1,3 +1,9 @@
+## E-20261107-OPERATING-WIZARD-GUIDED-SOURCE — not actual DGX switch
+
+Current GitHub source branch includes `scripts/manager/operational_wizard.py` and `tests/test_operational_wizard_cpu.py`; existing ordinary-switch preview and independent executor are now connected **only through a release-gated guided operator boundary**. Execution SHA domain-separate from preview candidate; Fake-DGX simulated both directions, cancellation, no TTY, stale plan, and production release lock. Record latest head-specific GitHub CI separately when completed. **Actual ordinary model switch and rollback NOT_RUN**; current real DGX remains 27B active at :8000 from operator logs. No P3 A/B/C replay, actual Docker stop/start, model delete/restart, tool-parser addition or original private evidence mutation.
+
+---
+
 ## E-20261107-27B-OPENWEBUI-AUTO-TOOL-BLOCKED — real operator observation
 
 Direct actual DGX `/v1/chat/completions` with `chat_template_kwargs.enable_thinking=false`: matching `model=qwen3.8-27b`, `message.content="DGX_OK"`, `reasoning=null`, `finish_reason=stop`, `completion_tokens=4`, vLLM `0.32.0-bfe01fe9`. This confirms strict visible-output formatting for **one no-tool request** and no longer implies unconditional reasoning leakage. Separately, real Open WebUI 27B question failed with exact `"auto" tool choice requires --enable-auto-tool-choice and --tool-call-parser to be set`. Neither WebUI settings nor current Docker Cmd were supplied, so root cause is **strongly supported by source 27B launcher flags omission, not fully observed in container**. No changes to running 27B or Open WebUI settings by assistant. Investigate using `docs/OPENWEBUI-27B-TOOL-CALLING-20261107.md`; do not infer Native Tool Calling PASS.
