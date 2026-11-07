@@ -21,7 +21,7 @@ MAX_META_BYTES = 8 * 1024 * 1024
 MAX_TEMPLATE_BYTES = 256 * 1024
 MAX_INDEX_SHARDS = 256
 MAX_INDEX_WEIGHTS = 100000
-SHARD_NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*\\.safetensors$")
+SHARD_NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*\.safetensors$")
 
 
 def _mounted(doc: dict, dest: str) -> dict:
@@ -38,12 +38,13 @@ def _mounted(doc: dict, dest: str) -> dict:
     return selected[0]
 
 
-def _regular(path: Path, *, root: Path | None = None) -> tuple[Path, int]:
+def _regular(path: Path, *, root: Path | None = None,
+             allow_empty: bool = False) -> tuple[Path, int]:
     resolved = path.resolve(strict=True)
     if root is not None and not resolved.is_relative_to(root):
         raise ValueError("FILE_OUTSIDE_HF_CACHE")
     size = resolved.stat()
-    if not stat.S_ISREG(size.st_mode) or size.st_size <= 0:
+    if not stat.S_ISREG(size.st_mode) or (size.st_size == 0 and not allow_empty):
         raise ValueError("FILE_NOT_REGULAR_OR_EMPTY")
     return resolved, size.st_size
 
@@ -111,7 +112,7 @@ def inspect_assets(docker: dict, *, draft_loader=review.load_draft) -> dict[str,
         view_root = view.resolve(strict=True)
         if not view_root.is_dir() or not view_root.is_relative_to(cache):
             raise ValueError("FLASH_VIEW_OUTSIDE_CACHE")
-        _regular(view / ".prepared", root=cache)
+        _regular(view / ".prepared", root=cache, allow_empty=True)
         hashes: dict[str, str] = {}
         for name in ("config.json", "tokenizer_config.json",
                      "model.safetensors.index.json"):

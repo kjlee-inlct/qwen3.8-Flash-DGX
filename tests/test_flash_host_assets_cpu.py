@@ -7,7 +7,7 @@ import tempfile
 import unittest
 
 from scripts.manager import flash_host_assets as assets
-from tests.test_flash_recipe_draft_cpu import make_flash
+from test_flash_recipe_draft_cpu import make_flash
 
 
 class FlashHostAssetsCPU(unittest.TestCase):
@@ -17,7 +17,7 @@ class FlashHostAssetsCPU(unittest.TestCase):
                       / "models--nvidia--Qwen3.8-Flash-Next-NVFP4"
                       / "snapshots"
                       / (recipe["model"]["source_revision"] + "-fp8hybrid"))
-        (model_view / ".prepared").write_text("READY")
+        (model_view / ".prepared").write_text("")
         (model_view / "tokenizer.json").write_text('{"model": "test"}')
         (model_view / "config.json").write_text('{"model_type":"qwen"}')
         (model_view / "tokenizer_config.json").write_text('{"model_max_length": 1024}')
