@@ -237,7 +237,7 @@ def main(argv: list[str] | None = None) -> int:
                 del options[at:at + 2]
         valid_cache_source = (cache_source is None or (
             isinstance(cache_source, str) and cache_source.startswith("/")
-            and not any(c in cache_source for c in ("\\n", "\\r", "\\0"))))
+            and not any(ord(ch) < 32 for ch in cache_source)))
         if options not in ([], ["--plan"]) or not valid_cache_source:
             print(json.dumps({
                 "status": "BLOCKED", "executed": False,
