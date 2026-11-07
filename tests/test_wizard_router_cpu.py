@@ -1,4 +1,4 @@
-"""CPU-only tests for Wizard P1-P7 modular menu and automation CLI."""
+"""CPU-only tests for Wizard P1-P8 modular menu and automation CLI."""
 from __future__ import annotations
 
 import contextlib
@@ -20,10 +20,10 @@ class WizardRouterCPU(unittest.TestCase):
             result = router.main(args)
         return result, out.getvalue()
 
-    def test_catalog_contains_seven_roadmap_and_service_modules(self):
+    def test_catalog_contains_eight_roadmap_and_service_modules(self):
         doc = router.catalog()
         self.assertEqual([x["stage"] for x in doc["stages"]],
-                         ["p1", "p2", "p3", "p4", "p5", "p6", "p7", "svc"])
+                         ["p1", "p2", "p3", "p4", "p5", "p6", "p7", "p8", "svc"])
         self.assertEqual(doc["api_host_port"], 8000)
         expected_modules = {
             "p1": "wizard.menus.models.flash_next",
@@ -33,6 +33,7 @@ class WizardRouterCPU(unittest.TestCase):
             "p5": "wizard.menus.models.orcarouter_flash_next",
             "p6": "wizard.menus.switching.orcarouter_27b",
             "p7": "wizard.menus.operations.system",
+            "p8": "wizard.menus.operations.recovery_acceptance",
             "svc": "wizard.menus.operations.service",
         }
         for key, module in HANDLERS.items():
@@ -50,10 +51,10 @@ class WizardRouterCPU(unittest.TestCase):
         with patch.object(router.sys.stdin, "isatty", return_value=False):
             rc, s = self.call(["--json"])
         self.assertEqual(rc, 0)
-        self.assertEqual(len(json.loads(s)["stages"]), 8)
+        self.assertEqual(len(json.loads(s)["stages"]), 9)
 
     def test_future_stage_status_is_read_only(self):
-        for key in ("p2", "p3", "p4", "p5", "p6", "p7"):
+        for key in ("p2", "p3", "p4", "p5", "p6", "p7", "p8"):
             with self.subTest(stage=key):
                 rc, s = self.call([key, "status", "--json"])
                 obj = json.loads(s)
@@ -63,7 +64,7 @@ class WizardRouterCPU(unittest.TestCase):
                 self.assertEqual(obj["runtime"], "NOT_RUN")
 
     def test_future_stage_plans_are_all_blocked(self):
-        for key in ("p2", "p3", "p4", "p5", "p6", "p7"):
+        for key in ("p2", "p3", "p4", "p5", "p6", "p7", "p8"):
             module = HANDLERS[key]
             for action in module.SPEC.actions:
                 if key == "p2" and action == "download":
@@ -78,7 +79,7 @@ class WizardRouterCPU(unittest.TestCase):
                     self.assertIsNone(obj["plan_id"])
 
     def test_future_stage_execute_cannot_be_unlocked_by_fake_approval(self):
-        for key in ("p2", "p3", "p4", "p5", "p6", "p7"):
+        for key in ("p2", "p3", "p4", "p5", "p6", "p7", "p8"):
             action = HANDLERS[key].SPEC.actions[0]
             with self.subTest(stage=key):
                 rc, s = self.call([key, action, "--execute",
@@ -88,6 +89,22 @@ class WizardRouterCPU(unittest.TestCase):
                 self.assertFalse(obj["executed"])
                 self.assertFalse(obj["approval_accepted"])
                 self.assertIn("UNVERIFIED_APPROVAL_CANNOT_EXECUTE", obj["issues"])
+
+    def test_p8_recovery_and_final_signoff_are_non_executable(self):
+        for action in ("preflight", "fault-matrix", "recovery", "audit", "ux", "signoff"):
+            with self.subTest(action=action):
+                rc, raw = self.call(["operations", "recovery-acceptance", action,
+                                     "--execute", "--approve-plan", "f" * 64,
+                                     "--json"])
+                self.assertEqual(rc, 3)
+                report = json.loads(raw)
+                self.assertEqual(report["stage"], "p8")
+                self.assertEqual(report["status"], "BLOCKED")
+                self.assertIsNone(report["plan_id"])
+                self.assertFalse(report["executed"])
+                self.assertFalse(report["approval_accepted"])
+                self.assertFalse(report["operations_enabled"])
+                self.assertIn("UNVERIFIED_APPROVAL_CANNOT_EXECUTE", report["issues"])
 
     def test_service_menu_status_and_restart_fail_closed(self):
         observation = {"stage": "svc", "status": "LIVE_SERVICE_VERIFIED",
@@ -217,19 +234,19 @@ class WizardRouterCPU(unittest.TestCase):
             "models/flash_next.py", "models/qwen_27b.py",
             "models/orcarouter_flash_next.py",
             "switching/flash_next_27b.py", "switching/orcarouter_27b.py",
-            "storage/flash_next_cleanup.py", "operations/system.py",
+            "storage/flash_next_cleanup.py", "operations/system.py", "operations/recovery_acceptance.py",
         )
         for name in names:
             with self.subTest(file=name):
                 self.assertTrue((root / "wizard/menus" / name).is_file())
-        for n in range(1, 8):
+        for n in range(1, 9):
             with self.subTest(legacy_file=n):
                 self.assertFalse((root / "wizard/menus" / f"p{n}.py").exists())
         self.assertTrue((root / "wizard.sh").is_file())
 
     def test_future_stage_status_does_not_inspect_docker(self):
         with patch("subprocess.run", side_effect=AssertionError("no subprocess")):
-            for stage in ("p2", "p3", "p4", "p5", "p6", "p7"):
+            for stage in ("p2", "p3", "p4", "p5", "p6", "p7", "p8"):
                 rc, _ = self.call([stage, "status", "--json"])
                 self.assertEqual(rc, 0)
 
@@ -241,7 +258,7 @@ class WizardRouterCPU(unittest.TestCase):
             "model": ["p1", "p2", "p5"],
             "switch": ["p3", "p6"],
             "storage": ["p4"],
-            "operations": ["p7"],
+            "operations": ["p7", "p8"],
             "service": ["svc"],
         })
         for item in catalog["stages"]:
@@ -294,6 +311,7 @@ class WizardRouterCPU(unittest.TestCase):
         for args, expected in (
             (["storage", "flash-next", "status", "--json"], "p4"),
             (["operations", "system", "status", "--json"], "p7"),
+            (["operations", "recovery-acceptance", "status", "--json"], "p8"),
         ):
             rc, s = self.call(args)
             self.assertEqual(rc, 0)
@@ -344,7 +362,7 @@ class WizardRouterCPU(unittest.TestCase):
         self.assertIn("Select / run model", out.getvalue())
 
     def test_schema_version_in_future_plans(self):
-        for stage in ("p2", "p3", "p4", "p5", "p6", "p7"):
+        for stage in ("p2", "p3", "p4", "p5", "p6", "p7", "p8"):
             obj = plan(HANDLERS[stage].SPEC, HANDLERS[stage].SPEC.actions[0])
             self.assertEqual(obj["schema_version"], 1)
             self.assertEqual(describe(HANDLERS[stage].SPEC)["stage"], stage)
