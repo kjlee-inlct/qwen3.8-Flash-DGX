@@ -1,3 +1,21 @@
+## 2026-11-07 — Priority restored: Guided model switch UX → independent executor (SOURCE, release gated)
+
+**Immediate engineering priority is recurring Flash-Next ↔ NVIDIA 27B model switching from the EXISTING `./wizard.sh` interface.** Open WebUI auto tool calling, `qwen3_coder` parser configuration, NVIDIA 27B recipe tool changes, P4 cleanup and P5/P6/P7 are **DEFERRED**, not prerequisites for this source iteration. Do not change the working DGX 27B service.
+
+New operator navigation:
+
+- `./wizard.sh` → **Select / run model → target NVIDIA Flash-Next or NVIDIA 27B → 6. Guided operating switch (release gated)**.
+- `./wizard.sh switch flash-next-27b operational guided --target flash-next` opens the same review-only guided path. Existing option 5 and `operational --target ... --plan --json` remain read-only previews.
+- This is not P3 stage A/B/C execution. Original stage receipts, image IDs and container IDs are evidence only.
+
+**Source connection:** `scripts/manager/operational_wizard.py::guided` reads a fresh `operational_switch.make_plan` with current model/target/port/P3 lineage, displays any blockers, and derives a **domain-separated execution approval SHA** from the immutable source/target IDs, images, preview hash and expiry with `operational_executor.execution_plan_id`. The read-only preview fingerprint is NOT itself a valid execution approval: the backend explicitly rejects it. The source-only test path obtains three distinct exact inputs: new execution SHA, separate downtime consent, and target-specific activation consent, then calls the independent `operational_executor.execute` which rechecks live state under the private lock; the success/failure result is rendered including private evidence path. No approval value is accepted through a legacy P3 path.
+
+**Production safety gate:** `PRODUCTION_EXECUTION_RELEASED = False` in `operational_wizard.py`. It is **not** configurable by TTY prompt, CLI flag or environment; `--execute`, `--approve-plan` etc are blocked before preflight by the public guided CLI. The source-only suite temporarily patches the gate **within CPU Fake-DGX test process** and injects a fake Docker/HTTP backend. No actual DGX switching is authorized by this source work; user-facing guided mode stops at `RELEASE_GATED`. Release requires crash/ambiguous recovery review and a separate operator-approved real DGX trial; it cannot be inferred from CPU tests or historical P3 A/B/C.
+
+**Required remaining work:** harden the recurring executor's crash/port/unknown-state recovery gates, independently qualify exact backend/multiclient behavior, perform scoped operator-approved bounded DGX trial for both directions/rollback, decide release activation process, then switch production gate only via code review. A one-screen target selection alone does not establish end-to-end operator acceptance.
+
+---
+
 ## Addendum — 2026-11-07: REAL DGX 27B smoke PASS; strict format deviation
 
 **Actual operator result, newer than the previous source-only NOT_RUN note below:** local `/health` and sole `/v1/models` ID `qwen3.8-27b` PASS; actual model `qwen3.8-27b` chat completion `finish_reason=stop` and 26 completion tokens under `vllm-0.32.0-bfe01fe9`. `bash scripts/temporary/operational-27b-curl-smoke.sh` emitted `HEALTH_PASS`, `IDENTITY_PASS`, `INFERENCE_PASS`, `27B_CURL_SMOKE_PASS`. This is **real hardware functional inference** (not mock). No Docker/service mutation.
