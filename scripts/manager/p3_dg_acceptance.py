@@ -18,6 +18,7 @@ import sys
 from typing import Any, Callable
 
 from scripts.manager import model_lifecycle, operational_switch, recipe_drift
+from scripts.manager import flash_recipe_review
 from scripts.manager import operational_audit, p2_27b_gpu_trial as gpu
 from scripts.manager.service_status import inspect_live_status
 
@@ -28,6 +29,7 @@ CPU_SUITES = (
     "test_operational_switch_cpu.py",
     "test_operational_executor_cpu.py",
     "test_p3_dg_acceptance_cpu.py",
+    "test_flash_recipe_draft_cpu.py",
 )
 PROC_ROOT = Path("/proc")
 MODEL_NAMES = ("27b", "flash-next")
@@ -402,6 +404,7 @@ def stage_e(snapshot: dict, *, historical: dict | None = None) -> dict:
     flash = docs.get("qwen38-flash")
     qualified = historical if historical is not None else operational_switch.historical_p3_receipts()
     candidate: dict[str, Any] | None = None
+    draft_review: dict[str, Any] | None = None
     if not isinstance(flash, dict):
         issues.append("FLASH_PRESERVED_CONTAINER_NOT_FOUND")
     else:
@@ -415,6 +418,7 @@ def stage_e(snapshot: dict, *, historical: dict | None = None) -> dict:
         try:
             candidate, command_issues, advisories = flash_observed_candidate(flash)
             issues.extend(command_issues)
+            draft_review = flash_recipe_review.compare_observation(candidate, flash)
         except (ValueError, TypeError, KeyError):
             issues.append("FLASH_RUNTIME_CONFIG_UNPARSEABLE")
     if qualified.get("status") != "LOCAL_P3_A_B_C_RECEIPTS_VERIFIED":
@@ -442,6 +446,7 @@ def stage_e(snapshot: dict, *, historical: dict | None = None) -> dict:
         else "DRAFT_REVIEW_REQUIRED" if candidate and only_recipe_missing
         else "BLOCKED", issues=issues, advisories=advisories,
         observed_candidate=candidate, canonical_recipe_registered=canonical_recipe_registered,
+        source_draft_field_review=draft_review,
         limitation="Legacy observed Flash argv, flags and writable cache are NOT a qualified reinstall recipe.")
 
 
