@@ -1,3 +1,9 @@
+## 2026-11-07 — End-to-end source implementation of ordinary model-switch Wizard, independently gated DGX trial
+
+Implemented existing `./wizard.sh` model-first main entry and target selector; separate guided review and eventual three-input production action flow, source gate still OFF; strict domain-separated execution SHA vs preview; trial-only `operational acceptance` CLI with four exact TTY acknowledgments and tracked wrapper; extra expiry/TTY/JSON cancel gates. Hardened new operating executor's pre-stop cancellation (no downtime on stale source), foreign-GPU post-start check, bounded target chat inference, terminal immutable receipt and journal audit before PASS. New read-only `operational_audit` checks event-log hash chain vs snapshot and missing committed receipt to fail closed after crash. Added multi-direction Fake-DGX acceptance, rollback, mismatch, expiry, noninteractive cancellation and journal corruption CPU tests, workflow wiring, main menu, roadmap and runbook. No ACTUAL DGX operating switch or recovery was attempted; no active 27B changes, model cleanup, P3 replay or Draft PR merge. Deferred Open WebUI Tool Calling.
+
+---
+
 ## 2026-11-07 — Restore Wizard ordinary operating switch priority; release-gated UX/backend link (SOURCE)
 
 Created `scripts/manager/operational_wizard.py` for target-first switch review, source-safe independent authorization fingerprint, three exact approvals and fake-only backend dispatch. Wired into existing `./wizard.sh` interactive model option 6 and grouped CLI `switch flash-next-27b operational guided --target ...`. Updated existing independent executor to reject preview-only SHA; Fake-DGX unit/integration tests and CI workflow. Production gate false, no real Docker/GPU switch; P3 immutable historical stages untouched. WebUI Tool Calling and 27B recipe support **deferred** per operator correction, not current focus.
