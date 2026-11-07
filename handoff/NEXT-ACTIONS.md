@@ -1,3 +1,15 @@
+## LATEST NEXT — 2026-11-07: first ordinary switch + independent postcheck PASS; reverse source READY only
+
+- [x] Actual DGX ordinary `27b→flash-next`: operator's `PASS` and private receipt plus **separate after-action** `LIVE_SERVICE_VERIFIED` for sole `qwen3.8-flash-next`, `operational_audit=VERIFIED/COMMITTED/7 events`.
+- [x] Reverse `flash-next→27b` **READ-ONLY** preflight: `READY_FOR_SEPARATE_TRIAL_APPROVAL`, `issues=[]` (the recorded 276s remaining and SHA expired/rotate according to time; never assume still valid).
+- [ ] **Real reverse execution NOT_RUN.** Need new, separately scoped Flash-Next API downtime authorization, fresh `--target 27b --plan --json` and (only when approved) human `--target 27b --execute` with FOUR *new* exact TTY inputs; do not auto-fill, pipe, or reuse first direction's SHA. Successful reverse leaves 27B active, no auto-return.
+- [ ] Separately authorize and qualify real error/restore behavior before normal production switch release. `PRODUCTION_EXECUTION_RELEASED=False` continues to protect normal `./wizard.sh` main/model menus; P3 A/B/C remain historical, not to rerun.
+- [ ] Preserve private operating/P3 receipts, model containers/image/caches, Portainer/Open WebUI and port 8000. Keep 27B Tool Calling deferred and PR #1 unmerged until independently assessed.
+
+**Next exact safe command (read-only)**: `bash scripts/temporary/operational-switch-acceptance.sh --target 27b --plan --json`, followed by separate operator consideration of the trial. No automatic action authorized merely by this log.
+
+---
+
 ## NEXT after REAL DGX ordinary 27B → Flash-Next PASS — 2026-11-07
 
 1. **Record current active model as FLASH-NEXT**: the new actual single-switch `operational acceptance --target flash-next --execute` returned `PASS` and `Observed model: flash-next`. Prior next-actions saying this first direction has NOT_RUN are superseded. P3 A/B/C receipts and operations journal are distinct; do NOT replay P3 stages.
