@@ -1,3 +1,9 @@
+## SOURCE UPDATE 2026-11-07 — Protected Native Tools V1 candidate, SSE probe; P2-FINAL still OPEN
+
+Added isolated source candidate `qwen38-27b-native-tools-v1` in `scripts/manager/p2_27b_tool_variant.py` and intentionally schema-incomplete recipe `recipes/qwen38-27b-native-tools-v1.candidate.yaml`. `--tools-variant-plan` performs read-only source/container/GPU inventory and ALWAYS refuses execution; do not run its command preview. New `--tools-stream-probe` validates bounded local streaming SSE tool-call structure but is **not** actual DGX acceptance. Full design and unresolved execution/rollback/manifest gates: [protected variant contract](P2-27B-NATIVE-TOOLS-V1-PROTECTED-VARIANT-20261107.md). Existing original Docker Cmd lacks tool flags and its HTTP 400 stays the latest actual evidence. P3-C remains closed. No actual DGX Docker or service change, no normal Wizard production unlock.
+
+---
+
 ## NEW ACTUAL DGX EVIDENCE — 2026-11-07: P2-FINAL Native Tool Calling NOT PASS on original 27B
 
 Operator local source updated to `09c6780`; **27B service `LIVE_SERVICE_VERIFIED`** at port 8000 with only `qwen3.8-27b`, original `qwen38-27b` active, `issues=[]`. Independent ordinary operating journal `VERIFIED/COMMITTED`, 14 events after actual 27B→Flash→27B normal transfers; **reverse operating postcheck no longer pending**.

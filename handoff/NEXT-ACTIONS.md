@@ -1,3 +1,15 @@
+## LATEST NEXT ACTIONS 2026-11-07 — after source-only protected 27B Native Tools V1
+
+1. **CI and source review:** confirm latest feature branch CI for `p2_27b_tool_variant.py`, `p2_27b_tool_streaming.py`, new test suites, intentionally invalid V1 YAML and shell CLI. GitHub CPU PASS is not DGX qualification.
+2. **Read-only DGX audit (optional operator run):** after clean `git pull --ff-only`, use `--tools-profile` and `--tools-variant-plan` (exit 3 by design). Preserve original 27B/Flash and existing port 8000. Do not invoke SSE probe repeatedly against original HTTP-400 container.
+3. **Develop missing executor safely:** validate exact pinned vLLM 0.32 parser/tokenizer; design variant-aware service-policy/manifest, domain-separated expiring execution plan, TTY approvals, stop-old→free :8000→start distinct variant→verify native tools, locked journal, rollback and ambiguous crash-denial. Add Fake-DGX launch/restore/failure and concurrent-service regression tests. **No live execution authorization**.
+4. **Later separate real approval:** only after source/CI safety and independent downtime consent, qualify DGX auto Tool Calling + continuation + streaming + reasoning + non-tool chat, Open WebUI Native, original restore and independent final journal. Then decide P2-FINAL PASS. Keep `PRODUCTION_EXECUTION_RELEASED=False` until its own Wizard menu and fault recovery qualifications.
+5. Historical P3-C must never be repeated, original image/container/cache/receipts never removed, no auto approval, no PR merge. P4–P7 retain their separate ordering.
+
+Contract: `docs/P2-27B-NATIVE-TOOLS-V1-PROTECTED-VARIANT-20261107.md`.
+
+---
+
 ## LATEST NEXT ACTIONS — 2026-11-07: P2-FINAL real HTTP 400, protected tool-enabled variant design required
 
 **P0 — Record closure/evidence, no operation:** newest user-provided `LIVE_SERVICE_VERIFIED` current 27B, journal `VERIFIED/COMMITTED` with **14** events; both real ordinary 27B→Flash and Flash→27B PASS and independently post-checked. Historical P3-C remains FINAL/CLOSED, never re-run. Normal main Wizard is NOT production released and real fault injection/recovery not accepted. Reconfirm current status before any action.

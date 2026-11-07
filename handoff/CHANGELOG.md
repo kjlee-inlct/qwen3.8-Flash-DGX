@@ -1,3 +1,9 @@
+## 2026-11-07 — P2-FINAL protected Native Tools V1 SOURCE implementation (no DGX operations)
+
+Created distinct `qwen38-27b-native-tools-v1` source candidate and deliberately unqualified pinned recipe; implemented read-only source/original/fallback/port/GPU inspection with no execute, plus strict SSE auto tool-call parsing with bounded data/time and HTTP/error guard. New offline regressions cover original immutability, variant collisions, other GPU users, source image/port/cache drift, malformed/truncated streaming/JSON and model mismatch. Extended `scripts/serve_27b.sh` CLI. Documented isolated cutover, independent approval, journal and rollback contract as **future implementation gates**; do not confuse SOURCE/CPU with actual DGX acceptance. Existing P3-C, original 27B/Flash, cache, operating journal and normal Wizard production gate untouched. P2-FINAL remains OPEN.
+
+---
+
 ## 2026-11-07 — Latest DGX operational reverse postcheck VERIFIED; P2-FINAL Tool Calling HTTP 400 confirmed
 
 Operator fast-forwarded to `09c6780`; verified real running `qwen38-27b`, `:8000` `LIVE_SERVICE_VERIFIED`, sole `qwen3.8-27b`, `issues=[]`; independent operating journal `VERIFIED/COMMITTED`, 14 events. Direct Docker `Config.Cmd` confirms absence of all tool-auto/parser/reasoning flags from preserved 27B, while source opt-in tool profile displays expected candidate flags. Real bounded local `--tools-probe` returns `BLOCKED/LOCAL_API_HTTP_ERROR_400` with no structured call/continuation; no destructive or lifecycle actions. This **closes the earlier reverse-postcheck gap** while keeping **P2-FINAL Native Tool Calling NOT_QUALIFIED**. Original P3-C historic PASS unchanged, normal main Wizard production gate OFF. New task: protected tool-enabled 27B variant and separately approved transition/rollback design; Open WebUI Native and streaming tests pending.

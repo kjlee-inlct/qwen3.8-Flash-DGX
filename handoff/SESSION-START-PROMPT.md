@@ -1,3 +1,7 @@
+> **2026-11-07 later source-only update:** P2-FINAL now has `p2_27b_tool_variant.py` (new protected `qwen38-27b-native-tools-v1`), intentionally invalid `recipes/qwen38-27b-native-tools-v1.candidate.yaml`, `--tools-variant-plan` read-only preflight, and `--tools-stream-probe` SSE inference probe with CPU tests. Consult `docs/P2-27B-NATIVE-TOOLS-V1-PROTECTED-VARIANT-20261107.md`. No new actual DGX run, no parser validation, no cutover executor, no production release; P2-FINAL remains OPEN. Original NVIDIA 27B at :8000 and old HTTP 400 are last operator observations. Historical P3-C remains closed. Re-check HEAD/CI/PR at the start of the new session; do NOT replay P3 or use a candidate argv as executable approval.
+
+---
+
 # New Conversation Starter — Blazux P2-FINAL Native Tool Calling, DGX Spark / Wizard 안전 전환 개발
 
 아래 저장소의 **Blazux / vLLM 0.32 기반 DGX Spark 모델 레시피·Wizard·서비스 관리 개발**을 이전 작업에서 이어서 직접 수행해주세요. 이 프롬프트는 새 대화에서 독립적으로 사용되는 핸드오프입니다. 반드시 먼저 GitHub 연결 도구로 HEAD/PR/CI와 최신 영구 문서/소스를 조회하고, 이후 코드를 구현·테스트·커밋·Draft PR 검토·문서 업데이트까지 처리하세요. 계획만 작성하고 중단하지 마세요. **실제 DGX GPU/서비스 변경은 별도의 운영자 승인 없이는 절대 실행하지 마세요.**

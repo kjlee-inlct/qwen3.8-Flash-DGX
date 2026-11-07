@@ -1,3 +1,9 @@
+## E-20261107-P2-NATIVE-TOOLS-V1-SOURCE — GitHub SOURCE/CPU ONLY; NO new DGX evidence
+
+Tracked source: `scripts/manager/p2_27b_tool_variant.py` (distinct new variant identity and read-only original/fallback/GPU checks); `scripts/manager/p2_27b_tool_streaming.py` (strict bounded SSE test); `recipes/qwen38-27b-native-tools-v1.candidate.yaml` intentionally schema invalid; new Fake-DGX/SSE tests, `scripts/serve_27b.sh` read-only/inference probe routes. CI outcome should be tied to the exact subsequent HEAD/run, not presumed from historical 680 tests. No protected container ID/image/cache or P2/P3/ordinary receipts changed by GitHub source writes; no observed live model or parser verification in this phase. Previously supplied REAL DGX remains authoritative: NVIDIA 27B LIVE_SERVICE_VERIFIED at :8000, ordinary journal VERIFIED 14 COMMITTED, Docker Cmd no tool flags, original local auto Tool probe HTTP 400. P2-FINAL remains NOT_QUALIFIED, P3-C historical PASS/CLOSED. The source-only preflight fingerprint is NOT a runtime plan/approval.
+
+---
+
 ## E-20261107-LATEST-27B-POST-REVERSE-AND-P2-TOOLS-HTTP400 — actual operator DGX, source `09c6780`
 
 **Real DGX after both independently approved ordinary switching directions PASS:**

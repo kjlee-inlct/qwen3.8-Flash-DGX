@@ -1,3 +1,9 @@
+## 2026-11-07 — P2-FINAL Native Tools V1 separate candidate (NOT LAUNCHABLE)
+
+`recipes/qwen38-27b-native-tools-v1.candidate.yaml` declares a distinct container name `qwen38-27b-native-tools-v1` using the same pinned NVIDIA 27B and :8000 **only after** stopping the original. This second YAML is deliberately schema-INCOMPLETE (unverified exact image/source), source-only and NOT in the live service manifest. Never use `docker run` from a preview. Use `bash scripts/serve_27b.sh --tools-variant-plan` for fail-closed read-only inspection (expected exit code 3); see `docs/P2-27B-NATIVE-TOOLS-V1-PROTECTED-VARIANT-20261107.md`. Original `qwen38-27b`, P3 receipts, Flash and HF caches remain protected. A source recipe cannot grant downtime consent.
+
+---
+
 # Recipe registry (P0/N1: source schema only)
 
 Recipes are YAML checked against schemas/recipe.schema.json by

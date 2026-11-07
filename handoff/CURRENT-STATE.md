@@ -1,3 +1,9 @@
+## LATEST SOURCE 2026-11-07 — P2-FINAL protected Native Tools V1 candidate added; REAL DGX unchanged
+
+On existing Draft PR #1 / `feature/recipe-wizard-handoff`, added separate protected `qwen38-27b-native-tools-v1` source-only variant, intentionally incomplete YAML recipe, read-only `--tools-variant-plan`, strict SSE `--tools-stream-probe`, and offline CPU tests. The existing P2/P3 default `qwen38-27b` argv, service-policy, operational executor and production release gate are unchanged. The variant source is NOT executable; no parser-audited tool-enabled container has been created, no migration/rollback executor released, and no actual DGX tests run in this update. P2-FINAL remains OPEN/NOT_QUALIFIED. Latest operator-observed real DGX evidence still: original NVIDIA 27B on port 8000 LIVE_SERVICE_VERIFIED; journal VERIFIED/COMMITTED 14; old Docker Cmd missing auto-tool flags; local probe HTTP 400. Historical P3-C PASS/CLOSED, recurring switch both actual directions PASS; Wizard production menu still locked. Read `docs/P2-27B-NATIVE-TOOLS-V1-PROTECTED-VARIANT-20261107.md` before advancing.
+
+---
+
 ## LATEST ACTUAL DGX 2026-11-07 — 27B ACTIVE / ordinary journal 14 COMMITTED / P2-FINAL HTTP 400
 
 Operator fast-forwarded local `feature/recipe-wizard-handoff` source from `4054eb2` to `09c6780`, and the subsequent **REAL DGX, non-disruptive** checks returned:

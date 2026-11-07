@@ -140,3 +140,6 @@ jobs:
           if python -m scripts.manager.manifest validate recipes/qwen38-27b.candidate.yaml; then
             echo "::error::27B candidate unexpectedly passed"; exit 1
           fi
+          if python -m scripts.manager.manifest validate recipes/qwen38-27b-native-tools-v1.candidate.yaml; then
+            echo "::error::27B Native Tools V1 candidate unexpectedly passed"; exit 1
+          fi
