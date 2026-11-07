@@ -1,3 +1,11 @@
+## 2026-11-07 SOURCE UPDATE — ordinary model-switch preview and independent guarded backend
+
+The original actual-DGX P1/P2/P3-A/B/C PASS results below remain valid and immutable; the last operator observation is still NVIDIA 27B on :8000 (\`qwen3.8-27b\`). A **new source-only** ordinary switch preview is available from \`./wizard.sh\` model selection and CLI \`./wizard.sh switch flash-next-27b operational --target flash-next --plan --json\`; \`operational_executor.py\` implements independent protected transaction SOURCE but **is not exposed for live execute**. Fake-DGX CPU CI validates source paths only. P3 operating-switch readiness = **SOURCE_PRESENT / CPU_SIMULATION_PASS / REAL_DGX_NOT_RUN / INTERACTIVE_EXECUTE_NOT_ACCEPTED**. The dashboard now separates strictly readable private P3 historical receipts, local model history, current API health, general operating readiness and UX acceptance. P4/P5/P6/P7 remain as shown below; do not upgrade release or operations qualification solely from source CI.
+
+See \`docs/OPERATING-SWITCH-UX-CONTRACT-20261107.md\`. Private P3 A/B/C receipts remain historical; never re-run stage A/B/C, stop NVIDIA 27B without new approval, delete caches, or merge Draft PR #1.
+
+---
+
 # Blazux P1–P7 인수인계 기준 현황 — 2026-11-07
 
 > **범위:** 실제 DGX에서 증거가 확인된 백엔드 수행 결과와, `./wizard.sh` 대화형 운영 UX의 완성도를 **독립적으로** 기록한다. 이 문서는 최신 실장비 실시간 점검 명령의 대용이 아니다. 모든 과거 기록의 `NOT_RUN` 표시보다 `handoff/EVIDENCE-LEDGER.md`의 최신 시간순 실측 증거가 우선한다. 단계별 원본 테스트 영수증은 로컬에 보존하고 Git에는 공개 허용된 벤치마크 요약만 저장한다.
