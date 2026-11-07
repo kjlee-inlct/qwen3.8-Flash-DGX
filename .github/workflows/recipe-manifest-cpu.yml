@@ -118,7 +118,7 @@ jobs:
           python -m wizard p2 status --json
           python -m wizard model 27b status --inspect-cache --json
           python -m unittest discover -s tests -p 'test_serve_split_cpu.py' -v
-          bash -n scripts/temporary/p1-post-b-audit.sh flash scripts/serve.sh scripts/serve_flash-next.sh scripts/serve_27b.sh wizard/00-doctor.sh wizard/10-plan.sh wizard/p1.sh wizard.sh scripts/temporary/p1-post-download.sh scripts/temporary/p1-pre-a-readiness.sh scripts/temporary/p3-stage-a-operator.sh scripts/temporary/p3-stage-b-inspect.sh scripts/temporary/p3-stage-b-operator.sh scripts/temporary/p3-stage-c-operator.sh
+          bash -n scripts/temporary/p1-post-b-audit.sh flash scripts/serve.sh scripts/serve_flash-next.sh scripts/serve_27b.sh wizard/00-doctor.sh wizard/10-plan.sh wizard/p1.sh wizard.sh scripts/temporary/p1-post-download.sh scripts/temporary/p1-pre-a-readiness.sh scripts/temporary/p3-stage-a-operator.sh scripts/temporary/p3-stage-b-inspect.sh scripts/temporary/p3-stage-b-operator.sh scripts/temporary/p3-stage-c-operator.sh scripts/temporary/verify-published-benchmarks.sh
       - name: Confirm 27B candidate is not launchable
         run: |
           if python -m scripts.manager.manifest validate recipes/qwen38-27b.candidate.yaml; then
