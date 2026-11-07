@@ -237,7 +237,17 @@ def collect_docker(*, run: Callable[..., Any] = gpu.call,
         raise ValueError("DOCKER_IDENTITY_UNVERIFIED")
     from scripts.manager.p2_27b_tool_variant import _gpu_access
     gpu_running = [name for name in running if _gpu_access(docs[name])]
-    return {"containers": docs, "running": running, "gpu_running": gpu_running}
+    port_owners = []
+    for name in running:
+        bindings = ((docs[name].get("HostConfig") or {}).get("PortBindings") or {})
+        for entries in bindings.values():
+            if isinstance(entries, list) and any(
+                    isinstance(v, dict) and v.get("HostPort") == "8000"
+                    for v in entries):
+                port_owners.append(name)
+                break
+    return {"containers": docs, "running": running, "gpu_running": gpu_running,
+            "port_owners": sorted(port_owners)}
 
 
 def plan(model: str, action: str = "status", *,
@@ -265,7 +275,12 @@ def plan(model: str, action: str = "status", *,
         known = {key: docs.get(name) for key, name in managed.items()}
         current = [key for key, name in managed.items() if name in running_names]
         foreign = sorted(gpu_names - set(managed.values()))
+        port_owners = set(snapshot.get("port_owners") or [])
         issues: list[str] = []
+        if port_owners - set(managed.values()):
+            issues.append("UNMANAGED_HOST_PORT_8000_OWNER")
+        if len(port_owners) > 1:
+            issues.append("MULTIPLE_HOST_PORT_8000_OWNERS")
         if len(current) > 1 or len(gpu_names) > 1:
             issues.append("ONE_ACTIVE_MODEL_ONLY_VIOLATED")
         if foreign:
@@ -274,6 +289,10 @@ def plan(model: str, action: str = "status", *,
         target_name = managed[model]
         target = known[model]
         installed = target is not None
+        for key, item in known.items():
+            if item is not None and bool((item.get("State") or {}).get("Running")) != (
+                    managed[key] in running_names):
+                issues.append("INCONSISTENT_MANAGED_CONTAINER_RUNNING_STATE")
         running = target_name in running_names
         if installed:
             observed = observed_runtime(target)
@@ -329,7 +348,8 @@ def plan(model: str, action: str = "status", *,
             "target_model": model, "action": action,
             "recipe_sha": recipe_sha, "target_id": identity,
             "managed_ids": {k: d.get("Id") if d else None for k, d in known.items()},
-            "gpu_running": sorted(gpu_names), "active_model": active,
+            "gpu_running": sorted(gpu_names), "port_owners": sorted(port_owners),
+            "active_model": active, "pinned_cache_source": cache_source,
             "decision": decision, "diff": diffs, "window": int((now if now is not None else time.time()) // PLAN_WINDOW_SECONDS),
         }
         plan_id = _digest(facts) if not issues else None
