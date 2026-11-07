@@ -1,3 +1,11 @@
+## LATEST DGX — 2026-11-07 full ordinary bidirectional postcheck PASS; P2-FINAL tool auto still blocked
+
+The operating acceptance 27B→Flash and reverse Flash→27B had both independently returned live `PASS`. New post-reverse REAL DGX `service manager status --json` confirms last active `27b`, `LIVE_SERVICE_VERIFIED`, exact sole API served ID `qwen3.8-27b`, port 8000, no issues. Independent `operational_audit --json` confirms `VERIFIED/COMMITTED`, **14** events, `issues=[]`. Ordinary operating backend's actual bidirectional transfer and postcheck therefore **PASS**. Real forced failure/restore and main interactive Wizard production switch release are still **NOT_QUALIFIED** (`PRODUCTION_EXECUTION_RELEASED=False`).
+
+**P2-FINAL Open WebUI Native Tool Calling remains outstanding**: actual preserved 27B Docker `Config.Cmd` lacks `--enable-auto-tool-choice`, `--tool-call-parser`, `--reasoning-parser`; source opt-in flag preview is correct but not deployed. Local structured `tool_choice=auto` probe returned `BLOCKED/LOCAL_API_HTTP_ERROR_400`; live structured call, continuation, streaming, thinking separation and WebUI Native UI **NOT PASS**. Prior P2 pinned GPU trial/benchmark PASS and P3-C original one-off PASS remain immutable and complete. Keep original assets and port 8000.
+
+---
+
 ## LATEST — P2-FINAL Tool Calling scope; P3-C already CLOSED; ordinary switch both-way backend PASS
 
 Confirmed current model in user's newest supplied ordinary acceptance result is `27b` after actual **Flash→27B** ordinary trial `PASS`, distinct from original **P3-C** historical one-off Flash→27B `PASS`. Earlier new ordinary 27B→Flash also REAL PASS and separately post-checked. Independent status/audit AFTER most recent reverse is still missing. `./wizard.sh` main menu remains **release-gated**, so a two-way one-off operator trial is NOT proof of normal everyday menu execution UX.
