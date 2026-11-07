@@ -35,6 +35,11 @@ class FlashHostAssetsCPU(unittest.TestCase):
                              "LOCAL_ASSET_METADATA_OBSERVED_REINSTALL_UNQUALIFIED")
             self.assertEqual(out["issues"], [])
             self.assertEqual(out["indexed_shard_count"], 1)
+            self.assertTrue(out["pinned_command_identity_matched"])
+            self.assertTrue(out["prepared_view_path_observed"])
+            self.assertFalse(out["verified_model_revision"])
+            self.assertIsNone(out["failed_stage"])
+            self.assertIsNone(out["failure_reason_code"])
             self.assertEqual(len(out["metadata_sha256"]), 3)
             self.assertEqual(len(out["template_sha256"]), 64)
             self.assertTrue(out["legacy_hf_bind_writable"])
@@ -44,6 +49,59 @@ class FlashHostAssetsCPU(unittest.TestCase):
             self.assertFalse(out["executed"])
             self.assertNotIn(str(Path(tmp)), json.dumps(out))
 
+    def test_index_size_limit_diagnoses_stage_without_paths(self):
+        from unittest.mock import patch
+        with tempfile.TemporaryDirectory() as tmp:
+            doc, _ = self.make_complete(Path(tmp))
+            with patch.object(assets, "MAX_META_BYTES", 5):
+                out = assets.inspect_assets(doc)
+            self.assertEqual(out["status"], "BLOCKED")
+            self.assertEqual(out["failed_stage"], "READ_MODEL_CONFIG")
+            self.assertEqual(out["failure_reason_code"], "FILE_EXCEEDS_BOUNDED_READ")
+            self.assertNotIn(str(Path(tmp)), json.dumps(out))
+            self.assertFalse(out["verified_model_revision"])
+            self.assertTrue(out["prepared_view_path_observed"])
+            self.assertTrue(out["pinned_command_identity_matched"])
+
+    def test_malformed_json_index_reports_bounded_diagnostic(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            doc, view = self.make_complete(Path(tmp))
+            (view / "model.safetensors.index.json").write_text("{untrusted-content")
+            out = assets.inspect_assets(doc)
+            self.assertEqual(out["failed_stage"], "PARSE_SHARD_INDEX")
+            self.assertEqual(out["failure_reason_code"], "INVALID_JSON")
+            self.assertNotIn("untrusted-content", json.dumps(out))
+
+    def test_empty_or_missing_prepared_marker_and_symlink_escape(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            doc, view = self.make_complete(Path(tmp))
+            # Original Flash prepare-hybrid.sh touches a zero-byte .prepared.
+            self.assertTrue(assets.inspect_assets(doc)["prepared_view_path_observed"])
+            marker = view / ".prepared"
+            marker.unlink()
+            out = assets.inspect_assets(doc)
+            self.assertEqual(out["failed_stage"], "CHECK_PREPARED_MARKER")
+            self.assertEqual(out["failure_reason_code"], "FILE_NOT_FOUND")
+            outside = Path(tmp) / "sentinel-private"
+            outside.write_text("private")
+            marker.symlink_to(outside)
+            # Symlinks resolving outside /hf cannot qualify the prepared view.
+            out = assets.inspect_assets(doc)
+            self.assertEqual(out["failed_stage"], "CHECK_PREPARED_MARKER")
+            self.assertEqual(out["failure_reason_code"], "FILE_OUTSIDE_HF_CACHE")
+            self.assertNotIn("sentinel-private", json.dumps(out))
+
+    def test_unexpected_exception_text_is_never_returned(self):
+        from unittest.mock import patch
+        with tempfile.TemporaryDirectory() as tmp:
+            doc, _ = self.make_complete(Path(tmp))
+            with patch.object(assets, "_small_digest",
+                              side_effect=ValueError("sensitive_file_path_or_token")):
+                out = assets.inspect_assets(doc)
+            self.assertEqual(out["failed_stage"], "READ_MODEL_CONFIG")
+            self.assertEqual(out["failure_reason_code"], "INVALID_DATA")
+            self.assertNotIn("sensitive_file_path_or_token", json.dumps(out))
+
     def test_missing_shard_fails_closed(self):
         with tempfile.TemporaryDirectory() as tmp:
             doc, view = self.make_complete(Path(tmp))
@@ -52,6 +110,8 @@ class FlashHostAssetsCPU(unittest.TestCase):
             self.assertEqual(out["status"], "BLOCKED")
             self.assertEqual(out["indexed_shard_count"], 0)
             self.assertFalse(out["canonical_recipe_registered"])
+            self.assertEqual(out["failed_stage"], "CHECK_INDEXED_SHARDS")
+            self.assertEqual(out["failure_reason_code"], "FILE_NOT_FOUND")
 
     def test_index_traversal_never_reads_outside_hf_cache(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -61,6 +121,8 @@ class FlashHostAssetsCPU(unittest.TestCase):
             out = assets.inspect_assets(doc)
             self.assertEqual(out["status"], "BLOCKED")
             self.assertFalse(out["launch_allowed"])
+            self.assertEqual(out["failed_stage"], "PARSE_SHARD_INDEX")
+            self.assertEqual(out["failure_reason_code"], "FLASH_SHARD_INDEX_PATH_UNQUALIFIED")
 
     def test_missing_template_and_private_env_do_not_leak(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -71,6 +133,8 @@ class FlashHostAssetsCPU(unittest.TestCase):
             self.assertEqual(out["status"], "BLOCKED")
             self.assertNotIn("secret_should_never_emit", json.dumps(out))
             self.assertNotIn("secret_template.jinja", json.dumps(out))
+            self.assertEqual(out["failed_stage"], "READ_MOUNTED_CHAT_TEMPLATE")
+            self.assertEqual(out["failure_reason_code"], "FILE_NOT_FOUND")
 
     def test_unrecognized_flash_option_fails_even_with_valid_assets(self):
         with tempfile.TemporaryDirectory() as tmp:

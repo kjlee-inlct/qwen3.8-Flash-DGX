@@ -1,3 +1,16 @@
+## 2026-11-08 — First real DGX invocation BLOCKED; refine failure classification
+
+Operator ran `python3 -m scripts.manager.flash_host_assets --json` after the source landed. It returned `FLASH_HOST_ASSET_PREFLIGHT:ValueError`, zero indexed shards, empty metadata hashes, `legacy_hf_bind_writable=true`, and `verified_model_revision=true`. **That does not identify the failing asset.** The original implementation set the last boolean after validating a pinned command/cache mount, *before* checking the prepared files; thus it was misleading as content verification. This is a preflight failure only, not evidence of a broken or unusable model. No service change occurred.
+
+The next source patch:
+- Adds `failed_stage` and `failure_reason_code` with allowlisted stage/reason tokens, **never raw errors or host paths**, to distinguish index size, invalid/missing index, prepared marker, dangling shards, tokenizer and chat template failures.
+- Adds separate `pinned_command_identity_matched` and `prepared_view_path_observed` observation booleans. `verified_model_revision=false` remains conservative until actual trusted source byte provenance is established; simply matching a directory name or metadata digests does not prove that.
+- Preserves read-only inspection, no automatic cache repair, no unapproved Docker mutation and `launch_allowed=false`.
+
+**Next read-only diagnostic after updating code**: `python3 -m scripts.manager.flash_host_assets --json`. Copy only allowlisted JSON. If blocked, use `failed_stage` and `failure_reason_code` to identify the precise branch; do not relax the metadata caps or alter HF assets speculatively.
+
+---
+
 ## Verified source test evidence — 2026-11-08
 
 GitHub source: [03cbe4c](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/commit/03cbe4cc45a750322c4f99616c85f1061f7b2288), [2b44ccc](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/commit/2b44ccc0237fa34742e28608ad089cb3ca90fe55), and [8e8fcec](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/commit/8e8fcec5acb280e01445a2bd773fc9f4ecedf2f6). Source-only CI [42390619936](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42390619936): **870/870 PASS, 39 groups**, including 5 new Flash host asset tests. Existing DGX 153/153 local CPU execution was **before** this new five-test file; a new DGX-local run is not yet reported. Bounded host utility remains read-only and unqualified for launch.

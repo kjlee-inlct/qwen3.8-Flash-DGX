@@ -24,6 +24,45 @@ MAX_INDEX_WEIGHTS = 100000
 SHARD_NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*\.safetensors$")
 
 
+# Public diagnostic tokens are explicit allowlist entries: do not print the
+# raw exception text, since filesystem/JSON errors may include private paths.
+SAFE_ERROR_CODES = frozenset({
+    "MISSING_MOUNT_INVENTORY", "REQUIRED_BIND_MOUNT_UNQUALIFIED",
+    "HOST_MOUNT_SOURCE_UNQUALIFIED", "FILE_OUTSIDE_HF_CACHE",
+    "FILE_NOT_REGULAR_OR_EMPTY", "FILE_EXCEEDS_BOUNDED_READ",
+    "FILE_CHANGED_DURING_READ", "INVALID_DOCKER_DOC",
+    "IMAGE_CONTAINER_OR_ENTRYPOINT_DRIFT", "COMMAND_UNVERIFIED",
+    "REQUIRED_ENV_UNVERIFIED", "TEMPLATE_NOT_READ_ONLY",
+    "HF_CACHE_NOT_A_DIRECTORY", "FLASH_VIEW_OUTSIDE_CACHE",
+    "FLASH_SHARD_INDEX_UNQUALIFIED", "FLASH_SHARD_INDEX_PATH_UNQUALIFIED",
+    "INVALID_FLASH_COMMAND", "UNQUALIFIED_FLASH_CHECKPOINT",
+    "DUPLICATE_FLASH_OPTION", "BOOLEAN_FLASH_OPTION_WITH_VALUE",
+    "MISSING_FLASH_OPTION_VALUE", "EMPTY_FLASH_OPTION_VALUE",
+    "INVALID_FLASH_JSON_OPTION", "INVALID_FLASH_SPLITTING_OPS",
+    "INVALID_FLASH_SPECIAL_OPTION", "UNKNOWN_FLASH_OPTION_OR_POSITIONAL",
+    "DUPLICATE_ENV_KEYS",
+})
+
+
+def _public_reason(exc: Exception) -> str:
+    """Return only fixed diagnostic codes, never exception descriptions."""
+    if isinstance(exc, json.JSONDecodeError):
+        return "INVALID_JSON"
+    if isinstance(exc, FileNotFoundError):
+        return "FILE_NOT_FOUND"
+    if isinstance(exc, PermissionError):
+        return "PERMISSION_DENIED"
+    if isinstance(exc, IsADirectoryError):
+        return "IS_DIRECTORY"
+    if type(exc) is ValueError and str(exc) in SAFE_ERROR_CODES:
+        return str(exc)
+    if isinstance(exc, OSError):
+        return "IO_UNAVAILABLE"
+    if isinstance(exc, (ValueError, TypeError, KeyError)):
+        return "INVALID_DATA"
+    return "INTERNAL_ERROR"
+
+
 def _mounted(doc: dict, dest: str) -> dict:
     mounts = doc.get("Mounts")
     if not isinstance(mounts, list):
@@ -67,6 +106,10 @@ def inspect_assets(docker: dict, *, draft_loader=review.load_draft) -> dict[str,
         "status": "BLOCKED",
         "issues": [],
         "verified_model_revision": False,
+        "pinned_command_identity_matched": False,
+        "prepared_view_path_observed": False,
+        "failed_stage": None,
+        "failure_reason_code": None,
         "metadata_sha256": {},
         "template_sha256": None,
         "indexed_shard_count": 0,
@@ -79,9 +122,11 @@ def inspect_assets(docker: dict, *, draft_loader=review.load_draft) -> dict[str,
         "operations_enabled": False,
         "production_released": False,
     }
+    stage = "LOAD_PINNED_DRAFT"
     try:
         recipe, draft_sha = draft_loader()
         result["draft_recipe_sha256"] = draft_sha
+        stage = "CHECK_DOCKER_IDENTITY"
         if not isinstance(docker, dict):
             raise ValueError("INVALID_DOCKER_DOC")
         dc = recipe["docker"]
@@ -92,33 +137,48 @@ def inspect_assets(docker: dict, *, draft_loader=review.load_draft) -> dict[str,
         cmd = (docker.get("Config") or {}).get("Cmd")
         if not isinstance(cmd, list):
             raise ValueError("COMMAND_UNVERIFIED")
+        stage = "NORMALIZE_PINNED_FLASH_COMMAND"
         review.normalize_fp8hybrid_cmd(cmd, draft_loader=draft_loader)
+        result["pinned_command_identity_matched"] = True
+        stage = "VALIDATE_REQUIRED_ENV"
         required_env = review._environment(docker)
         if any(required_env.get(k) != v for k, v in
                recipe["required_environment"].items()):
             raise ValueError("REQUIRED_ENV_UNVERIFIED")
+        stage = "VALIDATE_HF_AND_TEMPLATE_BINDS"
         hf = _mounted(docker, "/hf")
         template = _mounted(docker, dc["required_ro_template_mount"])
         if template.get("RW") is not False:
             raise ValueError("TEMPLATE_NOT_READ_ONLY")
+        stage = "RESOLVE_HOST_HF_CACHE"
         cache = Path(hf["Source"]).resolve(strict=True)
         if not cache.is_dir():
             raise ValueError("HF_CACHE_NOT_A_DIRECTORY")
         result["legacy_hf_bind_writable"] = hf.get("RW") is True
-        result["verified_model_revision"] = True
+        # A pinned *command and directory name* do not cryptographically prove
+        # that HF cache bytes equal the published NVIDIA source revision.
         rev = recipe["model"]["source_revision"]
         view = (cache / "hub" / "models--nvidia--Qwen3.8-Flash-Next-NVFP4"
                 / "snapshots" / (rev + "-fp8hybrid"))
+        stage = "RESOLVE_PREPARED_VIEW"
         view_root = view.resolve(strict=True)
         if not view_root.is_dir() or not view_root.is_relative_to(cache):
             raise ValueError("FLASH_VIEW_OUTSIDE_CACHE")
+        stage = "CHECK_PREPARED_MARKER"
         _regular(view / ".prepared", root=cache, allow_empty=True)
+        result["prepared_view_path_observed"] = True
         hashes: dict[str, str] = {}
         for name in ("config.json", "tokenizer_config.json",
                      "model.safetensors.index.json"):
+            stage = {
+                "config.json": "READ_MODEL_CONFIG",
+                "tokenizer_config.json": "READ_TOKENIZER_CONFIG",
+                "model.safetensors.index.json": "READ_SHARD_INDEX",
+            }[name]
             digest, payload = _small_digest(view / name, limit=MAX_META_BYTES, root=cache)
             hashes[name] = digest
             if name == "model.safetensors.index.json":
+                stage = "PARSE_SHARD_INDEX"
                 idx = json.loads(payload)
                 weight_map = idx.get("weight_map") if isinstance(idx, dict) else None
                 if (not isinstance(weight_map, dict)
@@ -130,21 +190,27 @@ def inspect_assets(docker: dict, *, draft_loader=review.load_draft) -> dict[str,
                                not SHARD_NAME.fullmatch(s) for s in shards)):
                     raise ValueError("FLASH_SHARD_INDEX_PATH_UNQUALIFIED")
                 total = 0
+                stage = "CHECK_INDEXED_SHARDS"
                 for shard in shards:
                     _, size = _regular(view / shard, root=cache)
                     total += size
                 result["indexed_shard_count"] = len(shards)
                 result["indexed_shard_bytes_observed"] = total
         # The full tokenizer may exceed metadata cap; existence/size only.
+        stage = "CHECK_TOKENIZER_FILE"
         _regular(view / "tokenizer.json", root=cache)
+        stage = "READ_MOUNTED_CHAT_TEMPLATE"
         template_hash, _ = _small_digest(Path(template["Source"]),
                                           limit=MAX_TEMPLATE_BYTES)
         result["metadata_sha256"] = hashes
         result["template_sha256"] = template_hash
         result["status"] = "LOCAL_ASSET_METADATA_OBSERVED_REINSTALL_UNQUALIFIED"
     except (OSError, ValueError, TypeError, KeyError, json.JSONDecodeError) as exc:
-        # Stable code only. Never include a host path or original exception text.
-        result["issues"] = ["FLASH_HOST_ASSET_PREFLIGHT:" + type(exc).__name__]
+        # Never emit source paths, raw exception text or operator env values.
+        reason = _public_reason(exc)
+        result["failed_stage"] = stage
+        result["failure_reason_code"] = reason
+        result["issues"] = ["FLASH_HOST_ASSET_PREFLIGHT:" + stage + ":" + reason]
     return result
 
 
