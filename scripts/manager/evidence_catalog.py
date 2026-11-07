@@ -199,7 +199,17 @@ def _records(*, legacy: Path, operator: Path, reports: Path,
             else:
                 source, target = doc.get("source_model"), doc.get("target_model")
                 if source not in ids or target not in ids:
-                    source = target = None
+                    # Historical operator report filename may be misleading;
+                    # classify from the recorded *stage* field, not filename.
+                    stage_text = str(doc.get("stage") or "")
+                    if stage_text.startswith("P3_A_"):
+                        source, target = STAGES["a"]
+                    elif stage_text.startswith("P3_B_"):
+                        source, target = STAGES["b"]
+                    elif stage_text.startswith("P3_C_"):
+                        source, target = STAGES["c"]
+                    else:
+                        source = target = None
             involved_model_ids = [ids[x] for x in (source, target) if x in ids]
             model = ids.get(target) if target in ids else None
             summary = {"from_model": source, "to_model": target,
