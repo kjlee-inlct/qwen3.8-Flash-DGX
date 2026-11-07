@@ -1,0 +1,170 @@
+"""P3-E bounded *read-only* host asset evidence for the preserved Flash view.
+
+This is neither a canonical recipe nor permission to launch. Docker inspect is
+read-only and output is allowlisted: never print Env values, host paths, Docker
+Config/HostConfig, tokenizer/template contents, or arbitrary inspect payloads.
+Large safetensors shards are stat-checked, NOT hashed or integrity-qualified.
+"""
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+from pathlib import Path
+import re
+import stat
+from typing import Any
+
+from scripts.manager import flash_recipe_review as review
+
+MAX_META_BYTES = 8 * 1024 * 1024
+MAX_TEMPLATE_BYTES = 256 * 1024
+MAX_INDEX_SHARDS = 256
+MAX_INDEX_WEIGHTS = 100000
+SHARD_NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*\\.safetensors$")
+
+
+def _mounted(doc: dict, dest: str) -> dict:
+    mounts = doc.get("Mounts")
+    if not isinstance(mounts, list):
+        raise ValueError("MISSING_MOUNT_INVENTORY")
+    selected = [x for x in mounts if isinstance(x, dict)
+                and x.get("Destination") == dest]
+    if len(selected) != 1 or selected[0].get("Type") != "bind":
+        raise ValueError("REQUIRED_BIND_MOUNT_UNQUALIFIED")
+    source = selected[0].get("Source")
+    if not isinstance(source, str) or not Path(source).is_absolute():
+        raise ValueError("HOST_MOUNT_SOURCE_UNQUALIFIED")
+    return selected[0]
+
+
+def _regular(path: Path, *, root: Path | None = None) -> tuple[Path, int]:
+    resolved = path.resolve(strict=True)
+    if root is not None and not resolved.is_relative_to(root):
+        raise ValueError("FILE_OUTSIDE_HF_CACHE")
+    size = resolved.stat()
+    if not stat.S_ISREG(size.st_mode) or size.st_size <= 0:
+        raise ValueError("FILE_NOT_REGULAR_OR_EMPTY")
+    return resolved, size.st_size
+
+
+def _small_digest(path: Path, *, limit: int, root: Path | None = None) -> tuple[str, bytes]:
+    resolved, n = _regular(path, root=root)
+    if n > limit:
+        raise ValueError("FILE_EXCEEDS_BOUNDED_READ")
+    payload = resolved.read_bytes()
+    if len(payload) != n:
+        raise ValueError("FILE_CHANGED_DURING_READ")
+    return hashlib.sha256(payload).hexdigest(), payload
+
+
+def inspect_assets(docker: dict, *, draft_loader=review.load_draft) -> dict[str, Any]:
+    """Host cache/template provenance evidence; never promote installability."""
+    result: dict[str, Any] = {
+        "schema_version": 1,
+        "action": "FLASH_HOST_ASSET_READ_ONLY_PREFLIGHT",
+        "status": "BLOCKED",
+        "issues": [],
+        "verified_model_revision": False,
+        "metadata_sha256": {},
+        "template_sha256": None,
+        "indexed_shard_count": 0,
+        "indexed_shard_bytes_observed": 0,
+        "large_shard_hashes_verified": False,
+        "full_docker_runtime_reinstall_qualified": False,
+        "launch_allowed": False,
+        "canonical_recipe_registered": False,
+        "executed": False,
+        "operations_enabled": False,
+        "production_released": False,
+    }
+    try:
+        recipe, draft_sha = draft_loader()
+        result["draft_recipe_sha256"] = draft_sha
+        if not isinstance(docker, dict):
+            raise ValueError("INVALID_DOCKER_DOC")
+        dc = recipe["docker"]
+        if (docker.get("Name") != "/" + dc["container_name"]
+                or docker.get("Image") != dc["image_id"]
+                or (docker.get("Config") or {}).get("Entrypoint") != dc["entrypoint"]):
+            raise ValueError("IMAGE_CONTAINER_OR_ENTRYPOINT_DRIFT")
+        cmd = (docker.get("Config") or {}).get("Cmd")
+        if not isinstance(cmd, list):
+            raise ValueError("COMMAND_UNVERIFIED")
+        review.normalize_fp8hybrid_cmd(cmd, draft_loader=draft_loader)
+        required_env = review._environment(docker)
+        if any(required_env.get(k) != v for k, v in
+               recipe["required_environment"].items()):
+            raise ValueError("REQUIRED_ENV_UNVERIFIED")
+        hf = _mounted(docker, "/hf")
+        template = _mounted(docker, dc["required_ro_template_mount"])
+        if template.get("RW") is not False:
+            raise ValueError("TEMPLATE_NOT_READ_ONLY")
+        cache = Path(hf["Source"]).resolve(strict=True)
+        if not cache.is_dir():
+            raise ValueError("HF_CACHE_NOT_A_DIRECTORY")
+        result["legacy_hf_bind_writable"] = hf.get("RW") is True
+        result["verified_model_revision"] = True
+        rev = recipe["model"]["source_revision"]
+        view = (cache / "hub" / "models--nvidia--Qwen3.8-Flash-Next-NVFP4"
+                / "snapshots" / (rev + "-fp8hybrid"))
+        view_root = view.resolve(strict=True)
+        if not view_root.is_dir() or not view_root.is_relative_to(cache):
+            raise ValueError("FLASH_VIEW_OUTSIDE_CACHE")
+        _regular(view / ".prepared", root=cache)
+        hashes: dict[str, str] = {}
+        for name in ("config.json", "tokenizer_config.json",
+                     "model.safetensors.index.json"):
+            digest, payload = _small_digest(view / name, limit=MAX_META_BYTES, root=cache)
+            hashes[name] = digest
+            if name == "model.safetensors.index.json":
+                idx = json.loads(payload)
+                weight_map = idx.get("weight_map") if isinstance(idx, dict) else None
+                if (not isinstance(weight_map, dict)
+                        or not 0 < len(weight_map) <= MAX_INDEX_WEIGHTS):
+                    raise ValueError("FLASH_SHARD_INDEX_UNQUALIFIED")
+                shards = set(weight_map.values())
+                if (not 0 < len(shards) <= MAX_INDEX_SHARDS
+                        or any(not isinstance(s, str) or
+                               not SHARD_NAME.fullmatch(s) for s in shards)):
+                    raise ValueError("FLASH_SHARD_INDEX_PATH_UNQUALIFIED")
+                total = 0
+                for shard in shards:
+                    _, size = _regular(view / shard, root=cache)
+                    total += size
+                result["indexed_shard_count"] = len(shards)
+                result["indexed_shard_bytes_observed"] = total
+        # The full tokenizer may exceed metadata cap; existence/size only.
+        _regular(view / "tokenizer.json", root=cache)
+        template_hash, _ = _small_digest(Path(template["Source"]),
+                                          limit=MAX_TEMPLATE_BYTES)
+        result["metadata_sha256"] = hashes
+        result["template_sha256"] = template_hash
+        result["status"] = "LOCAL_ASSET_METADATA_OBSERVED_REINSTALL_UNQUALIFIED"
+    except (OSError, ValueError, TypeError, KeyError, json.JSONDecodeError) as exc:
+        # Stable code only. Never include a host path or original exception text.
+        result["issues"] = ["FLASH_HOST_ASSET_PREFLIGHT:" + type(exc).__name__]
+    return result
+
+
+def main(argv: list[str] | None = None) -> int:
+    ap = argparse.ArgumentParser(description="Flash host assets, strictly read-only")
+    ap.add_argument("--json", action="store_true", help="Structured redacted JSON")
+    args = ap.parse_args(argv)
+    try:
+        from scripts.manager.p2_27b_gpu_trial import docker_info
+        result = inspect_assets(docker_info("qwen38-flash"))
+    except (OSError, RuntimeError, ValueError, TypeError) as exc:
+        result = {
+            "schema_version": 1, "action": "FLASH_HOST_ASSET_READ_ONLY_PREFLIGHT",
+            "status": "BLOCKED",
+            "issues": ["DOCKER_READ_ONLY_INSPECT_UNAVAILABLE:" + type(exc).__name__],
+            "launch_allowed": False, "executed": False,
+            "production_released": False,
+        }
+    print(json.dumps(result, indent=2 if args.json else None, sort_keys=True))
+    return 0 if not result.get("issues") else 3
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
