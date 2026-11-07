@@ -1,3 +1,9 @@
+## D-065 — 2026-11-08 — Do not equate a large FP8-hybrid weight_map with corruption or blindly enlarge its entry cap
+
+Actual operator DGX read-only Flash metadata index: 31,907,813 bytes, successfully within 128 MiB file cap; `PARSE_SHARD_INDEX:FLASH_SHARD_INDEX_UNQUALIFIED` after JSON decoding. Historical code collapsed type/empty/>100,000-count conditions, so genuine tensor count **unmeasured**. Commit [135f75c](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/commit/135f75c8cc652ed63b8508d10fcf5f079dff24ef) separates safe numeric/shape diagnosis without increasing limits. 2 CPU tests; GitHub CI [42392277467](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42392277467) **878/878 PASS, 39 groups** (source-only). Model file damage, missing shard and fresh reinstall qualification not established; no service mutation or approval to execute. Keep P3-G original real PASS/CLOSED and P8 independently gated.
+
+---
+
 ## D-064 — 2026-11-08 — Model index uses separate bounded read cap, not an 8 MiB general metadata cap
 
 Real DGX read-only Flash preflight returned `READ_SHARD_INDEX:FILE_EXCEEDS_BOUNDED_READ`, showing a generic-metadata limit mismatch in the **observer**, not demonstrated model damage. Source-only fix [56d39e4](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/commit/56d39e4acb5d4e69777372283fe5f8839a16fc7c) introduces a hard, independent 128 MiB max for the model's safetensors index, while retaining 8 MiB for small metadata and 256 KiB for chat template. Never read beyond limit+1 bytes; report only safe size numbers. Keep index JSON and path checks fail-closed. Operator did not provide actual index size; if it exceeds dedicated max, investigate and request a policy review rather than silently widening it. CI [42391564016](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42391564016) **876/876 PASS source-only**. No promotion of Flash reinstall, no service mutation or P8 release.
