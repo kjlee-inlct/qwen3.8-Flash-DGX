@@ -127,6 +127,52 @@ class DraftUnifiedRunnerCPU(unittest.TestCase):
         self.assertEqual(out["status"], "BLOCKED")
         self.assertIn("HOST_PORT_PROCESS_CONTAINER_OWNERSHIP_UNVERIFIED", out["issues"])
 
+    def test_d_qualified_docker_proxy_host_pid_is_attributed(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "5").mkdir()
+            args = ["/usr/bin/docker-proxy", "-proto", "tcp",
+                    "-host-ip", "0.0.0.0", "-host-port", "8000",
+                    "-container-ip", "172.17.0.2", "-container-port", "8000"]
+            (root / "5" / "cmdline").write_bytes(bytes([0]).join(
+                a.encode() for a in args) + bytes([0]))
+            doc = snapshot()
+            active = doc["containers"]["qwen38-27b"]
+            active["HostConfig"] = {"PortBindings": {
+                "8000/tcp": [{"HostIp": "0.0.0.0", "HostPort": "8000"}]}}
+            active["NetworkSettings"] = {"Networks": {
+                "bridge": {"IPAddress": "172.17.0.2"}}}
+            self.assertTrue(dg.docker_proxy_belongs(5, active, root=root))
+            def runner(argv, timeout=12):
+                if argv[0] == "ss":
+                    return SimpleNamespace(returncode=0, stdout=(
+                        'LISTEN 0 4096 0.0.0.0:8000 0.0.0.0:* '
+                        'users:(("docker-proxy",pid=5,fd=4))\n'))
+                return SimpleNamespace(returncode=0, stdout="17, python\n")
+            out = dg.stage_d(doc, verified_live(), run=runner,
+                             proc_owner=lambda pid, cid: pid == 17 and cid == IDENT,
+                             proxy_owner=lambda pid, info: dg.docker_proxy_belongs(
+                                 pid, info, root=root))
+            self.assertEqual(out["status"], "READ_ONLY_PASS")
+            self.assertEqual(out["port_pid_attribution"]["5"], "QUALIFIED_DOCKER_PROXY")
+            active["NetworkSettings"]["Networks"]["bridge"]["IPAddress"] = "172.17.0.3"
+            self.assertFalse(dg.docker_proxy_belongs(5, active, root=root))
+
+    def test_d_unverifiable_proxy_cannot_bypass_container_ip_requirement(self):
+        fake = snapshot()
+        active = fake["containers"]["qwen38-27b"]
+        active["HostConfig"] = {"PortBindings": {
+            "8000/tcp": [{"HostIp": "0.0.0.0", "HostPort": "8000"}]}}
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "5").mkdir()
+            argv = ["/usr/bin/docker-proxy", "-proto", "tcp",
+                    "-host-ip", "0.0.0.0", "-host-port", "8000",
+                    "-container-ip", "172.17.0.2", "-container-port", "8000"]
+            (root / "5" / "cmdline").write_bytes(bytes([0]).join(
+                a.encode() for a in argv) + bytes([0]))
+            self.assertFalse(dg.docker_proxy_belongs(5, active, root=root))
+
     def test_d_gpu_unknown_cannot_be_interpreted_as_pass(self):
         def runner(args, timeout=12):
             if args[0] == "ss":
