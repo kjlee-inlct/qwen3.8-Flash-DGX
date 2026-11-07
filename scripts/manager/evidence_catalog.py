@@ -343,9 +343,17 @@ def copy_approved(plan_id: str | None, *, legacy: Path = LEGACY,
             raw = _private_bytes(source, source.parent)
             if hashlib.sha256(raw).hexdigest() != item["sha256"]:
                 raise ValueError("SOURCE_CHANGED_DURING_COPY")
-            dest.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
-            if dest.parent.is_symlink() or (dest.parent.stat().st_mode & 0o077):
-                raise ValueError("UNSAFE_REPORT_DIRECTORY")
+            # mkdir(parents=True) can create intermediate ancestors as 0755.
+            # Build every report directory at 0700 and reject any preexisting
+            # public/symlinked ancestor rather than silently chmod'ing it.
+            directory = reports
+            for component in ("", *dest.parent.relative_to(reports).parts):
+                if component:
+                    directory = directory / component
+                directory.mkdir(mode=0o700, exist_ok=True)
+                if (directory.is_symlink() or not directory.is_dir()
+                        or directory.stat().st_mode & 0o077):
+                    raise ValueError("UNSAFE_REPORT_DIRECTORY")
             fd = os.open(dest, os.O_CREAT | os.O_EXCL | os.O_WRONLY | os.O_NOFOLLOW, 0o600)
             with os.fdopen(fd, "wb") as stream:
                 stream.write(raw)
