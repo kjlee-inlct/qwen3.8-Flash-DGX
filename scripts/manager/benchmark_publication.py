@@ -251,7 +251,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--approve-sha256")
     args = parser.parse_args(argv)
     try:
-        summary, destination = build_summary(model=args.model, source=args.source.expanduser())
+        summary, destination = build_summary(
+            model=args.model, source=args.source.expanduser(),
+            legacy=LEGACY, reports=REPORTS, policy=POLICY, discovery=DISCOVERY)
         if args.plan:
             if args.approve_sha256:
                 raise ValueError("PLAN_CANNOT_INCLUDE_APPROVAL")
