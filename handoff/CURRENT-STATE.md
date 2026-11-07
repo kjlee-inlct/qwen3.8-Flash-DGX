@@ -1,3 +1,9 @@
+## 2026-11-07 — NEWER SOURCE-ONLY Wizard recipe drift and lifecycle implementation (supersedes the preceding audit's future-work status)
+
+GitHub branch feature/recipe-wizard-handoff; source-only CI run 42355750124 SUCCESS, **799/799 CPU/Fake-DGX PASS across 36 groups**. New modules: scripts/manager/recipe_drift.py (normalized 27B desired/actual Docker diff, live container ID and 600-second fingerprint, no-op vs recreate decisions), scripts/manager/model_lifecycle.py (source-only guarded transaction/rollback scaffold), new Fake-DGX tests, Wizard CLI recipe-diff / lifecycle and model menu option 7. Design and limitations: docs/WIZARD-LIFECYCLE-SOURCE-IMPLEMENTATION-20261107.md. **Production lifecycle remains RELEASED=False; no DGX live model mutations or live acceptance in this session.** Canonical 27B recipe unchanged; historic P3 IDs are not current Docker IDs. Existing operational_switch.py still requires current-ID-aware refactoring. Historical actual DGX 27B Native Tools/P3-C/OpenWebUI/cleanup PASS remains unchanged; the previously recorded operating state below is not a new live observation.
+
+---
+
 ## 2026-11-07 — HANDOFF DOCUMENT AUDIT / NEXT CONVERSATION READY
 
 The user starts the next development phase in a separate conversation. **Audit verified all 8 handoff docs, 12 implementation docs and 5 recipe/manifest/benchmark indices exist (25/25), plus both published benchmark collection directories and current source/evidence files.** The pre-audit HEAD `9ec7420b74369e7a76785577dc543f9dafb8897d` had GitHub Actions run `42352654468` SUCCESS, **757/757 CPU tests in 34 groups**. This CI is source-only. New documentation commits advance HEAD; inspect GitHub afresh.
