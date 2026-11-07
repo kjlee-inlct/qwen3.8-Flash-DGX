@@ -1,3 +1,9 @@
+## 2026-11-07 — Independent post-switch Flash service and journal VERIFIED; reverse 27B plan ready
+
+Operator subsequently read live DGX service: `flash-next` ACTIVE / `LIVE_SERVICE_VERIFIED`, sole `qwen3.8-flash-next` on :8000, `issues=[]`; operating journal `VERIFIED`, `COMMITTED`, 7 events, no issues. Separate read-only ordinary reverse plan `flash-next→27b` `READY_FOR_SEPARATE_TRIAL_APPROVAL`, issues none, **not executed**. First 27B→Flash physically accepted switch is now corroborated by independent read-only after-checks. Reverse still needs fresh explicit downtime consent and manual exact approvals. No new model transfer/cleanup or PR merge in this documentation update.
+
+---
+
 ## 2026-11-07 — First REAL DGX normal Wizard switch PASS: NVIDIA 27B → Flash-Next
 
 Operator supplied terminal showing source fast-forward to `4054eb2`, current 27B API `LIVE_SERVICE_VERIFIED`, independent operating journal `EMPTY`, exact fresh operating acceptance plan ready, and four human TTY approvals. The tracked new `operational-switch-acceptance.sh --target flash-next --execute` returned `Live transition result: PASS`, `Observed model: flash-next`, and new immutable private completion receipt. This proves first **ordinary** backend physical transfer, not one-off P3 replay. The independently verified source CI remains 671/671 CPU Fake-DGX. No reverse action, real rollback trial, production menu release, model deletion, Tool Calling recipe work or PR merge. The current last observed model is now Flash-Next, superseding prior 27B-active claims.
