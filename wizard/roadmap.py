@@ -43,7 +43,8 @@ def readiness_report(*, service: dict[str, Any] | None = None,
                      checkpoint: dict[str, Any] | None = None,
                      live_status: dict[str, Any] | None = None,
                      p3_history: dict[str, Any] | None = None,
-                     model_history: dict[str, dict] | None = None) -> dict[str, Any]:
+                     model_history: dict[str, dict] | None = None,
+                     operating_audit: dict[str, Any] | None = None) -> dict[str, Any]:
     probe_live = service is None
     if service is None:
         from scripts.manager.service_manifest import inspect_service
@@ -87,6 +88,10 @@ def readiness_report(*, service: dict[str, Any] | None = None,
         from scripts.manager.operational_switch import historical_p3_receipts
         p3_history = historical_p3_receipts()
     p3_pass = p3_history.get("status") == "LOCAL_P3_A_B_C_RECEIPTS_VERIFIED"
+    if operating_audit is None:
+        from scripts.manager.operational_audit import inspect_journal
+        from scripts.manager.operational_switch import ROOT as OPERATING_ROOT
+        operating_audit = inspect_journal(OPERATING_ROOT)
     if model_history is None:
         model_history = {
             "flash_verify": _local_history("flash-next", "verify"),
@@ -96,8 +101,8 @@ def readiness_report(*, service: dict[str, Any] | None = None,
     scopes = {
         "P1": "GUARDED_BACKEND_PRESENT_LIVE_REVALIDATION_REQUIRED",
         "P2": p2,
-        "P3": ("ONE_OFF_A_B_C_RECEIPTS_PRESENT_GENERAL_SWITCH_PREVIEW_ONLY"
-               if p3_pass else "LOCAL_P3_RECEIPTS_UNAVAILABLE_GENERAL_SWITCH_PREVIEW_ONLY"),
+        "P3": ("ONE_OFF_A_B_C_RECEIPTS_PRESENT_GUIDED_SOURCE_TRIAL_NOT_DGX_QUALIFIED"
+               if p3_pass else "LOCAL_P3_RECEIPTS_UNAVAILABLE_GUIDED_SOURCE_ONLY"),
         "P4": "CONDITIONAL_SOURCE_ONLY_NO_DELETE_APPROVAL",
         "P5": "ORCAROUTER_ADAPTER_UNQUALIFIED",
         "P6": "SWITCH_EXECUTOR_NOT_QUALIFIED",
@@ -108,7 +113,8 @@ def readiness_report(*, service: dict[str, Any] | None = None,
                "benchmark": model_history.get("flash_benchmark", {"status": "UNAVAILABLE"})},
         "P2": {"benchmark": model_history.get("27b_benchmark", {"status": "UNAVAILABLE"})},
         "P3": {"stage_a_b_c": p3_history.get("status", "UNAVAILABLE"),
-               "issues": p3_history.get("issues", [])},
+               "issues": p3_history.get("issues", []),
+               "independent_operating_journal": operating_audit},
     }
     milestones = [
         {"stage": stage, "title": title, "state": scopes[stage],
@@ -118,9 +124,11 @@ def readiness_report(*, service: dict[str, Any] | None = None,
          "historical_backend_evidence": evidence.get(stage, {"status": "UNVERIFIED"}),
          "runtime_pass_claimed": False,
          "general_operating_switch": (
-             "READ_ONLY_PREVIEW_EXECUTOR_NOT_QUALIFIED" if stage == "P3"
+             "GUIDED_SOURCE_PLUS_SEPARATE_TRIAL_UNRELEASED" if stage == "P3"
              else "NOT_QUALIFIED_OR_NOT_APPLICABLE"),
-         "interactive_wizard_ux_acceptance": "NOT_VERIFIED",
+         "interactive_wizard_ux_acceptance": (
+             "SOURCE_MENU_PRESENT_ACTUAL_DGX_NOT_VERIFIED"
+             if stage == "P3" else "NOT_VERIFIED"),
          "requires_separate_approval": stage in ("P2", "P3", "P4", "P5", "P6", "P7")}
         for stage, title in MILESTONES
     ]
@@ -138,12 +146,14 @@ def readiness_report(*, service: dict[str, Any] | None = None,
                                else None),
         "download_running": download_running,
         "p2_checkpoint_status": checkpoint.get("checkpoint_status"),
+        "operating_journal_audit": operating_audit,
+        "ordinary_switch_production_released": False,
         "milestones": milestones, "release_ready": False,
         "issues": sorted(set((service.get("issues") or [])
                              + (checkpoint.get("issues") or [])
                              + (observed_live.get("issues") or []))),
         "notice": "Historical P1/P2 records, immutable P3 A/B/C receipts, current live API, "
-                  "general-switch readiness and integrated Wizard UX are separate evidence domains. "
+                  "source-guided switch, trial acceptance and live production UX are separate. "
                   "No historical PASS substitutes for a current switch approval.",
     }
 
