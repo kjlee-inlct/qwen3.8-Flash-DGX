@@ -76,9 +76,9 @@ class DraftUnifiedRunnerCPU(unittest.TestCase):
             if args[0] == "ss":
                 return SimpleNamespace(
                     returncode=0, stdout=(
-                        'LISTEN 0 4096 0.0.0.0:8000 0.0.0.0:* users:(("python",pid=14,fd=3))\\n'
-                        'LISTEN 0 4096 [::]:8000 [::]:* users:(("python",pid=14,fd=5))\\n'))
-            return SimpleNamespace(returncode=0, stdout="17, python\\n")
+                        'LISTEN 0 4096 0.0.0.0:8000 0.0.0.0:* users:(("python",pid=14,fd=3))\n'
+                        'LISTEN 0 4096 [::]:8000 [::]:* users:(("python",pid=14,fd=5))\n'))
+            return SimpleNamespace(returncode=0, stdout="17, python\n")
         out = dg.stage_d(snapshot(), verified_live(), run=runner,
                          proc_owner=lambda pid, cid: pid in (14, 17) and cid == IDENT)
         self.assertEqual(out["status"], "READ_ONLY_PASS")
@@ -91,9 +91,9 @@ class DraftUnifiedRunnerCPU(unittest.TestCase):
             if args[0] == "ss":
                 return SimpleNamespace(
                     returncode=0, stdout=(
-                        'LISTEN 0 4096 0.0.0.0:8000 0.0.0.0:* users:(("python",pid=14,fd=3))\\n'
-                        'LISTEN 0 4096 [::]:8000 [::]:*\\n'))
-            return SimpleNamespace(returncode=0, stdout="17, python\\n")
+                        'LISTEN 0 4096 0.0.0.0:8000 0.0.0.0:* users:(("python",pid=14,fd=3))\n'
+                        'LISTEN 0 4096 [::]:8000 [::]:*\n'))
+            return SimpleNamespace(returncode=0, stdout="17, python\n")
         out = dg.stage_d(snapshot(), verified_live(), run=runner,
                          proc_owner=lambda pid, cid: True)
         self.assertEqual(out["status"], "BLOCKED")
@@ -103,8 +103,8 @@ class DraftUnifiedRunnerCPU(unittest.TestCase):
         def runner(args, timeout=12):
             if args[0] == "ss":
                 return SimpleNamespace(returncode=0, stdout=
-                                       "LISTEN 0 4096 0.0.0.0:8000 0.0.0.0:*\\n")
-            return SimpleNamespace(returncode=0, stdout="17, python\\n")
+                                       "LISTEN 0 4096 0.0.0.0:8000 0.0.0.0:*\n")
+            return SimpleNamespace(returncode=0, stdout="17, python\n")
         out = dg.stage_d(snapshot(), verified_live(), run=runner,
                          proc_owner=lambda pid, cid: True)
         self.assertEqual(out["status"], "BLOCKED")
