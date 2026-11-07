@@ -1,3 +1,9 @@
+## Verified GitHub Actions follow-up — 2026-11-08
+
+CI on original source commit `d68106a24c4c6071acff7a4d98d74e04c6ecbfe1`: [Run 42386939625](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42386939625), manifest job `128446200136`, **SUCCESS, 862/862 tests / 38 groups**. Actual run logs verified; no real DGX action. Acceptance/release gates remain locked.
+
+---
+
 # P3-E / P3-F source hardening checkpoint — 2026-11-08
 
 Scope: **source-only** change on `feature/recipe-wizard-handoff`. No Docker, DGX GPU, :8000, HF cache, live API, or old receipts are changed by this commit. P3-A/B/C/G stay REAL PASS/CLOSED; P8 alone owns failure injection, automatic restoration trials and final release signoff.
