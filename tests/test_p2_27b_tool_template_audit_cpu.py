@@ -52,8 +52,8 @@ class NativeToolTemplateAuditCPU(unittest.TestCase):
 
     def test_nonzero_exit_surfaces_redacted_stderr_last_line(self):
         run, _ = fake_runner(
-            rc=1, stderr="Traceback (most recent call last):\\n"
-            "  File \\"/home/inlc/private/program.py\\", line 1\\n"
+            rc=1, stderr="Traceback (most recent call last):\n"
+            "  File \"/home/inlc/private/program.py\", line 1\n"
             "ImportError: cannot import SECRET_LIB"
         )
         result = mod.inspect_template_cpu(run=run)
