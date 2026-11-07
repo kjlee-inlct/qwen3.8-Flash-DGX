@@ -1,3 +1,9 @@
+## 2026-11-07 — LATEST DGX READ-ONLY evidence and current-ID-aware switch code
+
+Operator's actual DGX post-pull Wizard: 27B `diff=[]`, `issues=[]`, API `LIVE_SERVICE_VERIFIED`, container ID `00094794475a9eaa62296c9e9fcb880bf6f3e01abdb77e3dd3ac5f964d5b2d4a`; cache host `/home/inlc/.cache/huggingface` mounted `/hf:ro`. New source fixes ordinary switch stale P3 Docker ID assumptions, with qualified canonical 27B provenance and explicit optional read-only host cache comparison. CI 42367665200 SUCCESS: 814/814 CPU/Fake-DGX tests (36 groups), no actual DGX mutation. Start with `docs/WIZARD-27B-LIVE-DRIFT-CURRENT-ID-20261107.md`, `handoff/CURRENT-STATE.md` and `handoff/NEXT-ACTIONS.md`. Production release gates unchanged False; historical P2/P3/cleanup real evidence preserved.
+
+---
+
 ## 2026-11-07 — LATEST SOURCE-ONLY Wizard lifecycle implementation
 
 New generic 27B recipe drift comparator, read-only Wizard lifecycle CLI and interactive menu option 7, and guarded container-only lifecycle/rollback scaffold were implemented on feature/recipe-wizard-handoff. GitHub Actions CI 42355750124: **799/799 CPU/Fake-DGX PASS (36 groups)**. No DGX service mutation was authorized or performed; production dispatch remains hard-blocked. Read docs/WIZARD-LIFECYCLE-SOURCE-IMPLEMENTATION-20261107.md and newest entries in CURRENT-STATE.md / NEXT-ACTIONS.md for source-vs-real status and remaining blockers. The previously recorded canonical live 27B and P3-C evidence below remains historical, not a fresh live probe.
