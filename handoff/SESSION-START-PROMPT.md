@@ -1,3 +1,9 @@
+## 2026-11-07 — NEW OFFICIAL P3-D/E/F/G AND SINGLE-SCRIPT DRAFT
+
+User explicitly mapped four general Wizard operating tasks to P3-D/E/F/G, following permanently CLOSED P3-A/B/C. New one-command local runner: `bash scripts/temporary/p3-d-g-acceptance.sh --run --report /tmp/unique-p3-dg.json` after fast-forwarding `feature/recipe-wizard-handoff`. Implements D Docker/ss/nvidia-smi/proc read-only ownership, E Flash preserved Docker candidate and missing qualified recipe gate, F automatic CPU/Fake-DGX suites, G read-only switch/journal readiness; distinct verdicts and `acceptance_complete=false`. The batch must NOT call Docker mutation, automatically approve a downtime SHA, execute P3-A/B/C again, or claim real G PASS. Read `docs/P3-D-G-UNIFIED-WIZARD-DRAFT-ACCEPTANCE-20261107.md`. P4 optional Flash removal, P5 Orcarouter, P6 Orcarouter↔27B, P7 integration; keep existing PR #1 Draft and unmerged.
+
+---
+
 ## 2026-11-07 — LATEST OPERATOR READ-ONLY DGX PREVIEW PASS ON SOURCE 4189a79
 
 A second operator DGX read-only run after source `4189a79` verified canonical 27B `diff=[]`, `advisories=[]` with explicit HF source; `switch flash-next-27b operational --target flash-next --plan --json` now returns `READY_FOR_OPERATOR_REVIEW_ONLY`, `issues=[]`, `current_ids_from_live_docker=true`, source lineage `CANONICAL_RECIPE`, target lineage `HISTORICAL_P3_INSTANCE`. API remains `LIVE_SERVICE_VERIFIED`. **No actual DGX mutation/transfer**, no GPU process exclusivity or process-level port ownership verified, and no production switch gate unlocked. Evidence and next priorities: `docs/WIZARD-27B-OPERATIONAL-PREVIEW-DGX-PASS-20261107.md`, `handoff/NEXT-ACTIONS.md`. Last SOURCE CI 814/814 CPU Fake-DGX PASS run 42367665200; PR #1 still Draft. Do not re-run P3 A/B/C or assume approval from preview fingerprint.
