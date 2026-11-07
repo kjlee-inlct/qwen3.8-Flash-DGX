@@ -17,6 +17,9 @@ SPEC = Stage(
 
 def run(argv, *, as_json=False, dry_run=False):
     args = list(argv)
+    if args[:2] == ["operational", "acceptance"]:
+        from scripts.manager.operational_acceptance import main as acceptance_main
+        return acceptance_main(args[2:])
     if args[:2] == ["operational", "guided"]:
         from scripts.manager.operational_wizard import main as guided_main
         return guided_main(args[2:])
