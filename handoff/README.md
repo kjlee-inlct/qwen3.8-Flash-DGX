@@ -1,3 +1,9 @@
+## 2026-11-07 — LATEST DGX ACTUAL READ-ONLY ACCEPTANCE: CURRENT-ID SWITCH PREVIEW PASS
+
+Read `docs/WIZARD-27B-OPERATIONAL-PREVIEW-DGX-PASS-20261107.md` for the second operator DGX read-only report after pulling 4189a79: canonical 27B `diff=[]`, `advisories=[]`; ordinary 27B -> preserved Flash-Next switch preflight `READY_FOR_OPERATOR_REVIEW_ONLY`, `issues=[]`, current IDs and source/target lineage validated; service `LIVE_SERVICE_VERIFIED`. **This is a PREVIEW PASS only**, not GPU exclusivity or port ownership and not actual model switch/rollback acceptance. Code CI 814/814 PASS. Never treat a preview plan hash as execution approval.
+
+---
+
 ## 2026-11-07 — LATEST DGX READ-ONLY evidence and current-ID-aware switch code
 
 Operator's actual DGX post-pull Wizard: 27B `diff=[]`, `issues=[]`, API `LIVE_SERVICE_VERIFIED`, container ID `00094794475a9eaa62296c9e9fcb880bf6f3e01abdb77e3dd3ac5f964d5b2d4a`; cache host `/home/inlc/.cache/huggingface` mounted `/hf:ro`. New source fixes ordinary switch stale P3 Docker ID assumptions, with qualified canonical 27B provenance and explicit optional read-only host cache comparison. CI 42367665200 SUCCESS: 814/814 CPU/Fake-DGX tests (36 groups), no actual DGX mutation. Start with `docs/WIZARD-27B-LIVE-DRIFT-CURRENT-ID-20261107.md`, `handoff/CURRENT-STATE.md` and `handoff/NEXT-ACTIONS.md`. Production release gates unchanged False; historical P2/P3/cleanup real evidence preserved.
