@@ -1,3 +1,21 @@
+## 2026-11-07 — P3-D/E/F/G ONE-COMMAND DRAFT ACCEPTANCE: NEXT DGX STEP
+
+**Stage labels are now P3-D/E/F/G** after completed P3-A/B/C. Run ONE read-only acceptance batch on DGX after clean pull:
+
+```bash
+cd ~/Workspace/llm/blazux-orcarouter
+git status --short
+git pull --ff-only origin feature/recipe-wizard-handoff
+bash scripts/temporary/p3-d-g-acceptance.sh --plan
+bash scripts/temporary/p3-d-g-acceptance.sh --run --report /tmp/p3-d-g-readonly-$(date +%Y%m%dT%H%M%S).json
+```
+
+Collect the full JSON/exit status and classify D (GPU/port process attribution), E (Flash observed candidate/qualified recipe missing), F (CPU suite), G (current-ID switch and journal preview). Expect `E.DRAFT_REVIEW_REQUIRED` until a reviewed Flash recipe exists and `G.PREVIEW_PASS_REAL_SWITCH_NOT_RUN` even if all read-only prechecks pass; neither means final acceptance. Do not use `--execute`, do not replay P3 A/B/C, do not stop 27B or promote Flash recipe without new scoped operator approval. Next SOURCE priorities after first DGX output: close D environment-specific visibility gaps; qualify Flash E; complete F executor/rollback/crash semantics; conduct separately approved real G trial. P4 optional deletion decision and P5/P6/P7 follow.
+
+Full runbook: `docs/P3-D-G-UNIFIED-WIZARD-DRAFT-ACCEPTANCE-20261107.md`.
+
+---
+
 ## 2026-11-07 — DGX READ-ONLY CURRENT-ID SWITCH PREVIEW NOW PASS; NEXT GATES
 
 **The earlier read-only DGX step is COMPLETE** on source `4189a79`: canonical 27B matches including explicit HF source; operating switch preview 27B -> Flash-Next has `status=READY_FOR_OPERATOR_REVIEW_ONLY`, `issues=[]`, `source_lineage=CANONICAL_RECIPE`, `target_lineage=HISTORICAL_P3_INSTANCE`, current Docker IDs sourced from live inspect; service manager remains `LIVE_SERVICE_VERIFIED`. Details in `docs/WIZARD-27B-OPERATIONAL-PREVIEW-DGX-PASS-20261107.md`. Do **not** repeat this read-only test absent drift.
