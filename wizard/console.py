@@ -271,18 +271,33 @@ def _switch_selector() -> None:
 
 def _service_menu() -> None:
     from wizard.menus.operations import service as manager
-    actions = ["status", "health", "logs", "start", "stop",
+    actions = ["status", "health", "logs", "cleanup", "start", "stop",
                "restart", "rollback", "proxy", "gateway"]
     while True:
         print("\nService management: active inference model on :8000/v1")
         for i, name in enumerate(actions, 1):
-            indicator = "read only" if name in ("status", "health", "logs") else "guarded"
+            indicator = ("plan + TTY approval" if name == "cleanup"
+                         else "read only" if name in ("status", "health", "logs")
+                         else "guarded")
             print(f" {i}. {name:<8} [{indicator}]")
         selected = _choice(_input("Action (0 back): "), actions)
         if selected is None:
             return
         if not selected:
             print("Unknown option.")
+            continue
+        if selected == "cleanup":
+            print("Manifest-owned cleanup: only TWO stopped historical 27B"
+                  " test containers; never remove active model, image, HF"
+                  " cache or immutable evidence.")
+            rc = manager.run(["cleanup", "--plan"])
+            if rc:
+                print("No approved cleanup preview. Docker remains unchanged.")
+                continue
+            if _input("Proceed to guarded cleanup approvals? [y/N]: ") == "y":
+                manager.run(["cleanup", "--execute"])
+            else:
+                print("Cancelled. No Docker changes.")
             continue
         manager.run([selected])
 
