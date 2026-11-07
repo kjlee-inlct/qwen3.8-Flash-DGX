@@ -173,6 +173,114 @@ def review(a: dict, b: dict, live: dict, plan: dict,
     return sorted(set(problems))
 
 
+
+# The canonical P3 plan rotates at fixed 10-minute epoch boundaries.
+# An operator entering --execute during the final two minutes should not
+# have to guess the next 10-minute boundary or bypass safety thresholds.
+MIN_APPROVAL_SECONDS = 120
+MAX_READONLY_REFRESH_SECONDS = 150
+REFRESH_INTERVAL_SECONDS = 5
+
+
+def await_approval_window(
+    a: dict, b: dict, initial_live_rc: int | None, initial_live: dict,
+    initial_plan_rc: int | None, initial_plan: dict, *,
+    clock=None, sleep=None, observer=None, check_clean=None,
+) -> dict[str, Any]:
+    """Wait *only by read-only observation* for a safe fresh plan window.
+
+    NEVER request consent or call the canonical execution CLI in this helper.
+    Reject a pre-expiry plan SHA rotation as unexpected source drift. A new
+    window MUST have a distinct digest, still pass the canonical P1/P2/A/B
+    provenance/live checks, and leave >=120 seconds for new human approvals.
+    The bounded wait is only used on an interactive --execute invocation.
+    """
+    clock = time.time if clock is None else clock
+    sleep = time.sleep if sleep is None else sleep
+    observer = get_plan_and_live if observer is None else observer
+    check_clean = git_clean if check_clean is None else check_clean
+    initial = {
+        "live_rc": initial_live_rc, "live": initial_live,
+        "plan_rc": initial_plan_rc, "plan": initial_plan,
+        "refreshed": False, "refresh_probes": 0,
+        "wait_seconds": 0, "issues": [],
+    }
+    now = clock()
+    expires = initial_plan.get("expires_at_epoch_seconds")
+    if type(expires) not in (int, float):
+        initial["issues"] = ["P3_C_PLAN_EXPIRY_MISSING"]
+        return initial
+    remaining = expires - now
+    if remaining >= MIN_APPROVAL_SECONDS:
+        # main() already checked the original full readiness gate.
+        return initial
+
+    initial_sha = initial_plan.get("plan_id")
+    if not SHA64.fullmatch(str(initial_sha or "")):
+        initial["issues"] = ["P3_C_INVALID_INITIAL_PLAN_SHA"]
+        return initial
+    # Never allow unlimited read-only waiting; stop automatically if the
+    # canonical plan does not rotate shortly after its declared expiration.
+    stop_at = now + min(MAX_READONLY_REFRESH_SECONDS, max(0, remaining) + 15)
+    print(
+        "\nP3-C plan has only "
+        f"{max(0, int(remaining))} seconds left (<{MIN_APPROVAL_SECONDS}). "
+        "No service will be changed.",
+        "\nWaiting for the next plan window using read-only checks only. "
+        "No prior approval will be reused. Ctrl+C cancels.",
+        flush=True,
+    )
+    result = dict(initial)
+    while clock() < stop_at:
+        left = stop_at - clock()
+        if left <= 0:
+            break
+        pause = min(REFRESH_INTERVAL_SECONDS, left)
+        if pause <= 0:
+            break
+        try:
+            sleep(pause)
+        except KeyboardInterrupt:
+            result["issues"] = ["P3_C_READONLY_PLAN_REFRESH_CANCELLED"]
+            return result
+        result["wait_seconds"] = max(0, round(clock() - now, 3))
+        try:
+            live_rc, live, plan_rc, plan = observer()
+        except (OSError, RuntimeError, ValueError, TypeError):
+            result["issues"] = ["P3_C_READONLY_REOBSERVATION_FAILED"]
+            return result
+        result["refresh_probes"] += 1
+        # Changes to current source/target/checkpoint/receipts never turn into
+        # auto-approval. They simply refuse the operation.
+        problems = review(a, b, live, plan, live_rc, plan_rc,
+                          clean=check_clean(), now_epoch=clock())
+        if problems and problems != ["P3_C_PLAN_EXPIRED"]:
+            result["issues"] = sorted(set(problems))
+            return result
+        new_sha = plan.get("plan_id")
+        if new_sha != initial_sha and clock() < expires:
+            result["issues"] = ["P3_C_PLAN_CHANGED_BEFORE_WINDOW_BOUNDARY"]
+            return result
+        new_expiry = plan.get("expires_at_epoch_seconds")
+        if (not problems and type(new_expiry) in (int, float)
+                and new_expiry - clock() >= MIN_APPROVAL_SECONDS):
+            if new_sha == initial_sha:
+                result["issues"] = ["P3_C_PLAN_NOT_ROTATED"]
+                return result
+            result.update(
+                live_rc=live_rc, live=live, plan_rc=plan_rc, plan=plan,
+                refreshed=True, issues=[],
+            )
+            print(
+                "New read-only Stage-C plan is READY. "
+                "Fresh exact manual confirmation is still required.",
+                flush=True,
+            )
+            return result
+    result["issues"] = ["P3_C_READONLY_PLAN_REFRESH_TIMEOUT"]
+    return result
+
+
 def confirm(plan: dict, *, input_fn=input) -> bool:
     """Three independently typed values; no abbreviated COPY/y/auto approvals."""
     try:
@@ -314,10 +422,33 @@ def main(argv: list[str] | None = None) -> int:
         report["status"] = "BLOCKED"
         report["issues"] = ["P3_C_REAL_TTY_REQUIRED"]
         return emit(report, rc=3)
-    expires = plan.get("expires_at_epoch_seconds")
-    if type(expires) not in (int, float) or expires - time.time() < 120:
+    selected = await_approval_window(a, b, live_rc, live, plan_rc, plan)
+    report["refresh_probes"] = selected["refresh_probes"]
+    report["refresh_wait_seconds"] = selected["wait_seconds"]
+    report["plan_refreshed"] = selected["refreshed"]
+    if selected["issues"]:
         report["status"] = "BLOCKED"
-        report["issues"] = ["P3_C_INSUFFICIENT_TIME_FOR_THREE_APPROVALS"]
+        report["issues"] = selected["issues"]
+        return emit(report, rc=3)
+    # All of these values must reflect the NEW observed plan, never the old
+    # short-lived one. No approval has been requested or carried over yet.
+    live = selected["live"]
+    plan = selected["plan"]
+    expires = plan["expires_at_epoch_seconds"]
+    report["current_model"] = live.get("observed_model")
+    report["current_model_ids"] = live.get("observed_model_ids")
+    report["source_container_id"] = plan.get("source_container_id")
+    report["target_container_id"] = plan.get("target_container_id")
+    report["flash_image"] = plan.get("flash_image")
+    report["target_image"] = plan.get("target_image")
+    report["plan_id"] = plan.get("plan_id")
+    report["expires_at_epoch_seconds"] = expires
+    report["expires_at_kst"] = expiry_kst(expires)
+    report["p1_evidence"] = plan.get("p1_evidence")
+    report["p2_receipt_sha256"] = plan.get("p2_receipt_sha256")
+    if expires - time.time() < MIN_APPROVAL_SECONDS:
+        report["status"] = "BLOCKED"
+        report["issues"] = ["P3_C_APPROVAL_WINDOW_SHRANK_BEFORE_CONFIRMATION"]
         return emit(report, rc=3)
     print(json.dumps(report, indent=2, sort_keys=True, ensure_ascii=False),
           flush=True)
