@@ -1,3 +1,15 @@
+## 2026-11-07 — ACTIVE NEXT ACTIONS after Wizard SOURCE implementation (CI 799/799 PASS)
+
+1. Pull the latest feature/recipe-wizard-handoff commit with a clean fast-forward on DGX. Run READ-ONLY ./wizard.sh model 27b recipe-diff --json and ./wizard.sh service manager status --json; inspect false-positive differences against current 27B actual Docker Cmd, mount RO/source, GPU, ports, API. No execute.
+2. Pin/verify trusted host HF cache location and qualified Flash-Next recipe before generic model uninstall/reinstall release. Do not edit the existing qualified 27B recipe SHA casually.
+3. Replace stale P3 receipt Docker IDs used by operational_switch.py / operational_executor.py live checks with fresh observed IDs while preserving historical receipt integrity.
+4. Complete source-level private journal/crash guarantees, independent verified backup cleanup and atomic benchmark latest-pointer promotion; test idempotence, interrupted writes, uncertain rollback. Existing generic lifecycle execution remains hard-gated False.
+5. Separate DGX operator authorization and real UX, fault/rollback, one-active-model, :8000 and 27B tool/benchmark acceptance before production gates change. P4-P7 remain later; P2-FINAL and P3-C stay PASS/CLOSED.
+
+Implementation scope and caveats: docs/WIZARD-LIFECYCLE-SOURCE-IMPLEMENTATION-20261107.md. New GitHub CI run 42355750124, **799 CPU/Fake-DGX PASS in 36 groups**. This is NOT actual DGX live qualification.
+
+---
+
 ## 2026-11-07 — HANDOFF DOCUMENT AUDIT / NEXT CONVERSATION READY
 
 The user starts the next development phase in a separate conversation. **Audit verified all 8 handoff docs, 12 implementation docs and 5 recipe/manifest/benchmark indices exist (25/25), plus both published benchmark collection directories and current source/evidence files.** The pre-audit HEAD `9ec7420b74369e7a76785577dc543f9dafb8897d` had GitHub Actions run `42352654468` SUCCESS, **757/757 CPU tests in 34 groups**. This CI is source-only. New documentation commits advance HEAD; inspect GitHub afresh.
