@@ -20,7 +20,9 @@
       "container_name": "qwen38-27b",
       "runtime_recipe": "recipes/qwen38-27b.runtime.json",
       "desired_native_tool_calling": true,
-      "native_tools_qualification": "REAL_DGX_ONE_SHOT_PROBES_PASS_CANONICAL_MIGRATION_PENDING"
+      "native_tools_qualification": "REAL_DGX_CANONICAL_RECIPE_COMMITTED_BENCHMARK_V2_PASS_OPENWEBUI_USER_CONFIRMED",
+      "recipe_state": "CANONICAL_DEFAULT",
+      "cleanup_history": "PRIOR_ORIGINAL_BACKUP_REMOVED_ON_VERIFIED_COMMIT"
     },
     "orcarouter": {
       "checkpoint": null,
@@ -46,5 +48,47 @@
     "uses_gpu": false,
     "binds_host_port": false,
     "does_not_stop_old": true
+  },
+  "retired_containers": {
+    "schema_version": 1,
+    "scope": "EXACTLY_TWO_PRESERVED_27B_TEST_CONTAINERS",
+    "cleanup_mode": "OPERATOR_APPROVED_CONTAINER_ONLY",
+    "requires_active_model": "27b",
+    "requires_served_id": "qwen3.8-27b",
+    "requires_host_port": 8000,
+    "requires_promoted_recipe": "recipes/qwen38-27b.runtime.json",
+    "expected_image_id": "sha256:9479fc92a9244fcf137afb36ed778e07495e29663a81db193736fcaa1f15e137",
+    "preserve_images": true,
+    "preserve_hf_cache": true,
+    "preserve_p3_and_benchmark_receipts": true,
+    "targets": [
+      {
+        "name": "qwen38-27b-failed-6d9ede0904c2",
+        "role": "failed_first_canonical_recipe_migration_candidate",
+        "managed_model": "27b",
+        "expected_labels": {
+          "blazux.recipe": "qwen38-27b",
+          "blazux.migration": "01702fa1b0901a0dce7517ccbaee133fc253058a1c07abe63bc00c42bec52a15"
+        },
+        "expected_original_id": "6d9ede0904c2b8e9e632d45b51aba4acbaf4502ae648da60cca77677948b0e2d",
+        "evidence_root": "~/.local/state/blazux-wizard/27b-recipe-migration",
+        "evidence_result": "result-01702fa1b0901a0dce7517ccbaee133fc253058a1c07abe63bc00c42bec52a15.json",
+        "evidence_expected_status": "FAIL_RESTORED"
+      },
+      {
+        "name": "qwen38-27b-native-tools-v1",
+        "role": "successful_one_shot_native_tools_trial_variant",
+        "managed_model": "27b",
+        "expected_container_id": "d42a15e2f7959829eeb616d748522193999441c9f418ec5dcae98931dfe5da56",
+        "expected_labels": {
+          "blazux.variant": "nvidia-27b-native-tools-v1",
+          "blazux.preserved-original": "qwen38-27b",
+          "blazux.p2-final-native-tools-trial": "9d8fc5776673dbbc4a4cb2bbe1c1375db97e78862cf0ba91eb06faa7c34ab98f"
+        },
+        "evidence_root": "~/.local/state/blazux-wizard/p2-final-tools-v1",
+        "evidence_result": "result-9d8fc5776673dbbc4a4cb2bbe1c1375db97e78862cf0ba91eb06faa7c34ab98f.json",
+        "evidence_expected_status": "PASS_RESTORED"
+      }
+    ]
   }
 }
