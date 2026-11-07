@@ -45,6 +45,7 @@ on:
       - 'tests/test_recipe_drift_cpu.py'
       - 'tests/test_model_lifecycle_cpu.py'
       - 'tests/test_p3_dg_acceptance_cpu.py'
+      - 'tests/test_flash_recipe_draft_cpu.py'
       - 'tests/test_p2_27b_benchmark_cpu.py'
       - 'tests/test_p3_roundtrip_cpu.py'
       - 'tests/test_p3_persistent_cpu.py'
@@ -114,6 +115,7 @@ jobs:
           python -m unittest discover -s tests -p 'test_recipe_drift_cpu.py' -v
           python -m unittest discover -s tests -p 'test_model_lifecycle_cpu.py' -v
           python -m unittest discover -s tests -p 'test_p3_dg_acceptance_cpu.py' -v
+          python -m unittest discover -s tests -p 'test_flash_recipe_draft_cpu.py' -v
           python -m scripts.manager.p3_dg_acceptance --plan
           python -m scripts.manager.p3_dg_acceptance --cpu-only
           python -m unittest discover -s tests -p 'test_installed_models_cpu.py' -v
