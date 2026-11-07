@@ -230,6 +230,9 @@ def inspect_p4_a(*,
                 "filesystem_total_bytes": None,
                 "filesystem_free_bytes": None,
                 "cache_allocated_bytes": None,
+                "known_model_repo_allocated_bytes": {
+                    "flash-next": None, "27b": None, "orcarouter": None,
+                },
                 "flash_repo_present": False,
                 "27b_repo_present": False,
                 "orcarouter_repo_present": False,
@@ -249,7 +252,15 @@ def inspect_p4_a(*,
                         ("27b", "models--nvidia--Qwen3.8-27B-NVFP4"),
                         ("orcarouter", "models--orcarouter--Qwen3.8-Flash-Next-Uncensored-NVFP4"),
                     ):
-                        item[model + "_repo_present"] = (root / "hub" / repo).is_dir()
+                        model_dir = root / "hub" / repo
+                        item[model + "_repo_present"] = model_dir.is_dir()
+                        if model_dir.is_dir():
+                            item["known_model_repo_allocated_bytes"][
+                                "flash-next" if model == "flash" else model
+                            ] = _du_bytes(model_dir, run)
+                            if item["known_model_repo_allocated_bytes"][
+                                    "flash-next" if model == "flash" else model] is None:
+                                result["issues"].append("MODEL_REPO_CAPACITY_ESTIMATE_UNAVAILABLE")
                 else:
                     result["issues"].append("CACHE_ROOT_UNAVAILABLE_OR_UNSAFE")
             except (OSError, ValueError, RuntimeError):

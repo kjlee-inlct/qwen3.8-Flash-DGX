@@ -128,6 +128,8 @@ def _advanced_menu() -> int:
             return 0
         if stage == "p2" and action == "download":
             module.run(["download", "--guided"])
+        elif stage == "p4" and action == "inventory":
+            module.run(["inventory"])
         elif action in module.SPEC.actions:
             module.run(["plan", "--for-action", action])
         elif action:
