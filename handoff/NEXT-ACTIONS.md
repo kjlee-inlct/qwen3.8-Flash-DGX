@@ -1,3 +1,11 @@
+## 2026-11-07 — Follow-up after actual DGX 27B curl PASS
+
+- [x] Real DGX 27B health, sole API model ID and actual chat completion **PASS** from operator console. `/v1/models=qwen3.8-27b`, completion model matches, stop finish, vLLM 0.32.0, original source at `05c1968`. Previous `curl smoke NOT_RUN` note is superseded.
+- [ ] Investigate **response formatting only**, separately: `content` contains reasoning-like text and `</think>` before `DGX_OK`, `reasoning=null`. Optional non-disruptive per-request `chat_template_kwargs.enable_thinking=false` experiment after reviewing actual Qwen/launcher compatibility. Never edit the live 27B runtime or restart blindly. Updated `FORMAT_DEVIATION` classifier is SOURCE+CPU until independently run on actual DGX.
+- [ ] Source-only general switch executable release gates: recovery/crash testing, non-reusable scoped operator consent, integrated Wizard UX and independent approved DGX bidirectional/rollback acceptance. **NOT YET AUTHORIZED**. Do not replay P3 A/B/C or automatically switch models, delete caches, or merge Draft PR.
+
+---
+
 ## 2026-11-07 current immediate operator read-only / inference task
 
 - [ ] On *real DGX*, while NVIDIA 27B is still active, pull source only and run `bash scripts/temporary/operational-27b-curl-smoke.sh`. Supply output (health, served ID, completion). It makes **one bounded localhost GPU inference** but does NOT switch/stop/start containers. `LIVE_SERVICE_VERIFIED` alone is not inference proof. Do not claim actual pass before output.
