@@ -1,3 +1,15 @@
+## LATEST TOP PRIORITY — Ordinary Wizard source finished; independently approved DGX acceptance is next
+
+1. Verify latest GitHub commit and **green source CPU CI** (Fake-DGX only). `./wizard.sh` main option **4**, model option **6**, `operational guided --target flash-next|27b`, and one-off acceptance `operational acceptance --target ... --plan|--execute` are new and source-wired. Production release gate is intentionally false.
+2. Next safe DGX operator step is **READ ONLY**, after clean fast-forward source pull: `./wizard.sh service manager status --json`, `python3 -m scripts.manager.operational_audit --json`, then `bash scripts/temporary/operational-switch-acceptance.sh --target flash-next --plan --json`. No stop, GPU start, benchmark or P3 replay in these commands.
+3. To complete ACTUAL hardware acceptance, obtain a fresh, independently scoped **27B downtime/possible restore failure** approval. Only then can the DGX human voluntarily run the tracked `--execute` (four independent exact TTY approvals). PASS leaves Flash active. Flash→27B requires **another separate new operator approval**, plan and physical trial. Stop immediately on `RECOVERY_FAILED` / committed uncertainty, no blind retries or state deletion.
+4. On supplied actual DGX outputs, review private evidence vs current journal, target chat, post-switch identity and rollback. Only AFTER both real directions and recovery behaviors are independently qualified can the reviewed normal production release gate be enabled. Do not infer DGX acceptance from CI or one-off P3 receipts.
+5. Keep **Open WebUI 27B Tool Calling and recipe parser updates deferred**. Later P4 conditional cleanup, P5 Orcarouter, P6 Orcarouter↔27B, P7 proxy/gateway are separate phases. Preserve active 27B, original Flash fallback, HF cache, port 8000, all historical evidence and Draft PR #1.
+
+Primary runbook: `docs/OPERATING-SWITCH-DGX-ACCEPTANCE-RUNBOOK-20261107.md`.
+
+---
+
 ## TOP PRIORITY 2026-11-07 — Resume normal model switching Wizard UX, DEFER Tool Calling
 
 1. Complete GitHub CPU CI for newly wired guided path `wizard/console.py` option 6 / `operational guided --target` / `operational_wizard.py` / `operational_executor.py`. Resolve any regressions before user source pull. Preserve Draft PR #1.
