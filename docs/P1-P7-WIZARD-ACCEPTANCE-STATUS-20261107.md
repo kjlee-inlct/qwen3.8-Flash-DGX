@@ -1,3 +1,9 @@
+## Latest DGX proof — current 27B functional text-generation PASS (2026-11-07)
+
+User-supplied DGX actual `curl` probe and tracked script both verified localhost `:8000/health`, sole served model `qwen3.8-27b` and actual Chat Completions with the matching model ID. Tracked script returned `27B_CURL_SMOKE_PASS`. This strengthens **current P2/27B serving functional health** (not a new benchmark); P3 A/B/C historical completion is unchanged. Direct reply `finish_reason=stop` with 26 generated tokens; however `message.content` contained reasoning-like text and literal `</think>` before `DGX_OK`, so strict exact-format compliance is **not PASS**. New classifier source-only, pending actual DGX rerun; **general operating switch, user-friendly approval, recovery and P7 release remain NOT ACCEPTED**. No model transfers or restarts authorized.
+
+---
+
 ## 2026-11-07 SOURCE UPDATE — ordinary model-switch preview and independent guarded backend
 
 The original actual-DGX P1/P2/P3-A/B/C PASS results below remain valid and immutable; the last operator observation is still NVIDIA 27B on :8000 (\`qwen3.8-27b\`). A **new source-only** ordinary switch preview is available from \`./wizard.sh\` model selection and CLI \`./wizard.sh switch flash-next-27b operational --target flash-next --plan --json\`; \`operational_executor.py\` implements independent protected transaction SOURCE but **is not exposed for live execute**. Fake-DGX CPU CI validates source paths only. P3 operating-switch readiness = **SOURCE_PRESENT / CPU_SIMULATION_PASS / REAL_DGX_NOT_RUN / INTERACTIVE_EXECUTE_NOT_ACCEPTED**. The dashboard now separates strictly readable private P3 historical receipts, local model history, current API health, general operating readiness and UX acceptance. P4/P5/P6/P7 remain as shown below; do not upgrade release or operations qualification solely from source CI.
