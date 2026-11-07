@@ -37,7 +37,7 @@ from scripts.manager.p2_27b_tool_streaming import probe_stream
 from scripts.manager.p2_27b_tool_live_trial import ROOT as TRIAL_ROOT, TRIAL_LABEL
 from scripts.manager.p2_27b_tool_variant import (
     SOURCE_CONTAINER, FALLBACK_CONTAINER, VARIANT_CONTAINER, VARIANT_ID,
-    _image_and_id, _gpu_access, _protected_mount, _run_names, variant_command,
+    _image_and_id, _gpu_access, _protected_mount, _run_names,
 )
 from scripts.manager.p2_27b_tool_template_audit import EXPECTED_TEMPLATE_SHA256
 from scripts.manager.p2_27b_tool_variant_status import _template_digest_from_mount
@@ -143,27 +143,49 @@ def _load_recipe() -> tuple[dict, str]:
 
 
 def _candidate(recipe: dict, mount: Path, image_id: str, plan: str) -> list[str]:
-    command = variant_command(mount, image_id)
-    i = command.index("--name") + 1
-    command[i] = SOURCE_CONTAINER
-    for label in ("blazux.variant=" + VARIANT_ID,
-                  "blazux.preserved-original=" + SOURCE_CONTAINER):
-        pos = command.index(label)
-        if command[pos - 1] != "--label":
-            raise ValueError("VARIANT_LABEL_LAYOUT_CHANGED")
-        del command[pos-1:pos+1]
-    image_index = command.index(image_id)
-    command[image_index:image_index] = [
-        "--pull", "never", "--restart", "no",
-        "--label", "blazux.recipe=qwen38-27b",
+    """Use the SINGLE CANONICAL pinned runtime JSON as launch source of truth."""
+    m = recipe["model"]
+    r = recipe["runtime"]
+    n = recipe["native_tools"]
+    if image_id != r["local_image_id"] or not p3.SHA.fullmatch(plan):
+        raise ValueError("CANONICAL_RECIPE_IMAGE_OR_PLAN_CHANGED")
+    if (r["max_model_len"] != 8192 or r["max_num_seqs"] != 1
+            or r["gpu_memory_utilization"] != "0.70"
+            or r["shm_size"] != "16g" or r["gpus"] != "all"
+            or r["load_format"] != "safetensors"
+            or r["dtype"] != "bfloat16"
+            or r["enforce_eager"] is not True or r["port"] != 8000
+            or n["chat_template"] != (
+                "/hf/hub/models--nvidia--Qwen3.8-27B-NVFP4/snapshots/"
+                + REVISION + "/chat_template.jinja")):
+        raise ValueError("CANONICAL_27B_EXACT_LIVE_TEST_PROFILE_CHANGED")
+    checkpoint = (
+        "/hf/hub/models--nvidia--Qwen3.8-27B-NVFP4/snapshots/" + m["revision"]
+    )
+    return [
+        "docker", "run", "-d", "--pull", "never",
+        "--restart", "no", "--name", SOURCE_CONTAINER,
+        "--gpus", r["gpus"], "--ipc=host", "--shm-size", r["shm_size"],
+        "-p", str(r["port"]) + ":8000",
+        "-v", str(mount) + ":/hf:ro",
+        "-e", "HF_HOME=/hf", "-e", "HF_HUB_OFFLINE=1",
+        "--label", "blazux.recipe=" + recipe["recipe_id"],
         "--label", "blazux.migration=" + plan,
+        image_id, checkpoint,
+        "--served-model-name", m["served_id"],
+        "--host", "0.0.0.0", "--port", "8000",
+        "--load-format", r["load_format"],
+        "--quantization", m["quantization"],
+        "--dtype", r["dtype"],
+        "--max-model-len", str(r["max_model_len"]),
+        "--max-num-seqs", str(r["max_num_seqs"]),
+        "--gpu-memory-utilization", r["gpu_memory_utilization"],
+        "--enforce-eager",
+        "--chat-template", n["chat_template"],
+        "--enable-auto-tool-choice",
+        "--tool-call-parser", n["tool_call_parser"],
+        "--reasoning-parser", n["reasoning_parser"],
     ]
-    if (command[command.index("--name")+1] != SOURCE_CONTAINER
-            or "--chat-template" not in command
-            or not all(flag in command for flag in TOOL_FLAGS)
-            or recipe["native_tools"]["chat_template"] not in command):
-        raise ValueError("CANONICAL_NATIVE_RECIPE_COMMAND_INVALID")
-    return command
 
 
 def _event(root: Path, plan: str, phase: str, extra: dict | None = None) -> None:
