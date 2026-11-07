@@ -1,3 +1,11 @@
+## E-20261107-27B-CURL-SMOKE-REAL-DGX-PASS — received original operator terminal output
+
+Actual DGX operator ran direct localhost `curl` for `/health`, `/v1/models`, and `/v1/chat/completions`, followed by fast-forward from `df3ec01` to `05c1968` and `bash scripts/temporary/operational-27b-curl-smoke.sh`. No Docker mutation or model switch. Direct /v1/models sole ID `qwen3.8-27b`, NVIDIA model root revision `482ca0f3832238542f8f5295dde86b5f22711d80`, `max_model_len=8192`. Direct chat model `qwen3.8-27b`, finish `stop`, 26 completion tokens, `system_fingerprint=vllm-0.32.0-bfe01fe9`; success included `DGX_OK` but also reasoning-like text and literal `</think>` in `message.content` while `message.reasoning` null. Updated smoke printed `HEALTH_PASS`, `IDENTITY_PASS`, `INFERENCE_PASS`, `27B_CURL_SMOKE_PASS`. **REAL DGX generation PASS; EXACT OUTPUT FORMATTING NOT PASS.** Console text is the evidentiary source, not a fabricated private JSON receipt; raw private logs, request IDs and output are not published in repo.
+
+New source-only separate formatting classifier and Fake-CPU tests distinguish `INFERENCE_PASS` from `FORMAT_DEVIATION`; no real DGX rerun of that new script has been claimed. Source CI must be checked at the final new HEAD. P3 general operating switch still `NOT_RUN`.
+
+---
+
 ## E-20261107-27B-CURL-SMOKE-SOURCE — inference-specific proof gate
 
 User correctly distinguished `LIVE_SERVICE_VERIFIED` (current API identity) from actual `/v1/chat/completions` functional inference. New bounded, localhost-only `scripts/temporary/operational-27b-curl-smoke.sh` and offline CPU tests `tests/test_operational_curl_smoke_cpu.py` ensure 27B health, exclusive served model identity and one user-visible response are separately checked. Wizard read-only preview provides exact command. Source CI to be checked at latest commit. **Real DGX inference smoke NOT_RUN / output not yet supplied.** Do not conflate script/test creation, old benchmark evidence or PREVIEW READY with fresh model functional acceptance; running 27B and preserved Flash assets remain untouched.
