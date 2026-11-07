@@ -1,3 +1,9 @@
+## R1AA — 2026-11-08 — P3-E bounded Flash host inventory is observation, never authorization
+
+`python3 -m scripts.manager.flash_host_assets --json` is **read-only** and must not invoke Docker create/stop/start/rm, model downloads or HF cache writes. A complete local metadata/template SHA-256 and indexed-shard presence check do not verify large-weight integrity, full Config/HostConfig/Env semantics, Docker registry provenance, restart/network/security policy or new container GPU execution. Never print or commit raw environment values, host paths, template contents or private Docker inspect payloads. A failing asset check is not a reason for automatic repair or retry. All model changes need a distinct fresh SHA, explicit TTY approval and recoverability review. P8 fault/automatic restore remains independently gated.
+
+---
+
 ## R1Z — 2026-11-07 — Fake-DGX stop/start/rollback simulation NEVER authorizes runtime
 
 `p2_27b_tool_cutover_simulation.py` is an isolated pure-injected simulation with NO production adapter or executable Wizard command. Its SHA and acknowledgements are intentionally domain-separated **simulation-only** and must never be accepted by any real DGX executor. It models failure/restoration paths for CPU tests, not actual journal integrity or validated Docker behavior. GitHub 722 CPU PASS on `fe4e6b01` is SOURCE ONLY; actual native tools and safe live rollback remain unqualified. Continue preserving original NVIDIA 27B, Flash, caches/receipts, single-model :8000, vLLM 0.32, no SGLang, no P3 replay, no release-gate flip.

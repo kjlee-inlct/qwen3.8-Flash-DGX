@@ -1,3 +1,9 @@
+## Verified source test evidence — 2026-11-08
+
+GitHub source: [03cbe4c](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/commit/03cbe4cc45a750322c4f99616c85f1061f7b2288), [2b44ccc](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/commit/2b44ccc0237fa34742e28608ad089cb3ca90fe55), and [8e8fcec](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/commit/8e8fcec5acb280e01445a2bd773fc9f4ecedf2f6). Source-only CI [42390619936](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42390619936): **870/870 PASS, 39 groups**, including 5 new Flash host asset tests. Existing DGX 153/153 local CPU execution was **before** this new five-test file; a new DGX-local run is not yet reported. Bounded host utility remains read-only and unqualified for launch.
+
+---
+
 # P3-E Flash host asset evidence — source-only implementation (2026-11-08)
 
 ## Latest operator result before this addition

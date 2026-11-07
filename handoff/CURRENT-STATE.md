@@ -1,3 +1,13 @@
+## 2026-11-08 — Operator P3-D independent PASS; Flash CLI parser PASS; host asset preflight source PASS
+
+Operator's latest DGX read-only `--sudo-ss` P3-D/E/F/G output: **P3-D READ_ONLY_PASS**, independently attributed docker-proxy IPv4 PID `2560693` and IPv6 PID `2560708`, GPU PID `2560905`, no detected GPU ownership conflict. **P3-E DRAFT_REVIEW_REQUIRED** despite `cmd_normalized=true` using `FLASH_FP8HYBRID_READ_ONLY_V1`, `cmd_normalization_error=null`, draft-field `issues=[]`, because canonical reinstall remains unqualified. **P3-F 153/153 DGX-local CPU PASS**. P3-G preview in this particular runner does not invalidate previously completed real bidirectional G. `blocked_stages=[]` with total `DRAFT_PARTIAL_ACCEPTANCE_NOT_RELEASED` is expected.
+
+GitHub source: [03cbe4c](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/commit/03cbe4cc45a750322c4f99616c85f1061f7b2288), [2b44ccc](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/commit/2b44ccc0237fa34742e28608ad089cb3ca90fe55), and [8e8fcec](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/commit/8e8fcec5acb280e01445a2bd773fc9f4ecedf2f6). Source-only CI [42390619936](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42390619936): **870/870 PASS, 39 groups**, including 5 new Flash host asset tests. New `scripts/manager/flash_host_assets.py` is a bounded **read-only Docker inspect/host file evidence** utility. It recognizes pinned NVIDIA Flash prepared view, enforces path-safe shard index references, hashes small metadata/template, and outputs only allowlisted fields. Test suite `tests/test_flash_host_assets_cpu.py` included in CI and P3-F CPU_SUITE registry; nothing starts/stops/removes Docker. It never marks Flash full reinstall or large-shard cryptographic integrity verified.
+
+**Current acceptance:** A/B/C/G real PASS/CLOSED; D real current READ_ONLY_PASS; E DRAFT_REVIEW_REQUIRED; F SOURCE_CPU_PASS_NOT_RELEASED; P8 NOT_RUN/NOT_RELEASED. Latest operator-observed active 27B :8000, no new live service change by source commits. Draft PR #1 remains Open/unmerged.
+
+---
+
 ## 2026-11-08 — Flash command parser CI confirmation
 
 The 3-test follow-up source commit [bb4d64e](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/commit/bb4d64e02e0d73d6406e6e0d7c593ec86ba4c954) passed GitHub Actions [42388253469](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42388253469): **865/865 CPU/Fake-DGX tests in 38 groups, SOURCE-ONLY**. The operator's 150/150 DGX-local CPU result predates these 3 source tests; new DGX-local CPU execution has not yet been observed. P3-D privileged PID check remains optional explicit operator step; E remains reinstall-unqualified, F unreleased, G historically real PASS/CLOSED, P8 NOT_RUN.

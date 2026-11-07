@@ -1,3 +1,18 @@
+## 2026-11-08 — P3-E host asset inventory next, no service mutation
+
+Operator's latest DGX read-only `--sudo-ss` P3-D/E/F/G output: **P3-D READ_ONLY_PASS**, independently attributed docker-proxy IPv4 PID `2560693` and IPv6 PID `2560708`, GPU PID `2560905`, no detected GPU ownership conflict. **P3-E DRAFT_REVIEW_REQUIRED** despite `cmd_normalized=true` using `FLASH_FP8HYBRID_READ_ONLY_V1`, `cmd_normalization_error=null`, draft-field `issues=[]`, because canonical reinstall remains unqualified. **P3-F 153/153 DGX-local CPU PASS**. P3-G preview in this particular runner does not invalidate previously completed real bidirectional G. `blocked_stages=[]` with total `DRAFT_PARTIAL_ACCEPTANCE_NOT_RELEASED` is expected.
+
+GitHub source: [03cbe4c](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/commit/03cbe4cc45a750322c4f99616c85f1061f7b2288), [2b44ccc](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/commit/2b44ccc0237fa34742e28608ad089cb3ca90fe55), and [8e8fcec](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/commit/8e8fcec5acb280e01445a2bd773fc9f4ecedf2f6). Source-only CI [42390619936](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42390619936): **870/870 PASS, 39 groups**, including 5 new Flash host asset tests.
+
+1. On DGX after `git pull --ff-only origin feature/recipe-wizard-handoff`, run only `python3 -m scripts.manager.flash_host_assets --json` and review its allowlisted output. This command reads existing `qwen38-flash` Docker inspect plus bounded local host metadata and template; no service change. Treat an incomplete/blocked result as evidence to investigate, not permission to recreate.
+2. Distinguish actual local image ID from registry digest, verify complete Docker security/network/restart fields, inherited versus runtime Env (37 additional keys in last observation), and pinned template file hash before drafting an unregistered Flash reinstall target. Do not upload raw Env, Config, HostConfig or host paths.
+3. Add CPU/Fake-DGX desired-vs-observed negative tests, bounded recreating/stopping failure-state proof, and backup/journal semantics. Preserve 27B recipe SHA and prior P3 receipts.
+4. Seek a separate exact-plan operator approval for any real Flash installation, port-8000 service interruption or container re-creation. P8 remains for deliberate fault injection and final operational/release acceptance, not P3-G.
+
+**No P3 A/B/C/G replay.** Keep vLLM 0.32, no SGLang, ONE_ACTIVE_MODEL_ONLY and fixed :8000.
+
+---
+
 ## 2026-11-08 — Flash command parser CI confirmation
 
 The 3-test follow-up source commit [bb4d64e](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/commit/bb4d64e02e0d73d6406e6e0d7c593ec86ba4c954) passed GitHub Actions [42388253469](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42388253469): **865/865 CPU/Fake-DGX tests in 38 groups, SOURCE-ONLY**. The operator's 150/150 DGX-local CPU result predates these 3 source tests; new DGX-local CPU execution has not yet been observed. P3-D privileged PID check remains optional explicit operator step; E remains reinstall-unqualified, F unreleased, G historically real PASS/CLOSED, P8 NOT_RUN.
