@@ -1,3 +1,8 @@
+## 2026-11-08 — P4-B/C source-only scope; no live cleanup
+
+Only P4-B reference/candidate **review** and P4-C **in-memory transaction rehearsal** have been authorized. Review fingerprints are not execution approvals. `P4_C_LIVE_EXECUTION_RELEASED=False`, and no production deletion adapter exists. The separate operator must establish an actual P5 operational issue or P8 acceptance need, exact resource identities, model/cache/blob/dependency audit, rollback, fresh TTY approval, runtime acceptance and postchecks before a future live cleanup adapter may be introduced. Never run Docker/HF/volume prune, delete stopped Flash reference or active 27B, alter the API service, automatically start P5/P8, or merge the Draft PR. Older P4-B/C NOT_STARTED markers are history for the **source development** scope only.
+
+---
 ## R1AC — 2026-11-08 — P4-A read-only inventory authorized; no cleanup inferred
 
 P4-A may inspect Docker container/API inventory, `docker system df`, configured/mounted HF caches and known model repository directory allocated sizes/free space with bounded no-shell read-only commands. Redact host paths, env and private resources. Report Docker reclaimable as unverified estimates and avoid adding model repo + parent cache totals. Model storage sizes are not verified safe-reclaimable bytes; P8 real Flash reinstall/rollback may require those cached assets. **No P4-B candidate decisions, P4-C execute/approval, Docker stop/start/rm, image/prune, cache writes or model switch** without later explicit user instruction and fresh per-action consent. P3 E/F source-level closeout is complete, but P8 production acceptance remains pending.

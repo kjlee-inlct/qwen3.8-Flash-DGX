@@ -1,3 +1,8 @@
+## 2026-11-08 — P4-B/C read-only source implementation and one-shot dry-run
+
+P4-B candidate/reference review + P4-C deletion transaction rehearsal are available from `./wizard.sh storage flash-next dry-run --json` and `bash scripts/temporary/p4-bc-dry-run.sh --json`. 13 Fake-DGX tests integrated into CI: [42403828742](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42403828742) **SUCCESS 902/902 CPU/Fake-DGX across 41 groups**. No new actual DGX P4-B/C result yet. Previous actual P4-A PASS remains established. No live deletion adapter exists (`P4_C_LIVE_EXECUTION_RELEASED=False`); P5 operational issue or P8 acceptance requires separate authorization and an exact-resource adapter/test before real cleanup. Never infer safe reclaim bytes. Reference: `docs/P4-BC-ONE-SHOT-DRY-RUN-20261108.md`.
+
+---
 # P4-A — Wizard capacity and state inventory (read-only, 2026-11-08)
 
 ## Actual real-DGX P4-A result — 2026-11-08

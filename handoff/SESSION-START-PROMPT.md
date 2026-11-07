@@ -1,3 +1,14 @@
+## 2026-11-08 — Current next session: P4-B/C one-command READ-ONLY dry-run
+
+P4-A real DGX inventory PASSED. P4-B/C source and 13 Fake-DGX CPU tests are implemented; combined CPU CI **902/902 PASS in 41 groups**, real DGX run **PENDING**. On the operator's DGX after non-destructive fast-forward run **only**:
+
+```bash
+bash scripts/temporary/p4-bc-dry-run.sh --json
+```
+
+This runs Fake-DGX tests then the read-only P4-A collector once and P4-B/C pure dry-run. Send output for review. Actual deletion is **not released or implemented** as a production adapter and can only be considered on an explicitly authorized P5 operational problem or P8 acceptance. No automatic P5/P8 execution, no PR merge. See `docs/P4-BC-ONE-SHOT-DRY-RUN-20261108.md`.
+
+---
 ## 2026-11-08 — Current next-session checkpoint: P4-A read-only inventory
 
 Latest current branch audit and new conversation starter:
