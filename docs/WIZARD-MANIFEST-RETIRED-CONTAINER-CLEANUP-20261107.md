@@ -1,3 +1,11 @@
+## ACTUAL DGX POST-EXECUTION UPDATE — 2026-11-07
+
+**COMPLETED:** The operator approved this exact batch and actually removed both previously stopped test containers on DGX. Wizard `cleanup --execute` returned `MANIFEST_RETIRED_CONTAINERS_CLEANED`, `issues=[]`, `deleted[]` exactly the two registered names, `remaining=[]`, `preserved_original_model_service=true`. An independent `cleanup --status` also returned `MANIFEST_RETIRED_CONTAINERS_CLEANED` with receipt `result-39f38df37561bbfdffbe0ecce12566a7f3d0d51cd8c5b90190c506e68e28bbd5.json`; API service status was `LIVE_SERVICE_VERIFIED`, `qwen3.8-27b` on :8000, `issues=[]`. `docker ps -a` now lists only running `qwen38-27b`, stopped `qwen38-flash`, Open WebUI and Portainer. **Do not run the one-time cleanup procedure below again.** It is preserved for historical reproducibility only.
+
+The current Git-tracked manifest stores the completed batch with exact consumed SHA and deleted Docker IDs; this is an **audit history**, not a pending cleanup queue. Runtime `./wizard.sh service manager cleanup --status` remains the authoritative read-only check. A repeated `cleanup --plan` returns **`ALREADY_CLEANED`** when the exact private receipt, active API and Docker absence match; it cannot create another executable plan. If they disagree, it returns BLOCKED rather than trusting Git history. See [actual DGX cleanup evidence](WIZARD-MANIFEST-RETIRED-CONTAINER-CLEANUP-LIVE-PASS-20261107.md).
+
+---
+
 # Wizard manifest container cleanup — 2026-11-07
 
 ## Operator-selected scope, NOT a global model deletion ban
