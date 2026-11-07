@@ -1,3 +1,9 @@
+## 2026-11-07 — Latest DGX operational reverse postcheck VERIFIED; P2-FINAL Tool Calling HTTP 400 confirmed
+
+Operator fast-forwarded to `09c6780`; verified real running `qwen38-27b`, `:8000` `LIVE_SERVICE_VERIFIED`, sole `qwen3.8-27b`, `issues=[]`; independent operating journal `VERIFIED/COMMITTED`, 14 events. Direct Docker `Config.Cmd` confirms absence of all tool-auto/parser/reasoning flags from preserved 27B, while source opt-in tool profile displays expected candidate flags. Real bounded local `--tools-probe` returns `BLOCKED/LOCAL_API_HTTP_ERROR_400` with no structured call/continuation; no destructive or lifecycle actions. This **closes the earlier reverse-postcheck gap** while keeping **P2-FINAL Native Tool Calling NOT_QUALIFIED**. Original P3-C historic PASS unchanged, normal main Wizard production gate OFF. New task: protected tool-enabled 27B variant and separately approved transition/rollback design; Open WebUI Native and streaming tests pending.
+
+---
+
 ## 2026-11-07 — P2 final tool-calling opt-in source / P3-C completed-history freeze
 
 Per operator ordering, created dedicated final P2 item for 27B Native Tool Calling. Verified official Qwen3.8-27B vLLM flags `--enable-auto-tool-choice --tool-call-parser qwen3_coder --reasoning-parser qwen3`; implemented opt-in candidate argv flag (legacy P2 launch remains unchanged), source-only profile and bounded localhost structured auto tool-call/continuation probe (no real tool execution, no Docker mutation), plus 27B dedicated entrypoint flags and Fake-DGX regression suite. Historical P2 GPU/benchmark passed and P3-C Stage A/B/C passed on DGX unchanged; appended P2 Tool Calling requires real parser/migration/Open WebUI tests before full P2 closure. Last actual ordinary reverse Flash→27B trial PASS, independent final status/audit still not supplied. Production main Wizard remains release gated; no P3-C rerun, no asset deletion or PR merge.
