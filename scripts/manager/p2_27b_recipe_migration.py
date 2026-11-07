@@ -40,6 +40,7 @@ from scripts.manager.p2_27b_tool_variant import (
     _image_and_id, _gpu_access, _protected_mount, _run_names, variant_command,
 )
 from scripts.manager.p2_27b_tool_template_audit import EXPECTED_TEMPLATE_SHA256
+from scripts.manager.p2_27b_tool_variant_status import _template_digest_from_mount
 from scripts.manager.p2_27b_launch_preview import SERVED, REVISION
 
 ROOT = Path.home() / ".local/state/blazux-wizard/27b-recipe-migration"
@@ -207,7 +208,9 @@ def make_plan(*,
     """No state changes; this plan only applies to the ORIGINAL unmodified 27B."""
     issues: list[str] = []
     try:
-        if root.is_symlink() or (root.exists() and list(root.glob("attempt-*.json"))):
+        if root.is_symlink() or (root.exists() and (
+                list(root.glob("attempt-*.json"))
+                or (root / "latest-27b-benchmark.json").exists())):
             issues.append("PRIOR_RECIPE_MIGRATION_REQUIRES_RECONCILIATION")
         recipe, recipe_sha = _load_recipe()
         hist = historical()
@@ -237,6 +240,12 @@ def make_plan(*,
             issues.append("FLASH_P3_CONTAINER_LINEAGE_CHANGED")
         if source.get("Image") != PINNED_IMAGE or variant.get("Image") != PINNED_IMAGE:
             issues.append("PINNED_VLLM_IMAGE_CHANGED")
+        issues.extend(p3._container_checks(
+            source, name=SOURCE_CONTAINER, image=PINNED_IMAGE,
+            expected_id=old.get("id_27b"), running=True))
+        issues.extend(p3._container_checks(
+            variant, name=VARIANT_CONTAINER, image=PINNED_IMAGE,
+            expected_id=variant.get("Id"), running=False))
         if not (source.get("State") or {}).get("Running") or SOURCE_CONTAINER not in running:
             issues.append("ORIGINAL_27B_NOT_RUNNING")
         if (variant.get("State") or {}).get("Running") or VARIANT_CONTAINER in running:
@@ -262,6 +271,12 @@ def make_plan(*,
         mount = _protected_mount(source)
         if mount is None or _protected_mount(variant) != mount:
             issues.append("READ_ONLY_HF_CACHE_MOUNT_UNVERIFIED")
+        if mount is not None:
+            try:
+                if _template_digest_from_mount(mount) != EXPECTED_TEMPLATE_SHA256:
+                    issues.append("PINNED_NVIDIA_CHAT_TEMPLATE_HASH_DRIFT")
+            except (OSError, RuntimeError, ValueError):
+                issues.append("PINNED_NVIDIA_CHAT_TEMPLATE_UNAVAILABLE")
         if not _gpu_access(source) or not _gpu_access(variant):
             issues.append("GPU_DEVICE_REQUIREMENTS_UNVERIFIED")
         if p3._gpu_conflicts(SOURCE_CONTAINER, run, inspect):
@@ -469,6 +484,10 @@ def execute(plan_id: str, downtime_ack: str, delete_ack: str, *,
             }
             _promote_benchmark(root, latest)
             result["benchmark_promoted"] = True
+            # The latest benchmark now describes the NEW active container.
+            # Do not silently roll back the model on any later bookkeeping
+            # or cleanup failure, as that would make the pointer dishonest.
+            committed = True
             # Independent immutable commit proof, before authorized cleanup.
             p3._write_once(root, "commit-" + plan_id + ".json", {
                 "status": "BENCHMARK_VERIFIED_NATIVE_RECIPE_COMMITTED",
@@ -477,7 +496,6 @@ def execute(plan_id: str, downtime_ack: str, delete_ack: str, *,
                 "new_id": new_id, "backup_name": backup,
                 "benchmark_status": measured["status"],
             })
-            committed = True
             _event(root, plan_id, "COMMITTED")
             # Explicit user-approved deletion of ONLY the stopped, verified backup.
             preserved = inspect(backup)
@@ -488,6 +506,9 @@ def execute(plan_id: str, downtime_ack: str, delete_ack: str, *,
             removal = run(["docker", "rm", backup], timeout=45)
             if removal.returncode:
                 result["issues"].append("BACKUP_CONTAINER_DELETE_FAILED")
+                result["status"] = "COMMITTED_CLEANUP_PENDING"
+            elif backup in _run_names(run, all_containers=True):
+                result["issues"].append("BACKUP_CONTAINER_DELETE_NOT_CONFIRMED")
                 result["status"] = "COMMITTED_CLEANUP_PENDING"
             else:
                 result["backup_container_deleted"] = True
