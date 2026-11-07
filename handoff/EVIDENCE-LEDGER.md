@@ -1,3 +1,13 @@
+## 2026-11-07 — PUBLIC/GIT BENCHMARK SUMMARY RECORDS + C APPROVAL CANCEL
+
+User explicitly suggested keeping measured benchmark results in Git. Source branch now tracks sanitized `benchmarks/published/qwen3.8-flash-next/f506db4c76430674.json` and `benchmarks/published/qwen3.8-27b/80f109dbd7c97460.json`, with historical ACTUAL DGX numerical values supplied in user logs and original immutable raw record SHA256 hashes. Flash: 2026-11-06T23:30:31Z, P1 post-B 3 x64 tokens concurrency1, mean 37.9527 tokens/s, TTFT p50/p95 1.384594/1.779602 s, E2E latency p50/p95 1.724560/1.813754 s, 192 output tokens; source raw SHA256 `f506db4c764306748dea7aa87d50b5d75a77dab846b7e742b9fbe1d6808ef8db`. 27B: 2026-11-06T04:26:42Z, actual bounded `BENCH_PASS_RESTORED_VERIFIED`, mean E2E 7.9002 tokens/s vs decode proxy 11.1801 (not measured vLLM engine decode throughput); TTFT p50/p95 0.179349/28.977990 s, latency p50/p95 5.818283/34.609889 s, source raw SHA256 `80f109dbd7c9746065a36c8376f3ff440d1b0d58eee2024fcfad3f1733a82dc9`.
+
+Published JSON contains ONLY model/revision/runtime, profile, numeric metrics, receipt SHA, status and limitations; no original raw file or private paths/plan ID/prompt/output/logs were committed. `scripts/manager/benchmark_publication.py`, `tests/test_benchmark_publication_cpu.py`, `scripts/temporary/verify-published-benchmarks.sh` added. **Initial reports transcribed from actual operator output; source-bytes round-trip verification has not yet run on operator DGX**. Read-only one-command verifier must return two VERIFIED events before claiming machine-reconciled publication. Source CI is CPU fixture/provenance validation only.
+
+Actual latest user P3-C `--execute` entered SHA with an extra initial `[`. Wrapper output `status=CANCELLED`, `executed=false`, `execution_dispatched=false`, `approval_accepted=false`. Flash was still observed active; no C service change. New C plan needed for any future intentional switch.
+
+---
+
 ## 2026-11-07 — OPERATOR ACTUAL STAGE-C READ-ONLY READY; SOURCE-ONLY C WRAPPER
 
 New operator DGX text `붙여넣은 텍스트(1)(6).txt`: clean fast-forward from `ebebd60` to `20907793795f43b3999d4a6470cbbf766ea87385`; `./wizard.sh evidence list --model 27b --kind benchmark` found ONE original 27B benchmark `20261106T042642Z-0cacd3f29370.benchmark.json`, `mean_e2e_tokens_per_sec=7.9002`, `mean_decode_tokens_per_sec_proxy=11.1801`, `ttft_p50_sec=0.179349`, `status=BENCH_PASS_RESTORED_VERIFIED`. `./wizard.sh evidence migrate --plan` READY with 14 COPY candidates and SHA `44753008...`, but the guided approval prompt received literal `COPY`, so output `CANCELLED/executed=false/copied=0`. Original P1/P2/P3 files unmodified and no import completed.
