@@ -1,3 +1,11 @@
+## 2026-11-07 — P3-C 실제 최종 PASS, 새로운 P1–P7 수용 현황 및 대화 시작 프롬프트 최신화
+
+실제 DGX 운영자가 새로운 P3-C 계획/3개 독립 승인으로 전환했고, canonical Wizard가 `status=PASS/stage=c/executed=true/live_verified=true/active_model=27b`를 반환했다. wrapper `P3_C_PASS_FINAL_27B_ACTIVE`, `post_switch_status=LIVE_SERVICE_VERIFIED`, `post_switch_observed_model=27b`, `issues=[]`; 원본 `stage-c.json` 증거 보존. 이 결과는 10분 경계에서 승인 부족으로 BLOCKED되었던 과거 시도를 supersede하며, **현재 마지막 관측 모델은 NVIDIA 27B ACTIVE :8000**. 최신 Git 모델별 벤치 2개도 actual DGX private source와 VERIFIED.
+
+모든 핵심 doc 경로를 재조회하여 필수 핸드오프/마스터 플랜/운영 계약/Manifest/벤치/단계별 P3 runbook의 **파일 미존재 없음**을 확인. 다만 기존 `handoff/SESSION-START-PROMPT.md`, `README.md`, `CHANGELOG.md` 및 일부 이전 계획의 첫 문단이 과거 P3-C NOT_RUN으로 시작하는 문서 최신화 누락을 발견. 새 시작 프롬프트를 P3-C 완료 이후 UX 작업 기준으로 갱신하고, `docs/P1-P7-WIZARD-ACCEPTANCE-STATUS-20261107.md`를 추가하여 실제 DGX P1-P3 백엔드 PASS와 일반 Wizard 메뉴 UX 수용 미완료를 분리했다. 원본 증거·GitHub Draft PR·활성 27B 서비스는 변경하지 않았다. `wizard/roadmap.py` P3 정적 상태와 `wizard/console.py` P3 plan-only 메뉴는 **다음 소스 개발의 확인된 갭**, 이번 문서 작업에서는 실행 코드 변경 없음.
+
+---
+
 ## 2026-11-07 — Fixed P3-C 10-minute plan-boundary operator refusal, source only
 
 Actual operator runs at 10:08:14 and 10:09:30 KST, both ending in `P3_C_INSUFFICIENT_TIME_FOR_THREE_APPROVALS` with `executed=false/execution_dispatched=false`, revealed the canonical expiring plan window UX issue while Flash remained active. No real Stage-C transition occurred. New `scripts/temporary/p3_stage_c_operator.py` bounded 150s **read-only** refreshes stage-C plan and live Flash source until a NEW, fully provenance-qualified SHA with >=120s remains; rejects early unexpected SHA change, foreign current model, missing P1/P2 evidence, dirty Git, timeout/interrupt. Old plan and approvals never reused. Still requires three fresh exact manual inputs and independently calls unchanged canonical guarded Wizard. `--plan` stays immediate/non-mutating. Added fake DGX virtual-clock and newly authorized SHA execution regression tests. Operator pulls latest branch after CI and can run `bash scripts/temporary/p3-stage-c-operator.sh --execute` under existing explicit operator Flash downtime consent. No model deletion, no PR merge, no GPU activity in source changes.
