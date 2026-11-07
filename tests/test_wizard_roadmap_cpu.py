@@ -1,4 +1,4 @@
-"""P1-P7 operator readiness summary is read-only and never claims GPU PASS."""
+"""P1-P8 operator readiness summary is read-only and never claims GPU PASS."""
 from __future__ import annotations
 
 import contextlib
@@ -18,18 +18,44 @@ def service(*, downloading=False, good=True):
 
 
 class RoadmapCPU(unittest.TestCase):
-    def test_seven_milestones_all_have_scope_not_runtime_pass(self):
+    def test_eight_milestones_all_have_scope_not_runtime_pass(self):
         r = roadmap.readiness_report(
             service=service(), checkpoint={"source_files_present": False,
                                             "checkpoint_status": "NOT_READY",
                                             "issues": []})
-        self.assertEqual(len(r["milestones"]), 7)
+        self.assertEqual(len(r["milestones"]), 8)
         self.assertEqual([v["stage"] for v in r["milestones"]],
-                         ["P1", "P2", "P3", "P4", "P5", "P6", "P7"])
+                         ["P1", "P2", "P3", "P4", "P5", "P6", "P7", "P8"])
         self.assertTrue(all(not v["runtime_pass_claimed"] for v in r["milestones"]))
         self.assertFalse(r["release_ready"])
         self.assertFalse(r["executed"])
         self.assertEqual(r["api_host_port"], 8000)
+
+    def test_p3_bidirectional_evidence_is_distinct_from_p8_fault_recovery(self):
+        report = roadmap.readiness_report(
+            service=service(),
+            checkpoint={"source_files_present": True,
+                        "checkpoint_status": "SOURCE_FILES_PRESENT_PINNED_CANDIDATE",
+                        "issues": []},
+            live_status={"status": "LIVE_SERVICE_VERIFIED",
+                         "expected_served_id": "qwen3.8-27b", "issues": []},
+            p3_history={"status": "LOCAL_P3_A_B_C_RECEIPTS_VERIFIED",
+                        "issues": []},
+            model_history={},
+            operating_audit={"status": "VERIFIED",
+                             "phase": "COMMITTED", "issues": []})
+        self.assertEqual(report["interface"], "P1_P8_ACCEPTANCE_DASHBOARD")
+        self.assertFalse(report["release_ready"])
+        self.assertEqual(report["milestones"][7]["stage"], "P8")
+        self.assertEqual(report["milestones"][7]["state"],
+                         "FAULT_RECOVERY_AND_FINAL_OPERATIONS_NOT_RUN")
+        self.assertFalse(report["milestones"][7]["runtime_pass_claimed"])
+        self.assertFalse(report["milestones"][7]["source_implemented"])
+        self.assertFalse(report["milestones"][7]["interactive_wizard_ux_acceptance"]
+                         == "PASS")
+        self.assertFalse(report["ordinary_switch_production_released"])
+        self.assertFalse(report["milestones"][2]["historical_backend_evidence"]
+                         ["p8_fault_restore_required_for_p3_g"])
 
     def test_download_in_progress_is_not_completion(self):
         data = roadmap.readiness_report(
