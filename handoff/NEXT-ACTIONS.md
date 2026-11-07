@@ -1,3 +1,17 @@
+## LATEST NEXT ACTIONS — 2026-11-07: P2-FINAL real HTTP 400, protected tool-enabled variant design required
+
+**P0 — Record closure/evidence, no operation:** newest user-provided `LIVE_SERVICE_VERIFIED` current 27B, journal `VERIFIED/COMMITTED` with **14** events; both real ordinary 27B→Flash and Flash→27B PASS and independently post-checked. Historical P3-C remains FINAL/CLOSED, never re-run. Normal main Wizard is NOT production released and real fault injection/recovery not accepted. Reconfirm current status before any action.
+
+**P1 — P2 last Tool Calling gap:** verified preserved `qwen38-27b` `Config.Cmd` lacks `--enable-auto-tool-choice`, `--tool-call-parser` and `--reasoning-parser`; source opt-in profile has intended `qwen3_coder` / `qwen3`; actual bounded local probe `BLOCKED/LOCAL_API_HTTP_ERROR_400`. **Do not retry repeatedly or pretend Tool Calling works.** Plan separate named, immutable 27B tool-enabled recipe/profile variant on vLLM 0.32, with image/parser support inspection, pinned model & original protected containers, formal single-model :8000 cutover, rollback and private evidence paths. Do NOT reuse the P2 first-boot trial, P3 stage C, or casually recreate `qwen38-27b` (ordinary switching pins its ID/provenance).
+ 
+**P2 — Implement & qualify on source:** profile variant (non-default); safe migration plan and separate authorization/executor contract; offline CPU Fake-DGX tests for parser flags and name/port/image/candidate identity, approval expiry, no parallel GPU, failed launch/rollback, tool `auto`/structured JSON/continuation, streaming chunks, thinking separation, Open WebUI Native expectations. New source/tests/docs commit to existing feature branch, CI green. Obtain actual DGX user approval **before** any stopping, starting, recreating or replacing inference containers, benchmark rerun or Open WebUI service modification.
+
+**P3 — Actual P2-final acceptance only after new consent:** bounded live tool-enabled runtime / Open WebUI Native tools accepted and original model assets retained, evidence for streaming and tool cycle. Only then consider P2-FINAL closed; original P2 and P3-C historic receipts untouched. Normal `./wizard.sh` release gate stays false pending its own menu UX and real failure-recovery acceptance. P4/P5/P6/P7 are deferred.
+
+See `docs/P2-27B-FINAL-TOOL-CALLING-ACCEPTANCE-20261107.md`, `docs/OPENWEBUI-27B-TOOL-CALLING-20261107.md`, `docs/OPERATING-SWITCH-UX-CONTRACT-20261107.md`.
+
+---
+
 ## NEXT after user P2/P3-C closure decision — 2026-11-07
 
 1. **P3-C historical real DONE/CLOSED**: original Flash→27B one-off actual P3-A/B/C accepted, no additional Stage-C run or receipt editing. Separately, new ordinary 27B→Flash and Flash→27B operators reported PASS; reverse final independent status/audit must still be observed. Last reported active is now 27B.
