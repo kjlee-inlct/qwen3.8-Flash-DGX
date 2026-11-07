@@ -1,3 +1,14 @@
+## 2026-11-07 — REAL DGX ORIGINAL-TO-GIT BENCHMARK ROUND-TRIP VERIFIED
+
+**New actual DGX operator result (not simulated CPU testing):** After Git fast-forward pull of the benchmark publication implementation, `bash scripts/temporary/verify-published-benchmarks.sh` returned **two `status=VERIFIED` records, each `issues=[]` and `executed=false`**, followed by `Published Flash-Next and NVIDIA 27B summaries match private DGX source receipts.`
+
+- Flash-Next published `benchmarks/published/qwen3.8-flash-next/f506db4c76430674.json`: `VERIFIED`, source original raw SHA256 `f506db4c764306748dea7aa87d50b5d75a77dab846b7e742b9fbe1d6808ef8db`.
+- NVIDIA 27B published `benchmarks/published/qwen3.8-27b/80f109dbd7c97460.json`: `VERIFIED`, source original raw SHA256 `80f109dbd7c9746065a36c8376f3ff440d1b0d58eee2024fcfad3f1733a82dc9`.
+
+This **closes the previously pending operator DGX source-byte/public-summary reproduction check**. The two allowlisted public JSON summaries exactly match what the validated exporter computes from the original private DGX receipts; no new benchmark, service mutation, stage-C dispatch, Git upload of original private telemetry, or port switch is asserted. This does **not** provide a fresh live model status check or authorize a Stage-C stop. P3-C remains NOT_RUN based on most recent run (cancelled due leading '[' in approval). Next optionally run the latest tracked `bash scripts/temporary/p3-stage-c-operator.sh --plan` for fresh current live gate; separate explicit Flash downtime consent remains mandatory for `--execute`.
+
+---
+
 ## 2026-11-07 — PUBLIC/GIT BENCHMARK SUMMARY RECORDS + C APPROVAL CANCEL
 
 User explicitly suggested keeping measured benchmark results in Git. Source branch now tracks sanitized `benchmarks/published/qwen3.8-flash-next/f506db4c76430674.json` and `benchmarks/published/qwen3.8-27b/80f109dbd7c97460.json`, with historical ACTUAL DGX numerical values supplied in user logs and original immutable raw record SHA256 hashes. Flash: 2026-11-06T23:30:31Z, P1 post-B 3 x64 tokens concurrency1, mean 37.9527 tokens/s, TTFT p50/p95 1.384594/1.779602 s, E2E latency p50/p95 1.724560/1.813754 s, 192 output tokens; source raw SHA256 `f506db4c764306748dea7aa87d50b5d75a77dab846b7e742b9fbe1d6808ef8db`. 27B: 2026-11-06T04:26:42Z, actual bounded `BENCH_PASS_RESTORED_VERIFIED`, mean E2E 7.9002 tokens/s vs decode proxy 11.1801 (not measured vLLM engine decode throughput); TTFT p50/p95 0.179349/28.977990 s, latency p50/p95 5.818283/34.609889 s, source raw SHA256 `80f109dbd7c9746065a36c8376f3ff440d1b0d58eee2024fcfad3f1733a82dc9`.
