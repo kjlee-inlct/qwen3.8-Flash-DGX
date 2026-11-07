@@ -1,3 +1,11 @@
+## 2026-11-07 — START HERE: P3-C 실제 DGX PASS, NVIDIA 27B ACTIVE, 이제 Wizard UX 개발
+
+**가장 최신 확정 상태:** P1 Flash-Next Verify/Benchmark와 P3-B 후 P1 재검증/진단, P2 NVIDIA 27B trial/benchmark, P3-A/B/C 실제 양방향 stage 순차 실행이 전부 PASS. 최종 `P3_C_PASS_FINAL_27B_ACTIVE`, `post_switch_observed_model=27b`, `post_switch_status=LIVE_SERVICE_VERIFIED` at port 8000. **원본 모델/컨테이너/HF 캐시 보존; P3-A/B/C 재실행 금지.** Git 공개 모델별 benchmark 원본 대조는 2/2 VERIFIED. 이 아래 오래된 `P3-C NOT_RUN`, `Flash active`, `benchmark comparison pending` 문구는 당시 이력이며 **현재 상태가 아님**.
+
+**새 대화는 [최신 시작 프롬프트](SESSION-START-PROMPT.md)에서 시작하세요.** [P1–P7 실제 백엔드/UX 별도 검증 표](../docs/P1-P7-WIZARD-ACCEPTANCE-STATUS-20261107.md)를 우선 참고. 대화형 `./wizard.sh`의 P3 메뉴는 계획 조회만 하므로, **다음 개발은 통합 Wizard 운영 UX + 반복 가능한 일반 Flash↔27B 전환**, 실제 27B 라이브 서비스 운영은 별도 명시적 승인 전 변경 금지. Draft PR #1은 미병합이며 GitHub HEAD/CI는 새 세션에서 다시 조회.
+
+---
+
 ## 2026-11-07 — MODEL BENCHMARK RESULTS NOW IN GIT AS SANITIZED SUMMARIES
 
 User requested storing benchmark results in Git. Current branch now tracks real operator-reported metric-only summaries at `benchmarks/published/qwen3.8-flash-next/f506db4c76430674.json` (post-B Flash mean 37.9527 tok/s; original private JSON SHA `f506db4c764306748dea7aa87d50b5d75a77dab846b7e742b9fbe1d6808ef8db`) and `benchmarks/published/qwen3.8-27b/80f109dbd7c97460.json` (27B E2E 7.9002 tok/s; decode proxy 11.1801; original SHA `80f109dbd7c9746065a36c8376f3ff440d1b0d58eee2024fcfad3f1733a82dc9`). These came from the user's actual DGX logs, not fresh GPU measurement. No private raw JSON, prompts, paths, tokens/approvals, container IDs or logs committed. `scripts/manager/benchmark_publication.py` is a guarded allowlist exporter (read-only plan/verify; explicit hash-approved local write; NO auto Git add/commit/push). `bash scripts/temporary/verify-published-benchmarks.sh` cross-checks Git summaries against original DGX receipts WITHOUT service changes. **Source CPU tests pass; real original-byte cross-check is pending operator pull/run.** See `benchmarks/published/README.md`.
