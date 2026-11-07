@@ -1,3 +1,13 @@
+## NEXT after REAL DGX ordinary 27B → Flash-Next PASS — 2026-11-07
+
+1. **Record current active model as FLASH-NEXT**: the new actual single-switch `operational acceptance --target flash-next --execute` returned `PASS` and `Observed model: flash-next`. Prior next-actions saying this first direction has NOT_RUN are superseded. P3 A/B/C receipts and operations journal are distinct; do NOT replay P3 stages.
+2. **Immediate safe read-only post-check on DGX:** `./wizard.sh service manager status --json`; `python3 -m scripts.manager.operational_audit --json`; `bash scripts/temporary/operational-switch-acceptance.sh --target 27b --plan --json`. Check `LIVE_SERVICE_VERIFIED` with only Flash ID `qwen3.8-flash-next`, journal `VERIFIED` / terminal `COMMITTED`, next fresh plan source `flash-next`→target `27b`, no issues. If output disagrees, stop; no destructive action.
+3. **Separate consent still required for reverse direction:** a new operator-approved Flash-Next downtime window and fresh four exact human TTY approvals are needed before `--target 27b --execute`. First plan hash/approval **cannot** be reused. Success would leave 27B active; no automatic toggle or repetition. Do not run merely on instruction to review status.
+4. After actual bidirectional trials, verify independently supplied journal/receipt status and still assess real rollback/failure behavior under separately approved conditions. Do not trigger intentional failure on the live DGX without a dedicated controlled test plan.
+5. Keep `PRODUCTION_EXECUTION_RELEASED=False` and Draft PR #1 unmerged until acceptance evidence and safety review meet the ordinary menu release gates. Keep Open WebUI Tool Calling, recipe modifications, P4/P5/P6/P7 deferred.
+
+---
+
 ## LATEST TOP PRIORITY — Ordinary Wizard source finished; independently approved DGX acceptance is next
 
 1. Verify latest GitHub commit and **green source CPU CI** (Fake-DGX only). `./wizard.sh` main option **4**, model option **6**, `operational guided --target flash-next|27b`, and one-off acceptance `operational acceptance --target ... --plan|--execute` are new and source-wired. Production release gate is intentionally false.
