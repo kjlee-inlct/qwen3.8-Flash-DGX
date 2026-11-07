@@ -1,3 +1,7 @@
+> **Current Stage-C approval prompt correction:** New source changes old `Type exactly [SHA]` to `Paste exactly SHA (no brackets; Enter cancels):`. The old real DGX input with a leading `[` was correctly cancelled and no C transition was dispatched. Regression test covers the input error. Keep manually separate exact downtime/final-target acknowledgements; no auto approval.
+
+---
+
 ## 2026-11-07 — GIT-TRACKED BENCHMARK SUMMARIES / READ-ONLY PRIVATE SOURCE VERIFICATION
 
 User requested keeping measured results in Git, WITHOUT exposing raw private receipts. Two sanitized metric-only original DGX outcomes now committed at `benchmarks/published/qwen3.8-flash-next/f506db4c76430674.json` and `benchmarks/published/qwen3.8-27b/80f109dbd7c97460.json`. Machine-readable summary fields are exclusively model/revision/runtime, receipt SHA256, UTC time, workload, metrics, statuses/method/limitations. Original unredacted JSON, host paths, plan approvals, API prompts/responses, Docker IDs, logs and state remain in ignored/private local locations.
