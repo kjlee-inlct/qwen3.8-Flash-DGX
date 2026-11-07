@@ -47,6 +47,7 @@ on:
       - 'tests/test_p3_dg_acceptance_cpu.py'
       - 'tests/test_flash_recipe_draft_cpu.py'
       - 'tests/test_flash_host_assets_cpu.py'
+      - 'tests/test_p4_disposition_cpu.py'
       - 'tests/test_p2_27b_benchmark_cpu.py'
       - 'tests/test_p3_roundtrip_cpu.py'
       - 'tests/test_p3_persistent_cpu.py'
@@ -77,6 +78,7 @@ on:
       - 'scripts/manager/**'
       - 'tests/test_manager_manifest_cpu.py'
       - 'tests/test_flash_host_assets_cpu.py'
+      - 'tests/test_p4_disposition_cpu.py'
       - 'tests/fixtures/**'
       - 'requirements-manager.txt'
       - '.github/workflows/recipe-manifest-cpu.yml'
@@ -119,6 +121,7 @@ jobs:
           python -m unittest discover -s tests -p 'test_p3_dg_acceptance_cpu.py' -v
           python -m unittest discover -s tests -p 'test_flash_recipe_draft_cpu.py' -v
           python -m unittest discover -s tests -p 'test_flash_host_assets_cpu.py' -v
+          python -m unittest discover -s tests -p 'test_p4_disposition_cpu.py' -v
           python -m scripts.manager.p3_dg_acceptance --plan
           python -m scripts.manager.p3_dg_acceptance --cpu-only
           python -m unittest discover -s tests -p 'test_installed_models_cpu.py' -v
