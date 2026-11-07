@@ -38,6 +38,10 @@ def model_ids(policy: Path = SERVICE_POLICY) -> dict[str, str]:
             served = entry.get("served_id")
             if isinstance(served, str) and re.fullmatch(r"[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}", served):
                 result[key] = served
+            elif (served is None and isinstance(key, str)
+                  and re.fullmatch(r"[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}", key)):
+                # Unqualified placeholders are discoverable, not executable.
+                result[key] = key
     return result
 
 
