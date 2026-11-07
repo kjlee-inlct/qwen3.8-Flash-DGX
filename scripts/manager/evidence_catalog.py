@@ -381,6 +381,7 @@ def main(argv: list[str] | None = None) -> int:
     mode = migrate.add_mutually_exclusive_group(required=True)
     mode.add_argument("--plan", action="store_true")
     mode.add_argument("--execute", action="store_true")
+    mode.add_argument("--guided", action="store_true")
     migrate.add_argument("--approve-plan")
     args = parser.parse_args(argv)
     if args.action == "list":
@@ -389,11 +390,38 @@ def main(argv: list[str] | None = None) -> int:
         doc = migration_plan() if not args.approve_plan else {
             "status": "BLOCKED", "issues": ["PLAN_CANNOT_INCLUDE_APPROVAL"],
             "executed": False}
+    elif args.guided:
+        if args.approve_plan:
+            doc = {"status": "BLOCKED", "issues": ["GUIDED_EXACT_MANUAL_APPROVAL_ONLY"],
+                   "executed": False}
+        else:
+            preflight = migration_plan()
+            print("Legacy evidence import (copy only, originals untouched)", flush=True)
+            print("Status: " + preflight["status"], flush=True)
+            print("Copy: " + str(preflight["copy_count"])
+                  + " | Already copied: " + str(preflight["already_copied"]), flush=True)
+            if preflight["issues"]:
+                print("Issues: " + ", ".join(preflight["issues"]), flush=True)
+            if preflight["status"] != "READY_TO_REQUEST_COPY_APPROVAL":
+                doc = preflight
+            else:
+                print("Current import plan: " + preflight["plan_id"], flush=True)
+                try:
+                    typed = input(
+                        "Type exactly [" + preflight["plan_id"]
+                        + "] to COPY (Enter cancels): ").strip()
+                except (EOFError, KeyboardInterrupt):
+                    typed = ""
+                if typed != preflight["plan_id"]:
+                    doc = {"status": "CANCELLED", "executed": False,
+                           "issues": [], "copied": 0}
+                else:
+                    doc = copy_approved(typed)
     else:
         doc = copy_approved(args.approve_plan)
     print(json.dumps(doc, ensure_ascii=False, indent=2, sort_keys=True))
     return 0 if doc["status"] in ("READ_ONLY_HISTORY", "READY_TO_REQUEST_COPY_APPROVAL",
-                                    "COPY_COMPLETE") else 3
+                                    "COPY_COMPLETE", "CANCELLED") else 3
 
 
 if __name__ == "__main__":
