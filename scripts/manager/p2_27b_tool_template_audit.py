@@ -130,9 +130,9 @@ def _stderr_hint(stderr: str | None) -> str | None:
     if not lines:
         return None
     last = lines[-1]
-    last = re.sub(r"/home/[^/\\s]+", "/home/<redacted>", last)
-    last = re.sub(r"(?i)(token|api[_-]?key|authorization)\\s*[:=]\\s*[^,\\s]+",
-                  r"\\1=<redacted>", last)
+    last = re.sub(r"/home/[^/\s]+", "/home/<redacted>", last)
+    last = re.sub(r"(?i)(token|api[_-]?key|authorization)\s*[:=]\s*[^,\s]+",
+                  r"\1=<redacted>", last)
     return last[:360]
 
 
