@@ -104,6 +104,27 @@
         "evidence_expected_status": "PASS_RESTORED"
       }
     ],
-    "notice": "This retirement batch manages exactly two old diagnostic containers; it does NOT prohibit separately approved uninstall/reinstall/recreation of canonical 27B, Flash-Next or other models."
+    "notice": "COMPLETED on real DGX; provenance retained for audit, not a pending deletion queue. Runtime absence + exact private receipt + live API identity are authoritative. This batch does not restrict model remove/reinstall workflows.",
+    "completion": {
+      "state": "OPERATOR_DGX_CLEANUP_COMPLETED_VERIFIED",
+      "observed_date_kst": "2026-11-07",
+      "proof_kind": "operator_console_plus_independent_wizard_postcheck",
+      "consumed_plan_id": "39f38df37561bbfdffbe0ecce12566a7f3d0d51cd8c5b90190c506e68e28bbd5",
+      "private_result_receipt": "result-39f38df37561bbfdffbe0ecce12566a7f3d0d51cd8c5b90190c506e68e28bbd5.json",
+      "verified_active_container_id": "00094794475a9eaa62296c9e9fcb880bf6f3e01abdb77e3dd3ac5f964d5b2d4a",
+      "deleted": [
+        {
+          "name": "qwen38-27b-failed-6d9ede0904c2",
+          "container_id": "44920f80610c5787f7d72064269be175d18150fe68d5a2fe846499129fc596bc"
+        },
+        {
+          "name": "qwen38-27b-native-tools-v1",
+          "container_id": "d42a15e2f7959829eeb616d748522193999441c9f418ec5dcae98931dfe5da56"
+        }
+      ],
+      "live_observation_overrides_git_record": true,
+      "historical_entry_retained": true,
+      "new_cleanup_plan_after_completion": false
+    }
   }
 }
