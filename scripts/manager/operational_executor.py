@@ -132,7 +132,8 @@ def execute(
             if target == "27b":
                 # Historical A provenance, not an approval token.
                 # Rechecking ID/image matters even if the label was read earlier.
-                if ((doc.get("Config") or {}).get("Labels") or {}).get(p3.LABEL) is None:
+                if (((doc.get("Config") or {}).get("Labels") or {}).get(p3.LABEL)
+                        != fresh.get("p3_a_plan_id")):
                     raise RuntimeError("PRESERVED_27B_PROVENANCE_MISSING")
             if p3._gpu_conflicts(p3.NAMES[source], run, inspect,
                                  require_source_running=False):
