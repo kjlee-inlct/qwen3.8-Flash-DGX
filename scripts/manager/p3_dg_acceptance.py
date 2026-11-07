@@ -33,6 +33,11 @@ PROC_ROOT = Path("/proc")
 MODEL_NAMES = ("27b", "flash-next")
 SHA = re.compile(r"^[0-9a-f]{64}$")
 PID = re.compile(r"pid=(\d+)")
+# P1/P3 accepted NVIDIA source snapshot. -fp8hybrid is a prepared local
+# derivative (NOT a 40-hex Hugging Face revision or an independent model).
+FLASH_PINNED_REVISION = "fc694b54fb0174e0913e6adf86691ef85a4ead47"
+FLASH_REPO_CACHE = "models--nvidia--Qwen3.8-Flash-Next-NVFP4"
+FLASH_SNAPSHOT_PREFIX = "/hf/hub/" + FLASH_REPO_CACHE + "/snapshots/"
 
 
 def result(stage: str, status: str, *, issues: list[str] | None = None,
@@ -263,13 +268,42 @@ def flash_observed_candidate(flash: dict) -> tuple[dict, list[str], list[str]]:
     if (not isinstance(cmd, list) or not 1 <= len(cmd) <= 256
             or any(not isinstance(x, str) or not x or len(x) > 4096 for x in cmd)):
         raise ValueError("FLASH_CMD_MISSING_OR_UNBOUNDED")
-    candidates = [x for x in cmd if x.startswith(
-        "/hf/hub/models--nvidia--Qwen3.8-Flash-Next-NVFP4/snapshots/")]
-    checkpoint = candidates[0] if len(candidates) == 1 else None
-    if not checkpoint or not re.fullmatch(
-            r"/hf/hub/models--nvidia--Qwen3[.]8-Flash-Next-NVFP4/snapshots/[0-9a-f]{40}",
-            checkpoint):
+    checkpoints = [x for x in cmd if x.startswith(FLASH_SNAPSHOT_PREFIX)]
+    checkpoint = checkpoints[0] if len(checkpoints) == 1 else None
+    observed_revision = (checkpoint[len(FLASH_SNAPSHOT_PREFIX):]
+                         if checkpoint else None)
+    # Legacy Flash can run the NVIDIA pinned source snapshot in its original
+    # form or from the *prepared* fp8hybrid derived view in the SAME cache.
+    # The variant suffix is not an HF revision. No automatic requalification.
+    checkpoint_variant = "SOURCE_NVFP4"
+    if observed_revision == FLASH_PINNED_REVISION + "-fp8hybrid":
+        checkpoint_variant = "LOCAL_PREPARED_FP8HYBRID"
+    elif observed_revision != FLASH_PINNED_REVISION:
         issues.append("FLASH_CHECKPOINT_REVISION_UNVERIFIED")
+    hybrid_preparation_verified = None
+    if checkpoint_variant == "LOCAL_PREPARED_FP8HYBRID":
+        cache = None
+        for value in flash.get("Mounts") or []:
+            if isinstance(value, dict) and value.get("Destination") == "/hf":
+                cache = value.get("Source")
+                break
+        if not isinstance(cache, str) or not cache.startswith("/"):
+            issues.append("FLASH_HYBRID_CACHE_SOURCE_UNVERIFIED")
+            hybrid_preparation_verified = False
+        else:
+            view = Path(cache) / "hub" / FLASH_REPO_CACHE / "snapshots" / observed_revision
+            # No writes: matches the exact .prepared sentinel and minimum
+            # index/config/tokenizer assets checked by serve_flash-next.sh.
+            essentials = ("config.json", "tokenizer.json",
+                          "tokenizer_config.json", "model.safetensors.index.json")
+            try:
+                hybrid_preparation_verified = (
+                    (view / ".prepared").is_file()
+                    and all((view / name).is_file() for name in essentials))
+            except (OSError, ValueError):
+                hybrid_preparation_verified = False
+            if not hybrid_preparation_verified:
+                issues.append("FLASH_HYBRID_PREPARED_VIEW_UNVERIFIED")
     served = _flash_arg(cmd, "--served-model-name")
     if served != "qwen3.8-flash-next":
         issues.append("FLASH_SERVED_ID_NOT_QUALIFIED")
@@ -333,6 +367,10 @@ def flash_observed_candidate(flash: dict) -> tuple[dict, list[str], list[str]]:
         "shm_size": host.get("ShmSize"),
         "served_id_observed_in_cmd": served,
         "checkpoint_observed_in_cmd": checkpoint,
+        "source_revision": FLASH_PINNED_REVISION,
+        "observed_checkpoint_revision_or_view": observed_revision,
+        "checkpoint_variant": checkpoint_variant,
+        "hybrid_preparation_verified": hybrid_preparation_verified,
     }
     return candidate, issues, advisories
 
