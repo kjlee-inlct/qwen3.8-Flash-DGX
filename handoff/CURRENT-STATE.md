@@ -1,5 +1,8 @@
 ## 2026-11-07 — OFFICIAL P3-D THROUGH P3-G DRAFT IMPLEMENTED IN GITHUB
 
+**NEW FINAL SOURCE CI:** `efb0dda78a4e6f894afe39c97a6839e1d7cf4d53` passed GitHub Actions run **42369840239**, **829/829 CPU/Fake-DGX tests, 37 groups**, including unified `--cpu-only`. SOURCE only; the actual DGX D~G one-command run remains NOT_RUN.
+
+
 The operator defined *four formerly unnamed common Wizard operations tasks* as official **P3-D/E/F/G**: D GPU process/:8000 PID read-only audit, E Flash-Next runtime recipe candidate and install qualification, F generic model lifecycle/switch/rollback/journal CPU validation, G independently approved REAL DGX bidirectional transfer/failure restore/UX acceptance. P3-A/B/C remain historical REAL PASS/CLOSED and unchanged.
 
 Source added `scripts/manager/p3_dg_acceptance.py`, `scripts/temporary/p3-d-g-acceptance.sh`, `tests/test_p3_dg_acceptance_cpu.py`, CI, and `docs/P3-D-G-UNIFIED-WIZARD-DRAFT-ACCEPTANCE-20261107.md`. Operator locally runs `bash scripts/temporary/p3-d-g-acceptance.sh --run --report /tmp/unique-p3-dg.json` after a clean branch pull. The script performs CPU regressions and only read-only Docker/ss/nvidia-smi/proc/localhost probes; it **cannot authorize real switch** and `acceptance_complete` remains False. `--strict` is nonzero until separate real approval/acceptance. E candidate is NOT a qualified reinstall recipe. No actual DGX P3-D-G run supplied yet; older 27B and operational preview read-only DGX PASS remain distinct. Last code CI before/at this draft must be read from GitHub, never inferred from a documentation commit.
