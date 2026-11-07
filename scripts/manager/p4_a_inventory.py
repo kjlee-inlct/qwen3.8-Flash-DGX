@@ -73,6 +73,11 @@ def _docker_df(run: Callable[..., Any]) -> dict:
             })
         if not rows:
             raise ValueError("DOCKER_DF_EMPTY")
+        # Do not declare the capacity inventory complete if Docker omitted
+        # images, containers, local volumes, or build cache. Retain observed
+        # display estimates for diagnosis, but treat the result as partial.
+        if {row["type"] for row in rows} != VALID_DF_TYPES:
+            return {"status": "PARTIAL_DOCKER_ESTIMATES", "rows": rows}
         return {"status": "OBSERVED_DOCKER_ESTIMATES", "rows": rows}
     except (OSError, TypeError, ValueError, subprocess.TimeoutExpired,
             json.JSONDecodeError):
@@ -178,16 +183,21 @@ def inspect_p4_a(*,
         actual = [m for m, name in managed.items() if name in running]
         if len(actual) != 1 or actual[0] != result["observed_active_model"]:
             result["issues"].append("ACTIVE_MODEL_SNAPSHOT_INCONSISTENT")
-        if len(gpu) != 1 or gpu[0] not in managed.values():
+        # A single GPU/port owner is not sufficient: the owner must be the
+        # same managed container as the currently verified live API model.
+        active_name = managed.get(result["observed_active_model"])
+        if len(gpu) != 1 or gpu[0] != active_name:
             result["issues"].append("GPU_OWNERSHIP_REQUIRES_FURTHER_VERIFICATION")
-        if len(ports) != 1 or ports[0] not in managed.values():
+        if len(ports) != 1 or ports[0] != active_name:
             result["issues"].append("HOST_PORT_8000_OWNERSHIP_UNVERIFIED")
         # No Docker inspect mount sources, env secrets, other container names,
         # or full paths are copied into the output.
     except (OSError, ValueError, RuntimeError, TypeError, KeyError):
         result["issues"].append("P4_A_DOCKER_AND_API_INSPECTION_UNAVAILABLE")
     result["docker_disk_usage"] = _docker_df(run)
-    if result["docker_disk_usage"]["status"] == "UNAVAILABLE":
+    if result["docker_disk_usage"]["status"] == "PARTIAL_DOCKER_ESTIMATES":
+        result["issues"].append("DOCKER_CAPACITY_CATEGORIES_INCOMPLETE")
+    elif result["docker_disk_usage"]["status"] == "UNAVAILABLE":
         result["issues"].append("DOCKER_CAPACITY_ESTIMATES_UNAVAILABLE")
 
     try:

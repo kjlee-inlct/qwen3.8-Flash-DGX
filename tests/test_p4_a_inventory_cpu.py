@@ -51,7 +51,9 @@ def fake_run(argv, *, timeout):
     if argv[:2] == ["docker", "system"]:
         return subprocess.CompletedProcess(argv, 0,
             '{"Type":"Images","TotalCount":"3","Active":"2","Size":"120GB","Reclaimable":"20GB (16%)"}\n'
-            '{"Type":"Containers","TotalCount":"3","Active":"1","Size":"20MB","Reclaimable":"10MB (50%)"}\n', "")
+            '{"Type":"Containers","TotalCount":"3","Active":"1","Size":"20MB","Reclaimable":"10MB (50%)"}\n'
+            '{"Type":"Local Volumes","TotalCount":"1","Active":"1","Size":"1GB","Reclaimable":"0B (0%)"}\n'
+            '{"Type":"Build Cache","TotalCount":"0","Active":"0","Size":"0B","Reclaimable":"0B"}\n', "")
     if argv[:4] == ["du", "-s", "-B1", "--"]:
         return subprocess.CompletedProcess(argv, 0, "4096\t/private/secret-path\n", "")
     raise AssertionError("Unexpected command " + str(argv))
@@ -109,6 +111,39 @@ class P4AInventoryCPU(unittest.TestCase):
             self.assertFalse(d["operations_enabled"])
             d = self.observe(root, live=lambda: {"status": "BLOCKED"})
             self.assertIn("LIVE_API_IDENTITY_NOT_VERIFIED", d["issues"])
+
+    def test_partial_docker_df_retains_observations_but_does_not_pass(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = self.make_cache(Path(tmp) / "hf")
+            def incomplete_df(args, *, timeout):
+                if args[:2] == ["docker", "system"]:
+                    return subprocess.CompletedProcess(
+                        args, 0,
+                        '{"Type":"Images","TotalCount":"2","Active":"1","Size":"3GB","Reclaimable":"1GB (33%)"}\\n',
+                        "")
+                return fake_run(args, timeout=timeout)
+            doc = self.observe(root, run=incomplete_df)
+            self.assertEqual(doc["status"], "READ_ONLY_INVENTORY_PARTIAL")
+            self.assertEqual(doc["docker_disk_usage"]["status"], "PARTIAL_DOCKER_ESTIMATES")
+            self.assertEqual(len(doc["docker_disk_usage"]["rows"]), 1)
+            self.assertIn("DOCKER_CAPACITY_CATEGORIES_INCOMPLETE", doc["issues"])
+            self.assertFalse(doc["operations_enabled"])
+
+    def test_single_gpu_or_port_owner_must_match_active_model(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = self.make_cache(Path(tmp) / "hf")
+            gpu_mismatch = fake_snapshot()
+            gpu_mismatch["gpu_running"] = ["qwen38-flash"]
+            doc = self.observe(root, snapshot=lambda: gpu_mismatch)
+            self.assertEqual(doc["status"], "READ_ONLY_INVENTORY_PARTIAL")
+            self.assertIn("GPU_OWNERSHIP_REQUIRES_FURTHER_VERIFICATION", doc["issues"])
+
+            port_mismatch = fake_snapshot()
+            port_mismatch["port_owners"] = ["qwen38-flash"]
+            doc = self.observe(root, snapshot=lambda: port_mismatch)
+            self.assertEqual(doc["status"], "READ_ONLY_INVENTORY_PARTIAL")
+            self.assertIn("HOST_PORT_8000_OWNERSHIP_UNVERIFIED", doc["issues"])
+            self.assertFalse(doc["reclaimable_bytes_verified"])
 
     def test_unavailable_docker_df_is_not_falsely_complete(self):
         with tempfile.TemporaryDirectory() as tmp:

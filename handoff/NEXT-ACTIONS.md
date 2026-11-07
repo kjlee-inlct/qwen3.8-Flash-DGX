@@ -1,3 +1,9 @@
+## 2026-11-08 — P4-A next: actual DGX read-only inventory, revised completeness safeguards
+
+P4-A source now treats incomplete Docker capacity categories and GPU/port owners inconsistent with the API-verified active model as **partial evidence**, not a clean inventory. Review the actual operator-side `./wizard.sh storage flash-next inventory --json` output after a safe fast-forward. Confirm all four Docker categories and host cache allocated/free bytes; do not infer reclaimable disk capacity or perform cleanup. P4-B/C and P8 remain separately gated. Source CI must be checked after the latest commit; actual DGX P4-A has not been reported.
+
+---
+
 ## 2026-11-08 — Current next-session checkpoint: P4-A read-only inventory
 
 Latest current branch audit and new conversation starter:

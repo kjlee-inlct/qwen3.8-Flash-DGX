@@ -1,3 +1,9 @@
+## 2026-11-08 — P4-A source guard: Docker category completeness and live owner matching
+
+The read-only inventory now fails closed to partial when any Docker `system df` category is missing or when the single reported GPU/host-port-8000 owner is another managed container rather than the API-verified active model. Added Fake-DGX regression cases for both. No GPU, Docker, HF, recipe, or service mutations; no P4-B/C authorization. CI and real DGX capacity remain separate evidence.
+
+---
+
 ## 2026-11-08 — Actual DGX P3-E/F read-only closeout complete; P4-A inventory NEXT
 
 **Observed on actual DGX after fast-forward to `0421b46`:** P3-E `flash_host_assets` status `LOCAL_ASSET_METADATA_OBSERVED_REINSTALL_UNQUALIFIED`, issues=[], 31,907,813-byte index, 299,845 weight-map entries (400,000 cap), **11 shards** total apparent size **129,771,270,410 bytes**, metadata hashes and mounted template SHA-256 observed. Checkpoint weights not hashed (`large_shard_hashes_verified=false`), pinned published revision bytes not independently verified (`verified_model_revision=false`), reinstall not qualified. P3-F real DGX **168/168 CPU PASS (7 suites)**, `PRODUCTION_LIFECYCLE_RELEASED=false`. Current `qwen38-27b` API `qwen3.8-27b`, host :8000, 8/8 service checks true and `LIVE_SERVICE_VERIFIED`; service-status command does not independently validate GPU/PID ownership. All commands read-only and no service mutation.

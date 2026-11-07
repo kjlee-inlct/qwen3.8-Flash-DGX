@@ -40,3 +40,7 @@ P4-A reports, without raw host paths or secrets:
 ## P4-B and P4-C prerequisites (not implemented/approved)
 
 Only **after** reading the user's P4-A DGX report: map model-repository snapshot/blob ownership, Docker container/image layer use, derived Flash FP8-hybrid symlink and checkpoint references, P8 reinstall/rollback needs, actual disk pressure, and uncertainty in shared-layer reclaim estimates. Propose keep/optional cleanup alternatives and quantified *upper bounds/uncertainty*, not a decision or executable removal script. A separate new request/approval would be needed to design P4-B; eventual removal P4-C requires a fresh, exact plan, resource identities, explicit TTY approval, tested rollback where possible and verified postchecks. User has **not** approved either B or C.
+
+## 2026-11-08 source safety clarification — incomplete inventory is partial
+
+The inventory must observe **all four** Docker `system df` categories (Images, Containers, Local Volumes, Build Cache) to report `OBSERVED_DOCKER_ESTIMATES`; a missing category leaves partial display rows and reports `DOCKER_CAPACITY_CATEGORIES_INCOMPLETE`. This is not permission to infer unreported bytes are zero. The single GPU-container and host-port-8000 owner must **match the API-verified active managed model**, not merely belong to the set of known model containers; mismatch is `READ_ONLY_INVENTORY_PARTIAL`. These guards are source/Fake-DGX acceptance only. No live P4-A DGX capacity result or deletion authorization is established by this update.
