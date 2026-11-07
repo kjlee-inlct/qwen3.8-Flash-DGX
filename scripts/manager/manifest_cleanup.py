@@ -381,8 +381,9 @@ def execute(plan_id: str, cleanup_ack: str, preservation_ack: str, *,
 
 
 def status(*, run: Callable[..., Any] = gpu.call,
+           active_status: Callable[..., dict] = migration.inspect_promoted_service,
            root: Path = ROOT) -> dict:
-    """Read-only inventory after cleanup, no assumption that deletion happened."""
+    """Read-only inventory, current active recipe and cleanup receipt audit."""
     report = _deny()
     report["action"] = "MANIFEST_RETIRED_27B_CONTAINER_STATUS"
     report["scope"] = "EXACT_TWO_DIAGNOSTIC_CONTAINERS_NOT_MODEL_UNINSTALL_POLICY"
@@ -400,7 +401,13 @@ def status(*, run: Callable[..., Any] = gpu.call,
                     and {row["name"] for row in receipt["deleted"]} ==
                             set(EXPECTED_NAMES)):
                 approved.append(item.name)
-        if not report["remaining"] and len(approved) == 1:
+        active = active_status()
+        report["active_service_preserved"] = (
+            active.get("status") == "LIVE_CANONICAL_27B_NATIVE_TOOLS_VERIFIED"
+            and active.get("issues") == []
+        )
+        if (not report["remaining"] and len(approved) == 1
+                and report["active_service_preserved"]):
             report["status"] = DONE
             report["issues"] = []
             report["verified_result_receipt"] = approved[0]
@@ -409,6 +416,8 @@ def status(*, run: Callable[..., Any] = gpu.call,
             report["issues"] = (
                 ["PENDING:" + x for x in report["remaining"]]
                 + (["NO_COMPLETED_CLEANUP_RECEIPT"] if not approved else [])
+                + (["ACTIVE_CANONICAL_27B_NOT_VERIFIED"]
+                   if not report["active_service_preserved"] else [])
             )
     except (OSError, ValueError, RuntimeError, TypeError,
             subprocess.TimeoutExpired):
