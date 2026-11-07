@@ -147,6 +147,38 @@ class FlashRecipeDraftCPU(unittest.TestCase):
             self.assertIn("REQUIRED_VLLM_JSON_FLAG_CHANGED:--speculative-config",
                           out["issues"])
 
+    def test_coverage_reports_host_unknowns_without_leaking_values(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            doc, _ = make_flash(Path(tmp))
+            doc["Config"]["Env"].append("PRIVATE_TOKEN=not-for-log")
+            doc["Mounts"].append({
+                "Type": "bind", "Destination": "/extra/private",
+                "Source": str(Path(tmp) / "secret-file"), "RW": False,
+            })
+            candidate, _, _ = dg.flash_observed_candidate(doc)
+            out = review.compare_observation(candidate, doc)
+            self.assertEqual(out["status"], "MATCHES_DOCUMENTED_FIELDS_REVIEW_REQUIRED")
+            c = out["host_runtime_qualification_coverage"]
+            self.assertEqual(c["additional_environment_key_count"], 1)
+            self.assertEqual(c["additional_mount_count"], 1)
+            self.assertFalse(c["full_container_reinstall_qualified"])
+            self.assertNotIn("not-for-log", json.dumps(out))
+            self.assertNotIn("secret-file", json.dumps(out))
+
+    def test_relative_template_source_is_not_treated_as_qualified_mount(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            doc, _ = make_flash(Path(tmp))
+            doc["Mounts"][1]["Source"] = "relative-template"
+            candidate, _, _ = dg.flash_observed_candidate(doc)
+            out = review.compare_observation(candidate, doc)
+            self.assertIn("TEMPLATE_MOUNT_SOURCE_NOT_ABSOLUTE", out["issues"])
+
+    def test_flash_draft_blockers_track_p8_not_completed_p3_g(self):
+        draft, _ = review.load_draft()
+        blockers = draft["release_blockers"]
+        self.assertIn("P8_FAULT_RECOVERY_AND_FINAL_OPERATIONS_ACCEPTANCE_NOT_RUN", blockers)
+        self.assertFalse(any("P3_G_REAL_BIDIRECTIONAL" in x for x in blockers))
+
 
 if __name__ == "__main__":
     unittest.main()

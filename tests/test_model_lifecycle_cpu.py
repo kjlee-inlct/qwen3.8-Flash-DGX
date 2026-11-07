@@ -264,6 +264,44 @@ class LifecycleTransactionCPU(unittest.TestCase):
         self.assertTrue(fake.states["qwen38-27b"])
         self.assertEqual(events[-1][0], "RESTORED")
 
+    def test_failed_fresh_install_does_not_claim_nonexistent_service_restored(self):
+        fake = FakeDGX()
+        fake.benchmark_ok = False
+        result, events = self.run_core(preview("install", "INSTALL"), fake)
+        self.assertEqual(result["status"], "FAIL_NO_PRIOR_SERVICE_TO_RESTORE")
+        self.assertFalse(result["restored_original"])
+        self.assertNotIn("qwen38-27b", fake.states)
+        self.assertIn("qwen38-27b-failed-" + "a"*12, fake.states)
+        self.assertEqual(events[-1][0], "NO_PRIOR_SERVICE_TO_RESTORE")
+
+    def test_partial_source_stop_failure_restores_observed_stopped_source(self):
+        fake = FakeDGX(**{"qwen38-flash": True, "qwen38-27b": False})
+        original_stop = fake.stop
+        def delayed_failure(name):
+            original_stop(name)
+            raise RuntimeError("DOCKER_STOP_COMPLETED_BUT_RETURNED_ERROR")
+        fake.stop = delayed_failure
+        result, events = self.run_core(
+            preview("switch", "START_EXISTING", active="flash-next"), fake)
+        self.assertEqual(result["status"], "FAIL_RESTORED")
+        self.assertTrue(fake.states["qwen38-flash"])
+        self.assertFalse(fake.states["qwen38-27b"])
+        self.assertEqual(events[-1][0], "RESTORED")
+
+    def test_partial_target_stop_failure_restores_target_without_double_start(self):
+        fake = FakeDGX(**{"qwen38-27b": True})
+        original_stop = fake.stop
+        def delayed_failure(name):
+            original_stop(name)
+            raise RuntimeError("DOCKER_STOP_COMPLETED_BUT_RETURNED_ERROR")
+        fake.stop = delayed_failure
+        result, events = self.run_core(
+            preview("restart", "RESTART_EXISTING", active="27b", running=True),
+            fake)
+        self.assertEqual(result["status"], "FAIL_RESTORED")
+        self.assertTrue(fake.states["qwen38-27b"])
+        self.assertEqual(events[-1][0], "RESTORED")
+
 
 if __name__ == "__main__":
     unittest.main()

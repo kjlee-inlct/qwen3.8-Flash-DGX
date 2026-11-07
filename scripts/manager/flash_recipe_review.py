@@ -159,6 +159,10 @@ def compare_observation(observed: dict, docker: dict, *,
         check(len(template) == 1 and template[0].get("Type") == "bind"
               and template[0].get("RW") is False,
               "EFFORT_ALIAS_TEMPLATE_READ_ONLY_MOUNT_UNVERIFIED")
+        if len(template) == 1:
+            check(isinstance(template[0].get("Source"), str)
+                  and template[0]["Source"].startswith("/"),
+                  "TEMPLATE_MOUNT_SOURCE_NOT_ABSOLUTE")
         check(host.get("IpcMode") == dr["ipc_mode"], "IPC_MODE_CHANGED")
         check(host.get("ShmSize") == dr["shm_size_bytes"], "SHARED_MEMORY_CHANGED")
         reqs = host.get("DeviceRequests") or []
@@ -178,6 +182,21 @@ def compare_observation(observed: dict, docker: dict, *,
             issues.append("ENVIRONMENT_DUPLICATED_OR_UNTRUSTED")
         for k, value in recipe["required_environment"].items():
             check(environment.get(k) == value, "REQUIRED_ENV_CHANGED:" + k)
+        # Known-field equality does NOT qualify the rest of Docker Config,
+        # HostConfig, inherited image env, or additional host bind mounts.
+        # Report counts only: values and paths may contain operator secrets.
+        coverage = {
+            "additional_environment_key_count": len(
+                set(environment) - set(recipe["required_environment"])),
+            "additional_mount_count": sum(
+                m.get("Destination") not in
+                ("/hf", dr["required_ro_template_mount"]) for m in mounts),
+            "host_cache_source_contents_qualified": False,
+            "template_source_contents_qualified": False,
+            "docker_registry_digest_qualified": False,
+            "network_and_security_settings_qualified": False,
+            "full_container_reinstall_qualified": False,
+        }
         return {
             "schema_version": 1,
             "action": "FLASH_RECIPE_DRAFT_FIELD_REVIEW",
@@ -188,6 +207,7 @@ def compare_observation(observed: dict, docker: dict, *,
             "draft_recipe_id": recipe["recipe_id"],
             "checked_documented_fields_only": True,
             "host_specific_extra_env_and_mounts_qualified": False,
+            "host_runtime_qualification_coverage": coverage,
             "complete_docker_runtime_reinstall_qualified": False,
             "launch_allowed": False, "executed": False, "production_released": False,
             "notice": "Source draft only; exact documented fields are not a launch or reinstall qualification.",

@@ -219,12 +219,15 @@ def _run_transaction(preview: dict, backend: Any, recipe: dict,
 
         if source is not None and source != target:
             record("STOPPING_ACTIVE_SOURCE", {"name": source})
-            backend.stop(source)
+            # Mark intent before the side effect: Docker may stop the source
+            # and then report a timeout/error. Reconcile actual state below.
             source_was_stopped = True
+            backend.stop(source)
         if original_running and decision in ("RESTART_EXISTING", "RECREATE"):
             record("STOPPING_TARGET", {"name": target})
-            backend.stop(target)
+            # A partially completed stop must still be considered in recovery.
             target_was_stopped = True
+            backend.stop(target)
         if not backend.port_free():
             raise RuntimeError("HOST_PORT_8000_NOT_FREE")
         if decision == "RECREATE":
@@ -266,7 +269,8 @@ def _run_transaction(preview: dict, backend: Any, recipe: dict,
                 if renamed:
                     backend.rename(backup, target)
                     if original_running:
-                        backend.start(target)
+                        if not backend.running(target):
+                            backend.start(target)
                         if not backend.verify(model):
                             raise RuntimeError("ORIGINAL_MODEL_RESTORE_VERIFY_FAILED")
             elif decision in ("START_EXISTING", "RESTART_EXISTING"):
@@ -275,7 +279,8 @@ def _run_transaction(preview: dict, backend: Any, recipe: dict,
                 if backend.exists(target) and backend.running(target):
                     backend.stop(target)
                 if target_was_stopped and backend.exists(target):
-                    backend.start(target)
+                    if not backend.running(target):
+                        backend.start(target)
                     if not backend.verify(model):
                         raise RuntimeError("TARGET_RESTART_RECOVERY_VERIFY_FAILED")
             elif decision.startswith("REMOVE") and not backend.exists(target):
@@ -283,13 +288,28 @@ def _run_transaction(preview: dict, backend: Any, recipe: dict,
                 # an absent original as successfully restored.
                 raise RuntimeError("CONTAINER_REMOVED_CANNOT_ROLL_BACK")
             elif target_was_stopped and backend.exists(target):
-                backend.start(target)
+                if not backend.running(target):
+                    backend.start(target)
                 if not backend.verify(model):
                     raise RuntimeError("TARGET_RESTART_RECOVERY_VERIFY_FAILED")
             if source_was_stopped and source is not None:
-                backend.start(source)
+                if not backend.running(source):
+                    backend.start(source)
                 if not backend.verify(source_model):
                     raise RuntimeError("PRIOR_ACTIVE_SERVICE_RECOVERY_VERIFY_FAILED")
+            # An unsuccessful first INSTALL may have no previously active
+            # service at all. Retaining a failed candidate is not restoration.
+            prior_service_preserved = bool(
+                (renamed and backend.exists(target))
+                or (source_was_stopped and source is not None
+                    and backend.running(source))
+                or (target_was_stopped and backend.exists(target)
+                    and (not original_running or backend.running(target))))
+            if not prior_service_preserved:
+                record("NO_PRIOR_SERVICE_TO_RESTORE", {"reason": reason})
+                return {**result, "status": "FAIL_NO_PRIOR_SERVICE_TO_RESTORE",
+                        "executed": True, "restored_original": False,
+                        "issues": [reason]}
             record("RESTORED", {"reason": reason})
             return {**result, "status": "FAIL_RESTORED", "executed": True,
                     "restored_original": True, "issues": [reason]}
