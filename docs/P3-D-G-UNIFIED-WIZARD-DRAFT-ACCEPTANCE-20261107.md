@@ -1,3 +1,11 @@
+## 2026-11-07 — ACTUAL DGX FIRST RUN + D/E DIAGNOSTIC FIXES
+
+Operator's first `--run` returned **P3-D BLOCKED** despite Docker one-model/port ownership and GPU process verification true: old `ss` parser incorrectly required exactly ONE host socket and reported `HOST_PORT_8000_LISTENER_NOT_UNAMBIGUOUS`. **P3-E BLOCKED** because old Flash argv did not fit the 27B parser; Flash reinstall recipe still unqualified. **P3-F passed all 119/119 local CPU tests**; **P3-G returned `PREVIEW_PASS_REAL_SWITCH_NOT_RUN`**, journal VERIFIED/COMMITTED. No actual model switching took place.
+
+Source fixes now accept independently attributed IPv4+IPv6 port listeners, verify host-cgroup Docker proxy PIDs only when their actual `/proc` argv and current Docker container IP/port binding agree, and expose detailed socket/PID diagnostics without falsely approving absent data. Flash E now records a legacy observed command candidate even when the canonical-27B parser rejects its options; a writable historical Flash `/hf` mount is a review advisory, not a qualified reinstall recipe. **No canonical Flash recipe is promoted**. Current source CI: [42371091647](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42371091647) SUCCESS **838/838 tests / 37 groups**. First actual DGX results and limitations: `docs/P3-D-G-FIRST-DGX-DIAGNOSTIC-FIXES-20261107.md`. New DGX read-only rerun is still required to observe real fixes; do not mark D/E PASS based on CPU.
+
+---
+
 # P3-D / P3-E / P3-F / P3-G — Unified Wizard Acceptance Draft
 
 **SOURCE CI VERIFIED (final implementation commit `efb0dda78a4e6f894afe39c97a6839e1d7cf4d53`):** GitHub Actions run [42369840239](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42369840239) completed **SUCCESS, 829/829 CPU tests in 37 reported groups**, including an automatic `python -m scripts.manager.p3_dg_acceptance --cpu-only` invocation. This is source/CI verification, **not actual DGX hardware acceptance or production release**. The subsequent handoff-document-only commits did not require/source-trigger a new hardware test.
