@@ -167,6 +167,36 @@ class GuidedOperatingWizardCPU(TestCase):
         self.assertIn("RELEASE_GATED", output.getvalue())
         planner.assert_not_called()
 
+    def test_main_menu_switch_goes_to_model_first_guided_path(self):
+        from wizard import console
+        with patch.object(console, "_input", side_effect=["4", "1", "0"]), \
+             patch("scripts.manager.service_manifest.inspect_service",
+                   return_value={"status": "OBSERVED_UNQUALIFIED",
+                                 "observed_model": "27b",
+                                 "download_running": False}), \
+             patch("scripts.manager.service_status.inspect_live_status",
+                   return_value={"status": "LIVE_SERVICE_VERIFIED",
+                                 "observed_model": "27b",
+                                 "issues": []}), \
+             patch.object(console, "_switch_guided") as chosen, \
+             contextlib.redirect_stdout(io.StringIO()) as output:
+            self.assertEqual(console.run(), 0)
+        chosen.assert_called_once_with("flash-next")
+        self.assertIn("Switch active model", output.getvalue())
+
+    def test_main_menu_does_not_switch_to_already_active_model(self):
+        from wizard import console
+        with patch.object(console, "_input", return_value="2"), \
+             patch("scripts.manager.service_status.inspect_live_status",
+                   return_value={"status": "LIVE_SERVICE_VERIFIED",
+                                 "observed_model": "27b",
+                                 "issues": []}), \
+             patch.object(console, "_switch_guided") as chosen, \
+             contextlib.redirect_stdout(io.StringIO()) as output:
+            console._switch_selector()
+        chosen.assert_not_called()
+        self.assertIn("already active", output.getvalue())
+
     def test_previewer_cli_route_is_integrated_in_wizard_handler(self):
         from wizard.menus.switching import flash_next_27b
         with patch.object(wiz, "main", return_value=3) as guided:
