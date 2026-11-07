@@ -1,3 +1,13 @@
+## 2026-11-08 — P3-E preparation handoff to P8; observed 299,845 index keys
+
+Actual operator DGX read-only evidence proved the exact `weight_map` cardinality: **299,845 entries**, file size **31,907,813 bytes**, JSON shape `OBJECT`, existing policy bound 100,000. Failure `PARSE_SHARD_INDEX:FLASH_WEIGHT_MAP_ENTRY_LIMIT_EXCEEDED` is a **diagnostic cardinality policy mismatch**, not evidence of missing/corrupt model shards. The old `indexed_shard_count=0` means shard inspection never started.
+
+The bounded source fix adopts a new explicit **400,000-key maximum** solely for the Flash index reader, retains index byte cap **128 MiB**, max shards **256**, existing path containment and metadata limits. New Fake-DGX tests exercise the exact 299,845-key count and continued strict upper-limit rejection. The operator must still run the new version read-only on DGX to demonstrate host asset metadata, referenced shard existence and chat template fingerprints; source CI is not equivalent to DGX proof.
+
+**Milestone direction:** P3-E stays `SOURCE_PREPARATION_HANDOFF_PENDING` (NOT a qualified reinstall). The **P8 reinstall-acceptance workstream** owns actual fresh canonical Flash container creation, full Docker environment/network/security/registry provenance, API/inference/port exclusivity evidence, recipe idempotence and drift, downtime, approved rollback, and final operator release along with P8 recovery/UX signoff. No P8 execution is authorized by transferring responsibilities; no P3-G replay or source-only release-gate change.
+
+---
+
 ## 2026-11-08 — Real DGX index within file-size cap; weight-map structure/count unknown
 
 Real DGX output confirmed `index_file_size_bytes_observed=31907813` (~30.43 MiB), below `index_file_size_limit_bytes=134217728` (128 MiB). Thus the separate bounded reader successfully reached JSON parsing. It then returned `PARSE_SHARD_INDEX:FLASH_SHARD_INDEX_UNQUALIFIED`, before shard checks.

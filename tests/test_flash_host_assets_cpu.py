@@ -208,6 +208,44 @@ class FlashHostAssetsCPU(unittest.TestCase):
                                      expected_count)
                     self.assertFalse(out["launch_allowed"])
 
+    def test_observed_dgx_flash_299845_entry_index_passes_source_bounded_check(self):
+        # Actual DGX read-only report: 299,845 keys, 31,907,813 bytes.
+        # Synthetic shard data only; this does not validate GPU weights.
+        with tempfile.TemporaryDirectory() as tmp:
+            doc, view = self.make_complete(Path(tmp))
+            weights = {
+                "tensor_" + str(i): "model-00001.safetensors"
+                for i in range(299845)
+            }
+            (view / "model.safetensors.index.json").write_text(
+                json.dumps({"weight_map": weights}))
+            out = assets.inspect_assets(doc)
+            self.assertEqual(out["status"],
+                             "LOCAL_ASSET_METADATA_OBSERVED_REINSTALL_UNQUALIFIED")
+            self.assertEqual(out["index_weight_map_entry_count_observed"], 299845)
+            self.assertEqual(out["index_weight_map_entry_limit"], 400000)
+            self.assertEqual(out["indexed_shard_count"], 1)
+            self.assertEqual(out["issues"], [])
+            self.assertFalse(out["launch_allowed"])
+            self.assertFalse(out["full_docker_runtime_reinstall_qualified"])
+            self.assertFalse(out["verified_model_revision"])
+
+    def test_new_cardinality_ceiling_remains_strictly_enforced(self):
+        from unittest.mock import patch
+        with tempfile.TemporaryDirectory() as tmp:
+            doc, view = self.make_complete(Path(tmp))
+            (view / "model.safetensors.index.json").write_text(json.dumps({
+                "weight_map": {str(i): "model-00001.safetensors" for i in range(9)}
+            }))
+            with patch.object(assets, "MAX_INDEX_WEIGHTS", 8):
+                out = assets.inspect_assets(doc)
+            self.assertEqual(out["status"], "BLOCKED")
+            self.assertEqual(out["failure_reason_code"],
+                             "FLASH_WEIGHT_MAP_ENTRY_LIMIT_EXCEEDED")
+            self.assertEqual(out["index_weight_map_entry_count_observed"], 9)
+            self.assertEqual(out["index_weight_map_entry_limit"], 8)
+            self.assertFalse(out["launch_allowed"])
+
     def test_missing_template_and_private_env_do_not_leak(self):
         with tempfile.TemporaryDirectory() as tmp:
             doc, _ = self.make_complete(Path(tmp))

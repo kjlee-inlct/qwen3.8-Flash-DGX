@@ -24,7 +24,11 @@ MAX_META_BYTES = 8 * 1024 * 1024
 MAX_INDEX_BYTES = 128 * 1024 * 1024
 MAX_TEMPLATE_BYTES = 256 * 1024
 MAX_INDEX_SHARDS = 256
-MAX_INDEX_WEIGHTS = 100000
+# The real NVIDIA Flash FP8-hybrid index contains 299,845 weight-map keys
+# (31,907,813 bytes), confirmed by operator DGX read-only observation.
+# 400,000 is a conservative, explicit source-only headroom policy. It does
+# NOT relax the independent 128 MiB byte bound or shard/path protections.
+MAX_INDEX_WEIGHTS = 400000
 SHARD_NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*\.safetensors$")
 
 
@@ -216,9 +220,8 @@ def inspect_assets(docker: dict, *, draft_loader=review.load_draft) -> dict[str,
                 if not weight_map:
                     raise ValueError("FLASH_WEIGHT_MAP_EMPTY")
                 if len(weight_map) > MAX_INDEX_WEIGHTS:
-                    # Do not raise the entry-count policy merely because
-                    # unknown data exceeded it: publish a safe numeric count
-                    # for an explicit bounded policy review.
+                    # Still fail closed above the reviewed cardinality ceiling;
+                    # print only safe counts, never tensor names or paths.
                     raise ValueError("FLASH_WEIGHT_MAP_ENTRY_LIMIT_EXCEEDED")
                 shards = set(weight_map.values())
                 if (not 0 < len(shards) <= MAX_INDEX_SHARDS
