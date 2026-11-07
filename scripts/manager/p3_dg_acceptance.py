@@ -236,7 +236,7 @@ def stage_f(*, suites: tuple[str, ...] = CPU_SUITES,
 
 
 def stage_g(live: dict, *, planner: Callable[[str], dict] = operational_switch.make_plan,
-            auditor: Callable[[], dict] = operational_audit.inspect_journal) -> dict:
+            auditor: Callable[[], dict] = lambda: operational_audit.inspect_journal(operational_switch.ROOT)) -> dict:
     """Read-only recurrent-switch and historic journal preflight only."""
     target = "flash-next" if live.get("observed_model") == "27b" else "27b"
     issues: list[str] = []
