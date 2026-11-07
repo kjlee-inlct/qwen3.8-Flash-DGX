@@ -1,3 +1,21 @@
+## 2026-11-07 — P3-C READ-ONLY FRESH PLAN WAIT IF 10-MINUTE WINDOW NEAR EXPIRY
+
+Actual DGX tried `--execute` at 10:08:14 and 10:09:30 KST, both `BLOCKED` before dispatch because plan expired 10:10 KST and fewer than 120s remained for three manual approvals; original Flash service stayed active. This is now improved **in the temporary Python wrapper only**; original canonical Wizard remains untouched.
+
+New `--execute` starts as before with full current Flash/P1/P2/A/B safety checks and real TTY requirement. If expiry is under 120s away, the script waits **only in the read-only plan/status path**, <=150s, polling every <=5s for a DIFFERENT new canonical Stage-C SHA and matching live Flash/canonical P1/P2 evidence, leaving >=120s in the new plan. No current or previous approval is inferred. It never starts/stops Docker during wait. On timeout, Ctrl+C, unexpected SHA-before-boundary, source/API changes or vanished P1 evidence, fail closed and emit a private operator report. `--plan` still performs a single non-waiting read-only snapshot.
+
+Only after a new READY plan may the operator manually type 1/3 **NEW exact 64 SHA (NO brackets)**, 2/3 `I_ACCEPT_FLASH_NEXT_DOWNTIME`, 3/3 `I_SEPARATELY_AUTHORIZE_FINAL_27B_STAGE_C`, followed by a final replan check and canonical unchanged Wizard. No automatic switch-back; source Flash container preserved. New fake DGX CPU tests cover all. Real execution still pending latest pull:
+
+```bash
+cd ~/Workspace/llm/blazux-orcarouter
+git pull --ff-only origin feature/recipe-wizard-handoff
+bash scripts/temporary/p3-stage-c-operator.sh --execute
+```
+
+Do not run unless previous explicit Flash downtime authorization remains in effect; if BLOCKED/uncertain, preserve original state and inspect instead of bypassing gates. [Runbook](../../docs/P3-STAGE-C-FINAL-27B-OPERATOR-20261107.md).
+
+---
+
 > **Current Stage-C approval prompt correction:** New source changes old `Type exactly [SHA]` to `Paste exactly SHA (no brackets; Enter cancels):`. The old real DGX input with a leading `[` was correctly cancelled and no C transition was dispatched. Regression test covers the input error. Keep manually separate exact downtime/final-target acknowledgements; no auto approval.
 
 ---
