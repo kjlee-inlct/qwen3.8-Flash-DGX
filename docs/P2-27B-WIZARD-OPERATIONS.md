@@ -1,3 +1,9 @@
+## LATEST 2026-11-07 — P2 GPU history PASSED, appended P2-FINAL Native Tool Calling NOT QUALIFIED
+
+The P2 NVIDIA pinned 27B initial loader/trial/benchmark/Flash restore is **historical REAL DGX PASS**. The newly required P2-FINAL official `--enable-auto-tool-choice --tool-call-parser qwen3_coder --reasoning-parser qwen3` is **not active** in the original preserved `qwen38-27b` Docker `Config.Cmd`, verified by an actual operator inspect. Source-only `scripts/serve_27b.sh --tools-profile` displays correct option candidate but no Docker change; bounded `--tools-probe` returns `BLOCKED/LOCAL_API_HTTP_ERROR_400`, no structured tool call. Meanwhile real 27B API remains `LIVE_SERVICE_VERIFIED` and the distinct ordinary switch journal `VERIFIED/COMMITTED/14` after both directions physically PASS. **P2-FINAL cannot be closed by ordinary chat/benchmark, config documentation or another historic P3-C replay.** The next source task is separate protected tool-enabled 27B recipe/profile, proven parser/stream/Open WebUI Native tool cycle, independently authorized cutover/rollback. Historic P3-C remains FINAL PASS and unchanged. See `docs/P2-27B-FINAL-TOOL-CALLING-ACCEPTANCE-20261107.md`.
+
+---
+
 ## 2026-11-06 — First Qwen3.8-27B GPU launch trial (one-shot and original service restoration)
 
 Actual DGX restricted CPU import/registry audit completed **all nine checks true with `issues: []`**; vLLM resolves `modelopt_mixed` to ModelOpt's imported config class. The Qwen3.8 NVIDIA checkpoint internally advertises `model_type=qwen3_5` and `Qwen3_5ForConditionalGeneration` solely as the loader class. The served model **is Qwen3.8-27B**, `nvidia/Qwen3.8-27B-NVFP4` pinned SHA `482ca0f3832238542f8f5295dde86b5f22711d80`.
