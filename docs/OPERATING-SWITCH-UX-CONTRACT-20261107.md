@@ -1,3 +1,17 @@
+## 2026-11-07 — Latest operating Wizard source candidate: model-first UX, transaction, source-only trial (DGX NOT_RUN)
+
+This newest section supersedes earlier notes saying the operating executor is not wired to Wizard. User priority is **the existing `./wizard.sh` ordinary Flash-Next ↔ NVIDIA 27B operating switch**, NOT the postponed Open WebUI Tool Calling / 27B recipe work.
+
+**Wizard source now links all stages:** `./wizard.sh` main choice **4. Switch active model**, or model-centered screen choice **6. Guided operating switch** → fresh guarded preflight → preview / source-target image and preserved container facts → independent executable SHA (strictly different from preview SHA) → three exact human acknowledgements **once production is separately qualified** → independent locked backend stop-before-start → target `:8000` HTTP/model ID **and a real bounded chat** → final pinned container and journal receipt confirmation; failure triggers best-effort original restoration and reports `FAIL_RESTORED`, `RECOVERY_FAILED`, or committed evidence uncertainty, never automatic repeated stages.
+
+**Journal integrity hardening:** `scripts/manager/operational_audit.py` verifies full append-only event SHA chain, current snapshot and last committed immutable receipt. A crash between event append and snapshot update or a missing completion receipt blocks any new plan. `OLD_STOPPING` is entered only after an extra source identity recheck; pre-stop drift closes `PLANNED→CANCELLED` without Docker downtime. Target API verification is followed by a small real chat, separate post-start GPU conflict check, and final journal audit.
+
+**Safely separated execution:** Ordinary production menu still has `PRODUCTION_EXECUTION_RELEASED=False` in the source; normal CLI `--execute` fails closed. One-off, separately authorized **physical acceptance** is available through `./wizard.sh switch flash-next-27b operational acceptance --target flash-next --plan --json` (read-only) and the explicitly opt-in `... --execute` requiring **four exact manually typed TTY approvals**, no automated approval, source/state recheck, and no automatic return. Tracked wrapper: `scripts/temporary/operational-switch-acceptance.sh`. See **`docs/OPERATING-SWITCH-DGX-ACCEPTANCE-RUNBOOK-20261107.md`**. Every direction requires a new plan and independent consent, especially while 27B is live.
+
+Offline Fake-DGX tests cover both directions, cancellation/no TTY, expiry, execute/JSON refusal, identity drift, rollback, inference failure, attempt replay, journal divergence, record integrity and UI route. **Actual DGX ordinary switching, rollback and integrated live production UX are NOT YET VERIFIED or RELEASED.** The operator has not separately approved new live 27B downtime; the code alone never modifies their running service. P3 original A/B/C receipts, Flash and 27B original model assets, Portainer/Open WebUI and API port 8000 are preserved. Draft PR #1 remains unmerged.
+
+---
+
 ## 2026-11-07 — Priority restored: Guided model switch UX → independent executor (SOURCE, release gated)
 
 **Immediate engineering priority is recurring Flash-Next ↔ NVIDIA 27B model switching from the EXISTING `./wizard.sh` interface.** Open WebUI auto tool calling, `qwen3_coder` parser configuration, NVIDIA 27B recipe tool changes, P4 cleanup and P5/P6/P7 are **DEFERRED**, not prerequisites for this source iteration. Do not change the working DGX 27B service.
