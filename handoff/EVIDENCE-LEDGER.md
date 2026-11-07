@@ -1,3 +1,11 @@
+## E-20261107-P2-FINAL-TOOLS-PROFILE-SOURCE-AND-REVERSE-OPERATING-ACTUAL — evidence boundary
+
+Operator's latest REAL DGX ordinary operating acceptance Flash→27B (distinct from earlier P3-C): 4 exact separate TTY approvals, `Live transition result: PASS`, `Observed model: 27b`, private receipt `completed-a811068f8059525f1960bbc4b746b78ad77f14da4ba55ed6a8006c5d9f5bf6f4.json`. Prior ordinary 27B→Flash real PASS with independent Flash API status `LIVE_SERVICE_VERIFIED` and operating audit `VERIFIED/COMMITTED`. Reverse 27B postcheck/audit NOT YET SUPPLIED, source-only tests are not actual DGX network proof.
+
+After user priority change, inspected official vLLM Qwen3.8-27B recipe and vLLM 0.32 docs: native tool flags `--enable-auto-tool-choice --tool-call-parser qwen3_coder --reasoning-parser qwen3`. Implemented **opt-in source-only** `p2_27b_launch_preview._candidate_argv(...,tool_calling=True)`, isolated `p2_27b_tool_calling.py` read-only profile + localhost-only fixed tool result/continuation probe, and `scripts/serve_27b.sh --tools-profile|--tools-probe`. CPU Fake-GPU tests added. Actual existing Docker Cmd not inspected, no production parser qualified, no Open WebUI Native full cycle evidence. Prior operator saw `tool_choice=auto` parser-related HTTP error. Therefore old P2 pinned GPU/download/benchmark remains actual PASS; newly appended `P2_FINAL_NATIVE_TOOL_CALLING` remains **NOT_QUALIFIED**, not assumed fixed. Original one-off **P3-C already REAL PASS and FINAL/CLOSED** and is not rerun; all P2/P3 historical files preserved. Official refs and acceptance gating: `docs/P2-27B-FINAL-TOOL-CALLING-ACCEPTANCE-20261107.md`.
+
+---
+
 ## E-20261107-OPERATING-FLASH-POSTCHECK-AND-REVERSE-READINESS — REAL DGX, NO NEW SWITCH
 
 After the **actual first ordinary 27B→Flash PASS** the operator provided independent read-only outputs:
