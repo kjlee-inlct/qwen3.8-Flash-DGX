@@ -1,3 +1,91 @@
+# New Conversation Starter — Blazux P2-FINAL Native Tool Calling, DGX Spark / Wizard 안전 전환 개발
+
+아래 저장소의 **Blazux / vLLM 0.32 기반 DGX Spark 모델 레시피·Wizard·서비스 관리 개발**을 이전 작업에서 이어서 직접 수행해주세요. 이 프롬프트는 새 대화에서 독립적으로 사용되는 핸드오프입니다. 반드시 먼저 GitHub 연결 도구로 HEAD/PR/CI와 최신 영구 문서/소스를 조회하고, 이후 코드를 구현·테스트·커밋·Draft PR 검토·문서 업데이트까지 처리하세요. 계획만 작성하고 중단하지 마세요. **실제 DGX GPU/서비스 변경은 별도의 운영자 승인 없이는 절대 실행하지 마세요.**
+
+## 1. 저장소와 고정 운영 정책
+
+- Repository: https://github.com/kjlee-inlct/qwen3.8-Flash-DGX
+- Branch: `feature/recipe-wizard-handoff`, Draft PR #1 **Open / Unmerged**, 새 브랜치/PR 및 머지 임의 수행 금지
+- Parallel `feature/orcarouter-bf16-adapter`, upstream https://github.com/blazux/qwen3.8-Flash-DGX
+- Real DGX source: `~/Workspace/llm/blazux-orcarouter`; NVIDIA DGX Spark GB10 / Ubuntu ARM64, Docker
+- Inference: **vLLM 0.32 only; no SGLang**. API remains `:8000/v1`, served ID `qwen3.8-27b` or `qwen3.8-flash-next`. **ONE_ACTIVE_MODEL_ONLY**.
+- Main UX: `./wizard.sh`, preserve Portainer/Open WebUI, pinned containers, images, model snapshot/HF caches and private receipts.
+- Last verified source-code HEAD (before newest documentation-only updates): `09c6780f52104de14fd3510c528a7a79c3d467dd`. [GitHub Actions 42337337910](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42337337910): **SUCCESS, 680/680 offline CPU tests, 34 groups**. **Do not assume this is current Git HEAD**: refresh PR #1's head SHA, latest CI and any newer doc commits.
+
+## 2. Mandatory permanent handoff and contracts
+
+Read these files **in order**, prioritizing the latest dated top sections over historical records:
+1. `handoff/README.md`
+2. `handoff/CURRENT-STATE.md`
+3. `handoff/OPERATING-RULES.md`
+4. `handoff/NEXT-ACTIONS.md`
+5. `handoff/EVIDENCE-LEDGER.md`
+6. `handoff/DECISIONS.md` (especially D-016, D-056, D-057, D-058 and newer decisions)
+7. `handoff/CHANGELOG.md`
+8. `handoff/SESSION-START-PROMPT.md`
+
+Then inspect `docs/P2-27B-FINAL-TOOL-CALLING-ACCEPTANCE-20261107.md`, `docs/OPENWEBUI-27B-TOOL-CALLING-20261107.md`, `docs/P2-27B-WIZARD-OPERATIONS.md`, `docs/P1-P7-WIZARD-ACCEPTANCE-STATUS-20261107.md`, `docs/OPERATING-SWITCH-UX-CONTRACT-20261107.md`, `docs/OPERATING-SWITCH-DGX-ACCEPTANCE-RUNBOOK-20261107.md`, `docs/P3-STAGE-C-FINAL-27B-OPERATOR-20261107.md`, `docs/MODEL-RECIPE-WIZARD-PLAN.md`, `docs/UNIFIED-MODEL-WIZARD-DESIGN.md`, `docs/WIZARD-OPERATOR-UX-EVIDENCE-CONTRACT.md`, `docs/WIZARD-CLI-CONTRACT.md`, `docs/MANIFEST-CONTRACTS.md`, `runtimes/service-policy.json`, `runtimes/model-discovery.json`, `recipes/README.md`, `scripts/temporary/README.md`, `benchmarks/published/README.md`, and the published Flash/27B sanitized reports. **All these named files and benchmark reports existed in the branch at the 2026-11-07 audit.**
+
+Important code: `scripts/manager/p2_27b_launch_preview.py`, `scripts/manager/p2_27b_tool_calling.py`, `scripts/manager/p2_27b_gpu_trial.py`, `scripts/manager/operational_{switch,executor,wizard,acceptance,audit,probe}.py`, `scripts/serve_27b.sh`, `wizard/{console,main,roadmap}.py`, `wizard/menus/switching/flash_next_27b.py`, `tests/test_p2_27b_tool_calling_cpu.py`, `tests/test_operational_*_cpu.py`, and `.github/workflows/recipe-manifest-cpu.yml`.
+
+## 3. Proven actual DGX history — do not redo accomplished work
+
+**P1 Flash-Next**: `nvidia/Qwen3.8-Flash-Next-NVFP4`, revision `fc694b54fb0174e0913e6adf86691ef85a4ead47`. Real API/Completion/Chat/Tool/Vision Verify PASS; benchmark and post-P3-B re-verify/benchmark PASS. Post-B reported average 37.9527 tok/s (different metric from 27B).
+
+**P2 existing GPU portion**: `nvidia/Qwen3.8-27B-NVFP4`, pinned revision `482ca0f3832238542f8f5295dde86b5f22711d80`; 19 files downloaded; `modelopt_mixed` ModelOpt NVFP4/FP8, runtime GPU trial/API PASS, 3/3 bounded benchmark and source restoration PASS. 27B reported 7.9002 client E2E tok/s and 11.1801 decode proxy tok/s. Internal loader `Qwen3_5ForConditionalGeneration` DOES NOT rename the installed Qwen3.8 checkpoint/API.
+
+**Historical P3 A/B/C**: `stage-a` Flash→27B PASS, `stage-b` 27B→Flash PASS, post-B P1 benchmark/verify PASS, `stage-c` Flash→27B PASS with private immutable receipt `~/.local/state/blazux-wizard/p3/stage-c.json`. **Original one-off P3-C is FINAL, CLOSED, IMMUTABLE. NEVER rerun P3-A/B/C, change old receipts or treat them as routine-switch execution.**
+
+**New ordinary operational switching** is a distinct backend. Real DGX operator executed two independent four-approval trials: 27B→Flash **PASS** (original private receipt `completed-72e0941f…json`) and Flash→27B **PASS** (private receipt `completed-a811068f…json`). Separate actual postchecks show latest active `qwen38-27b` on :8000 with sole `qwen3.8-27b` / `LIVE_SERVICE_VERIFIED` / `issues=[]` and independent operating journal `VERIFIED`, phase `COMMITTED`, **14 events**, `issues=[]`, hash `ece2b07f40d972761565b95c3c9b99552876079783af4e4aa4e2db5053a5724e`. Thus both ordinary directions plus postchecks are REAL PASS. **The normal interactive `./wizard.sh` execution menu remains `PRODUCTION_EXECUTION_RELEASED=False` and is NOT fully accepted/released**; actual intentional fault/recovery testing is NOT_RUN. Do NOT flip this gate from source/CPU or one-off trial results alone.
+
+## 4. NEWEST operator-provided P2-FINAL evidence (2026-11-07)
+
+Operator fast-forwarded local source from `4054eb2` to `09c6780`, with clean Git status and no destructive action. **Last observed live model: NVIDIA 27B**, service `LIVE_SERVICE_VERIFIED` at port 8000, correct sole `qwen3.8-27b`. Operating journal `VERIFIED/COMMITTED/14`.
+
+Direct `docker inspect qwen38-27b --format '{{json .Config.Cmd}}'` shows pinned `/hf/hub/models--nvidia--Qwen3.8-27B-NVFP4/snapshots/482ca0f3832238542f8f5295dde86b5f22711d80`, `--served-model-name qwen3.8-27b`, `--quantization modelopt_mixed`, `--dtype bfloat16`, `--max-model-len 8192`, `--max-num-seqs 1`, `--gpu-memory-utilization 0.70`, `--enforce-eager`. **The original running Docker Cmd DOES NOT include** `--enable-auto-tool-choice`, `--tool-call-parser`, or `--reasoning-parser`.
+
+The new `bash scripts/serve_27b.sh --tools-profile` displays source candidate flags:
+
+```bash
+--enable-auto-tool-choice \
+--tool-call-parser qwen3_coder \
+--reasoning-parser qwen3
+```
+
+Its status is `SOURCE_PROFILE_ONLY_DGX_NOT_QUALIFIED`; `production_enabled=false`, no Docker recreation or migration. The benign bounded localhost `bash scripts/serve_27b.sh --tools-probe` returned **`BLOCKED`, `issues=["LOCAL_API_HTTP_ERROR_400"]`, `structured_tool_call=false`, `tool_result_continuation=false`, `reasoning_separation=false`**. HTTP response body is not yet captured: do not fabricate it. Prior Open WebUI Native request had auto tool-choice parser error. Combined evidence confirms missing startup switches and current tool-auto incompatibility, NOT that the model itself cannot call tools. Source-only profile does not retrofit an immutable Docker container.
+
+## 5. Primary next development — P2 FINAL Tool Calling properly qualified
+
+P2 existing download/GPU/benchmark remains PASS; **add formal Native Tool Calling as P2's LAST unfinished acceptance gate**, and only close it after actual DGX & Open WebUI evidence. Official vLLM 0.32 Qwen3.8-27B recipe candidate:
+`--enable-auto-tool-choice --tool-call-parser qwen3_coder --reasoning-parser qwen3`.
+
+1. Inspect repo's real architecture, launcher, recipes, manifest, pinned Docker image, available parser/serving args and existing safe service manager. Confirm exact Qwen3.8 27B parser/chat-template compatibility; don't silently assume Qwen3.5 model ID or reuse Flash PLE/MTP config.
+2. Design **separate, named and versioned tool-enabled 27B recipe/runtime variant** rather than modifying/deleting `qwen38-27b`. Original 27B container ID/image/labels/P3 provenance are protected by the current normal-switch preflight. Explicitly design how separate variant fits manifest/service status/port :8000, protected fallback, lock/journal, one GPU model, cutover and rollback. Any need to modify existing container identities must be proposed and reviewed; no implicit collision, remove, force-recreate or `docker run` on port 8000.
+3. Implement source-only candidate plan, new exact authorization contract and proper CPU/Fake-DGX failure cases: invalid parser, wrong container/image ID, collision, timeout, GPU exclusivity, stale/expired plan, refusal/cancellation, partial start, failed health, source restore, journal tampering, no double running model. Do not expose unapproved execute path.
+4. Design/test bounded real Tool Calling acceptance: `tool_choice=auto`, structured `tool_calls` name/ID/JSON arguments, actual tool result continuation (benign local test function, no external side effects), no-tool chat, streaming tool-call chunks, reasoning separation, Open WebUI **Native Tools** functional integration. Distinguish HTTP 200 from successful structured tool semantics. Keep private evidence private.
+5. GitHub commit source/tests/docs, confirm CI and include manual, explicitly approved DGX trial instructions. **Obtain new operator downtime approval before ANY live service stop/start/recreate/migration, even if a plan is READY.** The existing user message authorizes documentation/source planning, NOT new downtime.
+6. Only after real Native tool cycle + streaming + Open WebUI + restore proof passes, mark `P2-FINAL=PASS`. Do not reopen historical P3-C.
+
+Secondary milestone: finish and qualify normal main Wizard guided production execute (currently source gate OFF) and real failure/recovery, separately from P2 tool integration. Keep P4 conditional cleanup, P5 Orcarouter, P6 Orcarouter↔27B, P7 proxy/gateway for later.
+
+## 6. Development workflow and immutable rules
+
+Follow D-016 and latest Operating Rules: read code/docs, implement necessary changes directly through GitHub connector, add/adjust CPU tests, run/check CI, commit to SAME feature branch, comment on existing Draft PR #1 and update handoff records. Never present a theoretical plan as delivered code. For DGX actions supply tracked `scripts/temporary/` read-only scripts and runbooks, not lengthy unreviewed commands; operator can `git pull --ff-only origin feature/recipe-wizard-handoff` when clean.
+
+**Do not**: re-run P3 A/B/C or finished P1/P2 benchmarks; erase/update original receipts; delete HF cache, models, original Flash/27B containers or Docker images; `docker system prune`, `git reset --hard`, `git clean -fd`; alter API port 8000; use SGLang; run 2 GPU inference models; auto-type approvals; turn on normal operating `PRODUCTION_EXECUTION_RELEASED` without distinct qualification; merge PR #1 without explicit authorization; upload secrets/private raw receipts or sensitive traces. A future newly approved tool-enabled variant may require service downtime but this prompt gives **NO SUCH APPROVAL**.
+
+At each meaningful development milestone update `handoff/CURRENT-STATE.md`, `NEXT-ACTIONS.md`, `EVIDENCE-LEDGER.md`, `DECISIONS.md`, `CHANGELOG.md`, `SESSION-START-PROMPT.md`, related `docs/` and tests/CI. Preserve historical content and prepend correctly dated superseding headnotes when older states are now stale.
+
+## 7. Required report
+
+Clearly separate: **WHAT CHANGED** (concrete implementation), **GITHUB** (actual latest HEAD, branch, PR, CI), **TESTS** (CPU vs real DGX), **P2-FINAL TOOL CALLING** (current 400/flags, root cause, variant/migration/acceptance), **WIZARD** (two real direction PASS vs main menu still locked), **DGX STATE** (last user-observed 27B :8000; preserve assets), **BLOCKERS / NEXT ACTIONS** (source-only next step vs separately approved physical cutover). Do not claim true DGX status after the last operator log, new model restart, parser/live tool success, or production release without new evidence.
+
+**Start now:** inspect newest GitHub HEAD/PR/CI, the handoff files and source paths, identify the minimal safe P2-FINAL separate 27B tool-enabled variant/migration design, implement/test/commit what can be done without altering the real DGX, and update permanent handoff. Do not ask again for details already established above.
+
+---
+
+## Previous handoff snapshots below (historical; superseded where inconsistent)
+
 ## NEWEST — 2026-11-07: P2 final Tool Calling added / historical P3-C CLOSED
 
 Priority selected by operator: original P2 pinned NVIDIA Qwen3.8-27B GPU download/loader/trial/benchmark historically PASS; **add Native Tool Calling on vLLM 0.32 (auto parser `qwen3_coder` / reasoning `qwen3`) as P2 last acceptance gate**, without renaming the model to Qwen3.5. Source-only opt-in profile `_candidate_argv(..., tool_calling=True)`, `scripts/manager/p2_27b_tool_calling.py`, and `scripts/serve_27b.sh --tools-profile|--tools-probe` now exist; source Fake-DGX tests cover profile and benign 2-turn tool-call. This does NOT retrofit original Docker startup flags or qualify current tool-native Open WebUI; operator must independently approve a separate preserved-container-safe variant migration and real GPU tool tests. Original **P3-C A/B/C were ALREADY REAL PASS and are now FINAL/CLOSED**, never replay. Separate new recurring operating 27B→Flash and Flash→27B trials both REAL PASS from operator, newest observed active 27B, but independent reverse postcheck still missing; normal `./wizard.sh` main menu production hard gate remains OFF. Initial safe DGX observations `service manager status --json`, `operational_audit --json`, `docker inspect qwen38-27b --format '{{json .Config.Cmd}}'`, then `scripts/serve_27b.sh --tools-profile|--tools-probe`; no Docker stop/restart. Read `docs/P2-27B-FINAL-TOOL-CALLING-ACCEPTANCE-20261107.md`. Keep Draft PR #1 unmerged, model caches/receipts preserved, port 8000, ONE_ACTIVE_MODEL_ONLY.
