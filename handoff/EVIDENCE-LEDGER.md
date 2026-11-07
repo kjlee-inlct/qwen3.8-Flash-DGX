@@ -1,3 +1,11 @@
+## 2026-11-07 — CPU SOURCE EVIDENCE: model history + copy-only consolidation
+
+Historical actual DGX `blazux-wizard.zip` remains unchanged and is detailed in the earlier operator evidence entry (P3-A/B PASS, post-B P1 Verify/Benchmark PASS, stage-B receipts, original rc3 diagnostics). Added **source only** `scripts/manager/evidence_catalog.py`, `tests/test_evidence_catalog_cpu.py`, Wizard `evidence` route and console model option 4 plus Advanced copy option 8. Catalog reads original private JSON and project-local reports, including `p2/*.benchmark.json` real-shaped E2E/proxy stats and stage A/B transitions. Copy importer rehashes current plan and writes digest-named append-only 0600 copies without ever moving P2/P3 state/locks/journal. Its fake CPU tests do **not** prove any real DGX import or Stage-C readiness. See [contract](../docs/MODEL-EVIDENCE-HISTORY-MIGRATION-20261107.md).
+
+P3-C remains NOT_RUN, NOT_AUTHORIZED; latest source CI and fresh operator `stage-c --plan --json` must be examined. P1 original receipts and source proof are untouched.
+
+---
+
 ## 2026-11-07 — NEW ORIGINAL OPERATOR DGX ZIP / POST-B REAL P1 RECEIPTS
 
 New user-provided `blazux-wizard.zip`, **not source CI**:
