@@ -1,3 +1,11 @@
+## 2026-11-07 — P3-C OPERATOR PLAN WINDOW ROLLOVER FIX IS SOURCE-ONLY
+
+Actual DGX `--execute` twice near 10:10 KST canonical 10-minute plan expiration (10:08:14, 10:09:30 KST) returned `BLOCKED` solely due `P3_C_INSUFFICIENT_TIME_FOR_THREE_APPROVALS`, with `approval_accepted=false/executed=false/execution_dispatched=false`. No Stage C transition, GPU operation or downtime. Active model observed remained original Flash-Next; preserved NVIDIA 27B target unchanged, original P1/P2 evidence PASS. Canonical plan window end `2026-11-07 10:10:00 KST`; old SHA `30b2b29bb715e2393b65152ea8d1da2db61956d631efce2248aee2e9690610de` has expired and cannot be reused.
+
+Updated **only** the tracked `scripts/temporary/p3_stage_c_operator.py` flow: near expiry, wait a bounded <=150 seconds for a **different fully READY read-only canonical plan** with >=120 seconds left; if source/API/P1/P2/container/provenance changes, SHA rotates unexpectedly before boundary, time limit/TTY/interrupt fails, or git becomes dirty, BLOCK before dispatch. Once freshly READY, it requests fresh exact current SHA, separate Flash downtime ack and separate final-C ack; then still repeats plan/live check and uses unchanged canonical switch guard. `--plan` unchanged. New virtual-clock CPU tests; docs `docs/P3-STAGE-C-FINAL-27B-OPERATOR-20261107.md`. Source+CI cannot claim actual DGX Stage C execution. No auto approval, no model deletion, no PR merge. P3-C still NOT_EXECUTED pending actual operator command.
+
+---
+
 ## 2026-11-07 — PUBLIC BENCHMARK REPORTS VERIFIED AGAINST ORIGINAL REAL DGX PRIVATE RECEIPTS
 
 User ran `bash scripts/temporary/verify-published-benchmarks.sh` on actual DGX after pulling branch changes. Both Flash `f506db4c76430674.json` and NVIDIA 27B `80f109dbd7c97460.json` returned `status=VERIFIED/issues=[]/executed=false`, with raw original SHA256 values respectively `f506db4c764306748dea7aa87d50b5d75a77dab846b7e742b9fbe1d6808ef8db` and `80f109dbd7c9746065a36c8376f3ff440d1b0d58eee2024fcfad3f1733a82dc9`. Thus the previously pending REAL-DGX private-to-public benchmark reproducibility check **is complete** (not merely mock CI). Published summaries are now source-reconciled, not unverified manual transcriptions. They remain narrow 3-request benchmarks using distinct Flash E2E and 27B E2E/decode-proxy definitions.
