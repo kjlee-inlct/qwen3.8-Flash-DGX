@@ -41,7 +41,7 @@ elif url.endswith("/v1/chat/completions"):
         sys.exit(9)
     reply_model = "qwen3.8-flash-next" if mode == "wrong_chat_model" else "qwen3.8-27b"
     content = ("" if mode == "empty_reply" else
-               "Thinking-style prose\\n</think>\\n\\nDGX_OK"
+               "Thinking-style prose\n</think>\n\nDGX_OK"
                if mode == "reasoning_in_content" else
                "WRONG_ANSWER" if mode == "non_exact_reply" else "DGX_OK")
     print(json.dumps({"model": reply_model, "choices": [
