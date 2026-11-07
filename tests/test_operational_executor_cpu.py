@@ -203,6 +203,54 @@ class FakeOperatingTransactionCPU(unittest.TestCase):
         self.assertEqual(doc["status"], "FAIL_RESTORED")
         self.assertEqual(self.active(), "27b")
 
+    def test_source_identity_drift_pre_stop_closes_cancelled_without_downtime(self):
+        good = exe.execution_plan_id(self.planner("flash-next", root=self.fake.ops))
+        def changed_source(name):
+            original = self.fake.docs[name]
+            if name == p3.NAMES["27b"]:
+                return {**original, "Id": "e" * 64}
+            return original
+        rc, doc = exe.execute(
+            "flash-next", good, exe.ACK_DOWNTIME,
+            exe.ACK_TARGET["flash-next"], root=self.fake.ops,
+            planner=self.planner, run=self.runner, inspect=changed_source,
+            waiter=lambda *args, **kwargs: True,
+            live=self.live, inference=lambda model: True)
+        self.assertEqual(rc, 3, doc)
+        self.assertEqual(doc["status"], "BLOCKED")
+        self.assertFalse(doc["executed"])
+        self.assertEqual(self.active(), "27b")
+        self.assertEqual(read_snapshot(self.fake.ops / "journal")["phase"],
+                         "CANCELLED")
+        self.assertFalse(any(cmd[:2] == ["docker", "stop"] for cmd in self.commands))
+
+    def test_target_chat_inference_failure_restores_original(self):
+        good = exe.execution_plan_id(self.planner("flash-next", root=self.fake.ops))
+        rc, doc = exe.execute(
+            "flash-next", good, exe.ACK_DOWNTIME,
+            exe.ACK_TARGET["flash-next"], root=self.fake.ops,
+            planner=self.planner, run=self.runner,
+            inspect=lambda name: self.fake.docs[name],
+            waiter=lambda *args, **kwargs: True,
+            live=self.live, inference=lambda model: False)
+        self.assertEqual(rc, 4, doc)
+        self.assertEqual(doc["status"], "FAIL_RESTORED")
+        self.assertIn("TARGET_CHAT_INFERENCE_UNVERIFIED", doc["issues"])
+        self.assertEqual(self.active(), "27b")
+        self.assertEqual(read_snapshot(self.fake.ops / "journal")["phase"],
+                         "RESTORED")
+
+    def test_postcommit_journal_inconsistency_is_not_false_pass_or_blind_rollback(self):
+        with patch.object(exe, "inspect_journal",
+                          return_value={"status": "BLOCKED", "phase": "COMMITTED",
+                                        "issues": ["TEST_DIVERGED"]}):
+            rc, doc = self.execute()
+        self.assertEqual(rc, 4, doc)
+        self.assertEqual(doc["status"], "COMMITTED_EVIDENCE_INCOMPLETE")
+        self.assertIn("TEST_DIVERGED", doc["issues"])
+        self.assertEqual(self.active(), "flash-next")
+        self.assertFalse(any(cmd[:2] == ["docker", "rm"] for cmd in self.commands))
+
     def test_attempt_marker_blocks_same_plan_replay(self):
         first, result = self.execute()
         self.assertEqual(first, 0)
