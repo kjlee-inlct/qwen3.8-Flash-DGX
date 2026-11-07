@@ -261,6 +261,34 @@ class BenchmarkPublicationCPU(unittest.TestCase):
         self.assertEqual(report["model_id"], "qwen3.8-flash-next")
         self.assertEqual(report["measurement_time_utc"], "2026-11-06T23:30:31Z")
 
+    def test_committed_public_summaries_use_only_whitelisted_fields(self):
+        actual = Path(__file__).resolve().parents[1] / "benchmarks" / "published"
+        for model, digest, value_key, expected in (
+            ("qwen3.8-flash-next", "f506db4c76430674",
+             "mean_tokens_per_sec", 37.9527),
+            ("qwen3.8-27b", "80f109dbd7c97460",
+             "mean_e2e_tokens_per_sec", 7.9002),
+        ):
+            with self.subTest(model=model):
+                doc = json.loads((actual / model / (digest + ".json")).read_text())
+                self.assertEqual(set(doc), {
+                    "schema_version", "record_kind", "model_id",
+                    "model_repository", "model_revision", "runtime",
+                    "measurement_time_utc", "source_evidence_sha256",
+                    "benchmark_status", "execution_status", "profile",
+                    "metrics", "method", "limitations"})
+                self.assertEqual(doc["schema_version"], 1)
+                self.assertEqual(doc["record_kind"], "benchmark_summary")
+                self.assertEqual(doc["model_id"], model)
+                self.assertTrue(doc["source_evidence_sha256"].startswith(digest))
+                self.assertEqual(doc["metrics"][value_key], expected)
+                self.assertEqual(doc["profile"], {
+                    "requests": 3, "max_tokens": 64, "seed": 1234,
+                    "concurrency": 1})
+                self.assertNotIn("plan_id", json.dumps(doc))
+                self.assertNotIn("api_base", json.dumps(doc))
+                self.assertEqual(doc["runtime"], "vllm-0.32")
+
     def test_publication_does_not_run_model_or_git_commands(self):
         report, dest = self.get("flash-next")
         with patch("subprocess.run", side_effect=AssertionError("side effect")), \
