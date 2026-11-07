@@ -1,3 +1,9 @@
+## 2026-11-07 — Restore Wizard ordinary operating switch priority; release-gated UX/backend link (SOURCE)
+
+Created `scripts/manager/operational_wizard.py` for target-first switch review, source-safe independent authorization fingerprint, three exact approvals and fake-only backend dispatch. Wired into existing `./wizard.sh` interactive model option 6 and grouped CLI `switch flash-next-27b operational guided --target ...`. Updated existing independent executor to reject preview-only SHA; Fake-DGX unit/integration tests and CI workflow. Production gate false, no real Docker/GPU switch; P3 immutable historical stages untouched. WebUI Tool Calling and 27B recipe support **deferred** per operator correction, not current focus.
+
+---
+
 ## 2026-11-07 — WebUI native tools mismatch; 27B no-thinking exact output PASS
 
 Real operator direct 27B curl with per-request `enable_thinking=false` returned exactly `DGX_OK` (4 tokens), while Open WebUI emitted vLLM tool-choice auto configuration error. Read-only Git source review identified missing `--enable-auto-tool-choice` / `--tool-call-parser` in 27B candidate launcher, unlike Flash; actual current Docker command still not observed. Added `docs/OPENWEBUI-27B-TOOL-CALLING-20261107.md`, recommended WebUI Builtin Tools-off workaround and separate future startup-profile/parser qualification gate. No source executor changes, DGX restarts, model switch, deletion or PR merge.
