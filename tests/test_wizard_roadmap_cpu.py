@@ -97,9 +97,12 @@ class RoadmapCPU(unittest.TestCase):
         self.assertEqual(p3["historical_backend_evidence"]["stage_a_b_c"],
                          "LOCAL_P3_A_B_C_RECEIPTS_VERIFIED")
         self.assertEqual(p3["general_operating_switch"],
-                         "READ_ONLY_PREVIEW_EXECUTOR_NOT_QUALIFIED")
-        self.assertEqual(p3["interactive_wizard_ux_acceptance"], "NOT_VERIFIED")
+                         "GUIDED_SOURCE_PLUS_SEPARATE_TRIAL_UNRELEASED")
+        self.assertEqual(p3["interactive_wizard_ux_acceptance"],
+                         "SOURCE_MENU_PRESENT_ACTUAL_DGX_NOT_VERIFIED")
         self.assertFalse(p3["runtime_pass_claimed"])
+        self.assertFalse(doc["ordinary_switch_production_released"])
+        self.assertIn("operating_journal_audit", doc)
         self.assertEqual(doc["live_api_served_id"], "qwen3.8-flash-next")
         self.assertFalse(doc["release_ready"])
 
