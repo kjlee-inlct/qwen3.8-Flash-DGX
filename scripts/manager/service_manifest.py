@@ -43,6 +43,24 @@ def manifest_from_observation(inv: dict, *, desired: str | None = None,
             present.append(row)
             if str(container.get("status", "")).startswith("Up"):
                 running.append(row)
+    # Managed-model removal/reinstallation is a separate lifecycle operation,
+    # NOT prohibited by the selected test-container cleanup inventory.
+    lifecycle = {
+        key: desc.get("container_lifecycle", {})
+        for key, desc in models.items()
+    }
+    retired_spec = cfg.get("retired_containers", {})
+    retire_names = {
+        row.get("name") for row in retired_spec.get("targets", [])
+        if isinstance(row, dict) and isinstance(row.get("name"), str)
+    }
+    retired_seen = [
+        {"name": c.get("name"), "status": c.get("status"),
+         "image_id": c.get("image_id"),
+         "manifest_registered": True}
+        for c in inv.get("containers", [])
+        if c.get("name") in retire_names
+    ]
     download_containers = [
         {"name": c.get("name"), "status": c.get("status"),
          "image_id": c.get("image_id")}
@@ -76,6 +94,9 @@ def manifest_from_observation(inv: dict, *, desired: str | None = None,
         "desired_model": desired,
         "observed_state": state, "observed_model": live_owner,
         "managed_containers": present,
+        "managed_container_lifecycle": lifecycle,
+        "retired_container_inventory": retired_seen,
+        "retired_container_manifest_names": sorted(retire_names),
         "download_containers": download_containers,
         "download_running": download_running,
         "api_port_8000_listening": port_listening,
