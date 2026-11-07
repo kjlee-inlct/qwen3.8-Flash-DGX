@@ -15,8 +15,8 @@ from scripts.manager.service_logs import inspect_logs
 
 SPEC = Stage(
     "svc", "Service management",
-    ("status", "inventory", "health", "logs", "cleanup", "start", "stop", "restart",
-     "rollback", "proxy", "gateway"),
+    ("status", "inventory", "health", "logs", "start", "stop", "restart",
+     "rollback", "proxy", "gateway", "cleanup"),
     ("read-only service/port/container inventory",
      "identified active model and exact runtime ownership",
      "scoped approval for stateful Docker/GPU/API actions",
