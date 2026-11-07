@@ -1,0 +1,130 @@
+{
+  "schema_version": 1,
+  "title": "Single GPU-model service policy for DGX Spark",
+  "engine": "vllm-0.32",
+  "max_active_gpu_models": 1,
+  "api": {
+    "host_port": 8000,
+    "base_path": "/v1",
+    "port_must_remain_stable": true
+  },
+  "models": {
+    "flash-next": {
+      "checkpoint": "nvidia/Qwen3.8-Flash-Next-NVFP4",
+      "served_id": "qwen3.8-flash-next",
+      "container_name": "qwen38-flash",
+      "container_lifecycle": {
+        "removable": true,
+        "requires_explicit_approval": true,
+        "reinstallable": true,
+        "reinstall_recipe_status": "LEGACY_FLASH_LAUNCH_RECIPE_REQUIRES_WIZARD_INTEGRATION",
+        "current_wizard_removal_implementation": "NOT_YET_IMPLEMENTED"
+      }
+    },
+    "27b": {
+      "checkpoint": "nvidia/Qwen3.8-27B-NVFP4",
+      "served_id": "qwen3.8-27b",
+      "container_name": "qwen38-27b",
+      "runtime_recipe": "recipes/qwen38-27b.runtime.json",
+      "desired_native_tool_calling": true,
+      "native_tools_qualification": "REAL_DGX_CANONICAL_RECIPE_COMMITTED_BENCHMARK_V2_PASS_OPENWEBUI_USER_CONFIRMED",
+      "recipe_state": "CANONICAL_DEFAULT",
+      "cleanup_history": "PRIOR_ORIGINAL_BACKUP_REMOVED_ON_VERIFIED_COMMIT",
+      "container_lifecycle": {
+        "removable": true,
+        "requires_explicit_approval": true,
+        "reinstallable": true,
+        "reinstall_recipe": "recipes/qwen38-27b.runtime.json",
+        "current_wizard_removal_implementation": "NOT_YET_IMPLEMENTED"
+      }
+    },
+    "orcarouter": {
+      "checkpoint": null,
+      "served_id": null,
+      "container_name": "qwen38-orcarouter",
+      "qualification": "NOT_VERIFIED",
+      "comment": "Desired registry placeholder only; no Orcarouter service start is authorized."
+    }
+  },
+  "transitions": {
+    "require_exact_approved_plan": true,
+    "revalidate_live_state": true,
+    "stop_old_before_start_new": true,
+    "preserve_old_checkpoint_and_image": true,
+    "verify_new_api_model_id": true,
+    "failed_new_model_rollback_to_old": true,
+    "no_automatic_deletion": true,
+    "append_only_transition_journal": true,
+    "actual_docker_state_overrides_stored_manifest": true
+  },
+  "download": {
+    "may_overlap_live_inference": true,
+    "uses_gpu": false,
+    "binds_host_port": false,
+    "does_not_stop_old": true
+  },
+  "retired_containers": {
+    "schema_version": 1,
+    "scope": "EXACTLY_TWO_SELECTED_27B_TEST_CONTAINERS_NOT_GLOBAL_UNINSTALL_POLICY",
+    "cleanup_mode": "OPERATOR_APPROVED_CONTAINER_ONLY",
+    "requires_active_model": "27b",
+    "requires_served_id": "qwen3.8-27b",
+    "requires_host_port": 8000,
+    "requires_promoted_recipe": "recipes/qwen38-27b.runtime.json",
+    "expected_image_id": "sha256:9479fc92a9244fcf137afb36ed778e07495e29663a81db193736fcaa1f15e137",
+    "preserve_images": true,
+    "preserve_hf_cache": true,
+    "preserve_p3_and_benchmark_receipts": true,
+    "targets": [
+      {
+        "name": "qwen38-27b-failed-6d9ede0904c2",
+        "role": "failed_first_canonical_recipe_migration_candidate",
+        "managed_model": "27b",
+        "expected_labels": {
+          "blazux.recipe": "qwen38-27b",
+          "blazux.migration": "01702fa1b0901a0dce7517ccbaee133fc253058a1c07abe63bc00c42bec52a15"
+        },
+        "expected_original_id": "6d9ede0904c2b8e9e632d45b51aba4acbaf4502ae648da60cca77677948b0e2d",
+        "evidence_root": "~/.local/state/blazux-wizard/27b-recipe-migration",
+        "evidence_result": "result-01702fa1b0901a0dce7517ccbaee133fc253058a1c07abe63bc00c42bec52a15.json",
+        "evidence_expected_status": "FAIL_RESTORED"
+      },
+      {
+        "name": "qwen38-27b-native-tools-v1",
+        "role": "successful_one_shot_native_tools_trial_variant",
+        "managed_model": "27b",
+        "expected_container_id": "d42a15e2f7959829eeb616d748522193999441c9f418ec5dcae98931dfe5da56",
+        "expected_labels": {
+          "blazux.variant": "nvidia-27b-native-tools-v1",
+          "blazux.preserved-original": "qwen38-27b",
+          "blazux.p2-final-native-tools-trial": "9d8fc5776673dbbc4a4cb2bbe1c1375db97e78862cf0ba91eb06faa7c34ab98f"
+        },
+        "evidence_root": "~/.local/state/blazux-wizard/p2-final-tools-v1",
+        "evidence_result": "result-9d8fc5776673dbbc4a4cb2bbe1c1375db97e78862cf0ba91eb06faa7c34ab98f.json",
+        "evidence_expected_status": "PASS_RESTORED"
+      }
+    ],
+    "notice": "COMPLETED on real DGX; provenance retained for audit, not a pending deletion queue. Runtime absence + exact private receipt + live API identity are authoritative. This batch does not restrict model remove/reinstall workflows.",
+    "completion": {
+      "state": "OPERATOR_DGX_CLEANUP_COMPLETED_VERIFIED",
+      "observed_date_kst": "2026-11-07",
+      "proof_kind": "operator_console_plus_independent_wizard_postcheck",
+      "consumed_plan_id": "39f38df37561bbfdffbe0ecce12566a7f3d0d51cd8c5b90190c506e68e28bbd5",
+      "private_result_receipt": "result-39f38df37561bbfdffbe0ecce12566a7f3d0d51cd8c5b90190c506e68e28bbd5.json",
+      "verified_active_container_id": "00094794475a9eaa62296c9e9fcb880bf6f3e01abdb77e3dd3ac5f964d5b2d4a",
+      "deleted": [
+        {
+          "name": "qwen38-27b-failed-6d9ede0904c2",
+          "container_id": "44920f80610c5787f7d72064269be175d18150fe68d5a2fe846499129fc596bc"
+        },
+        {
+          "name": "qwen38-27b-native-tools-v1",
+          "container_id": "d42a15e2f7959829eeb616d748522193999441c9f418ec5dcae98931dfe5da56"
+        }
+      ],
+      "live_observation_overrides_git_record": true,
+      "historical_entry_retained": true,
+      "new_cleanup_plan_after_completion": false
+    }
+  }
+}

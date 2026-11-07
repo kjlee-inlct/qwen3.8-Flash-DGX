@@ -1,5 +1,14 @@
 # Qwen3.8-Flash-Next on a single DGX Spark (GB10)
 
+> **Wizard menu organization (2026-11-05):** Use `./wizard.sh` for Model management (Flash-Next, 27B, Orcarouter Flash-Next), Model switching (Flash-Next↔27B, Orcarouter↔27B), Storage, or Operations. Descriptive source modules are under `wizard/menus/models/`, `switching/`, `storage/`, `operations/`. Example `./wizard.sh model flash-next status --json`. P1–P7 remain supported CLI aliases; no new runtime authorization is implied.
+
+> **Unified Wizard:** `./wizard.sh` opens the P1–P7 menu; `./wizard.sh list --json` and `./wizard.sh --stage p1 --action status --json` support direct scripted/operator use. P1 delegates to the guarded Blazux backend. P2–P7 are source-only menu/plan contracts with execution blocked until their DGX validation. [CLI contract](docs/WIZARD-CLI-CONTRACT.md).
+
+> **P1 Wizard:** Source and CPU CI (80/80 tests per job) implemented. Run `bash wizard/p1.sh status` for read-only inspection or `bash wizard/p1.sh` for interactive, per-step approved operations. See [P1 Wizard operations](docs/P1-WIZARD-OPERATIONS.md). If the existing operator setup/download or queued serve/wait/test chain is still active, do not run another setup or serve. CPU CI does not prove DGX runtime qualification.
+
+> **Fork-specific operational default (2026-11-05):** External API is now `http://localhost:8000/v1` for `./flash serve default`; served model ID `qwen3.8-flash-next`, Docker name `qwen38-flash`, NVIDIA Flash-Next checkpoint with the original Blazux default Hybrid/YaRN/MTP2 settings. This overrides upstream documentation examples using :18300. The previous Orcarouter :8000 service was **reported removed** (not confirmed on the DGX). Review [safe operations runbook](docs/FLASH-NEXT-8000-OPERATIONS.md) and run read-only `wizard/00-doctor.sh` before any deployment. **No automatic container replacement or deletion.**
+
+
 Run **Qwen3.8-Flash-Next** — a ~176B-parameter model (125B main + 51B n-gram, 6B
 active) — on **one NVIDIA DGX Spark / ASUS GX10** with **vLLM**, at full prefill
 speed, with MTP speculative decoding, **working prefix caching**, **deterministic
@@ -45,7 +54,7 @@ docker logs -f qwen38-flash                   # ready at "Application startup co
 scripts/smoke-test.sh                         # health, coherence, prefix-cache hit, determinism, tok/s
 ```
 
-OpenAI-compatible API on `http://localhost:18300/v1`, default model name `qwen3.8-flash-next`
+OpenAI-compatible API on `http://localhost:8000/v1` (fork default), default model name `qwen3.8-flash-next`
 (configurable with `SERVED_MODEL_NAME`), tool calling and reasoning parsers on. Every default is the setting that scored best on our
 agentic tournament (see [How the defaults are chosen](#how-the-defaults-are-chosen-quality-first-speed-as-an-option));
 what you get on a GX10: ~34 tok/s single-stream decode, ~2,700–4,000 tok/s prefill (8k–32k prompts), a ~505–520k-token

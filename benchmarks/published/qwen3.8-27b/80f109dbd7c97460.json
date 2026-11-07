@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "record_kind": "benchmark_summary",
+  "model_id": "qwen3.8-27b",
+  "model_repository": "nvidia/Qwen3.8-27B-NVFP4",
+  "model_revision": "482ca0f3832238542f8f5295dde86b5f22711d80",
+  "runtime": "vllm-0.32",
+  "measurement_time_utc": "2026-11-06T04:26:42Z",
+  "source_evidence_sha256": "80f109dbd7c9746065a36c8376f3ff440d1b0d58eee2024fcfad3f1733a82dc9",
+  "benchmark_status": "PASS",
+  "execution_status": "BENCH_PASS_RESTORED_VERIFIED",
+  "profile": {
+    "requests": 3,
+    "max_tokens": 64,
+    "seed": 1234,
+    "concurrency": 1
+  },
+  "metrics": {
+    "ttft_p50_sec": 0.179349,
+    "ttft_p95_sec": 28.97799,
+    "latency_p50_sec": 5.818283,
+    "latency_p95_sec": 34.609889,
+    "mean_e2e_tokens_per_sec": 7.9002,
+    "mean_decode_tokens_per_sec_proxy": 11.1801
+  },
+  "method": "client_sse_trial_restore_e2e_and_decode_proxy",
+  "limitations": [
+    "bounded_three_request_smoke_not_saturation_test",
+    "client_ttft_includes_queue_network_prefill",
+    "decode_proxy_not_engine_measured",
+    "true_prefill_throughput_not_measured",
+    "original_flash_service_restored_after_trial"
+  ]
+}

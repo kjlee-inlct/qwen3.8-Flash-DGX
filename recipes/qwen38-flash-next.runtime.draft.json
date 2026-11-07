@@ -1,0 +1,100 @@
+{
+  "schema_version": 1,
+  "recipe_id": "qwen38-flash-next-fp8hybrid-source-draft-v1",
+  "status": "SOURCE_DRAFT_NOT_RUNTIME_QUALIFIED",
+  "engine": "vllm",
+  "vllm_version": "0.32.0",
+  "launch_allowed": false,
+  "register_as_runtime_recipe": false,
+  "authorization": "READ_ONLY_REVIEW_ONLY_NO_DOCKER_MUTATION",
+  "model": {
+    "repo_id": "nvidia/Qwen3.8-Flash-Next-NVFP4",
+    "source_revision": "fc694b54fb0174e0913e6adf86691ef85a4ead47",
+    "checkpoint_view_suffix": "-fp8hybrid",
+    "served_id": "qwen3.8-flash-next"
+  },
+  "docker": {
+    "container_name": "qwen38-flash",
+    "image_id": "sha256:9479fc92a9244fcf137afb36ed778e07495e29663a81db193736fcaa1f15e137",
+    "entrypoint": [
+      "vllm",
+      "serve"
+    ],
+    "host_port": 8000,
+    "internal_port": 8000,
+    "gpu_request": "all",
+    "ipc_mode": "host",
+    "shm_size_bytes": 17179869184,
+    "hf_mount": {
+      "destination": "/hf",
+      "type": "bind",
+      "read_only": false
+    },
+    "required_ro_template_mount": "/qwen38/chat_template.jinja"
+  },
+  "observed_vllm": {
+    "value_flags": {
+      "--served-model-name": "qwen3.8-flash-next",
+      "--host": "0.0.0.0",
+      "--port": "8000",
+      "--load-format": "safetensors",
+      "--max-model-len": "500000",
+      "--max-num-seqs": "8",
+      "--gpu-memory-utilization": "0.80",
+      "--max-num-batched-tokens": "8192",
+      "--kv-cache-dtype": "auto",
+      "--tool-call-parser": "qwen3_coder",
+      "--reasoning-parser": "qwen3",
+      "--chat-template": "/qwen38/chat_template.jinja"
+    },
+    "boolean_flags": [
+      "--enable-prefix-caching",
+      "--enable-prompt-tokens-details",
+      "--enable-chunked-prefill",
+      "--no-enable-flashinfer-autotune",
+      "--enable-auto-tool-choice"
+    ],
+    "prefix_flags": [
+      "-cc.cudagraph_mode=PIECEWISE",
+      "-cc.splitting_ops="
+    ],
+    "json_flags": {
+      "--speculative-config": {
+        "method": "mtp",
+        "num_speculative_tokens": 2,
+        "max_model_len": 500000
+      },
+      "--hf-overrides": {
+        "text_config": {
+          "rope_parameters": {
+            "mrope_interleaved": true,
+            "mrope_section": [
+              11,
+              11,
+              10
+            ],
+            "rope_type": "yarn",
+            "rope_theta": 10000000,
+            "partial_rotary_factor": 0.25,
+            "factor": 4,
+            "original_max_position_embeddings": 262144
+          }
+        }
+      }
+    }
+  },
+  "required_environment": {
+    "HF_HOME": "/hf",
+    "HF_HUB_OFFLINE": "1",
+    "VLLM_FP8_HYBRID": "1"
+  },
+  "preserve_assets": true,
+  "release_blockers": [
+    "SOURCE_ONLY_NO_CURRENT_HOST_ENV_OR_EXTRA_MOUNT_COMPLETENESS",
+    "FLASH_TEMPLATE_OR_HOST_CACHE_REINSTALL_NOT_INDEPENDENTLY_QUALIFIED",
+    "FLASH_POST_RECREATE_BENCHMARK_AND_TOOL_CALLING_NOT_ACCEPTED",
+    "MODEL_LIFECYCLE_LIVE_EXECUTOR_NOT_RELEASED",
+    "P3_G_REAL_BIDIRECTIONAL_SWITCH_AND_ROLLBACK_NOT_ACCEPTED"
+  ],
+  "provenance_note": "Derived only from operator's third real DGX read-only Docker observations and tracked original Flash launcher; not a launch command."
+}
