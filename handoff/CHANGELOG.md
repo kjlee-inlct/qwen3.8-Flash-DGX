@@ -1,3 +1,9 @@
+## 2026-11-07 — SOURCE implementation of generic recipe drift and model lifecycle (NOT a new DGX mutation)
+
+GitHub CI 42355750124 SUCCESS: **799/799 CPU/Fake-DGX tests**, 36 groups. Added scripts/manager/recipe_drift.py, scripts/manager/model_lifecycle.py, tests/test_recipe_drift_cpu.py, tests/test_model_lifecycle_cpu.py; extended Wizard CLI router, model menu option 7, CI workflow; documented in docs/WIZARD-LIFECYCLE-SOURCE-IMPLEMENTATION-20261107.md. Production lifecycle executor remains source-only and unreleased; no Docker/API/GPU change. Earlier live P2/P3/cleanup outcomes remain immutable historical evidence; latest actual operator state was canonical 27B running on :8000.
+
+---
+
 ## LATEST REAL DGX — 2026-11-07 Wizard manifest cleanup actually executed and VERIFIED: two historical test containers REMOVED
 
 **Operator-provided real DGX terminal stdout** after fast-forward to `9518f25e614367ab0ebbb725d7568e5c6bf177ed`: `./wizard.sh service manager inventory --json` listed original canonical `qwen38-27b` active on :8000 and two retired stopped containers. `./wizard.sh service manager cleanup --plan` returned `READY_FOR_MANIFEST_RETIRED_CONTAINER_CLEANUP_APPROVAL`, `issues=[]`, target_count=2, plan `39f38df37561bbfdffbe0ecce12566a7f3d0d51cd8c5b90190c506e68e28bbd5`, active container full ID `00094794475a9eaa62296c9e9fcb880bf6f3e01abdb77e3dd3ac5f964d5b2d4a`. User then supplied exact fresh SHA and both TTY approvals to `./wizard.sh service manager cleanup --execute`, which returned **`MANIFEST_RETIRED_CONTAINERS_CLEANED`**, `executed=true`, `issues=[]`, `remaining=[]`, `preserved_original_model_service=true`, `preserved_images_and_caches=true`. Exact removed names and Docker IDs:
