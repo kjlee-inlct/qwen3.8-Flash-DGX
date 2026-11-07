@@ -1,3 +1,9 @@
+## 2026-11-07 — FIRST ACTUAL UNIFIED P3-D/E/F/G DGX OUTPUT, THEN SOURCE FIX
+
+User-supplied actual DGX unified `--run`: D BLOCKED `HOST_PORT_8000_LISTENER_NOT_UNAMBIGUOUS` despite single managed GPU/port Docker owner and `gpu_process_exclusivity_verified=true`, NVIDIA compute PID 2051842; E BLOCKED `FLASH_RUNTIME_CONFIG_UNPARSEABLE`, `FLASH_CANONICAL_REINSTALL_RECIPE_NOT_QUALIFIED`; F `SOURCE_CPU_PASS_NOT_RELEASED`, 119/119 local tests; G `PREVIEW_PASS_REAL_SWITCH_NOT_RUN`, `VERIFIED/COMMITTED` journal, source CANONICAL_RECIPE, target HISTORICAL_P3_INSTANCE, no issues. Overall BLOCKED/acceptance_complete=false and no model mutation. Source corrections backed by [CI 42371091647](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42371091647), **838/838 PASS / 37 groups**; no real DGX rerun of revised code yet. Reference: `docs/P3-D-G-FIRST-DGX-DIAGNOSTIC-FIXES-20261107.md`.
+
+---
+
 ## 2026-11-07 — P3-D/E/F/G SOURCE DRAFT AND CI (NOT REAL DGX ACCEPTANCE)
 
 **CI qualification for new source (not DGX):** GitHub Actions run **42369840239** SUCCESS on source commit `efb0dda`, **829/829 CPU/Fake-DGX tests across 37 groups**, including unified D-G `--cpu-only` orchestrator. Real D/G process measurements, Flash E reinstall qualification and G live roundtrip/fault restore remain not run.
