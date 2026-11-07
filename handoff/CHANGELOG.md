@@ -1,3 +1,9 @@
+## 2026-11-07 — 27B DGX read-only recipe comparison PASS; current-ID operating switch code source-only
+
+Operator reported `qwen38-27b` LIVE_SERVICE_VERIFIED, image/revision/options matching canonical recipe, `diff=[]`, `issues=[]`, HF bind source `/home/inlc/.cache/huggingface`, restart preview RESTART_EXISTING and explicit reinstall preview RECREATE, no executed change. Source updated `operational_switch.py` and `operational_executor.py` to bind the current container ID and distinguish 27B canonical recipe from historical P3 instance. Read-only CLI now accepts `--cache-source /absolute/path`. Source CI 42367665200 SUCCESS **814/814 tests, 36 groups**; no DGX switch or production release. See `docs/WIZARD-27B-LIVE-DRIFT-CURRENT-ID-20261107.md`.
+
+---
+
 ## 2026-11-07 — SOURCE implementation of generic recipe drift and model lifecycle (NOT a new DGX mutation)
 
 GitHub CI 42355750124 SUCCESS: **799/799 CPU/Fake-DGX tests**, 36 groups. Added scripts/manager/recipe_drift.py, scripts/manager/model_lifecycle.py, tests/test_recipe_drift_cpu.py, tests/test_model_lifecycle_cpu.py; extended Wizard CLI router, model menu option 7, CI workflow; documented in docs/WIZARD-LIFECYCLE-SOURCE-IMPLEMENTATION-20261107.md. Production lifecycle executor remains source-only and unreleased; no Docker/API/GPU change. Earlier live P2/P3/cleanup outcomes remain immutable historical evidence; latest actual operator state was canonical 27B running on :8000.
