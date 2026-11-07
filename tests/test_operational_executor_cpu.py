@@ -88,7 +88,7 @@ class FakeOperatingTransactionCPU(unittest.TestCase):
             planner=self.planner, run=self.runner,
             inspect=lambda name: self.fake.docs[name],
             waiter=lambda name, model, timeout, run: not self.fail_wait,
-            live=self.live,
+            live=self.live, inference=lambda model: True,
         )
 
     def test_27b_to_flash_success_and_no_p3_receipt_mutation(self):
@@ -145,7 +145,7 @@ class FakeOperatingTransactionCPU(unittest.TestCase):
                 planner=drifted, run=self.runner,
                 inspect=lambda name: self.fake.docs[name],
                 waiter=lambda name, model, timeout, run: True,
-                live=self.live)
+                live=self.live, inference=lambda model: True)
         self.assertEqual(rc, 3)
         self.assertIn("EXPIRED_OR_CHANGED_OPERATING_PLAN", doc["issues"])
         self.assertFalse(any(c[:2] == ["docker", "stop"] for c in self.commands))
@@ -170,7 +170,7 @@ class FakeOperatingTransactionCPU(unittest.TestCase):
             planner=self.planner, run=failing_target,
             inspect=lambda name: self.fake.docs[name],
             waiter=lambda name, model, timeout, run: True,
-            live=self.live)
+            live=self.live, inference=lambda model: True)
         self.assertEqual(rc, 4)
         self.assertEqual(doc["status"], "FAIL_RESTORED")
         self.assertEqual(self.active(), "27b")
@@ -198,7 +198,7 @@ class FakeOperatingTransactionCPU(unittest.TestCase):
             planner=self.planner, run=self.runner,
             inspect=lambda name: self.fake.docs[name],
             waiter=lambda name, model, timeout, run: True,
-            live=active_checked)
+            live=active_checked, inference=lambda model: True)
         self.assertEqual(rc, 4)
         self.assertEqual(doc["status"], "FAIL_RESTORED")
         self.assertEqual(self.active(), "27b")
@@ -230,7 +230,7 @@ class FakeOperatingTransactionCPU(unittest.TestCase):
             "orcarouter", "a" * 64, exe.ACK_DOWNTIME, "yes",
             root=self.fake.ops, planner=self.planner,
             run=self.runner, inspect=lambda n: self.fake.docs[n],
-            live=self.live)
+            live=self.live, inference=lambda model: True)
         self.assertEqual(rc, 3)
         self.assertFalse(doc["executed"])
 
