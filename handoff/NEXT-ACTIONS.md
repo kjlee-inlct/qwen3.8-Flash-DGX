@@ -1,3 +1,19 @@
+## 2026-11-07 — NEXT: STAGE-C FRESH READ-ONLY PLAN; BENCHMARK PUBLICATION ALREADY VERIFIED
+
+**Completed by operator on actual DGX:** `bash scripts/temporary/verify-published-benchmarks.sh` checked private Flash and NVIDIA 27B original JSONs against two Git-tracked metric-only public summaries: both `VERIFIED`, `issues=[]`, `executed=false`; original SHA256s match expected. No need to repeat publication verification or run GPU benchmarks without new reason. Git `benchmarks/published/` entries are now actual source-reconciled and private originals remain local.
+
+**Next operation, non-disruptive:**
+```bash
+cd ~/Workspace/llm/blazux-orcarouter
+git pull --ff-only origin feature/recipe-wizard-handoff
+bash scripts/temporary/p3-stage-c-operator.sh --plan
+```
+Require `status=READY_FOR_SEPARATE_P3_C_OPERATOR_APPROVAL`, empty issues, active Flash-Next expected model and original preserved 27B target, P1 post-B evidence PASS, fresh plan SHA and expiry. This must be rechecked because the benchmark verifier does not query current live service.
+
+**DO NOT auto-execute Stage C.** When operator separately and explicitly approves stopping the live Flash API on :8000, `bash scripts/temporary/p3-stage-c-operator.sh --execute` prompts for 3 independently typed literals: NEW SHA **with no brackets**, `I_ACCEPT_FLASH_NEXT_DOWNTIME`, and `I_SEPARATELY_AUTHORIZE_FINAL_27B_STAGE_C`. Any stale/changed plan or issue blocks; canonical Wizard alone owns Docker and rollback; final success requires actual live 27B identity and immutable C receipt. Prior C attempt was cancelled before dispatch; no C state or running model change was established by this new benchmark verification log. Do not merge PR #1, delete caches/models/containers, reuse old SHA, or perform unattended downtime.
+
+---
+
 ## 2026-11-07 — APPROVAL PROMPT FIX AFTER REAL BRACKETED INPUT
 
 New C operator `confirm()` now displays `Paste exactly <current 64-char SHA> (no brackets; Enter cancels):`, with explicit warning against `[` or `]`. The real previous `[<sha>` submission safely returned CANCELLED/dispatched=false and is NOT a switch. When operator *separately* decides to stop Flash-Next, use a NEW fresh plan, then type only the 64 hex chars and both exact independent acknowledgements; no auto approval. This UX change does not change canonical C, service status or model files. Verify original Git-tracked benchmark summaries first with read-only `bash scripts/temporary/verify-published-benchmarks.sh`.
