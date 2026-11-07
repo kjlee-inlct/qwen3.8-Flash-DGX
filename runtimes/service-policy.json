@@ -12,7 +12,14 @@
     "flash-next": {
       "checkpoint": "nvidia/Qwen3.8-Flash-Next-NVFP4",
       "served_id": "qwen3.8-flash-next",
-      "container_name": "qwen38-flash"
+      "container_name": "qwen38-flash",
+      "container_lifecycle": {
+        "removable": true,
+        "requires_explicit_approval": true,
+        "reinstallable": true,
+        "reinstall_recipe_status": "LEGACY_FLASH_LAUNCH_RECIPE_REQUIRES_WIZARD_INTEGRATION",
+        "current_wizard_removal_implementation": "NOT_YET_IMPLEMENTED"
+      }
     },
     "27b": {
       "checkpoint": "nvidia/Qwen3.8-27B-NVFP4",
@@ -22,7 +29,14 @@
       "desired_native_tool_calling": true,
       "native_tools_qualification": "REAL_DGX_CANONICAL_RECIPE_COMMITTED_BENCHMARK_V2_PASS_OPENWEBUI_USER_CONFIRMED",
       "recipe_state": "CANONICAL_DEFAULT",
-      "cleanup_history": "PRIOR_ORIGINAL_BACKUP_REMOVED_ON_VERIFIED_COMMIT"
+      "cleanup_history": "PRIOR_ORIGINAL_BACKUP_REMOVED_ON_VERIFIED_COMMIT",
+      "container_lifecycle": {
+        "removable": true,
+        "requires_explicit_approval": true,
+        "reinstallable": true,
+        "reinstall_recipe": "recipes/qwen38-27b.runtime.json",
+        "current_wizard_removal_implementation": "NOT_YET_IMPLEMENTED"
+      }
     },
     "orcarouter": {
       "checkpoint": null,
@@ -51,7 +65,7 @@
   },
   "retired_containers": {
     "schema_version": 1,
-    "scope": "EXACTLY_TWO_PRESERVED_27B_TEST_CONTAINERS",
+    "scope": "EXACTLY_TWO_SELECTED_27B_TEST_CONTAINERS_NOT_GLOBAL_UNINSTALL_POLICY",
     "cleanup_mode": "OPERATOR_APPROVED_CONTAINER_ONLY",
     "requires_active_model": "27b",
     "requires_served_id": "qwen3.8-27b",
@@ -89,6 +103,7 @@
         "evidence_result": "result-9d8fc5776673dbbc4a4cb2bbe1c1375db97e78862cf0ba91eb06faa7c34ab98f.json",
         "evidence_expected_status": "PASS_RESTORED"
       }
-    ]
+    ],
+    "notice": "This retirement batch manages exactly two old diagnostic containers; it does NOT prohibit separately approved uninstall/reinstall/recreation of canonical 27B, Flash-Next or other models."
   }
 }
