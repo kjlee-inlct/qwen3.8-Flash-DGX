@@ -68,7 +68,7 @@ try:
                 "required": ["key"],
             },
         },
-    }]
+    }}]
     msgs = [{"role": "user", "content": "Use get_probe_token for key test."}]
     prompted = tok.apply_chat_template(
         msgs, tools=tools, add_generation_prompt=True,
