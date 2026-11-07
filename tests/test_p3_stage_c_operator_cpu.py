@@ -262,6 +262,92 @@ class StageCOperatorCPU(unittest.TestCase):
         self.assertEqual(reports[-1]["status"],
                          "READY_FOR_SEPARATE_P3_C_OPERATOR_APPROVAL")
 
+
+    def simulated_readonly_rotation(self, *, expiry_in=30, rotate=True,
+                                    early_rotate=False, foreign=False,
+                                    interrupt=False):
+        """Virtual clock: actual helper logic, never wall-clock sleeps."""
+        now = [datetime.now(timezone.utc).timestamp()]
+        old = plan(now[0] + expiry_in)
+        new = plan(now[0] + 600)
+        new["plan_id"] = "8" * 64
+        events = []
+        def sleeper(seconds):
+            events.append(("sleep", seconds))
+            if interrupt:
+                raise KeyboardInterrupt
+            now[0] += seconds
+        def observer():
+            events.append(("read-only-plan", now[0]))
+            current = (new if rotate and
+                       (early_rotate or now[0] >= old["expires_at_epoch_seconds"])
+                       else old)
+            identity = live("27b") if foreign else live()
+            return 0, identity, 0, dict(current)
+        with contextlib.redirect_stdout(io.StringIO()):
+            result = op.await_approval_window(
+                a_receipt(), b_receipt(), 0, live(), 0, old,
+                clock=lambda: now[0], sleep=sleeper,
+                observer=observer, check_clean=lambda: True)
+        return result, events, old, new
+
+    def test_near_expiry_waits_readonly_for_a_new_distinct_plan_sha(self):
+        result, events, old, new = self.simulated_readonly_rotation(expiry_in=30)
+        self.assertEqual(result["issues"], [])
+        self.assertTrue(result["refreshed"])
+        self.assertEqual(result["plan"]["plan_id"], new["plan_id"])
+        self.assertNotEqual(result["plan"]["plan_id"], old["plan_id"])
+        self.assertGreater(result["wait_seconds"], 0)
+        self.assertGreater(result["refresh_probes"], 0)
+        self.assertTrue(all(e[0] in ("sleep", "read-only-plan") for e in events))
+
+    def test_normal_window_never_waits_or_replans(self):
+        now = datetime.now(timezone.utc).timestamp()
+        old = plan(now + 300)
+        result = op.await_approval_window(
+            a_receipt(), b_receipt(), 0, live(), 0, old,
+            clock=lambda: now,
+            sleep=lambda _: self.fail("unexpected sleep"),
+            observer=lambda: self.fail("unexpected observation"))
+        self.assertEqual(result["issues"], [])
+        self.assertFalse(result["refreshed"])
+        self.assertEqual(result["refresh_probes"], 0)
+        self.assertEqual(result["plan"]["plan_id"], C_PLAN)
+
+    def test_near_expiry_never_executes_when_plan_does_not_rotate(self):
+        result, events, old, _ = self.simulated_readonly_rotation(rotate=False)
+        self.assertEqual(result["issues"], ["P3_C_READONLY_PLAN_REFRESH_TIMEOUT"])
+        self.assertFalse(result["refreshed"])
+        self.assertLessEqual(result["wait_seconds"], op.MAX_READONLY_REFRESH_SECONDS)
+        self.assertGreater(len(events), 0)
+
+    def test_early_rotation_blocks_without_using_new_sha(self):
+        result, _, old, _ = self.simulated_readonly_rotation(early_rotate=True)
+        self.assertEqual(result["issues"],
+                         ["P3_C_PLAN_CHANGED_BEFORE_WINDOW_BOUNDARY"])
+        self.assertFalse(result["refreshed"])
+        self.assertEqual(result["plan"]["plan_id"], old["plan_id"])
+
+    def test_foreign_live_service_during_readonly_wait_blocks(self):
+        result, _, _, _ = self.simulated_readonly_rotation(foreign=True)
+        self.assertIn("P3_C_LIVE_FLASH_SOURCE_UNVERIFIED", result["issues"])
+        self.assertFalse(result["refreshed"])
+
+    def test_ctrl_c_cancels_readonly_wait_without_dispatched_execution(self):
+        result, _, _, _ = self.simulated_readonly_rotation(interrupt=True)
+        self.assertEqual(result["issues"], ["P3_C_READONLY_PLAN_REFRESH_CANCELLED"])
+        self.assertFalse(result["refreshed"])
+
+    def test_noninteractive_execution_blocks_before_any_refresh_wait(self):
+        with patch.object(op, "await_approval_window",
+                          side_effect=AssertionError("MUST_NOT_WAIT")):
+            rc, calls, reports, probes = self.invoke(
+                execute=True, tty=False, approved=True, expire_seconds=35)
+        self.assertEqual(rc, 3)
+        self.assertFalse(calls)
+        self.assertEqual(probes, 1)
+        self.assertIn("P3_C_REAL_TTY_REQUIRED", reports[-1]["issues"])
+
     def test_execute_requires_tty_and_approved_inputs(self):
         for tty, approved in ((False, False), (True, False)):
             with self.subTest(tty=tty, approved=approved):
@@ -271,12 +357,46 @@ class StageCOperatorCPU(unittest.TestCase):
                 self.assertEqual(calls, [])
                 self.assertFalse(reports[-1]["execution_dispatched"])
 
-    def test_expiring_plan_blocks_without_prompt_or_mutation(self):
-        rc, calls, reports, _ = self.invoke(
-            execute=True, tty=True, approved=True, expire_seconds=45)
+    def test_refresh_timeout_blocks_before_approval_or_mutation(self):
+        def timed_out(a, b, live_rc, active, plan_rc, pl):
+            return {"live": active, "plan": pl, "live_rc": live_rc,
+                    "plan_rc": plan_rc, "refreshed": False,
+                    "refresh_probes": 2, "wait_seconds": 30,
+                    "issues": ["P3_C_READONLY_PLAN_REFRESH_TIMEOUT"]}
+        with patch.object(op, "await_approval_window", side_effect=timed_out):
+            rc, calls, reports, _ = self.invoke(
+                execute=True, tty=True, approved=True, expire_seconds=45)
         self.assertEqual(rc, 3)
         self.assertEqual(calls, [])
-        self.assertIn("P3_C_INSUFFICIENT_TIME_FOR_THREE_APPROVALS", reports[-1]["issues"])
+        self.assertFalse(reports[-1]["approval_accepted"])
+        self.assertFalse(reports[-1]["execution_dispatched"])
+        self.assertIn("P3_C_READONLY_PLAN_REFRESH_TIMEOUT", reports[-1]["issues"])
+
+    def test_refreshed_plan_must_receive_new_approval_before_dispatch(self):
+        fresh_sha = "8" * 64
+        observed = []
+        def refreshed(a, b, live_rc, active, plan_rc, pl):
+            nxt = dict(pl)
+            nxt["plan_id"] = fresh_sha
+            nxt["expires_at_epoch_seconds"] = (
+                datetime.now(timezone.utc).timestamp() + 600)
+            return {"live": active, "plan": nxt, "live_rc": live_rc,
+                    "plan_rc": plan_rc, "refreshed": True,
+                    "refresh_probes": 5, "wait_seconds": 25, "issues": []}
+        def approved_for_exact_new_plan(pl):
+            observed.append(pl["plan_id"])
+            return False  # cancellation before canonical execution
+        with patch.object(op, "await_approval_window", side_effect=refreshed), \
+             patch.object(op, "confirm", side_effect=approved_for_exact_new_plan):
+            rc, calls, reports, _ = self.invoke(
+                execute=True, tty=True, approved=True, expire_seconds=45)
+        self.assertEqual(rc, 3)
+        self.assertEqual(observed, [fresh_sha])
+        self.assertEqual(calls, [])
+        self.assertEqual(reports[-1]["plan_id"], fresh_sha)
+        self.assertEqual(reports[-1]["status"], "CANCELLED")
+        self.assertTrue(reports[-1]["plan_refreshed"])
+        self.assertFalse(reports[-1]["approval_accepted"])
 
     def test_clean_git_required_no_approval_inference(self):
         rc, calls, reports, _ = self.invoke(
