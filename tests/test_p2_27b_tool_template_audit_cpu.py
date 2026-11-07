@@ -88,6 +88,29 @@ class NativeToolTemplateAuditCPU(unittest.TestCase):
         self.assertIn("TEMPLATE_RENDER_FAILED_THINKING_PROMPT_RENDERED",
                       result["issues"])
 
+    def test_nvidia_pinned_template_hash_is_verified(self):
+        self.assertEqual(
+            mod.EXPECTED_TEMPLATE_SHA256,
+            "c3cf9e34abf4f9e36c2d72165aa9c132d3e2a725b6c2586aaa3a8af9d7a81041"
+        )
+        self.assertIn(mod.EXPECTED_TEMPLATE_SHA256, mod.CPU_PROBE)
+        self.assertIn("PINNED_CHAT_TEMPLATE_SHA256_MISMATCH", mod.CPU_PROBE)
+        self.assertNotIn("__EXPECTED_TEMPLATE_SHA256__", mod.CPU_PROBE)
+
+    def test_template_hash_mismatch_fails_closed(self):
+        run, _ = fake_runner(probe_doc(
+            status="BLOCKED",
+            issues=["PINNED_CHAT_TEMPLATE_SHA256_MISMATCH"],
+            template_sha256="b" * 64,
+        ))
+        result = mod.inspect_template_cpu(run=run)
+        self.assertEqual(result["status"], "BLOCKED")
+        self.assertEqual(
+            result["expected_template_sha256"],
+            mod.EXPECTED_TEMPLATE_SHA256,
+        )
+        self.assertIn("PINNED_CHAT_TEMPLATE_SHA256_MISMATCH", result["issues"])
+
     def test_nonzero_exit_surfaces_redacted_stderr_last_line(self):
         run, _ = fake_runner(
             rc=1, stderr="Traceback (most recent call last):\n"
