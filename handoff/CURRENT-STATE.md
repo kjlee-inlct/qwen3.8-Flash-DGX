@@ -1,3 +1,11 @@
+## 2026-11-07 — FIRST ACTUAL DGX P3-D/E/F/G BATCH; D/E SOURCE FIXES CI PASS
+
+Actual first operator `bash scripts/temporary/p3-d-g-acceptance.sh --run` (READ-ONLY) returned overall BLOCKED: **D** Docker 27B one GPU/port owner, NVIDIA compute PID 2051842 and GPU process exclusivity true, but host `ss` listener `HOST_PORT_8000_LISTENER_NOT_UNAMBIGUOUS`; **E** `FLASH_RUNTIME_CONFIG_UNPARSEABLE` (27B parser applied to legacy Flash) plus unqualified canonical Flash reinstall recipe; **F** real local 119/119 CPU tests PASS, lifecycle unreleased; **G** current-ID operating preview PASS, journal VERIFIED/COMMITTED, real switch/fault restore NOT RUN. Current active 27B remains unmodified.
+
+Subsequent SOURCE corrections: tolerate rigorously verified dual-stack IPv4/IPv6 :8000 listeners, optionally validate host-cgroup Docker proxy via actual PID cmdline + current Docker container IP/port, expose socket/PID diagnostics, and preserve actual Flash `Config.Cmd`/mount candidate with transparent normalizer review (historically writable /hf is a review note). **No user DGX rerun yet; real D/E acceptance NOT established.** CI [42371091647](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42371091647) SUCCESS **838/838 CPU Fake-DGX tests / 37 groups**. Full evidence: `docs/P3-D-G-FIRST-DGX-DIAGNOSTIC-FIXES-20261107.md`.
+
+---
+
 ## 2026-11-07 — OFFICIAL P3-D THROUGH P3-G DRAFT IMPLEMENTED IN GITHUB
 
 **NEW FINAL SOURCE CI:** `efb0dda78a4e6f894afe39c97a6839e1d7cf4d53` passed GitHub Actions run **42369840239**, **829/829 CPU/Fake-DGX tests, 37 groups**, including unified `--cpu-only`. SOURCE only; the actual DGX D~G one-command run remains NOT_RUN.
