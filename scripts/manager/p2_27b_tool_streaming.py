@@ -119,7 +119,7 @@ def evaluate_stream(lines: Any) -> dict[str, Any]:
         "status": "LOCAL_STREAMED_TOOL_CALL_PASS" if not issues else "BLOCKED",
         "issues": issues,
         "streamed_tool_call": not issues,
-        "reasoning_separation": not ("SSE_REASONING_LEAKED_IN_FINAL_CONTENT" in issues),
+        "reasoning_separation": not issues,
         "stream_event_count": count,
         "executed_tool": False,
     }
