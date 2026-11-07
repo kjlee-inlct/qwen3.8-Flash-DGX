@@ -1,3 +1,11 @@
+## 2026-11-07 — NEXT: MODEL HISTORY + P2/P3 COPY-ONLY CONSOLIDATION; P3-C READ-ONLY PLAN
+
+User asked to add per-model past Verify/Benchmark/history in the main Wizard and phase in project-local P2/P3 evidence. Implemented read-only catalog `scripts/manager/evidence_catalog.py`, integrated `Select model → 4 Past results` and `Advanced → 8 Exact-approved report COPY`; machine CLI `./wizard.sh evidence list --model flash-next --kind benchmark`, `./wizard.sh evidence migrate --plan|--guided`. P1/P2/P3 old source receipts, runtime locks/journal remain unchanged; project reports ignored by Git. New copy uses fresh 64-char approval, revalidation, 0600 O_EXCL, 0700 directories, hash dedup; P3-C safety-critical evidence gate still reads canonical state. See [migration contract](../docs/MODEL-EVIDENCE-HISTORY-MIGRATION-20261107.md).
+
+Actual DGX ZIP still grounds P3-A/B PASS and POST-B P1 Verify+Benchmark PASS; last observed Flash-Next active :8000. **P3-C is the next eligible operating stage, but is NOT_AUTHORIZED/NOT_RUN and its *new live preflight* has NOT yet been supplied.** Once latest GitHub code/CPU CI passes and user clean-pulls, request ONLY `./wizard.sh switch flash-next-27b stage-c --plan --json`. If `READY_TO_REQUEST_TRANSITION_APPROVAL` with `issues=[]` and P1 gate PASS, separately seek actual Flash downtime authorization. Do not automatically execute C, repeat A/B, clean caches or merge Draft PR #1. Older messages claiming POST-B P1 NOT_RUN superseded.
+
+---
+
 ## 2026-11-07 — CURRENT operator state: Post-B Flash Verify + Benchmark REAL PASS, UX source fixes
 
 The operator supplied a ZIP containing actual Flash-Next GPU Verify and Benchmark executed after successful P3-B. Both PASS with distinct explicit SHA approvals; measured 3-request mean 37.9527 tokens/sec, TTFT p50 1.384594 sec, latency p50 1.724560 sec. Last known actual API served `qwen3.8-flash-next` on :8000. Older statements that POST-B P1 is NOT_RUN are superseded. `P3-C` is still NOT_AUTHORIZED; no model switch/restart/repeat inferred.
