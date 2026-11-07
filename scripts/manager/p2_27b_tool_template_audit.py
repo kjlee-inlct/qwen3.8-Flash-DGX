@@ -79,7 +79,11 @@ try:
         "<tool_call>" in prompted and
         "<|im_start|>assistant" in prompted
     )
-    r["no_thinking_rendered"] = "<think>\n\n</think>" in prompted
+    # enable_thinking=False should NOT inject reasoning markup into the
+    # assistant-generation prefix. An empty <think> block is not mandatory.
+    r["no_thinking_rendered"] = (
+        "<think>" not in prompted and "</think>" not in prompted
+    )
     ordinary = tok.apply_chat_template(
         [{"role": "user", "content": "Say hello."}],
         add_generation_prompt=True, tokenize=False,
@@ -117,6 +121,35 @@ print(json.dumps(r, ensure_ascii=False, sort_keys=True))
 '''.replace("__TEMPLATE_PATH__", TOOL_CHAT_TEMPLATE)
 
 
+def _stderr_hint(stderr: str | None) -> str | None:
+    """Short, redacted last error line; never copy full tracebacks to JSON."""
+    if not isinstance(stderr, str):
+        return None
+    import re
+    lines = [line.strip() for line in stderr.splitlines() if line.strip()]
+    if not lines:
+        return None
+    last = lines[-1]
+    last = re.sub(r"/home/[^/\\s]+", "/home/<redacted>", last)
+    last = re.sub(r"(?i)(token|api[_-]?key|authorization)\\s*[:=]\\s*[^,\\s]+",
+                  r"\\1=<redacted>", last)
+    return last[:360]
+
+
+def _structured_stdout(stdout: str | None) -> dict[str, Any] | None:
+    """Accept single-line structured JSON, optionally after library log noise."""
+    if not isinstance(stdout, str) or not stdout or len(stdout) > 16384:
+        return None
+    candidates = [line.strip() for line in stdout.splitlines() if line.strip()]
+    if not candidates:
+        return None
+    try:
+        result = json.loads(candidates[-1])
+    except (json.JSONDecodeError, ValueError):
+        return None
+    return result if isinstance(result, dict) else None
+
+
 def inspect_template_cpu(
     *, run: Callable[..., Any] = subprocess.run,
 ) -> dict[str, Any]:
@@ -145,14 +178,23 @@ def inspect_template_cpu(
         if result.returncode:
             report["issues"].append("DOCKER_EXEC_CPU_PROBE_NONZERO_EXIT")
             report["docker_exec_returncode"] = result.returncode
+            hint = _stderr_hint(getattr(result, "stderr", None))
+            if hint:
+                report["docker_exec_stderr_last_line"] = hint
+            data = _structured_stdout(getattr(result, "stdout", None))
+            if data is not None:
+                report["inner_probe_status"] = data.get("status")
+                report["inner_probe_issues"] = data.get("issues", [])
+                if data.get("error_summary"):
+                    report["inner_error_summary"] = str(data["error_summary"])[:360]
             return report
-        raw = result.stdout.strip()
-        if not raw or len(raw) > 16384:
-            report["issues"].append("CPU_PROBE_RESPONSE_INVALID_SIZE")
+        data = _structured_stdout(getattr(result, "stdout", None))
+        if data is None:
+            report["issues"].append("CPU_PROBE_RESPONSE_INVALID_OR_NON_JSON")
+            hint = _stderr_hint(getattr(result, "stderr", None))
+            if hint:
+                report["docker_exec_stderr_last_line"] = hint
             return report
-        data = json.loads(raw)
-        if not isinstance(data, dict):
-            raise ValueError("CPU_PROBE_RESPONSE_NOT_OBJECT")
         for key in ("template_present", "tokenizer_auto_template_present",
                     "template_sha256", "transformers_version",
                     "tool_prompt_rendered", "tool_result_rendered",
@@ -165,6 +207,8 @@ def inspect_template_cpu(
         ):
             raise ValueError("CPU_PROBE_ISSUES_INVALID")
         report["issues"].extend(reported_issues)
+        if data.get("error_summary"):
+            report["inner_error_summary"] = str(data["error_summary"])[:360]
         if data.get("status") != "CPU_TEMPLATE_RENDER_VALIDATED_ONLY":
             report["issues"].append("CPU_TEMPLATE_NOT_VALIDATED")
         if not report["issues"]:
