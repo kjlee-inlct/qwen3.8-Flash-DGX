@@ -1,3 +1,9 @@
+## R1Z — 2026-11-07 — Fake-DGX stop/start/rollback simulation NEVER authorizes runtime
+
+`p2_27b_tool_cutover_simulation.py` is an isolated pure-injected simulation with NO production adapter or executable Wizard command. Its SHA and acknowledgements are intentionally domain-separated **simulation-only** and must never be accepted by any real DGX executor. It models failure/restoration paths for CPU tests, not actual journal integrity or validated Docker behavior. GitHub 722 CPU PASS on `fe4e6b01` is SOURCE ONLY; actual native tools and safe live rollback remain unqualified. Continue preserving original NVIDIA 27B, Flash, caches/receipts, single-model :8000, vLLM 0.32, no SGLang, no P3 replay, no release-gate flip.
+
+---
+
 ## R1Y — 2026-11-07 — Native Tools V1 source-only candidate is not deployment consent
 
 The new distinct `qwen38-27b-native-tools-v1` source candidate uses the same pinned NVIDIA 27B and served ID but a different container name; never reuse or remove preserved `qwen38-27b`. Read-only `--tools-variant-plan` returns exit code 3 intentionally, even on a clean preflight; its fingerprint and argv are NOT executable approvals. New `--tools-stream-probe` makes bounded local inference, not Docker changes, and cannot by itself qualify Open WebUI. Candidate YAML is schema-incomplete and not registered as production. Independent parser+tokenizer qualification, variant-aware service-policy, real stop/start rollback executor, explicit new TTY downtime consent, Fake-DGX faults and actual DGX native tool checks are still REQUIRED. No source changes auto-authorize Docker, port, service, P3 replay, receipt modification, or Wizard release. Historical P3-C is immutable; keep :8000, ONE_ACTIVE_MODEL_ONLY, vLLM 0.32, no SGLang.
