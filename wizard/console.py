@@ -241,6 +241,34 @@ def _model_selector() -> None:
     _model_screen(selection)
 
 
+def _switch_selector() -> None:
+    """Direct model-first operating switch navigation from the main screen."""
+    from scripts.manager.service_status import inspect_live_status
+    try:
+        status = inspect_live_status()
+        current = (status.get("observed_model")
+                   if status.get("status") == "LIVE_SERVICE_VERIFIED"
+                   else "unknown")
+    except (OSError, RuntimeError, ValueError, TypeError):
+        current = "unknown"
+    print("\nSwitch active model — existing preserved containers only")
+    print("  Current API model: " + str(current))
+    print("  Port stays :8000/v1; one GPU model at a time")
+    print("  1. NVIDIA Flash-Next")
+    print("  2. NVIDIA 27B")
+    print("  0. Cancel")
+    selected = _choice(_input("Target model (0 cancel): "), ["flash-next", "27b"])
+    if selected is None:
+        return
+    if selected not in ("flash-next", "27b"):
+        print("Unknown model; nothing executed.")
+        return
+    if current == selected:
+        print("Requested model already active. No switch needed.")
+        return
+    _switch_guided(selected)
+
+
 def _service_menu() -> None:
     from wizard.menus.operations import service as manager
     actions = ["status", "health", "logs", "start", "stop",
@@ -376,6 +404,7 @@ def run() -> int:
         print("  1. Select / run model")
         print("  2. Service health / status / logs")
         print("  3. Advanced / recipes / storage")
+        print("  4. Switch active model (guided / release gated)")
         print("  0. Exit")
         selected = _input("Select (0 exit): ")
         if selected in (None, "0"):
@@ -386,5 +415,7 @@ def run() -> int:
             _service_menu()
         elif selected == "3":
             _advanced_menu()
+        elif selected == "4":
+            _switch_selector()
         else:
             print("Unknown option; nothing executed.")
