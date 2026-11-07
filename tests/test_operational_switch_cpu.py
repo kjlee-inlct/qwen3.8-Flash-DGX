@@ -126,6 +126,15 @@ class FakeDGX(unittest.TestCase):
         result = self.plan()
         self.assertIn("P3_STAGE_PINNED_LINEAGE_MISMATCH:image_27b", result["issues"])
 
+    def test_p3_historical_pass_without_executed_true_is_not_accepted(self):
+        receipt = self.p3_root / "stage-b.json"
+        data = json.loads(receipt.read_text())
+        data["executed"] = False
+        receipt.write_text(json.dumps(data))
+        doc = self.plan()
+        self.assertIn("P3_STAGE_EXECUTION_NOT_PROVEN", doc["issues"])
+        self.assertFalse(doc["operations_enabled"])
+
     def test_actual_dgx_wrong_api_id_blocks_preview(self):
         doc = self.plan(good=False)
         self.assertIn("SOURCE_API_AND_MANIFEST_UNVERIFIED", doc["issues"])
