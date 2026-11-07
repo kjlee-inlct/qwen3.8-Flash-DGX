@@ -1,3 +1,13 @@
+## NEXT after user P2/P3-C closure decision — 2026-11-07
+
+1. **P3-C historical real DONE/CLOSED**: original Flash→27B one-off actual P3-A/B/C accepted, no additional Stage-C run or receipt editing. Separately, new ordinary 27B→Flash and Flash→27B operators reported PASS; reverse final independent status/audit must still be observed. Last reported active is now 27B.
+2. **P2-final Native Tool Calling is the only appended P2 acceptance gate** (prior P2 GPU/benchmark/restore PASS retained). Source vLLM 0.32 Qwen3.8-27B profile `--enable-auto-tool-choice --tool-call-parser qwen3_coder --reasoning-parser qwen3` is opt-in, never automatically retrofits original 27B container. See `docs/P2-27B-FINAL-TOOL-CALLING-ACCEPTANCE-20261107.md`.
+3. DGX no-downtime read-only + small inference checks: `./wizard.sh service manager status --json`; `python3 -m scripts.manager.operational_audit --json`; `docker inspect qwen38-27b --format '{{json .Config.Cmd}}' | python3 -m json.tool`; `bash scripts/serve_27b.sh --tools-profile`; `bash scripts/serve_27b.sh --tools-probe`. The probe intentionally returns BLOCKED if auto-parser is absent; no need to retry/restart. New source requires clean fast-forward and CPU CI first.
+4. Before actual P2-FINAL remediation, design a **distinct pinned tool-enabled 27B recipe/service variant**; do not recreate/delete historical `qwen38-27b`. Qualify parser on vLLM 0.32, tool_call, tool-result continuation, **streaming**, non-tool inference, reasoning separation, Open WebUI Native. Requires independently approved outage/restore risk and a separately reviewed rollback plan. Do not disturb active 27B or port 8000 while creating read-only profile.
+5. **Normal everyday Wizard main menu release still OFF**; Fake-DGX CPU and actual trial-only dual direction PASS do NOT alone qualify main TTY menu or failure recovery. No forced recovery test, P3 replay, P4 cleanup, Orcarouter changes or PR merge without independent approval.
+
+---
+
 ## LATEST NEXT — 2026-11-07: first ordinary switch + independent postcheck PASS; reverse source READY only
 
 - [x] Actual DGX ordinary `27b→flash-next`: operator's `PASS` and private receipt plus **separate after-action** `LIVE_SERVICE_VERIFIED` for sole `qwen3.8-flash-next`, `operational_audit=VERIFIED/COMMITTED/7 events`.
