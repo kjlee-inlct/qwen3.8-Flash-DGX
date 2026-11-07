@@ -1,3 +1,9 @@
+## New actual DGX verification — 2026-11-07: post-ordinary 27B→Flash status and journal PASS
+
+**First real ordinary 27B→Flash PASS** now additionally confirmed via independently issued read-only DGX commands: Flash is sole active `qwen3.8-flash-next` `LIVE_SERVICE_VERIFIED`, `issues=[]` on :8000, and independent operating journal chain audit `VERIFIED` / terminal `COMMITTED` / 7 events, `issues=[]`. Reverse ordinary **Flash→27B is still NOT_RUN**: its preflight is `READY_FOR_SEPARATE_TRIAL_APPROVAL`, issues none, with an ephemeral plan SHA and 276 seconds remaining **at capture only**. No reverse action or failure-recovery injection has been performed. Production guided switch menu remains gate-locked; old P3 A/B/C are historical. No incorrect assumption that the read-only service's `gpu_exclusivity_verified=false` equates to a live GPU conflict.
+
+---
+
 ## LATEST 2026-11-07 ACTUAL ordinary switch acceptance: 27B → Flash-Next PASS (first direction only)
 
 Operator real DGX after source `4054eb2` ran the newly tracked `operational-switch-acceptance.sh --target flash-next --execute` under a fresh read-only plan and four exact, manually typed trial/SHA/downtime/target approvals. Source API before transfer was `LIVE_SERVICE_VERIFIED` for sole `qwen3.8-27b`, operating journal initially `EMPTY`, current plan `READY_FOR_SEPARATE_TRIAL_APPROVAL`, issues `[]`. The NEW independent ordinary-switch backend returned `Live transition result: PASS`, `Observed model: flash-next`, and private immutable completion receipt. **This is first real DGX ordinary 27B→Flash acceptance**, independent of historic P3-B.
