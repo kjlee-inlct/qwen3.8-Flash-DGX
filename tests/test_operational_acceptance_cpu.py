@@ -141,6 +141,30 @@ class OperatingAcceptanceCPU(unittest.TestCase):
         self.assertIn("LIVE_ACCEPTANCE_JSON_MODE_FORBIDDEN", output.getvalue())
         backend.assert_not_called()
 
+    def test_router_preserves_json_for_read_only_plan(self):
+        from wizard import main as router
+        fake_plan = {"status": "READY_FOR_SEPARATE_TRIAL_APPROVAL",
+                     "executed": False, "target_model": "flash-next",
+                     "issues": []}
+        with patch.object(acc, "trial_plan", return_value=fake_plan), \
+             contextlib.redirect_stdout(io.StringIO()) as output:
+            rc = router.main([
+                "switch", "flash-next-27b", "operational", "acceptance",
+                "--target", "flash-next", "--plan", "--json"])
+        self.assertEqual(rc, 0)
+        self.assertEqual(__import__("json").loads(output.getvalue()), fake_plan)
+
+    def test_router_json_execute_refused_even_without_production_gate(self):
+        from wizard import main as router
+        with patch.object(acc, "run_trial") as backend, \
+             contextlib.redirect_stdout(io.StringIO()) as output:
+            rc = router.main([
+                "switch", "flash-next-27b", "operational", "acceptance",
+                "--target", "flash-next", "--execute", "--json"])
+        self.assertEqual(rc, 3)
+        self.assertIn("LIVE_ACCEPTANCE_JSON_MODE_FORBIDDEN", output.getvalue())
+        backend.assert_not_called()
+
     def test_cli_router_acceptance_is_a_separate_entrypoint(self):
         from wizard.menus.switching import flash_next_27b
         with patch.object(acc, "main", return_value=3) as wrapper:
