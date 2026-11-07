@@ -1,3 +1,11 @@
+## 2026-11-07 — NEXT after source-only operating switch implementation
+
+The new ordinary switch PREVIEW and independent guarded executor SOURCE are implemented on the existing branch. **No Wizard execute route and no actual DGX operation were enabled.** Next: (1) confirm the new Fake-DGX executor and preflight CI passes including stop→start, exact identity, rollback success/fail and retry denial; (2) review the new execution contract and identify state machine/lock/recovery limitations; (3) implement a real user-friendly guided review/approval flow only after safety gates and CPU tests qualify, keeping live execution disabled until separately authorized DGX maintenance; (4) run operator-initiated read-only \`./wizard.sh switch flash-next-27b operational --target flash-next --plan --json\` optionally after safe fast-forward pull; (5) request a separately scoped consent before ANY live 27B downtime or repeated switch test. P4 remains conditional, P5 Orcarouter source audit after UX, P6 after P5 GPU qualification, P7 after service/proxy/gateway integration. Do not reuse one-off P3 stage receipts as authorization.
+
+Read latest design: \`docs/OPERATING-SWITCH-UX-CONTRACT-20261107.md\`. Retain original 27B active :8000, entire original HF cache, containers/images, original immutable P3 receipts and journals. Draft PR #1 must remain Draft/unmerged.
+
+---
+
 ## 2026-11-07 — P3-C SUCCESS; STOP REPEATING P3 STAGES, NEXT WIZARD USABILITY PHASE
 
 **P3-C is now DONE on actual DGX, not just preflight!** Operator's real `--execute` used a newly approved C SHA and both distinct explicit downtime/activation strings; canonical Wizard returned PASS and `active_model=27b`; wrapper `P3_C_PASS_FINAL_27B_ACTIVE`, `post_switch_status=LIVE_SERVICE_VERIFIED`, `post_switch_observed_model=27b`, `issues=[]`, original immutable `stage-c.json` verified. Private report `reports/transitions/flash-next--to--27b/p3-c-operator-20261107T011939Z-5f26a6ff25a2.json`. Flash assets/containers preserved. DO NOT RE-RUN A/B/C, P1/P2 benches, restore Flash, prune models, or change port 8000 as part of this handoff. Preserve running 27B for operational use. Real P1+P2+P3 backend qualification is COMPLETE for the specified bounded scenarios; generic recurring switch and interactive menu acceptance are NOT.
