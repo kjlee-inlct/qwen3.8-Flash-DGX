@@ -169,9 +169,114 @@ def stage_d(snapshot: dict, live: dict, *,
         limitation="Docker/ss/nvidia-smi/proc evidence only; no GPU workload or mutation.")
 
 
-def stage_e(snapshot: dict, *, historical: dict | None = None) -> dict:
-    """Record observed Flash runtime candidate without QUALIFYING an install."""
+def _flash_arg(cmd: list[str], key: str) -> str | None:
+    """Extract one exact vLLM flag without inventing defaults for old commands."""
+    matches: list[str] = []
+    for index, token in enumerate(cmd):
+        if token == key:
+            if index + 1 < len(cmd) and not cmd[index + 1].startswith("--"):
+                matches.append(cmd[index + 1])
+            else:
+                return None
+        elif token.startswith(key + "="):
+            matches.append(token[len(key) + 1:])
+    return matches[0] if len(matches) == 1 else None
+
+
+def flash_observed_candidate(flash: dict) -> tuple[dict, list[str], list[str]]:
+    """Inventory the *actual* legacy Flash argv, without 27B-only normalization.
+
+    The original Flash launcher has a larger flag set than the canonical 27B
+    runtime and historically used a writable /hf bind. Neither can be silently
+    converted into a production reinstall recipe. Report exact observed facts
+    and model-specific review gaps; reject uncertain model/port/GPU identity.
+    """
     issues: list[str] = []
+    advisories: list[str] = []
+    config = flash.get("Config") or {}
+    host = flash.get("HostConfig") or {}
+    cmd = config.get("Cmd")
+    if (not isinstance(cmd, list) or not 1 <= len(cmd) <= 256
+            or any(not isinstance(x, str) or not x or len(x) > 4096 for x in cmd)):
+        raise ValueError("FLASH_CMD_MISSING_OR_UNBOUNDED")
+    candidates = [x for x in cmd if x.startswith(
+        "/hf/hub/models--nvidia--Qwen3.8-Flash-Next-NVFP4/snapshots/")]
+    checkpoint = candidates[0] if len(candidates) == 1 else None
+    if not checkpoint or not re.fullmatch(
+            r"/hf/hub/models--nvidia--Qwen3[.]8-Flash-Next-NVFP4/snapshots/[0-9a-f]{40}",
+            checkpoint):
+        issues.append("FLASH_CHECKPOINT_REVISION_UNVERIFIED")
+    served = _flash_arg(cmd, "--served-model-name")
+    if served != "qwen3.8-flash-next":
+        issues.append("FLASH_SERVED_ID_NOT_QUALIFIED")
+    if _flash_arg(cmd, "--port") != "8000":
+        issues.append("FLASH_INTERNAL_PORT_UNVERIFIED")
+    mounts = [m for m in flash.get("Mounts") or []
+              if isinstance(m, dict) and m.get("Destination") == "/hf"]
+    mount = mounts[0] if len(mounts) == 1 else {}
+    mount_info = {
+        "destination": mount.get("Destination"),
+        "read_only": mount.get("RW") is False,
+        "type": mount.get("Type"),
+    }
+    source = mount.get("Source")
+    if (mount_info.get("destination") != "/hf"
+            or mount_info.get("type") != "bind"
+            or not isinstance(source, str) or not source.startswith("/")):
+        issues.append("FLASH_HOST_HF_CACHE_BIND_UNVERIFIED")
+    if mount and mount.get("RW") is True:
+        advisories.append("FLASH_LEGACY_HF_MOUNT_WRITABLE_REINSTALL_REVIEW")
+    env: dict[str, str] = {}
+    for value in config.get("Env") or []:
+        if isinstance(value, str) and "=" in value:
+            k, v = value.split("=", 1)
+            if k in ("HF_HOME", "HF_HUB_OFFLINE"):
+                env[k] = v
+    if env.get("HF_HOME") != "/hf" or env.get("HF_HUB_OFFLINE") != "1":
+        issues.append("FLASH_OFFLINE_CACHE_ENV_UNVERIFIED")
+    requests = host.get("DeviceRequests") or []
+    all_gpu = any(isinstance(req, dict)
+                  and req.get("Count") == -1
+                  and any(isinstance(group, list) and "gpu" in group
+                          for group in req.get("Capabilities") or [])
+                  for req in requests)
+    if not all_gpu:
+        issues.append("FLASH_GPU_CONFIGURATION_UNVERIFIED")
+    port_bindings = (host.get("PortBindings") or {}).get("8000/tcp")
+    ports = sorted(str(v.get("HostPort")) for v in port_bindings
+                   if isinstance(v, dict)) if isinstance(port_bindings, list) else []
+    if not ports or any(v != "8000" for v in ports):
+        issues.append("FLASH_HOST_PORT_CONFIGURATION_UNVERIFIED")
+    normalized = None
+    normalization_error = None
+    try:
+        normalized = recipe_drift.command_flags(cmd)
+    except (ValueError, TypeError) as exc:
+        normalization_error = str(exc)[:120]
+        advisories.append("FLASH_LEGACY_COMMAND_NEEDS_MODEL_SPECIFIC_NORMALIZER")
+    candidate = {
+        "container_id": flash.get("Id"),
+        "image_id": flash.get("Image"),
+        "raw_cmd": cmd,
+        "entrypoint": config.get("Entrypoint"),
+        "cmd": normalized,
+        "cmd_normalization_error": normalization_error,
+        "cmd_normalized": normalized is not None,
+        "gpu": "all" if all_gpu else "UNVERIFIED",
+        "ipc_mode": host.get("IpcMode"), "env": env,
+        "hf_mount": mount_info, "hf_cache_source": source,
+        "api_port_bindings": ports,
+        "shm_size": host.get("ShmSize"),
+        "served_id_observed_in_cmd": served,
+        "checkpoint_observed_in_cmd": checkpoint,
+    }
+    return candidate, issues, advisories
+
+
+def stage_e(snapshot: dict, *, historical: dict | None = None) -> dict:
+    """Flash discovery is read-only; observed legacy argv is NOT install approval."""
+    issues: list[str] = []
+    advisories: list[str] = []
     docs = snapshot.get("containers") or {}
     flash = docs.get("qwen38-flash")
     qualified = historical if historical is not None else operational_switch.historical_p3_receipts()
@@ -187,25 +292,8 @@ def stage_e(snapshot: dict, *, historical: dict | None = None) -> dict:
         if (flash.get("State") or {}).get("Running") is True:
             issues.append("FLASH_ACTIVE_SOURCE_NOT_SAFE_TO_CLASSIFY_AS_PRESERVED")
         try:
-            details = recipe_drift.observed_runtime(flash)
-            candidate = {
-                "container_id": ident,
-                "image_id": details["image_id"],
-                "cmd": details["cmd"],
-                "gpu": details["gpu"], "ipc_mode": details["ipc_mode"],
-                "env": details["env"], "hf_mount": details["hf_mount"],
-                "hf_cache_source": details.get("hf_cache_source"),
-                "api_port_bindings": details["api_port_bindings"],
-                "shm_size": details["shm_size"],
-                "served_id_observed_in_cmd": details["cmd"].get("--served-model-name"),
-                "checkpoint_observed_in_cmd": details["cmd"].get("_checkpoint"),
-            }
-            if candidate["served_id_observed_in_cmd"] != "qwen3.8-flash-next":
-                issues.append("FLASH_SERVED_ID_NOT_QUALIFIED")
-            if candidate["gpu"] != "all" or candidate["api_port_bindings"] != ["8000"]:
-                issues.append("FLASH_GPU_OR_PORT_CONFIG_UNVERIFIED")
-            if candidate["hf_mount"] != {"destination": "/hf", "read_only": True, "type": "bind"}:
-                issues.append("FLASH_HF_BIND_NOT_READ_ONLY")
+            candidate, command_issues, advisories = flash_observed_candidate(flash)
+            issues.extend(command_issues)
         except (ValueError, TypeError, KeyError):
             issues.append("FLASH_RUNTIME_CONFIG_UNPARSEABLE")
     if qualified.get("status") != "LOCAL_P3_A_B_C_RECEIPTS_VERIFIED":
@@ -214,22 +302,26 @@ def stage_e(snapshot: dict, *, historical: dict | None = None) -> dict:
         recipe, _ = recipe_drift.load_desired("flash-next")
         canonical_recipe_registered = True
         if candidate is not None and isinstance(flash, dict):
-            desired = recipe_drift.desired_runtime(
-                recipe, cache_source=candidate.get("hf_cache_source"))
-            observed = recipe_drift.observed_runtime(flash)
-            issues.extend("FLASH_CANONICAL_RECIPE_DRIFT:" + row["field"]
-                          for row in recipe_drift.difference(desired, observed))
+            try:
+                desired = recipe_drift.desired_runtime(
+                    recipe, cache_source=candidate.get("hf_cache_source"))
+                observed = recipe_drift.observed_runtime(flash)
+                issues.extend("FLASH_CANONICAL_RECIPE_DRIFT:" + row["field"]
+                              for row in recipe_drift.difference(desired, observed))
+            except (ValueError, TypeError, KeyError):
+                issues.append("FLASH_CANONICAL_RECIPE_NORMALIZER_UNQUALIFIED")
     except (OSError, ValueError, TypeError, KeyError):
         canonical_recipe_registered = False
     if not canonical_recipe_registered:
         issues.append("FLASH_CANONICAL_REINSTALL_RECIPE_NOT_QUALIFIED")
+    only_recipe_missing = (
+        set(issues) == {"FLASH_CANONICAL_REINSTALL_RECIPE_NOT_QUALIFIED"})
     return result(
         "P3-E", "READ_ONLY_PASS" if not issues and canonical_recipe_registered
-        else "DRAFT_REVIEW_REQUIRED" if candidate and
-             set(issues) == {"FLASH_CANONICAL_REINSTALL_RECIPE_NOT_QUALIFIED"}
-        else "BLOCKED", issues=issues,
+        else "DRAFT_REVIEW_REQUIRED" if candidate and only_recipe_missing
+        else "BLOCKED", issues=issues, advisories=advisories,
         observed_candidate=candidate, canonical_recipe_registered=canonical_recipe_registered,
-        limitation="Observed Docker values are NOT a qualified/released reinstall recipe.")
+        limitation="Legacy observed Flash argv, flags and writable cache are NOT a qualified reinstall recipe.")
 
 
 def stage_f(*, suites: tuple[str, ...] = CPU_SUITES,
