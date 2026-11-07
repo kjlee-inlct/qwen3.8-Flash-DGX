@@ -19,6 +19,7 @@ from scripts.manager import p2_27b_gpu_trial as gpu
 from scripts.manager import p3_persistent_switch as p3
 from scripts.manager.operational_audit import inspect_journal
 from scripts.manager.service_status import inspect_live_status
+from scripts.manager import recipe_drift
 
 ROOT = Path.home() / ".local/state/blazux-wizard/operational-switch"
 P3_ROOT = p3.ROOT
@@ -82,6 +83,55 @@ def historical_p3_receipts(*, root: Path = P3_ROOT) -> dict[str, Any]:
     }
 
 
+
+def current_container_lineage(model: str, doc: dict, *, history: dict
+                              ) -> tuple[str, str, str, str | None, list[str]]:
+    """Resolve CURRENT Docker ID, independently of P3 historical container ID.
+
+    Until a qualified Flash recipe is recorded, Flash must still be the
+    exact historically accepted instance. 27B may be the old accepted
+    instance OR a verified, recipe-matching canonical replacement.
+    """
+    entry = (history.get("records") or {}).get("a") or {}
+    issues: list[str] = []
+    identity = doc.get("Id")
+    image = doc.get("Image")
+    if not p3.SHA.fullmatch(str(identity or "")):
+        issues.append("CURRENT_CONTAINER_ID_INVALID")
+    if not isinstance(image, str) or not image.startswith("sha256:"):
+        issues.append("CURRENT_CONTAINER_IMAGE_INVALID")
+    if model == "flash-next":
+        kind = "HISTORICAL_P3_INSTANCE"
+        if identity != entry.get("flash_id") or image != entry.get("flash_image"):
+            issues.append("FLASH_NEW_INSTANCE_NEEDS_QUALIFIED_RECIPE")
+        return identity, image, kind, None, issues
+    if model != "27b":
+        return identity, image, "UNQUALIFIED", None, ["MODEL_NOT_QUALIFIED"]
+    labels = ((doc.get("Config") or {}).get("Labels") or {})
+    if labels.get("blazux.recipe") == "qwen38-27b":
+        kind = "CANONICAL_RECIPE"
+        try:
+            recipe, recipe_sha = recipe_drift.load_desired("27b")
+            expected = recipe_drift.desired_runtime(recipe)
+            actual = recipe_drift.observed_runtime(doc)
+            diffs = recipe_drift.difference(expected, actual)
+            issues.extend("CANONICAL_27B_RUNTIME_DRIFT:" + row["field"]
+                          for row in diffs)
+            if image != recipe["runtime"]["local_image_id"]:
+                issues.append("CANONICAL_27B_IMAGE_CHANGED")
+        except (OSError, RuntimeError, ValueError, TypeError, KeyError,
+                json.JSONDecodeError):
+            issues.append("CANONICAL_27B_RECIPE_UNVERIFIED")
+            recipe_sha = None
+        return identity, image, kind, recipe_sha, issues
+    kind = "HISTORICAL_P3_INSTANCE"
+    if (identity != entry.get("id_27b")
+            or image != entry.get("image_27b")
+            or labels.get(p3.LABEL) != entry.get("plan_id")):
+        issues.append("27B_UNQUALIFIED_INSTANCE_OR_LINEAGE")
+    return identity, image, kind, None, issues
+
+
 def make_plan(
     target: str, *,
     live: Callable[[], dict] = inspect_live_status,
@@ -117,13 +167,8 @@ def make_plan(
     source_doc, target_doc = None, None
     source_id, target_id = None, None
     source_image, target_image = None, None
-    if source in SUPPORTED:
-        key_source = "flash_id" if source == "flash-next" else "id_27b"
-        key_target = "flash_id" if target == "flash-next" else "id_27b"
-        image_source = "flash_image" if source == "flash-next" else "image_27b"
-        image_target = "flash_image" if target == "flash-next" else "image_27b"
-        source_id, target_id = a.get(key_source), a.get(key_target)
-        source_image, target_image = a.get(image_source), a.get(image_target)
+    source_lineage, target_lineage = None, None
+    source_recipe_sha, target_recipe_sha = None, None
     # Read the full write-ahead event chain, not just the current snapshot:
     # a SIGKILL between fsync(journal) and replace(snapshot) must fail closed.
     try:
@@ -139,17 +184,20 @@ def make_plan(
             else:
                 issues.extend(p3._gpu_conflicts(names[source], run, inspect))
                 source_doc, target_doc = inspect(names[source]), inspect(names[target])
+                (source_id, source_image, source_lineage,
+                 source_recipe_sha, source_issues) = current_container_lineage(
+                    source, source_doc, history=qualification)
+                (target_id, target_image, target_lineage,
+                 target_recipe_sha, target_issues) = current_container_lineage(
+                    target, target_doc, history=qualification)
+                issues.extend(source_issues)
+                issues.extend(target_issues)
                 issues.extend(p3._container_checks(
                     source_doc, name=names[source], image=source_image,
                     expected_id=source_id, running=True))
                 issues.extend(p3._container_checks(
                     target_doc, name=names[target], image=target_image,
                     expected_id=target_id, running=False))
-                if (target == "27b" or source == "27b"):
-                    check = target_doc if target == "27b" else source_doc
-                    label = ((check.get("Config") or {}).get("Labels") or {}).get(p3.LABEL)
-                    if label != a.get("plan_id"):
-                        issues.append("PRESERVED_27B_PROVENANCE_MISMATCH")
         except (OSError, RuntimeError, TypeError, ValueError,
                 subprocess.TimeoutExpired):
             issues.append("DOCKER_EXCLUSIVITY_OR_IDENTITY_UNVERIFIED")
@@ -159,6 +207,9 @@ def make_plan(
         "source": source, "target": target,
         "source_id": source_id, "target_id": target_id,
         "source_image": source_image, "target_image": target_image,
+        "source_lineage": source_lineage, "target_lineage": target_lineage,
+        "source_recipe_sha": source_recipe_sha,
+        "target_recipe_sha": target_recipe_sha,
         "p3_receipt_sha256": qualification["receipt_sha256"],
         "window": window, "port": 8000,
     }
@@ -169,7 +220,11 @@ def make_plan(
                       target_served_id=p3.IDS[target],
                       source_container_id=source_id, target_container_id=target_id,
                       source_image=source_image, target_image=target_image,
+                      source_lineage=source_lineage, target_lineage=target_lineage,
+                      source_recipe_sha256=source_recipe_sha,
+                      target_recipe_sha256=target_recipe_sha,
                       p3_a_plan_id=a.get("plan_id"),
+                      current_ids_from_live_docker=True,
                       historical_acceptance=qualification["status"],
                       expires_at_epoch_seconds=(window + 1) * 600,
                       plan_id=candidate_id)
