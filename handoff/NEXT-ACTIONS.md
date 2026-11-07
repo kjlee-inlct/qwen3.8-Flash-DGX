@@ -1,3 +1,16 @@
+## 2026-11-07 — NEXT: VERIFY CURRENT-ID-AWARE SWITCH PREVIEW ON DGX (READ ONLY)
+
+Current operator DGX observation already confirms **canonical 27B `diff=[]`, API LIVE_SERVICE_VERIFIED**, exact actual host HF source `/home/inlc/.cache/huggingface`, and no need to recreate active 27B. Later source code updated ordinary switch preview/executor to accept fresh current canonical 27B ID, retaining old P3 receipts only as history; 814/814 CPU/Fake-DGX tests PASS, CI 42367665200.
+
+Next operator safe checks after clean git fast-forward:
+`./wizard.sh model 27b recipe-diff --cache-source /home/inlc/.cache/huggingface --json`
+`./wizard.sh switch flash-next-27b operational --target flash-next --plan --json`
+`./wizard.sh service manager status --json`.
+
+Investigate any new PREVIEW blockers without overriding. Do not perform `--execute`. Remaining engineering: qualified Flash-Next runtime recipe and host source policy, immutable benchmark pointer promotion, verified backup retirement, robust crash consistency/rollback, independent GPU exclusivity/port process ownership, real DGX maintenance acceptance and user-facing lifecycle release. Historical P2-FINAL/P3-C remain complete and must not replay. No new SHA approval was given here. See `docs/WIZARD-27B-LIVE-DRIFT-CURRENT-ID-20261107.md`.
+
+---
+
 ## 2026-11-07 — ACTIVE NEXT ACTIONS after Wizard SOURCE implementation (CI 799/799 PASS)
 
 1. Pull the latest feature/recipe-wizard-handoff commit with a clean fast-forward on DGX. Run READ-ONLY ./wizard.sh model 27b recipe-diff --json and ./wizard.sh service manager status --json; inspect false-positive differences against current 27B actual Docker Cmd, mount RO/source, GPU, ports, API. No execute.
