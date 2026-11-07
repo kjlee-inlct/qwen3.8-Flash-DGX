@@ -31,7 +31,11 @@ from scripts.manager import p3_persistent_switch as p3
 from scripts.manager.operational_audit import inspect_journal
 from scripts.manager.operational_probe import verify_chat
 from scripts.manager.operational_switch import historical_p3_receipts, ROOT as OPS_ROOT
-from scripts.manager.p2_27b_benchmark import measure as benchmark_measure
+from scripts.manager.p2_27b_benchmark import (
+    CANONICAL_MAX_TOKENS, CANONICAL_VERSION, SEED as BENCHMARK_SEED,
+    REQUEST_COUNT as BENCHMARK_REQUEST_COUNT,
+    measure as benchmark_measure,
+)
 from scripts.manager.p2_27b_tool_calling import probe as structured_probe
 from scripts.manager.p2_27b_tool_streaming import probe_stream
 from scripts.manager.p2_27b_tool_live_trial import ROOT as TRIAL_ROOT, TRIAL_LABEL
@@ -348,9 +352,30 @@ def _load_recipe() -> tuple[dict, str]:
             or obj["native_tools"]["reasoning_parser"] != "qwen3"
             or obj["native_tools"]["chat_template_sha256"] != EXPECTED_TEMPLATE_SHA256
             or obj["acceptance"]["fresh_benchmark_required"] is not True
-            or obj["acceptance"]["backup_deletion_only_after_all_pass"] is not True):
+            or obj["acceptance"]["backup_deletion_only_after_all_pass"] is not True
+            or obj["benchmark"]["version"] != CANONICAL_VERSION
+            or obj["benchmark"]["model"] != SERVED
+            or obj["benchmark"]["requests"] != BENCHMARK_REQUEST_COUNT
+            or obj["benchmark"]["max_tokens"] != CANONICAL_MAX_TOKENS
+            or obj["benchmark"]["seed"] != BENCHMARK_SEED
+            or obj["benchmark"]["temperature"] != 0
+            or obj["benchmark"]["concurrency"] != 1
+            or obj["benchmark"]["stream"] is not True
+            or obj["benchmark"]["stream_options"] != {"include_usage": True}
+            or obj["benchmark"]["chat_template_kwargs"] != {"enable_thinking": False}):
         raise ValueError("CANONICAL_27B_RECIPE_POLICY_MISMATCH")
     return obj, hashlib.sha256(raw).hexdigest()
+
+
+def _canonical_benchmark() -> dict[str, Any]:
+    """Read ONLY the pinned canonical benchmark profile from recipe."""
+    recipe, _ = _load_recipe()
+    profile = recipe["benchmark"]
+    return benchmark_measure(
+        chat_template_kwargs=profile["chat_template_kwargs"],
+        max_tokens=profile["max_tokens"],
+        version=profile["version"],
+    )
 
 
 def _candidate(recipe: dict, mount: Path, image_id: str, plan: str) -> list[str]:
@@ -564,6 +589,7 @@ def make_plan(*,
             "backup_name": backup, "failed_name": failed,
             "image_id": source["Image"], "cache_mount": str(mount),
             "recipe_sha256": recipe_sha,
+            "benchmark_profile": recipe["benchmark"],
             "previous_reconciled_attempt": prior,
             "expires_at_epoch_seconds": (window+1)*600,
             "port": 8000, "target_container": SOURCE_CONTAINER,
@@ -592,9 +618,7 @@ def execute(plan_id: str, downtime_ack: str, delete_ack: str, *,
             chat: Callable[[str], bool] = verify_chat,
             tools: Callable[[], dict] = structured_probe,
             stream: Callable[[], dict] = probe_stream,
-            benchmark: Callable[[], dict] = lambda: benchmark_measure(
-                chat_template_kwargs={"enable_thinking": False}
-            ),
+            benchmark: Callable[[], dict] = _canonical_benchmark,
             api: Callable[[str], bool] = gpu.api_ready,
             root: Path = ROOT, clock: Callable[[], float] = time.time
             ) -> tuple[int, dict]:
@@ -743,6 +767,12 @@ def execute(plan_id: str, downtime_ack: str, delete_ack: str, *,
                 ),
             })
             if (measured.get("status") != "PASS"
+                    or measured.get("benchmark_version") !=
+                        recipe["benchmark"]["version"]
+                    or measured.get("max_tokens") !=
+                        recipe["benchmark"]["max_tokens"]
+                    or measured.get("chat_template_kwargs") !=
+                        recipe["benchmark"]["chat_template_kwargs"]
                     or measured.get("model") != SERVED
                     or measured.get("requests") != 3
                     or not isinstance(measured.get("samples"), list)
