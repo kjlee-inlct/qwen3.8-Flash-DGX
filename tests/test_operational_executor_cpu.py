@@ -99,8 +99,6 @@ class FakeOperatingTransactionCPU(unittest.TestCase):
         for stage, bytes_before in original.items():
             self.assertEqual((self.fake.p3_root / ("stage-" + stage + ".json")).read_bytes(),
                              bytes_before)
-        self.assertEqual(self.commands[-1][:2], ["docker", "ps"] if
-                         self.commands[-1][:2] == ["docker", "ps"] else self.commands[-1][:2])
         self.assertFalse(any(cmd[:2] == ["docker", "rm"] for cmd in self.commands))
 
     def test_flash_to_27b_success(self):
@@ -128,10 +126,7 @@ class FakeOperatingTransactionCPU(unittest.TestCase):
             data = self.planner(target, root=root)
             data["plan_id"] = "0" * 64
             return data
-        with patch.object(self, "planner", wraps=drifted) if False else patch.object(
-                exe, "make_plan", wraps=op.make_plan):
-            # Pass the drifted planner explicitly.
-            rc, doc = exe.execute(
+        rc, doc = exe.execute(
                 "flash-next", good, exe.ACK_DOWNTIME,
                 exe.ACK_TARGET["flash-next"], root=self.fake.ops,
                 planner=drifted, run=self.runner,
