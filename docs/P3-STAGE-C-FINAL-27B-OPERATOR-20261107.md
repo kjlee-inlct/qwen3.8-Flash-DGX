@@ -1,3 +1,28 @@
+## 2026-11-07 — Expiring plan-window UX fixed in tracked Stage-C operator
+
+**Actual DGX evidence prompting this change:** two sequential operator `bash scripts/temporary/p3-stage-c-operator.sh --execute` calls near the end of the 10:00–10:10 KST canonical plan window (operator report UTC `20261107T010814Z` and `20261107T010930Z`) both returned `BLOCKED`, `issues=["P3_C_INSUFFICIENT_TIME_FOR_THREE_APPROVALS"]`, `approval_accepted=false`, `executed=false`, `execution_dispatched=false` while current source was Flash-Next `qwen3.8-flash-next`. The unchanged plan expired at 10:10 KST; 10:08:14 left only 106s and 10:09:30 left 30s, below the explicit 120s human-input minimum. These are **non-mutating safe refusals**, not C switch failures, permission, or P1/P2 evidence invalidity.
+
+New **temporary wrapper-only** behavior (source/CPU, not yet executed on actual DGX):
+
+1. `--plan` remains strictly read-only, immediately returning original Wizard readiness and SHA. It never waits, prompts for approval, or mutates services.
+2. On a real TTY with `--execute`, after the full original A/B/P1/P2 provenance and live Flash preflight succeeds, check how many seconds remain in the short-lived plan.
+3. If **at least 120s remain**, display the **current exact SHA** and the same three independent manual confirmations.
+4. If **fewer than 120s remain**, print an explicit note that no service changes will occur and **wait only for another canonical read-only plan** (max 150s total; normally until the next 10-minute plan boundary), polling only `service manager status --json` and `switch flash-next-27b stage-c --plan --json`. The old SHA and any previous A/B/downtime approval are **discarded**. Require the newly read plan to have a different SHA, at least 120s left, unchanged immutable original preserved containers, original post-B P1 PASS and P2 proof, and no new issues. Unexpected pre-boundary hash rotation, active service drift, missing receipt, timeout, Ctrl+C or Git dirty state stops without calling the execute command.
+5. **Only AFTER** a fully revalidated new plan is READY may the script prompt for the NEW 64-character SHA (without square brackets), `I_ACCEPT_FLASH_NEXT_DOWNTIME`, and `I_SEPARATELY_AUTHORIZE_FINAL_27B_STAGE_C`. It then rechecks the *typed SHA* and current live source immediately before invoking the unchanged canonical guarded Wizard. Canonical Wizard remains the only Docker stop/start/restore authority and independently checks the SHA under the transition lock. No automatic C activation or approval transfer.
+6. New operator reports include `plan_refreshed`, `refresh_probes`, `refresh_wait_seconds`, final plan ID and expiry. CPU virtual-clock tests cover safe rollover, no wait for ordinary plan, no rotation timeout, early unexpected SHA rotation, foreign live API, Ctrl+C, no-TTY refusal, and no-reuse/new-prompt cancellation. **No real GPU switch occurs in source changes.**
+
+After the new source commit, CI success and clean operator pull, the next authorized real DGX action remains:
+
+```bash
+cd ~/Workspace/llm/blazux-orcarouter
+git pull --ff-only origin feature/recipe-wizard-handoff
+bash scripts/temporary/p3-stage-c-operator.sh --execute
+```
+
+Run this only under the **previously given explicit Flash downtime/27B final-switch consent** and a genuine interactive terminal. If near window end, the wrapper performs bounded **read-only** refresh first, then obtains **three NEW manual confirmations**. `BLOCKED`, `CANCELLED`, `RECOVERY_FAILED` or `OPERATOR_REVIEW_REQUIRED` must halt for evidence review, not provoke blind execution retries. Only actual confirmed `P3_C_PASS_FINAL_27B_ACTIVE` and canonical `stage-c.json` with matching API identity prove C completed. Successful C preserves the original Flash container/weights.
+
+---
+
 > **2026-11-07 approval UX correction:** After the actual accidental leading `[` input, the new Stage-C wrapper explicitly prints `Paste the literal values ONLY; do not type '[' or ']'` and prompts `Paste exactly <FULL_SHA_OR_ACK> (no brackets; Enter cancels):`. It no longer renders square brackets around the required value. Copy only the 64 lowercase hex characters for approval #1; the two downtime/final-C acknowledgement literals remain independently typed. This is a source-only UX fix, NOT a new C service execution or authorization.
 
 ---
