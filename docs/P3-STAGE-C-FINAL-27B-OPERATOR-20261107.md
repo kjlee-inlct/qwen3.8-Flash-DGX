@@ -1,3 +1,11 @@
+## Final evidence status — P3-C CLOSED (historical one-off, no replay), 2026-11-07
+
+The actual operator-directed P3-C final Flash-Next -> pinned NVIDIA 27B transition already returned **P3_C_PASS_FINAL_27B_ACTIVE** on 2026-11-07 at 10:19:39 KST. The independently observed API served model was qwen3.8-27b at :8000 with no issues, and the immutable historical P3-A/B/C receipts remain valid. **This stage is DONE and archived; do not execute Stage-C again.**
+
+A separate 2026-11-07 decision allows ONE fresh canonical 27B Native Tools benchmark-v2 recipe migration trial using a completely independent TTY approval and journal. If that second trial fails, defer the **remaining native tools/benchmark implementation work to P8**; it does NOT reopen or invalidate this already-PASS P3-C historical stage. The normal everyday Wizard production switch remains release-gated and distinct. See docs/P8-27B-NATIVE-RECIPE-DEFER-IF-V2-FAIL-20261107.md.
+
+---
+
 > **FINAL P3-C CLOSED — 2026-11-07.** Original one-off P3 A/B/C acceptance had already completed REAL DGX PASS; historic stage-C receipt is immutable, and this document is NOT an instruction to replay Stage C. Later independent ordinary operational switching 27B→Flash and Flash→27B also operator-reported PASS (separate contract, newest active 27B); normal main Wizard execution UX remains release-gated. The newly appended **P2-FINAL Tool Calling** item does not reopen P3-C and is tracked separately in `docs/P2-27B-FINAL-TOOL-CALLING-ACCEPTANCE-20261107.md`. Do not delete/recreate original pinned P2/P3 containers, rewrite receipts, or alter HF cache. Independent post-reverse status/audit and real Tool Calling acceptance have not yet been supplied.
 
 ---
