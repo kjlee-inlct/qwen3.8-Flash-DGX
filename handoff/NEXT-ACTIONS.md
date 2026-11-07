@@ -1,3 +1,13 @@
+## 2026-11-07 — STAGE-C TIME WINDOW HANDLING: NEXT OPERATOR ACTION
+
+After latest source CI PASS and a clean `git pull --ff-only origin feature/recipe-wizard-handoff`, the operator can run `bash scripts/temporary/p3-stage-c-operator.sh --execute` on actual DGX **only if explicit live Flash-Next downtime consent remains in force**. Current user explicitly authorized Flash-Next stop and final NVIDIA 27B switch earlier. The two attempted `--execute` commands at 10:08:14 and 10:09:30 KST were safely BLOCKED by <=120s remaining; **no dispatch occurred**. Keep original Flash :8000 active until canonical C actually succeeds.
+
+The wrapper now handles the edge of the canonical 10-minute window: if current plan has >=120s remaining, show exact three TTY prompts; if shorter, perform only read-only status + Stage C plan rechecks, bounded <=150 seconds, for a NEW DIFFERENT SHA with >=120s left. No sleep/refresh in `--plan`; no previous SHA, approvals or old C plan are reused. New plan requires unchanged original A/B receipt lineage, pinned preserved 27B, P2 SHA and post-B P1 PASS. Then user must independently type the new full 64-char SHA without brackets and the exact `I_ACCEPT_FLASH_NEXT_DOWNTIME`, `I_SEPARATELY_AUTHORIZE_FINAL_27B_STAGE_C`. Original canonical Wizard rechecks again under its lock; success requires actual 27B API and canonical immutable C receipt. If any BLOCKED/CANCELLED/UNCERTAIN status, HALT and review report, never skip gate or force retries. No PR merge/prune/P1 reruns.
+
+[Updated operator runbook](../docs/P3-STAGE-C-FINAL-27B-OPERATOR-20261107.md). Both Git-published benchmark summaries are ALREADY VERIFIED against original DGX receipts; no repeat bench needed.
+
+---
+
 ## 2026-11-07 — NEXT: STAGE-C FRESH READ-ONLY PLAN; BENCHMARK PUBLICATION ALREADY VERIFIED
 
 **Completed by operator on actual DGX:** `bash scripts/temporary/verify-published-benchmarks.sh` checked private Flash and NVIDIA 27B original JSONs against two Git-tracked metric-only public summaries: both `VERIFIED`, `issues=[]`, `executed=false`; original SHA256s match expected. No need to repeat publication verification or run GPU benchmarks without new reason. Git `benchmarks/published/` entries are now actual source-reconciled and private originals remain local.
