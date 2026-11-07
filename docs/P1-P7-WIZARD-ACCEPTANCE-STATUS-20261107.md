@@ -1,3 +1,11 @@
+## LATEST — P2-FINAL Tool Calling scope; P3-C already CLOSED; ordinary switch both-way backend PASS
+
+Confirmed current model in user's newest supplied ordinary acceptance result is `27b` after actual **Flash→27B** ordinary trial `PASS`, distinct from original **P3-C** historical one-off Flash→27B `PASS`. Earlier new ordinary 27B→Flash also REAL PASS and separately post-checked. Independent status/audit AFTER most recent reverse is still missing. `./wizard.sh` main menu remains **release-gated**, so a two-way one-off operator trial is NOT proof of normal everyday menu execution UX.
+
+P2 earlier pinned 27B download/loader/runtime trial/benchmark/Flash restore is REAL PASS. User added **last P2 acceptance item**: official vLLM **Qwen3.8-27B** Native Tool Calling on pinned NVIDIA variant, using `--enable-auto-tool-choice --tool-call-parser qwen3_coder --reasoning-parser qwen3`. Source opt-in profile and benign localhost structured tool-cycle probe implemented, existing original 27B startup untouched. **P2-FINAL live tool activation, streaming, reasoning, Open WebUI Native and preserved-container-safe migration NOT YET VERIFIED**. Thus do not mark newly expanded P2 acceptance all PASS. Historical **P3-C original real PASS stays CLOSED/IMMUTABLE** and requires no further Stage-C execution. See `docs/P2-27B-FINAL-TOOL-CALLING-ACCEPTANCE-20261107.md`.
+
+---
+
 ## New actual DGX verification — 2026-11-07: post-ordinary 27B→Flash status and journal PASS
 
 **First real ordinary 27B→Flash PASS** now additionally confirmed via independently issued read-only DGX commands: Flash is sole active `qwen3.8-flash-next` `LIVE_SERVICE_VERIFIED`, `issues=[]` on :8000, and independent operating journal chain audit `VERIFIED` / terminal `COMMITTED` / 7 events, `issues=[]`. Reverse ordinary **Flash→27B is still NOT_RUN**: its preflight is `READY_FOR_SEPARATE_TRIAL_APPROVAL`, issues none, with an ephemeral plan SHA and 276 seconds remaining **at capture only**. No reverse action or failure-recovery injection has been performed. Production guided switch menu remains gate-locked; old P3 A/B/C are historical. No incorrect assumption that the read-only service's `gpu_exclusivity_verified=false` equates to a live GPU conflict.
