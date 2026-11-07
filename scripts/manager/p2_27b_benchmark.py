@@ -157,7 +157,11 @@ def measure(*, opener=urlopen, clock=time.perf_counter,
     before = memory_reader()
     samples = []
     for index, prompt in enumerate(PROMPTS):
-        payload = {"model": trial.SERVED, "messages": [{"role": "user", "content": prompt}],
+        # Exact NVIDIA Jinja nonthinking control replaces informal /no_think
+        # prompt suffix in the canonical v2 acceptance protocol. Keep v1 intact.
+        user_prompt = (prompt.removesuffix(" /no_think")
+                       if version == CANONICAL_VERSION else prompt)
+        payload = {"model": trial.SERVED, "messages": [{"role": "user", "content": user_prompt}],
                    "temperature": 0, "seed": SEED, "max_tokens": max_tokens,
                    "stream": True, "stream_options": {"include_usage": True}}
         # The canonical Native Tools runtime is qualified with the exact
@@ -199,7 +203,7 @@ def measure(*, opener=urlopen, clock=time.perf_counter,
             reasons.append("TTFT_NOT_OBSERVED")
         samples.append({
             "index": index,
-            "prompt_sha256": hashlib.sha256(prompt.encode()).hexdigest(),
+            "prompt_sha256": hashlib.sha256(user_prompt.encode()).hexdigest(),
             "prompt_tokens": prompt_tokens, "completion_tokens": tokens,
             "latency_sec": round(elapsed, 6),
             "ttft_sec": round(ttft, 6) if ttft is not None else None,
