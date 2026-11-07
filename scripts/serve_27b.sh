@@ -21,6 +21,8 @@ usage() {
 NVIDIA 27B dedicated entrypoint:
   scripts/serve_27b.sh --plan       Read-only pinned launch/source/live-API preview
   scripts/serve_27b.sh --status     Read-only immutable snapshot/runtime audit
+  scripts/serve_27b.sh --tools-profile   Read-only official 27B vLLM tool/reasoning flags
+  scripts/serve_27b.sh --tools-probe     Bounded LOCAL inference tool-call/continuation probe (no Docker change)
   scripts/serve_27b.sh --bench-plan       Read-only P2 27B benchmark plan\n  scripts/serve_27b.sh --bench-execute --approve-plan SHA64 --ack-downtime ACK\n  scripts/serve_27b.sh --trial-plan       Read-only exact GPU trial approval plan
   scripts/serve_27b.sh --trial-execute --approve-plan SHA64 --ack-downtime ACK
   scripts/serve_27b.sh --help       Show usage
@@ -47,6 +49,14 @@ case "$MODE" in
     ;;
   --status|status)
     exec "$ROOT/wizard.sh" model 27b status --inspect-runtime --json
+    ;;
+  --tools-profile)
+    cd "$ROOT"
+    exec python3 -m scripts.manager.p2_27b_tool_calling profile --json
+    ;;
+  --tools-probe)
+    cd "$ROOT"
+    exec python3 -m scripts.manager.p2_27b_tool_calling probe --json
     ;;
   --execute|--start|start|--switch|switch)
     echo "BLOCKED: 27B GPU operations need a separately approved runtime and rollback executor" >&2
