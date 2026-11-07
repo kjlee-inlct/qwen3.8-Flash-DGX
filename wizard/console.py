@@ -176,6 +176,41 @@ def _switch_guided(model: str) -> None:
     guided(model)
 
 
+def _lifecycle_review(model: str) -> None:
+    """Meaningful recipe drift and lifecycle decision UX, NEVER a mutation."""
+    from scripts.manager.recipe_drift import plan
+    choices = ("status", "start", "stop", "restart", "switch", "install",
+               "reinstall", "recreate", "remove")
+    while True:
+        print("\n" + model + " — recipe and container lifecycle (read only)")
+        for number, action in enumerate(choices, 1):
+            print("  " + str(number) + ". " + action)
+        print("  0. Back")
+        picked = _input("Inspect action (0 back): ")
+        action = _choice(picked, list(choices))
+        if action is None:
+            return
+        if not action:
+            print("Unknown lifecycle action; nothing executed.")
+            continue
+        report = plan(model, action)
+        print("  State: " + report["status"])
+        print("  Installed: " + str(report.get("installed", "unverified"))
+              + " | running: " + str(report.get("running", "unverified")))
+        print("  Decision: " + str(report.get("decision", "BLOCKED")))
+        print("  Current container ID: " + str(report.get("container_id") or "none"))
+        print("  Desired recipe SHA: " + str(report.get("recipe_sha256") or "unqualified"))
+        for row in report.get("diff", []):
+            print("  Changed " + row["field"] + ":")
+            print("    desired: " + str(row["desired"]))
+            print("    observed: " + str(row["observed"]))
+        for issue in report.get("issues", []):
+            print("  BLOCKED: " + issue)
+        for item in report.get("advisories", []):
+            print("  Note: " + item)
+        print("  This is a review only. No service, Docker or cache changes.")
+
+
 def _model_screen(model: str) -> None:
     while True:
         doc = model_workflow(model)
@@ -186,6 +221,7 @@ def _model_screen(model: str) -> None:
         print("  4. Past Verify / Benchmark / transitions (read only)")
         print("  5. Review ordinary model switch (read only)")
         print("  6. Guided operating switch (release gated)")
+        print("  7. Recipe diff / container lifecycle review (read only)")
         print("  0. Back")
         selected = _input("Choice (0 back): ")
         if selected in (None, "0"):
@@ -217,6 +253,8 @@ def _model_screen(model: str) -> None:
             _switch_preview(model)
         elif selected == "6":
             _switch_guided(model)
+        elif selected == "7":
+            _lifecycle_review(model)
         else:
             print("Unknown option; nothing executed.")
 
