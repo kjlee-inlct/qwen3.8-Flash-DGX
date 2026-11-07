@@ -56,6 +56,23 @@ def proc_belongs(pid: int, docker_id: str, *, root: Path = PROC_ROOT) -> bool:
     return docker_id in content or docker_id[:12] in content
 
 
+def _ss_local_port_8000(row: str) -> bool:
+    """Parse the LOCAL listening socket, never the peer's ':8000' text."""
+    columns = row.split()
+    if len(columns) < 5 or columns[0] != "LISTEN":
+        return False
+    host, sep, port = columns[3].rpartition(":")
+    return bool(sep and host and port == "8000")
+
+
+def _ss_port_listeners(output: str) -> list[str]:
+    """Permit IPv4 + IPv6 dual-stack listeners and reject unrelated sockets."""
+    rows = output.splitlines()
+    if len(rows) > 32 or any(len(row) > 4096 for row in rows):
+        raise ValueError("UNBOUNDED_SS_OUTPUT")
+    return [row for row in rows if _ss_local_port_8000(row)]
+
+
 def stage_d(snapshot: dict, live: dict, *,
             run: Callable[..., Any] = gpu.call,
             proc_owner: Callable[[int, str], bool] = proc_belongs) -> dict:
@@ -85,21 +102,35 @@ def stage_d(snapshot: dict, live: dict, *,
         issues.append("DOCKER_HOST_8000_OWNER_NOT_EXCLUSIVE")
     listener_pids: list[int] = []
     gpu_pids: list[int] = []
+    port_listener_rows: list[str] = []
+    ss_returncode: int | None = None
+    ss_diagnostic: str | None = None
     port_pid_verified = False
     gpu_pid_verified = False
     try:
         observed = run(["ss", "-H", "-ltnp", "sport = :8000"], timeout=12)
-        rows = observed.stdout.splitlines() if observed.returncode == 0 else []
-        if len(rows) != 1 or "8000" not in rows[0] or "LISTEN" not in rows[0]:
-            issues.append("HOST_PORT_8000_LISTENER_NOT_UNAMBIGUOUS")
+        ss_returncode = observed.returncode
+        if observed.returncode:
+            ss_diagnostic = str(getattr(observed, "stderr", "") or "")[:300]
+            issues.append("HOST_PORT_SS_QUERY_FAILED")
         else:
-            listener_pids = sorted({int(x) for x in PID.findall(rows[0])})
-            if not listener_pids:
+            # Docker can publish BOTH 0.0.0.0:8000 and [::]:8000.
+            # Every listening socket must have independently attributable PIDs.
+            port_listener_rows = _ss_port_listeners(observed.stdout)
+            if not port_listener_rows:
+                issues.append("HOST_PORT_8000_LISTENER_NOT_OBSERVED")
+            elif len(port_listener_rows) > 4:
+                issues.append("HOST_PORT_8000_LISTENER_COUNT_UNEXPECTED")
+            elif any(not PID.findall(row) for row in port_listener_rows):
                 issues.append("HOST_PORT_PROCESS_PID_UNAVAILABLE")
-            elif docker_id:
-                port_pid_verified = all(proc_owner(pid, docker_id) for pid in listener_pids)
-                if not port_pid_verified:
-                    issues.append("HOST_PORT_PROCESS_CONTAINER_OWNERSHIP_UNVERIFIED")
+            else:
+                listener_pids = sorted({int(pid) for row in port_listener_rows
+                                       for pid in PID.findall(row)})
+                if docker_id:
+                    port_pid_verified = all(proc_owner(pid, docker_id)
+                                            for pid in listener_pids)
+                    if not port_pid_verified:
+                        issues.append("HOST_PORT_PROCESS_CONTAINER_OWNERSHIP_UNVERIFIED")
     except (OSError, RuntimeError, ValueError, subprocess.TimeoutExpired):
         issues.append("HOST_PORT_PROCESS_AUDIT_UNAVAILABLE")
     try:
@@ -130,6 +161,8 @@ def stage_d(snapshot: dict, live: dict, *,
         else "BLOCKED", issues=issues,
         active_model=active, docker_gpu_containers=gpu_names,
         docker_host_port_owners=ports, observed_port_pids=listener_pids,
+        observed_port_listener_rows=[row[:350] for row in port_listener_rows],
+        ss_returncode=ss_returncode, ss_diagnostic=ss_diagnostic,
         observed_gpu_pids=sorted(set(gpu_pids)),
         port_process_ownership_verified=port_pid_verified,
         gpu_process_exclusivity_verified=gpu_pid_verified,
