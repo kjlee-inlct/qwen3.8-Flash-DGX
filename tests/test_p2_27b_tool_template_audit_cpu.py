@@ -22,6 +22,7 @@ def probe_doc(**changes):
         "tool_prompt_rendered": True,
         "tool_result_rendered": True,
         "no_thinking_rendered": True,
+        "thinking_prompt_rendered": True,
         "non_tool_prompt_rendered": True,
         "issues": [],
     }
@@ -49,6 +50,43 @@ class NativeToolTemplateAuditCPU(unittest.TestCase):
         tree = ast.parse(mod.CPU_PROBE, filename="<p2-final-cpu-probe>")
         self.assertTrue(tree.body)
         compile(mod.CPU_PROBE, "<p2-final-cpu-probe>", "exec")
+
+    def test_qwen38_no_thinking_closed_prefill_and_enabled_open_prefill(self):
+        # The pinned Qwen3.8 template prepends an empty CLOSED reasoning
+        # segment when disabled, and an OPEN one when enabled.
+        self.assertIn(
+            'no_thinking_suffix = "<|im_start|>assistant\\n<think>\\n\\n</think>\\n\\n"',
+            mod.CPU_PROBE,
+        )
+        self.assertIn(
+            'thinking_suffix = "<|im_start|>assistant\\n<think>\\n"',
+            mod.CPU_PROBE,
+        )
+        self.assertIn('enable_thinking=True', mod.CPU_PROBE)
+        self.assertIn('prompted.endswith(no_thinking_suffix)', mod.CPU_PROBE)
+        self.assertIn('thinking_prompted.endswith(thinking_suffix)', mod.CPU_PROBE)
+
+    def test_no_thinking_prefix_mismatch_fails_closed(self):
+        run, _ = fake_runner(probe_doc(
+            status="BLOCKED", no_thinking_rendered=False,
+            issues=["TEMPLATE_RENDER_FAILED_NO_THINKING_RENDERED"],
+        ))
+        result = mod.inspect_template_cpu(run=run)
+        self.assertEqual(result["status"], "BLOCKED")
+        self.assertFalse(result["no_thinking_rendered"])
+        self.assertIn("TEMPLATE_RENDER_FAILED_NO_THINKING_RENDERED",
+                      result["issues"])
+
+    def test_thinking_enabled_prefix_mismatch_fails_closed(self):
+        run, _ = fake_runner(probe_doc(
+            status="BLOCKED", thinking_prompt_rendered=False,
+            issues=["TEMPLATE_RENDER_FAILED_THINKING_PROMPT_RENDERED"],
+        ))
+        result = mod.inspect_template_cpu(run=run)
+        self.assertEqual(result["status"], "BLOCKED")
+        self.assertFalse(result["thinking_prompt_rendered"])
+        self.assertIn("TEMPLATE_RENDER_FAILED_THINKING_PROMPT_RENDERED",
+                      result["issues"])
 
     def test_nonzero_exit_surfaces_redacted_stderr_last_line(self):
         run, _ = fake_runner(
