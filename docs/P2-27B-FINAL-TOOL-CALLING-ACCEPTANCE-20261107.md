@@ -1,3 +1,13 @@
+## NEW ACTUAL DGX EVIDENCE — 2026-11-07: P2-FINAL Native Tool Calling NOT PASS on original 27B
+
+Operator local source updated to `09c6780`; **27B service `LIVE_SERVICE_VERIFIED`** at port 8000 with only `qwen3.8-27b`, original `qwen38-27b` active, `issues=[]`. Independent ordinary operating journal `VERIFIED/COMMITTED`, 14 events after actual 27B→Flash→27B normal transfers; **reverse operating postcheck no longer pending**.
+
+Direct inspect of the running preserved NVIDIA 27B Docker `Config.Cmd` confirms original `modelopt_mixed`/BF16, context 8192/seq 1/GPU mem 0.70/eager, **no** `--enable-auto-tool-choice`, `--tool-call-parser`, or `--reasoning-parser`. The opt-in `scripts/serve_27b.sh --tools-profile` shows correct source candidate `--enable-auto-tool-choice --tool-call-parser qwen3_coder --reasoning-parser qwen3`, `SOURCE_PROFILE_ONLY_DGX_NOT_QUALIFIED`, and does not retrofit the original container. **Actual localhost** `--tools-probe` returns `status=BLOCKED`, `issues=["LOCAL_API_HTTP_ERROR_400"]`, and structured tool call/tool continuation/reasoning separation all false. HTTP response body was not supplied; do not misquote it. This is not a model-load issue: regular chat and API identity remain verified.
+
+**P2-FINAL remains NOT QUALIFIED.** Next work: implement **separate, versioned, immutable tool-enabled 27B variant** and safe approved cutover/restore contract; the existing `qwen38-27b` Docker image/ID/P3 provenance are relied on by the ordinary switch and MUST NOT be casually replaced. Source/test/CI first; actual DGX model downtime only with separately scoped consent. Validate parser compatibility, non-tool chat, structured auto calls, JSON arguments, fixed test-tool response continuation, streamed tool calls, reasoning separation, Open WebUI Native, and complete rollback evidence. Do not mark P2 full complete before real acceptance. Historical P3-C stage C already completed PASS, remains frozen.
+
+---
+
 # P2 LAST acceptance item — NVIDIA Qwen3.8-27B Native Tool Calling, vLLM 0.32
 
 **Accepted ordering (2026-11-07):** P2 original pinned download, GPU loader/trial/benchmark and source restore had already passed on actual DGX. Add **P2-FINAL: structured Native Tool Calling and Open WebUI tool-use integration** as the last P2 acceptance requirement. P3-C historic one-off A/B/C has ALREADY passed on actual DGX and MUST NOT be re-run, modified, reopened or represented as a current pending transition.
