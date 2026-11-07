@@ -89,10 +89,12 @@ def run_trial(target: str, *, planner: Callable[[str], dict] = make_plan,
     emit("  Approval plan SHA: " + token)
     emit("  Expires at epoch seconds: " + str(report["expires_at_epoch_seconds"]))
     approvals = (
-        (ACCEPTANCE_ACK, "Trial-only independent approval (Enter cancels): "),
-        (token, "Type full current independent plan SHA (Enter cancels): "),
-        (ACK_DOWNTIME, "Type exact API downtime approval (Enter cancels): "),
-        (ACK_TARGET[target], "Type target activation approval (Enter cancels): "),
+        (ACCEPTANCE_ACK,
+         "Type " + ACCEPTANCE_ACK + " (Enter cancels): "),
+        (token, "Type the exact displayed plan SHA (Enter cancels): "),
+        (ACK_DOWNTIME, "Type " + ACK_DOWNTIME + " (Enter cancels): "),
+        (ACK_TARGET[target],
+         "Type " + ACK_TARGET[target] + " (Enter cancels): "),
     )
     for expected, prompt in approvals:
         try:
