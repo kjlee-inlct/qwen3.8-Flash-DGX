@@ -1,3 +1,15 @@
+## D-050 / D-051 / D-052 — 2026-11-07 — Tracked P3-C final model operator
+
+**D-050 (canonical C ready, execution not authorized):** Actual DGX `./wizard.sh switch flash-next-27b stage-c --plan --json` returned `READY_TO_REQUEST_TRANSITION_APPROVAL/issues=[]/p1_evidence.status=PASS/executed=false`, active original Flash `qwen38-flash` CID `90f39a4dbccd0b5f97efa0ff163c61402ddace3dd3cb4da986a91dff7eb45ed5`, preserved 27B CID `6d9ede0904c2b8e9e632d45b51aba4acbaf4502ae648da60cca77677948b0e2d`, shared original image digest `sha256:9479fc92a9244fcf137afb36ed778e07495e29663a81db193736fcaa1f15e137`, POST-B P1 Verify+Benchmark+diagnostics SHA proofs and unchanged P2 receipt hash. Its old short-window SHA `d5f200ff54e545877c6551d1c1eb46dcdb7ee3abdfeb6fbecb66c27b03d4eef7` is historical and not reusable. Optional evidence-copy operation was cancelled (`COPY` input, `copied=0/executed=false`); not a Stage C prerequisite.
+
+**D-051 (new D-016 tracked C UX):** `scripts/temporary/p3-stage-c-operator.sh` + Python controller. `--plan` default read-only. `--execute` only after **independent operator approval of the LIVE Flash downtime**, a real TTY, fresh SHA printed in prompt, `I_ACCEPT_FLASH_NEXT_DOWNTIME`, and independent `I_SEPARATELY_AUTHORIZE_FINAL_27B_STAGE_C`. Wrapper third literal is additional human authorization but is **not sent as `--enter-p3`**; canonical C expects null. Fresh plan and live identity rechecked before dispatch; canonical Wizard alone executes switch, locks, journal and best-effort rollback. C SUCCESS must independently pass served 27B API on :8000 AND immutable original `stage-c.json`. No automatic switch-back after successful C; preserve original Flash.
+
+**D-052 (operator report separation):** Stage-C operator writes append-only private 0600 `<repo>/reports/transitions/flash-next--to--27b/p3-c-operator-<UTC>-<nonce>.json`, ignored by Git. This is **supplementary** to immutable `~/.local/state/blazux-wizard/p3/stage-c.json` and original P3 journal, lock and attempt marker (never copied away/deleted/moved for rollout). CPU fake-DGX tests and GitHub CI required before operator fast-forward pull. Source change does **not** authorize C execution, additional GPU tests, source/cache deletion, or Draft PR merge.
+
+[Runbook](../docs/P3-STAGE-C-FINAL-27B-OPERATOR-20261107.md).
+
+---
+
 ## D-047 / D-048 / D-049 — 2026-11-07 — Historical evidence view + staged copy migration / Stage C order
 
 **D-047** Model-centric report catalog uses the service-policy Manifest `served_id` and reports Verify/Benchmark/GPU trials/transitions independently of internal P1/P2/P3. It reads legacy plus project `reports/`, verifies source file regularity/size/private mode, deduplicates exact SHA256 bytes and uses original UTC completion/filename time. NVIDIA 27B mean end-to-end throughput and decode proxy must be distinctly labeled, not conflated with Flash-Next measured throughput. It is strictly read-only and shall never call Docker or perform inference.
