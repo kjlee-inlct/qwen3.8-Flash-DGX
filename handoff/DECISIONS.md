@@ -1,3 +1,11 @@
+## D-057 — 2026-11-07 — Isolate ordinary recurrent model switches from one-off P3 acceptance (SOURCE ONLY)
+
+Accepted development contract: keep P3-A/B/C immutable and never re-run or repurpose their stage execute commands for generic operating transitions. A new \`operational_switch.py\` may read/prove P3 A/B/C historical lineage but no old plan ID is an operational approval. Independently namespace recurring operations under \`~/.local/state/blazux-wizard/operational-switch\`; require a NEW exact short-lived plan, two distinct manual approvals, verified live source/API identity, pinned Docker target image/CID, stop-old-before-start, port 8000 release, single GPU model, append-only journal, one-use attempt marker, protected original model assets and exact API post-start verification. Recovery failures must not be reported as successful. 
+
+Current \`operational_executor.py\` is **source-only and not exposed by \`./wizard.sh\`** until complete fake-DGX tests, separate real DGX operator consent and explicit qualification. No service mutation was performed. Read-only model menu preview and phase/evidence-separated dashboard are approved as SOURCE changes only. This decision supplements D-016/D-056 and does NOT supersede their stricter real-DGX approval boundary. Existing Draft PR remains unmerged.
+
+---
+
 ## D-056 — 2026-11-07 — Treat actual P1/P2/P3 engine qualification and user-facing Wizard UX as separate acceptance gates
 
 **Evidence-first confirmation:** On real DGX the existing `./wizard.sh` CLI and guarded backend for Flash P1 Verify/Benchmark and pinned NVIDIA 27B P2 trial/benchmark were exercised; actual P3-A Flash→27B, P3-B 27B→Flash, and P3-C Flash→27B all completed PASS. Actual final P3-C consumed three independent TTY acknowledgments and called the canonical `scripts.manager.p3_persistent_switch` route. It returned `P3_C_PASS_FINAL_27B_ACTIVE`, `post_switch_observed_model=27b`, `post_switch_status=LIVE_SERVICE_VERIFIED`, `issues=[]`, and wrote original `stage-c.json`; the current live 27B stays active on :8000. **Do not rerun this one-off acceptance sequence.** Original Flash container, image and HF caches must remain preserved.
