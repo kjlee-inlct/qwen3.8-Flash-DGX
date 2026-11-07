@@ -103,8 +103,11 @@ def readiness_report(*, service: dict[str, Any] | None = None,
     scopes = {
         "P1": "GUARDED_BACKEND_PRESENT_LIVE_REVALIDATION_REQUIRED",
         "P2": p2,
-        "P3": ("ONE_OFF_A_B_C_RECEIPTS_PRESENT_GUIDED_SOURCE_TRIAL_NOT_DGX_QUALIFIED"
-               if p3_pass else "LOCAL_P3_RECEIPTS_UNAVAILABLE_GUIDED_SOURCE_ONLY"),
+        # This dashboard does not fetch/validate both independent operating
+        # completed receipts, so it must not negate real operator-reported G
+        # acceptance OR manufacture G PASS from a journal snapshot.
+        "P3": ("ONE_OFF_A_B_C_RECEIPTS_PRESENT_G_LIVE_RECEIPTS_NOT_AUDITED_HERE"
+               if p3_pass else "LOCAL_P3_RECEIPTS_UNAVAILABLE_G_LIVE_NOT_AUDITED_HERE"),
         "P4": "CONDITIONAL_SOURCE_ONLY_NO_DELETE_APPROVAL",
         "P5": "ORCAROUTER_ADAPTER_UNQUALIFIED",
         "P6": "SWITCH_EXECUTOR_NOT_QUALIFIED",
@@ -119,7 +122,7 @@ def readiness_report(*, service: dict[str, Any] | None = None,
                "issues": p3_history.get("issues", []),
                "independent_operating_journal": operating_audit,
                "p3_g_real_bidirectional_acceptance":
-                   "OPERATOR_REPORTED_PASS_DOCUMENTED_REVIEW_EVIDENCE_SEPARATELY",
+                   "DOCUMENTED_OPERATOR_REAL_PASS_NOT_INDEPENDENTLY_AUDITED_HERE",
                "p8_fault_restore_required_for_p3_g": False},
         "P8": {"fault_restore_live_verified": False,
                "final_operational_signoff_verified": False,
@@ -164,8 +167,9 @@ def readiness_report(*, service: dict[str, Any] | None = None,
         "notice": "Historical P1/P2 records, immutable P3 A/B/C receipts, current live API, "
                   "source-guided switch, trial acceptance and live production UX are separate. "
                   "No historical PASS substitutes for a current switch approval. "
-                  "P3-G bidirectional transfer and P8 fault/restore and final "
-                  "signoff are distinct acceptance tracks.",
+                  "P3-G independently documented successful bidirectional transfer "
+                  "does not imply a fresh runtime audit on this dashboard. P8 fault "
+                  "restoration and final signoff remain separate acceptance tracks.",
     }
 
 
