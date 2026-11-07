@@ -1,3 +1,16 @@
+## 2026-11-07 — Read-only ordinary model switch (post-P3-C)
+
+The P3 A/B/C one-off transitions **actually passed on DGX** and finished with NVIDIA 27B active. The source-only ordinary switch preview is now available:
+
+~~~bash
+./wizard.sh switch flash-next-27b operational --target flash-next --plan --json
+./wizard.sh switch flash-next-27b operational --target 27b --plan --json
+~~~
+
+This preview checks fresh service/API, strict P3 historical receipt provenance, exact preserved Docker models/images, port 8000 bindings, exclusivity and independent unresolved-journal blockers. A SHA256 candidate is **NOT an executable approval**. Any \`--execute\`, \`--approve-plan\`, \`--ack-downtime\` request is rejected. A separate guarded ordinary executor source exists (\`scripts/manager/operational_executor.py\`) but **is not exposed through CLI/TTY** and has not been qualified on DGX. P3-A/B/C stage commands must not be replayed for ordinary switching. Read-only \`./wizard.sh roadmap --json\` now separates historical local evidence, current API identity, generic switch readiness and UX acceptance. Do not stop the current NVIDIA 27B service or imply actual switch permission from CPU CI.
+
+---
+
 ## 2026-11-06 — P3 new operator-defined sequence (read-only); old roundtrip retired
 
 P2 27B bounded benchmark remains its own separately approved step. A P2 benchmark PASS **must NOT automatically enter P3**. After P2 returns to verified Flash-Next, stop and await the operator's new P3 authorization.
