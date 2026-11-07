@@ -1,3 +1,13 @@
+## 2026-11-08 — P5 reference integration scope and safety authorization
+
+P5 source implementation is authorized for the NEXT conversation: adapt YSLAB BF16PLE and Orcarouter MTP mechanics into Blazux vLLM 0.32 **without** replacing its base image/control plane, changing :8000, or violating `ONE_ACTIVE_MODEL_ONLY`. No SGLang. Preserve NVIDIA/RadixArk/27B existing defaults. Gated HF auth must never appear in logs; pinned sources/derived views must remain immutable with explicit revisions and hashes. Distinguish MTP OFF and MTP2, and keep numeric strict `1e-4` release gate unresolved until real comparable evidence.
+
+**Allowed source work:** code, recipe/manifest, CPU/Fake-DGX, bounded read-only inspection, dry-run/plan, CI, docs and Draft PR body updates. **Separately approved operations only:** download or writing large HF/derived assets, Docker image build if it mutates actual DGX, starting/stopping 27B/Orcarouter, GPU trial and benchmark, changing :8000 owner, any P4 deletion or invasive recovery. No automatic approval token, no Docker prune, no P3 replay, no P6/P8 real execution, no PR merge. The one-shot script must never escalate read-only mode into GPU or deletion without a fresh exact plan/TTY downtime approval.
+
+Next handoff: `handoff/START-NEXT-P5-20261108.md`. This **does not** retroactively grant a live P5 trial; old P4 prohibition below is superseded only for P5 development.
+
+---
+
 ## 2026-11-08 — P4-B/C source-only scope; no live cleanup
 
 Only P4-B reference/candidate **review** and P4-C **in-memory transaction rehearsal** have been authorized. Review fingerprints are not execution approvals. `P4_C_LIVE_EXECUTION_RELEASED=False`, and no production deletion adapter exists. The separate operator must establish an actual P5 operational issue or P8 acceptance need, exact resource identities, model/cache/blob/dependency audit, rollback, fresh TTY approval, runtime acceptance and postchecks before a future live cleanup adapter may be introduced. Never run Docker/HF/volume prune, delete stopped Flash reference or active 27B, alter the API service, automatically start P5/P8, or merge the Draft PR. Older P4-B/C NOT_STARTED markers are history for the **source development** scope only.

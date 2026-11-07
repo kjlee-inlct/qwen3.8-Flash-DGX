@@ -1,3 +1,9 @@
+## 2026-11-08 — Current start: P5 Orcarouter BF16PLE + vLLM 0.32
+
+For the **next conversation**, copy `handoff/START-NEXT-P5-20261108.md`. Source/acceptance contract: `docs/P5-ORCAROUTER-BF16PLE-VLLM032-ADOPTION-20261108.md`; document presence/compatibility audit: `docs/HANDOFF-DOCUMENT-AUDIT-P5-20261108.md`. These supersede older P4-A starter instructions for the **next phase**. P4-A/B/C real read-only PASS/CLOSED, actual deletion unapproved; P5 not yet implemented or real-trialed, P6 and P8 not run. This handoff only prepared docs. Existing HEAD/CI/PR should be re-fetched at new conversation start.
+
+---
+
 ## 2026-11-08 — Current P4-B/C one-shot actual DGX dry-run: PASS / no deletion
 
 Operator-side one-shot report: 13/13 Fake-DGX local PASS, P4-B `READ_ONLY_REVIEW_COMPLETE`, P4-C `DRY_RUN_COMPLETE_RELEASE_GATED`, combined `READ_ONLY_DRY_RUN_PASS`. Nine resource records reviewed, none selected or executed; no approved reclaimable bytes. 2 rehearsal steps PASS, 2 deferred to P5/P8, 1 live adapter NOT_RELEASED, 1 actual delete/postcheck NOT_EXECUTED. The **only** acceptance is real DGX read-only review/rehearsal, not production cleanup. Evidence: `docs/P4-BC-DGX-READONLY-DRY-RUN-EVIDENCE-20261108.md`. Prior P4-A actual inventory PASS remains closed; P5/P8 live work NOT_RUN. PR #1 remains Draft/Open/Unmerged.

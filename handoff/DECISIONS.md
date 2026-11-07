@@ -1,3 +1,11 @@
+## D-068 — 2026-11-08 — P5 uses YSLAB BF16PLE as reference, Blazux vLLM 0.32 as runtime; one-shot implementation and verdict
+
+Operator designated **P5** for `orcarouter/Qwen3.8-Flash-Next-Uncensored-NVFP4` and BF16 PLE/MTP mechanisms drawn from `YSLAB-ai/Qwen3.8-Flash-Next-NVFP4-BF16PLE-DGX-Spark` while maintaining the **existing Blazux vLLM 0.32/Wizard/manifest/service system**, one active model, host API :8000. No independent YSLAB service or vLLM 0.1.dev deployment. The following P5 conversation should implement as much as possible **in one coherent batch**, with an integrated temporary one-command CPU/Fake-DGX/DGX read-only automatic verdict (GPU trial separate via explicit approval). YSLAB main reference SHA `9492b78c6bc04638587b42f2ffeb0680b0fcb3ef`, original Orcarouter pinned revision `3a3b63161c0745390e5270179af42e46efc70799`, 31 BF16 MTP donor RadixArk pinned revision `7b719225242aacd3dbd3f9407468c2ee9a9d2594`; none is a current Blazux GPU qualification.
+
+**P4-B/C real dry-run PASS/CLOSED** (read-only only) is preserved. Actual cache/container/image deletion remains deferred to a separately authorized P5 capacity problem or P8. P5 source permission does **not** include 27B downtime, live GPU trial, automatic P6 switch, P8 release, or Draft PR merge. `docs/P5-ORCAROUTER-BF16PLE-VLLM032-ADOPTION-20261108.md` and `handoff/START-NEXT-P5-20261108.md` are the canonical P5 handoff; the P5 acceptance source/GPU results are NOT_RUN on this decision date.
+
+---
+
 ## D-067 — 2026-11-08 — P3 source closeout verified; P4-A read-only capacity review precedes any removal decision
 
 Operator's newest DGX logs completed P3-E bounded asset examination (11 reference shards, 129,771,270,410 apparent bytes, 299,845 weight-map entries, hashes/issues=[]), P3-F local seven-suite CPU 168/168 PASS (release false), and 27B current 8/8 health. These are not complete model weight integrity, canonical Flash reinstall, general production lifecycle or recovery approval, all handed to P8.

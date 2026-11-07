@@ -1,3 +1,13 @@
+## 2026-11-08 — Next conversation: P5 implementation + one-shot automatic adjudication
+
+User explicitly selected P5 next: integrate **YSLAB Orcarouter BF16PLE / MTP** reference on **Blazux vLLM 0.32** (NOT YSLAB's vLLM 0.1.dev image or standalone port 18300). Work in existing `feature/recipe-wizard-handoff`, Draft PR #1, review parallel design branch but do not merge it blindly. New mandatory starter: `handoff/START-NEXT-P5-20261108.md`; full implementation contract `docs/P5-ORCAROUTER-BF16PLE-VLLM032-ADOPTION-20261108.md`; audit `docs/HANDOFF-DOCUMENT-AUDIT-P5-20261108.md`.
+
+**Develop all together:** pinned Orcarouter/PLE/MTP compatibility and exact recipe/service manifest; vLLM 0.32 adapter; deterministic 31 BF16 MTP donor overlay; MTP OFF baseline and MTP2; Wizard doctor/prepare/start/verify/benchmark; CPU/Fake-DGX tests; `scripts/temporary/p5-one-shot-acceptance.sh` source/read-only/GPU-stage auto-judge and isolated JSON receipts. Code implementation and CI can proceed; real GPU execution, 27B shutdown, download/cache changes and port cutover require **new exact operator approval**. Do not auto-start P6/P8 or remove P4 assets.
+
+**Previous P4 is closed only for actual DGX read-only dry-run** (13/13 CPU, 9 reviewed / 0 selected; no deletion), so no new P4 cleanup run. P5 source/CPU/GPU evidence will have separate statuses. Do not claim current P5 code, runtime or benchmark as PASS before actually implemented and measured. Older P4-A/P4-B/C NEXT sections below are superseded by this new top entry.
+
+---
+
 ## 2026-11-08 — P4-B/C one-shot REAL DGX dry-run accepted; no cleanup now
 
 The operator's combined report is **READ_ONLY_DRY_RUN_PASS**, 13/13 Fake-DGX PASS, P4-B review 9 assets / selected 0, P4-C `DRY_RUN_COMPLETE_RELEASE_GATED` with 2 PASS / 2 DEFERRED / 1 NOT_RELEASED / 1 NOT_EXECUTED and no mutation or approval. Record the result as **P4-B/C READ-ONLY DRY-RUN COMPLETE**, not real cleanup acceptance. Evidence: `docs/P4-BC-DGX-READONLY-DRY-RUN-EVIDENCE-20261108.md`.

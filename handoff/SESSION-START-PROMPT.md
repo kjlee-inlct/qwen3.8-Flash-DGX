@@ -1,3 +1,11 @@
+## 2026-11-08 — New conversation START HERE: P5 Orcarouter BF16PLE Blazux vLLM 0.32
+
+The full current, standalone P5 next-conversation prompt is **`handoff/START-NEXT-P5-20261108.md`**. Source implementation contract: **`docs/P5-ORCAROUTER-BF16PLE-VLLM032-ADOPTION-20261108.md`**; complete existing-document audit: **`docs/HANDOFF-DOCUMENT-AUDIT-P5-20261108.md`**.
+
+**P5 is the next work**, not P4-A/B/C. Implement Orcarouter checkpoint + 128 BF16 PLE mmap and optional 31 BF16 MTP2 overlay from YSLAB reference into Blazux vLLM 0.32, Wizard, recipes, manifests, one-shot automated CPU/Fake-DGX/DGX read-only judge. Current P5 adapter and canonical recipe are NOT_IMPLEMENTED. Source development is permitted in the next conversation, but no unapproved 27B stop/GPU trial/port 8000 switch/cache deletion. Keep P3/P4 real PASS and P8 deferral; Draft PR #1 remains unmerged. Older P4 starter sections below are time-stamped historical content.
+
+---
+
 ## 2026-11-08 — Handoff after P4-B/C real read-only dry-run PASS
 
 **Current task P4-B/C is closed for the combined read-only dry-run scope only.** Actual DGX one-shot run: 13/13 local Fake-DGX PASS; P4-A complete; P4-B complete (9 reviews / 0 selected), P4-C `DRY_RUN_COMPLETE_RELEASE_GATED` with 2 PASS / 2 DEFERRED / 1 NOT_RELEASED / 1 NOT_EXECUTED; combined `READ_ONLY_DRY_RUN_PASS`. Evidence: `docs/P4-BC-DGX-READONLY-DRY-RUN-EVIDENCE-20261108.md`; old 'please run the one-shot script' guidance below is superseded. GitHub PR #1 remains Draft/Unmerged. Do not perform actual deletion, start P5/P8, stop 27B, replay P3 or claim a verified reclaimed byte value. The later P5 operational issue or P8 acceptance requires separate exact-resource, shared-layer, HF snapshot, rollback and approval work; there is no released live deletion adapter.

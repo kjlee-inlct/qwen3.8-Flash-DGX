@@ -1,3 +1,13 @@
+## 2026-11-08 — P5 preparation evidence (source/document audit only)
+
+GitHub pre-document HEAD `ac88693196a8b2b5efc95f091dc88531d6951037`, PR #1 Draft/Open/Unmerged; source CI [42405103774](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42405103774) SUCCESS (historical 902/902 CPU/Fake-DGX, 41 groups). Git tree nontruncated 467 entries: legacy mandatory documents **34/34 present** and recent P4 source/evidence **7/7 present**. Newly written `docs/HANDOFF-DOCUMENT-AUDIT-P5-20261108.md` details this bounded audit.
+
+External **reference** YSLAB GitHub main `9492b78c6bc04638587b42f2ffeb0680b0fcb3ef`, tree 87 entries, audited README/compatibility/runtime/Dockerfile/PLE patch; 0.1.dev custom vLLM and port 18300 are NOT target Blazux runtime. Source has Orcarouter pinned revision `3a3b63161c0745390e5270179af42e46efc70799` and 31 BF16 MTP donor RadixArk pinned revision `7b719225242aacd3dbd3f9407468c2ee9a9d2594`. External benchmark MTP2 44.23tok/s is **YSLAB-only** and is not our P5 GPU benchmark.
+
+No P5 implementation, source CI tests, new DGX GPU/API/bench tests, model download or switch performed as part of this audit. Historical P4-B/C actual DGX read-only result remains `READ_ONLY_DRY_RUN_PASS`, no deletion. A P5 actual evidence entry requires a future operator-supplied command/output, never inferred from source docs.
+
+---
+
 ## 2026-11-08 — REAL DGX P4-B/C dry-run acceptance evidence (source-only vs actual)
 
 Operator-submitted terminal excerpt: 13/13 local Fake-DGX PASS; combined `READ_ONLY_DRY_RUN_PASS`; P4-A `READ_ONLY_INVENTORY_COMPLETE`; P4-B `READ_ONLY_REVIEW_COMPLETE` / issues=[] / 9 reviewed records (2 managed containers, 3 HF repositories, 4 Docker categories); P4-C `DRY_RUN_COMPLETE_RELEASE_GATED` / issues=[] with 2 transaction steps PASS, 2 DEFERRED_P5_OR_P8, 1 NOT_RELEASED, 1 NOT_EXECUTED. All nine simulated resources `would_execute=false`, selected=0; `plan_id=null`, `approval_accepted=false`, `operations_enabled=false`, `executed=false`, `production_released=false`, `live_execution_released=false`, `safe_reclaimable_bytes=null`. Review fingerprint `f6ee99301983f4439048c29c1032e5f6a6a58a3138430c17030120201ed2feb1` **is not approval**. Source-only CI [42404211649](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42404211649) SUCCESS on branch HEAD `66c7e5b` is separate. The operator excerpt does not independently show a checkout HEAD. Full detail: `docs/P4-BC-DGX-READONLY-DRY-RUN-EVIDENCE-20261108.md`.

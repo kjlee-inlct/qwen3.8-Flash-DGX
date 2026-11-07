@@ -1,3 +1,15 @@
+## 2026-11-08 — NEXT SESSION P5: Orcarouter BF16PLE → Blazux vLLM 0.32 integration (handoff only)
+
+**P5 implementation starts in the NEXT conversation, not this one.** User confirmed YSLAB-ai `Qwen3.8-Flash-Next-NVFP4-BF16PLE-DGX-Spark` as the technical BF16PLE/MTP reference, but actual service/recipes/Wizard must use Blazux **vLLM 0.32**, :8000 and `ONE_ACTIVE_MODEL_ONLY`. Aim for one batch of source/recipe/Wizard/CPU-Fake-DGX/one-shot auto-judge implementation; exact operator approval is still required for GPU trial, service downtime or cache writes/deletion.
+
+**Reference:** YSLAB source `9492b78c6bc04638587b42f2ffeb0680b0fcb3ef` runs custom vLLM `0.1.dev20073+g8e685d198` and default 18300; cannot simply deploy/copy. Orcarouter gated revision `3a3b63161c0745390e5270179af42e46efc70799`, direct BF16 PLE (128 tensors/95.37GiB), optional 31 BF16 MTP overlay from RadixArk revision `7b719225242aacd3dbd3f9407468c2ee9a9d2594` must be re-qualified against v0.32. Parallel design branch `feature/orcarouter-bf16-adapter@620598c` is reference only.
+
+**Latest confirmed GitHub before handoff:** HEAD `ac88693196a8b2b5efc95f091dc88531d6951037`, PR #1 Draft/Open/Unmerged, CI [42405103774](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42405103774) SUCCESS, historical CPU/Fake-DGX 902/902 PASS. Documents 34/34 legacy required plus 7/7 new P4 evidence/source assets present; no lost handoff files. P4-B/C real DGX READ_ONLY_DRY_RUN_PASS, no deletion. P5 canonical Orcarouter recipe and one-shot judge **NOT YET IMPLEMENTED**. P8 NOT_RUN/NOT_RELEASED.
+
+**Start here:** `handoff/START-NEXT-P5-20261108.md`, `docs/P5-ORCAROUTER-BF16PLE-VLLM032-ADOPTION-20261108.md`, `docs/HANDOFF-DOCUMENT-AUDIT-P5-20261108.md`. Old P4-specific 'do not start P5' phrases below are historical and superseded for P5 source implementation only.
+
+---
+
 ## 2026-11-08 — P4-B/C actual DGX combined dry-run PASS (read-only scope)
 
 Operator returned the one-shot P4-B/C log: **13/13 Fake-DGX CPU PASS**, `inventory_status=READ_ONLY_INVENTORY_COMPLETE`, P4-B `READ_ONLY_REVIEW_COMPLETE` / `issues=[]` / **9 resource records**, P4-C `DRY_RUN_COMPLETE_RELEASE_GATED` / `issues=[]`, final **`READ_ONLY_DRY_RUN_PASS`**. All 9 resources `selected_for_deletion=false` and `would_execute=false`; no safe reclaimable bytes or approved deletion plan. P4-C transaction steps: **2 PASS / 2 DEFERRED_P5_OR_P8 / 1 NOT_RELEASED / 1 NOT_EXECUTED**. No service or cache mutation; `executed=false`, `operations_enabled=false`, `live_deletion_approved=false`, `production_released=false`. No confirmed fresh DGX checkout SHA in supplied excerpt. Source CI 902/902 PASS in 41 groups is separate evidence. Detail: `docs/P4-BC-DGX-READONLY-DRY-RUN-EVIDENCE-20261108.md`.
