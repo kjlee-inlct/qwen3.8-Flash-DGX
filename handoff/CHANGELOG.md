@@ -1,3 +1,9 @@
+## 2026-11-07 — WebUI native tools mismatch; 27B no-thinking exact output PASS
+
+Real operator direct 27B curl with per-request `enable_thinking=false` returned exactly `DGX_OK` (4 tokens), while Open WebUI emitted vLLM tool-choice auto configuration error. Read-only Git source review identified missing `--enable-auto-tool-choice` / `--tool-call-parser` in 27B candidate launcher, unlike Flash; actual current Docker command still not observed. Added `docs/OPENWEBUI-27B-TOOL-CALLING-20261107.md`, recommended WebUI Builtin Tools-off workaround and separate future startup-profile/parser qualification gate. No source executor changes, DGX restarts, model switch, deletion or PR merge.
+
+---
+
 ## 2026-11-07 — Real DGX 27B curl verification PASS, formatting anomaly isolated
 
 User supplied successful actual localhost /health, single /v1/models identity and two chat-completion probes (direct raw request and tracked shell smoke); tracked script emitted `27B_CURL_SMOKE_PASS`. Recorded actual active 27B pinned NVIDIA revision, vLLM 0.32.0 and 26-token direct reply. Reply contains reasoning-like prose and literal `</think>` in `content` despite `reasoning=null`: distinguish healthy inference from failed exact-format compliance, no speculative server-side repair. Follow-up `FORMAT_PASS` / `FORMAT_DEVIATION` classifier and offline fake-curl tests source-only. Maintained Draft PR, 27B state, Flash preservation and unqualified general operating switch.
