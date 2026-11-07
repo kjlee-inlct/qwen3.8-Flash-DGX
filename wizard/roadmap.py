@@ -21,8 +21,30 @@ MILESTONES = (
 )
 
 
+def _local_history(model: str, kind: str) -> dict[str, Any]:
+    """Show locally readable history, never treat it as live qualification."""
+    from scripts.manager.evidence_catalog import history
+    try:
+        doc = history(model=model, kind=kind, limit=20)
+        if doc.get("status") != "READ_ONLY_HISTORY":
+            return {"status": "UNAVAILABLE", "count": 0}
+        rows = doc.get("records") or []
+        latest = rows[0] if rows else {}
+        return {"status": "LOCAL_HISTORY_OBSERVED" if rows else "UNAVAILABLE",
+                "count": doc.get("count", 0),
+                "latest_record_status": latest.get("status"),
+                "latest_timestamp_utc": latest.get("timestamp_utc"),
+                "issues": doc.get("issues") or []}
+    except (OSError, ValueError, TypeError, KeyError):
+        return {"status": "UNAVAILABLE", "count": 0}
+
+
 def readiness_report(*, service: dict[str, Any] | None = None,
-                     checkpoint: dict[str, Any] | None = None) -> dict[str, Any]:
+                     checkpoint: dict[str, Any] | None = None,
+                     live_status: dict[str, Any] | None = None,
+                     p3_history: dict[str, Any] | None = None,
+                     model_history: dict[str, dict] | None = None) -> dict[str, Any]:
+    probe_live = service is None
     if service is None:
         from scripts.manager.service_manifest import inspect_service
         try:
@@ -54,35 +76,75 @@ def readiness_report(*, service: dict[str, Any] | None = None,
         p2 = "SOURCE_PRESENT_RUNTIME_UNQUALIFIED"
     else:
         p2 = "SOURCE_ABSENT_OR_INCOMPLETE"
+    if live_status is None and probe_live:
+        from scripts.manager.service_status import inspect_live_status
+        try:
+            # One Docker inventory is shared with the separate HTTP identity probe.
+            live_status = inspect_live_status(manifest_inspector=lambda: service)
+        except (OSError, RuntimeError, ValueError, TypeError):
+            live_status = {"status": "BLOCKED", "issues": ["LIVE_STATUS_UNAVAILABLE"]}
+    if p3_history is None:
+        from scripts.manager.operational_switch import historical_p3_receipts
+        p3_history = historical_p3_receipts()
+    p3_pass = p3_history.get("status") == "LOCAL_P3_A_B_C_RECEIPTS_VERIFIED"
+    if model_history is None:
+        model_history = {
+            "flash_verify": _local_history("flash-next", "verify"),
+            "flash_benchmark": _local_history("flash-next", "benchmark"),
+            "27b_benchmark": _local_history("27b", "benchmark"),
+        }
     scopes = {
         "P1": "GUARDED_BACKEND_PRESENT_LIVE_REVALIDATION_REQUIRED",
         "P2": p2,
-        "P3": "SWITCH_EXECUTOR_NOT_QUALIFIED",
+        "P3": ("ONE_OFF_A_B_C_RECEIPTS_PRESENT_GENERAL_SWITCH_PREVIEW_ONLY"
+               if p3_pass else "LOCAL_P3_RECEIPTS_UNAVAILABLE_GENERAL_SWITCH_PREVIEW_ONLY"),
         "P4": "CONDITIONAL_SOURCE_ONLY_NO_DELETE_APPROVAL",
         "P5": "ORCAROUTER_ADAPTER_UNQUALIFIED",
         "P6": "SWITCH_EXECUTOR_NOT_QUALIFIED",
         "P7": "RELEASE_GATES_NOT_COMPLETED",
     }
+    evidence = {
+        "P1": {"verify": model_history.get("flash_verify", {"status": "UNAVAILABLE"}),
+               "benchmark": model_history.get("flash_benchmark", {"status": "UNAVAILABLE"})},
+        "P2": {"benchmark": model_history.get("27b_benchmark", {"status": "UNAVAILABLE"})},
+        "P3": {"stage_a_b_c": p3_history.get("status", "UNAVAILABLE"),
+               "issues": p3_history.get("issues", [])},
+    }
     milestones = [
         {"stage": stage, "title": title, "state": scopes[stage],
-         "source_implemented": True,
+         "source_implemented": stage in ("P1", "P2", "P3"),
+         "source_interface_present": True,
+         "cpu_ci": "CHECK_GITHUB_ACTIONS_SEPARATELY",
+         "historical_backend_evidence": evidence.get(stage, {"status": "UNVERIFIED"}),
          "runtime_pass_claimed": False,
+         "general_operating_switch": (
+             "READ_ONLY_PREVIEW_EXECUTOR_NOT_QUALIFIED" if stage == "P3"
+             else "NOT_QUALIFIED_OR_NOT_APPLICABLE"),
+         "interactive_wizard_ux_acceptance": "NOT_VERIFIED",
          "requires_separate_approval": stage in ("P2", "P3", "P4", "P5", "P6", "P7")}
         for stage, title in MILESTONES
     ]
+    observed_live = live_status if isinstance(live_status, dict) else {}
     return {
-        "schema_version": 1, "interface": "P1_P7_ACCEPTANCE_DASHBOARD",
+        "schema_version": 2, "interface": "P1_P7_ACCEPTANCE_DASHBOARD",
         "stage": "p7", "scope": "DGX_READ_ONLY",
         "status": "NOT_RELEASE_QUALIFIED",
         "executed": False, "operations_enabled": False,
         "api_host_port": 8000, "max_active_gpu_models": 1,
         "observed_model": service.get("observed_model"),
+        "live_service_status": observed_live.get("status", "NOT_CHECKED"),
+        "live_api_served_id": (observed_live.get("expected_served_id")
+                               if observed_live.get("status") == "LIVE_SERVICE_VERIFIED"
+                               else None),
         "download_running": download_running,
         "p2_checkpoint_status": checkpoint.get("checkpoint_status"),
         "milestones": milestones, "release_ready": False,
-        "issues": sorted(set(service.get("issues", [])
-                             + checkpoint.get("issues", []))),
-        "notice": "Source/CI readiness is not runtime, GPU, API or recovery acceptance.",
+        "issues": sorted(set((service.get("issues") or [])
+                             + (checkpoint.get("issues") or [])
+                             + (observed_live.get("issues") or []))),
+        "notice": "Historical P1/P2 records, immutable P3 A/B/C receipts, current live API, "
+                  "general-switch readiness and integrated Wizard UX are separate evidence domains. "
+                  "No historical PASS substitutes for a current switch approval.",
     }
 
 
@@ -95,6 +157,8 @@ def run_cli(*, as_json: bool = False, dry_run: bool = False) -> int:
     else:
         print("P1–P7 acceptance status — NOT_RELEASE_QUALIFIED")
         print("Active model observed:", document["observed_model"] or "unknown/none")
+        print("Current API:", document["live_service_status"],
+              "| Served ID:", document["live_api_served_id"] or "unverified")
         for row in document["milestones"]:
             print(f"  {row['stage']}: {row['title']}: {row['state']}")
     return 0  # Read-only status, not release success.
