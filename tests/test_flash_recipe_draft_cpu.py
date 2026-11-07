@@ -179,6 +179,49 @@ class FlashRecipeDraftCPU(unittest.TestCase):
         self.assertIn("P8_FAULT_RECOVERY_AND_FINAL_OPERATIONS_ACCEPTANCE_NOT_RUN", blockers)
         self.assertFalse(any("P3_G_REAL_BIDIRECTIONAL" in x for x in blockers))
 
+    def test_real_shape_flash_hybrid_command_uses_model_specific_normalization(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            doc, recipe = make_flash(Path(tmp))
+            candidate, issues, advisories = dg.flash_observed_candidate(doc)
+            self.assertEqual(issues, [])
+            self.assertNotIn("FLASH_LEGACY_COMMAND_NEEDS_MODEL_SPECIFIC_NORMALIZER", advisories)
+            self.assertTrue(candidate["cmd_normalized"])
+            self.assertIsNone(candidate["cmd_normalization_error"])
+            self.assertEqual(candidate["cmd_normalization_profile"],
+                             "FLASH_FP8HYBRID_READ_ONLY_V1")
+            flags = candidate["cmd"]
+            self.assertEqual(flags["--max-model-len"], "500000")
+            self.assertEqual(flags["--speculative-config"],
+                             recipe["observed_vllm"]["json_flags"]["--speculative-config"])
+            self.assertEqual(flags["-cc.cudagraph_mode"], "PIECEWISE")
+            self.assertIn("vllm::unified_attention_with_output", flags["-cc.splitting_ops"])
+            self.assertFalse(review.compare_observation(candidate, doc)["launch_allowed"])
+
+    def test_flash_normalization_rejects_undocumented_runtime_flags(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            doc, _ = make_flash(Path(tmp))
+            doc["Config"]["Cmd"].append("--unknown-vllm-flag")
+            candidate, _, advisories = dg.flash_observed_candidate(doc)
+            self.assertFalse(candidate["cmd_normalized"])
+            self.assertEqual(candidate["cmd_normalization_error"],
+                             "UNKNOWN_FLASH_OPTION_OR_POSITIONAL")
+            self.assertIn("FLASH_LEGACY_COMMAND_NEEDS_MODEL_SPECIFIC_NORMALIZER",
+                          advisories)
+            self.assertFalse(review.compare_observation(candidate, doc)["launch_allowed"])
+
+    def test_flash_normalization_refuses_duplicate_and_malformed_json(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            doc, _ = make_flash(Path(tmp))
+            cmd = list(doc["Config"]["Cmd"])
+            with self.assertRaisesRegex(ValueError, "DUPLICATE_FLASH_OPTION"):
+                review.normalize_fp8hybrid_cmd(cmd + ["--port", "8000"])
+            with self.assertRaisesRegex(ValueError, "UNKNOWN_FLASH_OPTION_OR_POSITIONAL"):
+                review.normalize_fp8hybrid_cmd(cmd + ["vllm"])
+            with self.assertRaisesRegex(ValueError, "INVALID_FLASH_JSON_OPTION"):
+                i = cmd.index("--speculative-config")
+                cmd[i+1] = "{"
+                review.normalize_fp8hybrid_cmd(cmd)
+
 
 if __name__ == "__main__":
     unittest.main()

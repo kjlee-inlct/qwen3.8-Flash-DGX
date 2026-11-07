@@ -1,3 +1,9 @@
+## 2026-11-08 — DGX operator read-only P3-D/E/F/G follow-up
+
+**Operator evidence:** `docs/P3-E-F-DGX-READONLY-20261108.md`. At DGX local read-only snapshot, 27B API at :8000 is `LIVE_SERVICE_VERIFIED` with 8/8 checks true. P3-D remains `BLOCKED` only because unprivileged `ss` exposed no port listener PID (`sudo_ss_requested=false`); not a measured GPU conflict. P3-E full Flash draft-field match `issues=[]`, but reinstall unqualified with 37 extra environment keys and zero extra mounts; 27B-only command normalization reported Flash `-cc` tokens as unexpected positionals. P3-F new code ran **150/150 CPU tests PASS on operator DGX**; P3-G is only preview in this run, while prior real two-way G is CLOSED. The source follow-up introduces strict read-only Flash FP8-hybrid argv normalization, no service operations or release gate changes. Historical P3-G, P8 boundaries and Source/DGX classifications remain intact.
+
+---
+
 ## D-062 — 2026-11-08 — Source-only P3-E/F failure truthfulness and release boundaries
 
 **Implementation clarification; NOT new authorization to operate DGX.** Based on existing `ONE_ACTIVE_MODEL_ONLY`, exact approval, immutable evidence and P3-G/P8 split: any rollback result must distinguish verified restoration of a *previously existing service* from failure to install when none existed. A Docker stop may have taken effect before returning an error; reconciliation must inspect current state before restart. Do not leak extra host environment values/paths in Flash recipe coverage; do not equate known-field match with complete reinstall qualification. P3-G successful real bidirectional switch is CLOSED, while P8 is the only stage for deliberate fault/auto-recovery and final release. This is a code/test safeguard on [d68106a](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/commit/d68106a24c4c6071acff7a4d98d74e04c6ecbfe1), not operator consent.

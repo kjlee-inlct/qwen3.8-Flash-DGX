@@ -368,8 +368,16 @@ def flash_observed_candidate(flash: dict) -> tuple[dict, list[str], list[str]]:
         issues.append("FLASH_HOST_PORT_CONFIGURATION_UNVERIFIED")
     normalized = None
     normalization_error = None
+    normalizer_profile = ("FLASH_FP8HYBRID_READ_ONLY_V1"
+                          if checkpoint_variant == "LOCAL_PREPARED_FP8HYBRID"
+                          else "LEGACY_SOURCE_OBSERVATION_V1")
     try:
-        normalized = recipe_drift.command_flags(cmd)
+        if checkpoint_variant == "LOCAL_PREPARED_FP8HYBRID":
+            normalized = flash_recipe_review.normalize_fp8hybrid_cmd(cmd)
+        else:
+            # Source-only historical fallback; never a canonical Flash
+            # install/reinstall recipe.
+            normalized = recipe_drift.command_flags(cmd)
     except (ValueError, TypeError) as exc:
         normalization_error = str(exc)[:120]
         advisories.append("FLASH_LEGACY_COMMAND_NEEDS_MODEL_SPECIFIC_NORMALIZER")
@@ -380,6 +388,7 @@ def flash_observed_candidate(flash: dict) -> tuple[dict, list[str], list[str]]:
         "entrypoint": config.get("Entrypoint"),
         "cmd": normalized,
         "cmd_normalization_error": normalization_error,
+        "cmd_normalization_profile": normalizer_profile,
         "cmd_normalized": normalized is not None,
         "gpu": "all" if all_gpu else "UNVERIFIED",
         "ipc_mode": host.get("IpcMode"), "env": env,

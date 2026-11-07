@@ -74,6 +74,73 @@ def _flag(argv: list[str], flag: str) -> str | None:
     return values[0] if len(values) == 1 else None
 
 
+def normalize_fp8hybrid_cmd(argv: list[str], *, draft_loader=load_draft) -> dict:
+    """Strict Flash-specific, READ-ONLY vLLM argv normalization.
+
+    This is a diagnostic semantic representation, NEVER a Docker run command
+    or a statement of full runtime/install qualification. Unknown, duplicate,
+    or ambiguous tokens fail closed instead of reusing 27B-only parsing.
+    """
+    recipe, _ = draft_loader()
+    expected_checkpoint = (SOURCE_PREFIX + recipe["model"]["source_revision"]
+                           + recipe["model"]["checkpoint_view_suffix"])
+    if (not isinstance(argv, list) or not 1 <= len(argv) <= 256
+            or not all(isinstance(s, str) and 0 < len(s) <= 4096
+                       for s in argv)):
+        raise ValueError("INVALID_FLASH_COMMAND")
+    if argv[0] != expected_checkpoint:
+        raise ValueError("UNQUALIFIED_FLASH_CHECKPOINT")
+    cfg = recipe["observed_vllm"]
+    values = set(cfg["value_flags"]) | set(cfg["json_flags"])
+    booleans = set(cfg["boolean_flags"])
+    special = {s.split("=", 1)[0] for s in cfg["prefix_flags"]}
+    normalized: dict[str, Any] = {"_checkpoint": expected_checkpoint}
+    index = 1
+    while index < len(argv):
+        token = argv[index]
+        key, eq, inline = token.partition("=")
+        if key in normalized:
+            raise ValueError("DUPLICATE_FLASH_OPTION")
+        if key in booleans:
+            if eq:
+                raise ValueError("BOOLEAN_FLASH_OPTION_WITH_VALUE")
+            normalized[key] = True
+        elif key in values:
+            if eq:
+                value = inline
+            else:
+                index += 1
+                if index >= len(argv) or argv[index].startswith("--") or argv[index].startswith("-cc."):
+                    raise ValueError("MISSING_FLASH_OPTION_VALUE")
+                value = argv[index]
+            if not value:
+                raise ValueError("EMPTY_FLASH_OPTION_VALUE")
+            if key in cfg["json_flags"]:
+                try:
+                    value = json.loads(value)
+                except (TypeError, ValueError) as exc:
+                    raise ValueError("INVALID_FLASH_JSON_OPTION") from exc
+            normalized[key] = value
+        elif key in special:
+            if not eq or not inline:
+                raise ValueError("INVALID_FLASH_SPECIAL_OPTION")
+            if key == "-cc.splitting_ops":
+                try:
+                    parsed = json.loads(inline)
+                except (TypeError, ValueError) as exc:
+                    raise ValueError("INVALID_FLASH_SPLITTING_OPS") from exc
+                if (not isinstance(parsed, list)
+                        or not all(isinstance(s, str) for s in parsed)):
+                    raise ValueError("INVALID_FLASH_SPLITTING_OPS")
+                normalized[key] = parsed
+            else:
+                normalized[key] = inline
+        else:
+            raise ValueError("UNKNOWN_FLASH_OPTION_OR_POSITIONAL")
+        index += 1
+    return dict(sorted(normalized.items()))
+
+
 def _environment(doc: dict) -> dict[str, str]:
     found: dict[str, str] = {}
     duplicates: set[str] = set()
