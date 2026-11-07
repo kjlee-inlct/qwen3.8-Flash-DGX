@@ -1,3 +1,17 @@
+## E-20261107-OPERATING-27B-TO-FLASH-REAL-DGX-PASS — first recurring Wizard trial
+
+**Actual DGX source `4054eb2` after fast-forward, operator console supplied in conversation:**
+- **Before:** read-only `service manager status --json` returned `LIVE_SERVICE_VERIFIED` and one served `qwen3.8-27b` on `:8000`, container `qwen38-27b` Up 2 hours; issues `[]`. Note `gpu_exclusivity_verified=false` in the service-status response means that particular command does not verify GPU exclusivity; this is independently guarded in the operating preflight.
+- **Journal:** `python3 -m scripts.manager.operational_audit --json` returned `EMPTY`, count 0, issues `[]`.
+- **Fresh read-only acceptance plan:** `READY_FOR_SEPARATE_TRIAL_APPROVAL`, source `27b`, target `flash-next`, served ID `qwen3.8-flash-next`, issues `[]`, execution SHA with prefix `72e0941f`, 242 seconds remaining at review. The full exact plan ID was entered only by the operator.
+- **Actual four approvals and one-switch execute:** `bash scripts/temporary/operational-switch-acceptance.sh --target flash-next --execute`; `Live transition result: PASS`, `Observed model: flash-next`, private immutable completion evidence `~/.local/state/blazux-wizard/operational-switch/completed-72e0941f…json`. No automatic return was requested. This is the new **ordinary** independent backend, NOT a repetition of original P3-A/B/C.
+- **Proof scope:** backend implementation only returns PASS after target model identity / bounded chat / single GPU recheck / source preservation and committed journal audit. Underlying private receipt and independent post-execution status output are **not** yet separately supplied; do not invent those. Live reverse Flash→27B and failure recovery **NOT_RUN**.
+- **Current last observed active: Flash-Next**, and production ordinary menu gate **OFF**. Original 27B assets preserved by documented backend, pending independent user evidence of new running state.
+
+**Acceptance split:** `REAL_OPERATING_27B_TO_FLASH_PASS`; `REAL_OPERATING_FLASH_TO_27B_NOT_RUN`; `REAL_FAILURE_RESTORE_NOT_RUN`; `NORMAL_MENU_PRODUCTION_RELEASE_GATED`. CPU Fake-DGX 671 tests at `4054eb2` remain separate source evidence.
+
+---
+
 ## E-20261107-OPERATING-SWITCH-GUIDED-ACCEPTANCE-SOURCE — Fake-DGX, NOT real switch
 
 Tracked source in `feature/recipe-wizard-handoff`: `wizard/console.py` main option 4/model option 6; `scripts/manager/operational_wizard.py` release-gated normal UX; `scripts/manager/operational_acceptance.py` independent four-input real-DGX trial-only CLI; `scripts/temporary/operational-switch-acceptance.sh` tracked operator wrapper; `scripts/manager/operational_executor.py` stop→start, exact-target verification, inference + recovery; `scripts/manager/operational_audit.py` full journal/hash/snapshot/receipt consistency; `scripts/manager/operational_probe.py` bounded chat. CPU tests `test_operational_{switch,executor,wizard,audit,probe,acceptance}_cpu.py`, CI workflow. **No new user-provided real DGX ordinary-transfer log**, no stop/start, no real restore, no model deletion, no P3 A/B/C replay. The user-provided last live check remains 27B only served model with successful generation on port 8000; current source changes do not alter it.
