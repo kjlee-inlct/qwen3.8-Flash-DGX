@@ -1,6 +1,7 @@
 """Fake-DGX/CPU tests for non-mutating pinned NVIDIA Jinja render audit."""
 from __future__ import annotations
 
+import ast
 import json
 from pathlib import Path
 import subprocess
@@ -28,7 +29,7 @@ def probe_doc(**changes):
     return value
 
 
-def fake_runner(payload=None, *, rc=0, exception=None):
+def fake_runner(payload=None, *, rc=0, exception=None, stderr=""):
     seen = []
     def run(command, **kwargs):
         seen.append((command, kwargs))
@@ -37,12 +38,61 @@ def fake_runner(payload=None, *, rc=0, exception=None):
         return SimpleNamespace(
             returncode=rc, stdout=json.dumps(
                 probe_doc() if payload is None else payload
-            ), stderr="",
+            ), stderr=stderr,
         )
     return run, seen
 
 
 class NativeToolTemplateAuditCPU(unittest.TestCase):
+    def test_embedded_docker_stdin_python_compiles(self):
+        # Syntax errors inside the injected script used to escape CI.
+        tree = ast.parse(mod.CPU_PROBE, filename="<p2-final-cpu-probe>")
+        self.assertTrue(tree.body)
+        compile(mod.CPU_PROBE, "<p2-final-cpu-probe>", "exec")
+
+    def test_nonzero_exit_surfaces_redacted_stderr_last_line(self):
+        run, _ = fake_runner(
+            rc=1, stderr="Traceback (most recent call last):\\n"
+            "  File \\"/home/inlc/private/program.py\\", line 1\\n"
+            "ImportError: cannot import SECRET_LIB"
+        )
+        result = mod.inspect_template_cpu(run=run)
+        self.assertEqual(result["status"], "BLOCKED")
+        self.assertEqual(result["docker_exec_returncode"], 1)
+        self.assertEqual(result["docker_exec_stderr_last_line"],
+                         "ImportError: cannot import SECRET_LIB")
+        self.assertFalse(result["execution_enabled"])
+
+    def test_nonzero_with_inner_json_issues_retained(self):
+        run, _ = fake_runner(
+            probe_doc(status="BLOCKED", issues=["TEST_DIAGNOSTIC"]),
+            rc=1, stderr="RuntimeError: parser failed"
+        )
+        result = mod.inspect_template_cpu(run=run)
+        self.assertEqual(result["inner_probe_status"], "BLOCKED")
+        self.assertEqual(result["inner_probe_issues"], ["TEST_DIAGNOSTIC"])
+        self.assertIn("DOCKER_EXEC_CPU_PROBE_NONZERO_EXIT", result["issues"])
+
+    def test_inner_cpu_render_error_detail_is_visible(self):
+        run, _ = fake_runner(probe_doc(
+            status="BLOCKED", issues=["CPU_RENDER_ERROR_ValueError"],
+            error_summary="Synthetic Jinja error"
+        ))
+        result = mod.inspect_template_cpu(run=run)
+        self.assertEqual(result["inner_error_summary"], "Synthetic Jinja error")
+        self.assertEqual(result["status"], "BLOCKED")
+
+    def test_non_json_with_stderr_fails_closed(self):
+        def run(*args, **kwargs):
+            return SimpleNamespace(
+                returncode=0, stdout="warning without JSON",
+                stderr="ModuleNotFoundError: MissingLocalModule")
+        result = mod.inspect_template_cpu(run=run)
+        self.assertEqual(result["status"], "BLOCKED")
+        self.assertIn("CPU_PROBE_RESPONSE_INVALID_OR_NON_JSON", result["issues"])
+        self.assertEqual(result["docker_exec_stderr_last_line"],
+                         "ModuleNotFoundError: MissingLocalModule")
+
     def test_isolated_variant_uses_only_pinned_template(self):
         cmd = variant.variant_command(Path("/test/cache"), "sha256:" + "a" * 64)
         self.assertIn("--chat-template", cmd)
