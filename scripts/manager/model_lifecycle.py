@@ -269,6 +269,19 @@ def _run_transaction(preview: dict, backend: Any, recipe: dict,
                         backend.start(target)
                         if not backend.verify(model):
                             raise RuntimeError("ORIGINAL_MODEL_RESTORE_VERIFY_FAILED")
+            elif decision in ("START_EXISTING", "RESTART_EXISTING"):
+                # A partially successful start must be STOPPED before the
+                # previous GPU model is recovered. Never leave two GPU owners.
+                if backend.exists(target) and backend.running(target):
+                    backend.stop(target)
+                if target_was_stopped and backend.exists(target):
+                    backend.start(target)
+                    if not backend.verify(model):
+                        raise RuntimeError("TARGET_RESTART_RECOVERY_VERIFY_FAILED")
+            elif decision.startswith("REMOVE") and not backend.exists(target):
+                # Removal is irreversible at the container level. Never label
+                # an absent original as successfully restored.
+                raise RuntimeError("CONTAINER_REMOVED_CANNOT_ROLL_BACK")
             elif target_was_stopped and backend.exists(target):
                 backend.start(target)
                 if not backend.verify(model):
