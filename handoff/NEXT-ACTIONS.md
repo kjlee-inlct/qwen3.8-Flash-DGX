@@ -1,3 +1,17 @@
+## 2026-11-07 — NEXT OPERATOR: FAST-FORWARD PULL + TRACKED STAGE-C PLAN, THEN SEPARATE ACTUAL DOWNTIME CONSENT
+
+Operator has already shown **canonical** `./wizard.sh switch flash-next-27b stage-c --plan --json` READY/issues=[]/P1 gate PASS on actual DGX. Do NOT demand another P1 benchmark/diagnostic, repeat A/B or optional `evidence migrate`. The optional import was cancelled via input `COPY` and copied **0** files; Stage C does not depend on it.
+
+1. Check latest GitHub source HEAD, PR #1 Draft/Unmerged, CPU tests SUCCESS and fast-forward pull in clean `~/Workspace/llm/blazux-orcarouter`.
+2. Run exactly **`bash scripts/temporary/p3-stage-c-operator.sh --plan`**. This is the tracked P3-C wrapper's default read-only live preflight. It never stops services. Confirm `READY_FOR_SEPARATE_P3_C_OPERATOR_APPROVAL`, `issues=[]`, source current Flash, target original preserved 27B, P1 evidence PASS, `executed=false` and report path.
+3. **STOP for separate operator consent to actually stop the live Flash-Next API on port 8000.** Only if the human explicitly approves C downtime, run `bash scripts/temporary/p3-stage-c-operator.sh --execute`. Three new terminal inputs are mandatory: fresh 64 SHA printed in the new plan prompt, `I_ACCEPT_FLASH_NEXT_DOWNTIME`, `I_SEPARATELY_AUTHORIZE_FINAL_27B_STAGE_C`. Must be typed manually, never scripted/auto-piped. A/B or historic C SHA invalid. Expiry/changed live service blocks before core.
+4. Wrapper invokes canonical Wizard stage C with exact SHA + downtime ack (NO `--enter-p3` since canonical C requires null), which exclusively owns Docker, original Flash preservation and rollback. Stage C succeeds only if canonical `stage-c.json` and independent 27B live API on :8000 both verified, yielding `P3_C_PASS_FINAL_27B_ACTIVE`. No switch-back after success.
+5. If BLOCKED/OPERATOR_REVIEW_REQUIRED/RECOVERY_FAILED, **STOP**, collect appended operator report and original P3 journal/status; no blind retry, no deleting attempt markers/locks/old containers. Do not merge Draft PR, prune caches or start extra models.
+
+[Stage-C controller runbook](../docs/P3-STAGE-C-FINAL-27B-OPERATOR-20261107.md). Latest real source observations are **read-only only**; C service transfer itself has not yet run.
+
+---
+
 ## 2026-11-07 — NEXT DGX OPERATOR READ-ONLY HISTORY AND P3-C PLAN (NO TRANSITION)
 
 1. Confirm latest branch HEAD / GitHub CPU CI; `git pull --ff-only origin feature/recipe-wizard-handoff`. Do not merge PR #1, delete models, or restart/stop any service.
