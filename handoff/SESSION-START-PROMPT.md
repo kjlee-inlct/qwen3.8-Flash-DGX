@@ -1,3 +1,9 @@
+## 2026-11-07 — LATEST OPERATOR READ-ONLY DGX PREVIEW PASS ON SOURCE 4189a79
+
+A second operator DGX read-only run after source `4189a79` verified canonical 27B `diff=[]`, `advisories=[]` with explicit HF source; `switch flash-next-27b operational --target flash-next --plan --json` now returns `READY_FOR_OPERATOR_REVIEW_ONLY`, `issues=[]`, `current_ids_from_live_docker=true`, source lineage `CANONICAL_RECIPE`, target lineage `HISTORICAL_P3_INSTANCE`. API remains `LIVE_SERVICE_VERIFIED`. **No actual DGX mutation/transfer**, no GPU process exclusivity or process-level port ownership verified, and no production switch gate unlocked. Evidence and next priorities: `docs/WIZARD-27B-OPERATIONAL-PREVIEW-DGX-PASS-20261107.md`, `handoff/NEXT-ACTIONS.md`. Last SOURCE CI 814/814 CPU Fake-DGX PASS run 42367665200; PR #1 still Draft. Do not re-run P3 A/B/C or assume approval from preview fingerprint.
+
+---
+
 ## 2026-11-07 — LATEST UPDATE: READ-ONLY DGX MATCHED AND CURRENT-ID SWITCH SOURCE READY
 
 Actual user DGX read-only Wizard after 5456eae: 27B canonical `diff=[]`, `LIVE_SERVICE_VERIFIED`, observed host cache `/home/inlc/.cache/huggingface`, no reboot/switch/recreate. New source uses fresh current Docker IDs in ordinary switch, validates canonical 27B settings, keeps P3 A/B/C receipts immutable, and adds optional `--cache-source` READ-ONLY comparison. GitHub source CI 42367665200: **814/814 PASS**, 36 suites. No real operating switch or release. Read `docs/WIZARD-27B-LIVE-DRIFT-CURRENT-ID-20261107.md` first; next DGX commands are READ-ONLY `model 27b recipe-diff --cache-source /home/inlc/.cache/huggingface --json` and `switch flash-next-27b operational --target flash-next --plan --json`. Old generic lifecycle baseline status below is historical; keep source vs real PASS boundaries. The existing PR #1 remains Draft, do not merge.
