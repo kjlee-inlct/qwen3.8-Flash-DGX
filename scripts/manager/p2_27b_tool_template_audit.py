@@ -32,6 +32,7 @@ r = {
     "tool_result_rendered": False,
     "non_tool_prompt_rendered": False,
     "no_thinking_rendered": False,
+    "thinking_prompt_rendered": False,
     "issues": [],
 }
 try:
@@ -81,10 +82,20 @@ try:
         "<tool_call>" in prompted and
         "<|im_start|>assistant" in prompted
     )
-    # enable_thinking=False should NOT inject reasoning markup into the
-    # assistant-generation prefix. An empty <think> block is not mandatory.
-    r["no_thinking_rendered"] = (
-        "<think>" not in prompted and "</think>" not in prompted
+    # The pinned Qwen3.8 Jinja deliberately PREFILLS an EMPTY, CLOSED
+    # thinking region when enable_thinking=False. This is prompt markup,
+    # not generated reasoning leakage. For enabled thinking, the prompt
+    # instead ends in an OPEN thinking region. Verify both exact suffixes.
+    no_thinking_suffix = "<|im_start|>assistant\n<think>\n\n</think>\n\n"
+    thinking_suffix = "<|im_start|>assistant\n<think>\n"
+    r["no_thinking_rendered"] = prompted.endswith(no_thinking_suffix)
+    thinking_prompted = tok.apply_chat_template(
+        msgs, tools=tools, add_generation_prompt=True,
+        tokenize=False, enable_thinking=True,
+    )
+    r["thinking_prompt_rendered"] = (
+        thinking_prompted.endswith(thinking_suffix)
+        and not thinking_prompted.endswith(no_thinking_suffix)
     )
     ordinary = tok.apply_chat_template(
         [{"role": "user", "content": "Say hello."}],
@@ -122,7 +133,8 @@ try:
         "<function=get_probe_token>" in continued
     )
     for key in ("tool_prompt_rendered", "no_thinking_rendered",
-                "non_tool_prompt_rendered", "tool_result_rendered"):
+                "thinking_prompt_rendered", "non_tool_prompt_rendered",
+                "tool_result_rendered"):
         if not r[key]:
             r["issues"].append("TEMPLATE_RENDER_FAILED_" + key.upper())
 except Exception as exc:
@@ -211,7 +223,8 @@ def inspect_template_cpu(
         for key in ("template_present", "tokenizer_auto_template_present",
                     "template_sha256", "transformers_version",
                     "tool_prompt_rendered", "tool_result_rendered",
-                    "no_thinking_rendered", "non_tool_prompt_rendered"):
+                    "no_thinking_rendered", "thinking_prompt_rendered",
+                    "non_tool_prompt_rendered"):
             if key in data:
                 report[key] = data[key]
         reported_issues = data.get("issues")
