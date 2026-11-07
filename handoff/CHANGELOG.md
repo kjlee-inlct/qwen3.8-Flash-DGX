@@ -1,3 +1,9 @@
+## 2026-11-07 — LIVE DGX CURRENT-ID ORDINARY SWITCH PREVIEW PASSED READ-ONLY
+
+On actual DGX after operator pulled 4189a79, 27B recipe drift including pinned explicit host cache source yielded no drift/advisories, 27B -> Flash-Next `operational --plan` yielded `READY_FOR_OPERATOR_REVIEW_ONLY`, zero issues, correct current Docker IDs and source CANONICAL_RECIPE / target HISTORICAL_P3_INSTANCE, and manager status `LIVE_SERVICE_VERIFIED`. No model changes were made. Full report: `docs/WIZARD-27B-OPERATIONAL-PREVIEW-DGX-PASS-20261107.md`. Source CI baseline remains 814/814 PASS. Release gates remain disabled.
+
+---
+
 ## 2026-11-07 — 27B DGX read-only recipe comparison PASS; current-ID operating switch code source-only
 
 Operator reported `qwen38-27b` LIVE_SERVICE_VERIFIED, image/revision/options matching canonical recipe, `diff=[]`, `issues=[]`, HF bind source `/home/inlc/.cache/huggingface`, restart preview RESTART_EXISTING and explicit reinstall preview RECREATE, no executed change. Source updated `operational_switch.py` and `operational_executor.py` to bind the current container ID and distinguish 27B canonical recipe from historical P3 instance. Read-only CLI now accepts `--cache-source /absolute/path`. Source CI 42367665200 SUCCESS **814/814 tests, 36 groups**; no DGX switch or production release. See `docs/WIZARD-27B-LIVE-DRIFT-CURRENT-ID-20261107.md`.
