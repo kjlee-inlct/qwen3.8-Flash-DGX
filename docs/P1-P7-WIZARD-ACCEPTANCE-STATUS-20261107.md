@@ -1,3 +1,13 @@
+## 2026-11-07 — General P3 operating Wizard SOURCE acceptance candidate (not real DGX release)
+
+**P3 one-off historical real DGX A/B/C PASS unchanged.** Subsequent real DGX 27B curl text generation and one no-thinking exact response PASS; real recurring 27B ↔ Flash operating switch and rollback **NOT_RUN**. New GitHub source fully connects the *existing* `./wizard.sh` main menu (option 4) and model menu (option 6) to independent ordinary-switch guided review; CLI `operational guided` has read-only default, and production `--execute` remains source release-gated. The operating backend now has domain-separated execution SHA and three human consent fields, immutable journal audit with crash divergence rejection, bounded target Chat Completions after health/model identity, no-downtime cancellation, best-effort rollback and failure reporting.
+
+A separate one-time operator acceptance route `operational acceptance --target ... --plan|--execute` and a tracked shell wrapper are implemented. `--execute` needs four fresh exact human TTY approvals and independently checked current plan, which provides a way to perform **one** physical acceptance only if the operator separately approves 27B/Flash API downtime. It is NOT itself real hardware proof and does NOT release the normal operating Wizard. Read `docs/OPERATING-SWITCH-DGX-ACCEPTANCE-RUNBOOK-20261107.md`.
+
+Open WebUI 27B tool parser and recipe integration are intentionally **DEFERRED**. P4/P5/P6/P7 are unchanged. Original P3 immutable receipts and 27B active :8000 are preserved; no merge or deletion.
+
+---
+
 ## Latest DGX proof — current 27B functional text-generation PASS (2026-11-07)
 
 User-supplied DGX actual `curl` probe and tracked script both verified localhost `:8000/health`, sole served model `qwen3.8-27b` and actual Chat Completions with the matching model ID. Tracked script returned `27B_CURL_SMOKE_PASS`. This strengthens **current P2/27B serving functional health** (not a new benchmark); P3 A/B/C historical completion is unchanged. Direct reply `finish_reason=stop` with 26 generated tokens; however `message.content` contained reasoning-like text and literal `</think>` before `DGX_OK`, so strict exact-format compliance is **not PASS**. New classifier source-only, pending actual DGX rerun; **general operating switch, user-friendly approval, recovery and P7 release remain NOT ACCEPTED**. No model transfers or restarts authorized.
