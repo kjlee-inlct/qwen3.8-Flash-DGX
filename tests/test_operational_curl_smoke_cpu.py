@@ -40,7 +40,10 @@ elif url.endswith("/v1/chat/completions"):
             or payload["max_tokens"] > 256):
         sys.exit(9)
     reply_model = "qwen3.8-flash-next" if mode == "wrong_chat_model" else "qwen3.8-27b"
-    content = "" if mode == "empty_reply" else "DGX_OK"
+    content = ("" if mode == "empty_reply" else
+               "Thinking-style prose\\n</think>\\n\\nDGX_OK"
+               if mode == "reasoning_in_content" else
+               "WRONG_ANSWER" if mode == "non_exact_reply" else "DGX_OK")
     print(json.dumps({"model": reply_model, "choices": [
         {"message": {"content": content}, "finish_reason": "stop"}]}))
 else:
@@ -74,7 +77,7 @@ class OperationalCurlSmokeCPU(unittest.TestCase):
         result = self.execute()
         self.assertEqual(result.returncode, 0, result.stderr)
         for expected in ("HEALTH_PASS", "IDENTITY_PASS", "INFERENCE_PASS",
-                         "27B_CURL_SMOKE_PASS"):
+                         "FORMAT_PASS exact DGX_OK", "27B_CURL_SMOKE_PASS"):
             self.assertIn(expected, result.stdout)
         self.assertEqual(self.trace.read_text().splitlines(), [
             "http://127.0.0.1:8000/health",
@@ -108,6 +111,22 @@ class OperationalCurlSmokeCPU(unittest.TestCase):
         result = self.execute("empty_reply")
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("FAIL: 27B inference", result.stderr)
+
+    def test_real_dgx_style_thinking_text_keeps_inference_pass_but_flags_format(self):
+        result = self.execute("reasoning_in_content")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("INFERENCE_PASS", result.stdout)
+        self.assertIn("FORMAT_DEVIATION", result.stdout)
+        self.assertIn("think_end_marker_present=true", result.stdout)
+        self.assertNotIn("FORMAT_PASS", result.stdout)
+        self.assertIn("27B_CURL_SMOKE_PASS", result.stdout)
+
+    def test_wrong_nonempty_answer_does_not_get_exact_format_pass(self):
+        result = self.execute("non_exact_reply")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("INFERENCE_PASS", result.stdout)
+        self.assertIn("FORMAT_DEVIATION", result.stdout)
+        self.assertIn("think_end_marker_present=false", result.stdout)
 
     def test_wrong_completion_model_is_not_a_pass(self):
         result = self.execute("wrong_chat_model")
