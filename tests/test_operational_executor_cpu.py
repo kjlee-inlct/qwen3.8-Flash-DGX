@@ -258,7 +258,8 @@ class FakeOperatingTransactionCPU(unittest.TestCase):
         self.fake.docs[p3.NAMES["flash-next"]]["State"]["Running"] = False
         self.fake.docs[p3.NAMES["27b"]]["State"]["Running"] = True
         rc, data = self.execute()
-        self.assertEqual(rc, 4)
+        self.assertEqual(rc, 3)  # Replayed attempt blocked before any service change.
+        self.assertEqual(data["status"], "BLOCKED")
         self.assertFalse(data.get("active_model") == "flash-next")
         self.assertEqual(self.active(), "27b")
 
