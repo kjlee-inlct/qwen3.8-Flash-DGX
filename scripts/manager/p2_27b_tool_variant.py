@@ -42,8 +42,9 @@ def variant_command(cache: Path, image_id: str) -> list[str]:
         "--label", "blazux.variant=" + VARIANT_ID,
         "--label", "blazux.preserved-original=" + SOURCE_CONTAINER,
     ]
-    assert command[command.index("--name") + 1] != SOURCE_CONTAINER
-    assert command[-len(TOOL_CALLING_ARGS):] == list(TOOL_CALLING_ARGS)
+    if (command[command.index("--name") + 1] == SOURCE_CONTAINER
+            or command[-len(TOOL_CALLING_ARGS):] != list(TOOL_CALLING_ARGS)):
+        raise ValueError("NATIVE_TOOLS_VARIANT_IDENTITY_OR_FLAGS_CHANGED")
     return command
 
 
@@ -162,6 +163,10 @@ def inspect_variant(
             if any(flag in cmd for flag in ("--enable-auto-tool-choice",
                                            "--tool-call-parser", "--reasoning-parser")):
                 issues.append("PRESERVED_ORIGINAL_CMD_ALREADY_CHANGED")
+            if (status.get("active_container") or {}).get("image_id") != source_doc["Image"]:
+                issues.append("LIVE_STATUS_DOCKER_IMAGE_ID_MISMATCH")
+            if not ("--quantization" in cmd and "modelopt_mixed" in cmd):
+                issues.append("PINNED_MODEL_OPT_MIXED_LOADER_MISMATCH")
             mount = _protected_mount(source_doc)
             if mount is None:
                 issues.append("ORIGINAL_READ_ONLY_HF_BIND_NOT_VERIFIED")
