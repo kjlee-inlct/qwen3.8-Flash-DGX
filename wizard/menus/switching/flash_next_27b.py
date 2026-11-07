@@ -19,8 +19,13 @@ def run(argv, *, as_json=False, dry_run=False):
     args = list(argv)
     if args[:2] == ["operational", "acceptance"]:
         from scripts.manager.operational_acceptance import main as acceptance_main
-        return acceptance_main(args[2:])
+        return acceptance_main(args[2:] + (["--json"] if as_json else []))
     if args[:2] == ["operational", "guided"]:
+        # Guided approval must never become an unattended JSON/script action.
+        if as_json:
+            print(json.dumps({"status": "BLOCKED", "executed": False,
+                              "issues": ["GUIDED_MODE_TTY_ONLY_USE_OPERATIONAL_PLAN_FOR_JSON"]}))
+            return 3
         from scripts.manager.operational_wizard import main as guided_main
         return guided_main(args[2:])
     if args and args[0] == "operational":
