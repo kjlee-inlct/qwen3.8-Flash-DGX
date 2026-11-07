@@ -1,3 +1,13 @@
+## 2026-11-07 — OFFICIAL P3 EXTENSION: STAGES D, E, F, G (SOURCE DRAFT)
+
+**Approved stage numbering:** P3-A/B/C historical one-off transfers are **REAL PASS/CLOSED and immutable**. The formerly unnamed four common Wizard operating-function tasks are now officially **P3-D** (GPU exclusivity and :8000 PID audit), **P3-E** (Flash-Next canonical runtime/reinstall recipe qualification), **P3-F** (general recipe lifecycle, restart/reinstall/rollback/immutable journal/CPU acceptance), and **P3-G** (real DGX bidirectional operating transfers, safe fault/restore and Wizard UX final acceptance). There is **no P3-H** in the current plan. This expansion does not reopen or replay A/B/C.
+
+**One command draft runner:** `bash scripts/temporary/p3-d-g-acceptance.sh --run` performs D/E/G *read-only* DGX probes plus F CPU/Fake-DGX regression; `--cpu-only` runs source regressions without GPU/Docker/API, `--plan` is inert. `--strict` returns nonzero while real D-G acceptance is incomplete. **No Docker mutation, no benchmark, no installation/reinstall, and no real P3-G switch/rollback**. A successful source run does NOT mean D-G are complete or production released. `P3-E` without a separately qualified Flash reinstall recipe must remain DRAFT_REVIEW_REQUIRED. Full contract: `docs/P3-D-G-UNIFIED-WIZARD-DRAFT-ACCEPTANCE-20261107.md`. Current real DGX preexisting baseline: canonical 27B `diff=[]`, source-current-ID Flash operational preview `READY_FOR_OPERATOR_REVIEW_ONLY`, `LIVE_SERVICE_VERIFIED`; not evidence of D hardware ownership or G live transfers after canonical 27B recreation.
+
+**P4/P5/P6/P7 remain unchanged**: P4 optional Flash removal/recovery (may be NOT_APPLICABLE), P5 Orcarouter serving+bench, P6 Orcarouter↔27B switches, P7 full integrated system release. P3-D-G complete acceptance is a predecessor to selecting P4 disposition, but optional P4 is not a forced deletion stage.
+
+---
+
 ## SUPERSEDING VERIFIED STATE — 2026-11-07, AFTER DGX REAL ACCEPTANCE
 
 **LATEST FACTS override older diagnostic/HTTP-400/source-only text further down.** The initial NVIDIA 27B API HTTP 400 and absent native parser flags were RESOLVED via a user-approved RECREATION of the canonical `qwen38-27b` from pinned `recipes/qwen38-27b.runtime.json` (vLLM 0.32.0, modelopt_mixed, port 8000, `qwen3_coder` / `qwen3` / exact NVIDIA Jinja). Actual DGX native `tool_calls`, tool result continuation, streaming, normal chat, benchmark v2 **PASS** (3/3, mean client E2E 10.957 tok/s, p50 TTFT 0.165412 s), and Open WebUI Native **user-confirmed PASS**. Original old container's verified stopped backup was deleted after full success; new canonical `qwen38-27b` is operational. P3-C one-off already REAL PASS/CLOSED; old P3 Docker IDs are historical, not current execution identity.
