@@ -308,8 +308,14 @@ def migration_plan(*, legacy: Path = LEGACY, operator: Path = LEGACY_OPERATOR,
             entries.append({"source": str(path), "destination": str(dest),
                             "sha256": digest, "state": state, "source_type": origin})
         except (OSError, ValueError, UnicodeError, json.JSONDecodeError) as exc:
+            # Expose only enumerated nonsecret blocker codes. An unexpected
+            # OS error may contain private absolute paths or credentials.
+            safe = {"DESTINATION_HASH_CONFLICT", "OUTPUT_ESCAPES_REPORTS",
+                    "EVIDENCE_SIZE_OR_PERMISSIONS", "EVIDENCE_ESCAPES_SOURCE",
+                    "EVIDENCE_LINK_OR_MISSING", "EVIDENCE_NOT_JSON_OBJECT"}
+            reason = str(exc) if isinstance(exc, ValueError) and str(exc) in safe else type(exc).__name__
             issues.append("MIGRATION_SOURCE_INVALID:" + origin + "/" + path.name +
-                          ":" + type(exc).__name__)
+                          ":" + reason)
     entries.sort(key=lambda x: (x["source_type"], x["source"]))
     signature = hashlib.sha256(json.dumps(entries, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
     return {"status": "BLOCKED" if issues else "READY_TO_REQUEST_COPY_APPROVAL",
