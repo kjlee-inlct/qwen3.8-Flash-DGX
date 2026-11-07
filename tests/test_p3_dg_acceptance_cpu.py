@@ -71,6 +71,51 @@ class DraftUnifiedRunnerCPU(unittest.TestCase):
         self.assertEqual([x[0] for x in calls], ["ss", "nvidia-smi"])
         self.assertFalse(out["executed"])
 
+    def test_d_accepts_ipv4_and_ipv6_same_qualified_container(self):
+        def runner(args, timeout=12):
+            if args[0] == "ss":
+                return SimpleNamespace(
+                    returncode=0, stdout=(
+                        'LISTEN 0 4096 0.0.0.0:8000 0.0.0.0:* users:(("python",pid=14,fd=3))\\n'
+                        'LISTEN 0 4096 [::]:8000 [::]:* users:(("python",pid=14,fd=5))\\n'))
+            return SimpleNamespace(returncode=0, stdout="17, python\\n")
+        out = dg.stage_d(snapshot(), verified_live(), run=runner,
+                         proc_owner=lambda pid, cid: pid in (14, 17) and cid == IDENT)
+        self.assertEqual(out["status"], "READ_ONLY_PASS")
+        self.assertEqual(len(out["observed_port_listener_rows"]), 2)
+        self.assertEqual(out["observed_port_pids"], [14])
+        self.assertTrue(out["port_process_ownership_verified"])
+
+    def test_d_rejects_dual_stack_unattributed_second_listener(self):
+        def runner(args, timeout=12):
+            if args[0] == "ss":
+                return SimpleNamespace(
+                    returncode=0, stdout=(
+                        'LISTEN 0 4096 0.0.0.0:8000 0.0.0.0:* users:(("python",pid=14,fd=3))\\n'
+                        'LISTEN 0 4096 [::]:8000 [::]:*\\n'))
+            return SimpleNamespace(returncode=0, stdout="17, python\\n")
+        out = dg.stage_d(snapshot(), verified_live(), run=runner,
+                         proc_owner=lambda pid, cid: True)
+        self.assertEqual(out["status"], "BLOCKED")
+        self.assertIn("HOST_PORT_PROCESS_PID_UNAVAILABLE", out["issues"])
+
+    def test_d_sockets_without_pid_never_report_pass(self):
+        def runner(args, timeout=12):
+            if args[0] == "ss":
+                return SimpleNamespace(returncode=0, stdout=
+                                       "LISTEN 0 4096 0.0.0.0:8000 0.0.0.0:*\\n")
+            return SimpleNamespace(returncode=0, stdout="17, python\\n")
+        out = dg.stage_d(snapshot(), verified_live(), run=runner,
+                         proc_owner=lambda pid, cid: True)
+        self.assertEqual(out["status"], "BLOCKED")
+        self.assertIn("HOST_PORT_PROCESS_PID_UNAVAILABLE", out["issues"])
+
+    def test_d_peer_8000_not_mistaken_as_local_listener(self):
+        self.assertFalse(dg._ss_local_port_8000(
+            "LISTEN 0 100 127.0.0.1:8080 127.0.0.1:8000"))
+        self.assertTrue(dg._ss_local_port_8000(
+            "LISTEN 0 100 [::]:8000 [::]:*"))
+
     def test_d_does_not_claim_success_when_ss_proxy_cannot_be_attributed(self):
         def runner(args, timeout=12):
             if args[0] == "ss":
@@ -123,6 +168,47 @@ class DraftUnifiedRunnerCPU(unittest.TestCase):
         self.assertFalse(out["canonical_recipe_registered"])
         self.assertEqual(out["observed_candidate"]["container_id"], IDENT)
         self.assertIn("FLASH_CANONICAL_REINSTALL_RECIPE_NOT_QUALIFIED", out["issues"])
+
+    def test_e_legacy_vllm_command_does_not_erase_flash_candidate(self):
+        legacy = snapshot()
+        cmd = legacy["containers"]["qwen38-flash"]["Config"]["Cmd"]
+        legacy["containers"]["qwen38-flash"]["Config"]["Cmd"] = [
+            "vllm", "serve", *cmd, "--enable-chunked-prefill"]
+        history = {"status": "LOCAL_P3_A_B_C_RECEIPTS_VERIFIED",
+                   "records": {"a": {"flash_id": IDENT, "flash_image": IMAGE}},
+                   "issues": []}
+        out = dg.stage_e(legacy, historical=history)
+        self.assertEqual(out["status"], "DRAFT_REVIEW_REQUIRED")
+        self.assertEqual(out["issues"], ["FLASH_CANONICAL_REINSTALL_RECIPE_NOT_QUALIFIED"])
+        self.assertEqual(out["observed_candidate"]["cmd_normalized"], False)
+        self.assertIn("FLASH_LEGACY_COMMAND_NEEDS_MODEL_SPECIFIC_NORMALIZER",
+                      out["advisories"])
+        self.assertIn("vllm", out["observed_candidate"]["raw_cmd"])
+
+    def test_e_legacy_writable_hf_mount_is_a_review_advisory(self):
+        legacy = snapshot()
+        legacy["containers"]["qwen38-flash"]["Mounts"][0]["RW"] = True
+        history = {"status": "LOCAL_P3_A_B_C_RECEIPTS_VERIFIED",
+                   "records": {"a": {"flash_id": IDENT, "flash_image": IMAGE}},
+                   "issues": []}
+        out = dg.stage_e(legacy, historical=history)
+        self.assertEqual(out["status"], "DRAFT_REVIEW_REQUIRED")
+        self.assertIn("FLASH_LEGACY_HF_MOUNT_WRITABLE_REINSTALL_REVIEW",
+                      out["advisories"])
+        self.assertEqual(out["observed_candidate"]["hf_mount"]["read_only"], False)
+
+    def test_e_wrong_flash_model_path_and_served_id_still_block(self):
+        legacy = snapshot()
+        legacy["containers"]["qwen38-flash"]["Config"]["Cmd"] = [
+            "/hf/hub/models--other--model/snapshots/" + "1"*40,
+            "--served-model-name", "unknown", "--port", "8000"]
+        history = {"status": "LOCAL_P3_A_B_C_RECEIPTS_VERIFIED",
+                   "records": {"a": {"flash_id": IDENT, "flash_image": IMAGE}},
+                   "issues": []}
+        out = dg.stage_e(legacy, historical=history)
+        self.assertEqual(out["status"], "BLOCKED")
+        self.assertIn("FLASH_CHECKPOINT_REVISION_UNVERIFIED", out["issues"])
+        self.assertIn("FLASH_SERVED_ID_NOT_QUALIFIED", out["issues"])
 
     def test_e_rejects_unrecognized_flash_docker_recreation(self):
         history = {"status": "LOCAL_P3_A_B_C_RECEIPTS_VERIFIED",
