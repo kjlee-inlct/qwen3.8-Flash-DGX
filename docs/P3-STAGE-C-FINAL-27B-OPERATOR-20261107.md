@@ -1,3 +1,7 @@
+> **FINAL P3-C CLOSED — 2026-11-07.** Original one-off P3 A/B/C acceptance had already completed REAL DGX PASS; historic stage-C receipt is immutable, and this document is NOT an instruction to replay Stage C. Later independent ordinary operational switching 27B→Flash and Flash→27B also operator-reported PASS (separate contract, newest active 27B); normal main Wizard execution UX remains release-gated. The newly appended **P2-FINAL Tool Calling** item does not reopen P3-C and is tracked separately in `docs/P2-27B-FINAL-TOOL-CALLING-ACCEPTANCE-20261107.md`. Do not delete/recreate original pinned P2/P3 containers, rewrite receipts, or alter HF cache. Independent post-reverse status/audit and real Tool Calling acceptance have not yet been supplied.
+
+---
+
 > **2026-11-07 P3-C REAL DGX PASS — 최신 우선 판정:** P1 Flash-Next API/Verify/3요청 Benchmark 및 P3-B 후 P1 재검증·진단 PASS, P2 NVIDIA 27B GPU trial/Benchmark/원본 복구 PASS, P3-A/B/C 실제 DGX 순차 전환 모두 PASS. 최종 관측은 NVIDIA 27B `qwen3.8-27b` `:8000/v1` ACTIVE, canonical `stage-c.json`, wrapper `P3_C_PASS_FINAL_27B_ACTIVE`, 독립 API `LIVE_SERVICE_VERIFIED`. 기존 Flash/27B 컨테이너/HF 캐시 보존. **이 문서에 남아 있는 P2/P3 NOT_RUN / Flash ACTIVE / P3-C 승인 준비는 당시 역사적 시점이며 현재 수행 지시가 아님.** 단, 메인 `./wizard.sh`의 P3 메뉴는 여전히 `--plan` only이므로 **대화형 Wizard UX/반복 가능한 일반 전환의 수용은 미완료**. 다음 작업은 기존 서비스 변경 없는 Wizard UX 개발/CPU 테스트. 최신 기준: [P1–P7 검증 현황](P1-P7-WIZARD-ACCEPTANCE-STATUS-20261107.md), [최신 상태](../handoff/CURRENT-STATE.md), [새 대화 프롬프트](../handoff/SESSION-START-PROMPT.md).
 
 ---
