@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 import fcntl
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -34,6 +35,36 @@ def _deny(target: str, issue: str) -> tuple[int, dict]:
                "issues": [issue]}
 
 
+def execution_plan_id(preview: dict[str, Any]) -> str | None:
+    """Independent consent fingerprint, not the read-only candidate SHA."""
+    raw = preview.get("plan_id")
+    if (preview.get("status") != READY or not isinstance(raw, str)
+            or not p3.SHA.fullmatch(raw)
+            or preview.get("source_model") not in SUPPORTED
+            or preview.get("target_model") not in SUPPORTED
+            or preview["source_model"] == preview["target_model"]):
+        return None
+    facts = {
+        "kind": "INDEPENDENT_OPERATING_EXECUTION_APPROVAL_V1",
+        "preview_id": raw,
+        "source": preview["source_model"],
+        "target": preview["target_model"],
+        "source_id": preview.get("source_container_id"),
+        "target_id": preview.get("target_container_id"),
+        "source_image": preview.get("source_image"),
+        "target_image": preview.get("target_image"),
+        "expires_at": preview.get("expires_at_epoch_seconds"),
+        "port": 8000,
+    }
+    if not all(facts.get(k) for k in (
+            "source_id", "target_id", "source_image", "target_image",
+            "expires_at")):
+        return None
+    return hashlib.sha256(
+        json.dumps(facts, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+
+
 def execute(
     target: str, plan_id: str | None, ack_downtime: str | None,
     ack_target: str | None, *,
@@ -43,7 +74,7 @@ def execute(
     waiter: Callable[..., bool] = gpu.wait_for,
     live: Callable[..., dict] = inspect_live_status,
 ) -> tuple[int, dict]:
-    """Guarded backend only; there is deliberately NO user-facing execute route.
+    """Guarded backend; only a separately qualified Wizard release may dispatch.
 
     A source review or Fake-DGX PASS does NOT authorize this method on a live
     machine. Its eventual dispatcher must enforce the operator release gate.
@@ -71,7 +102,7 @@ def execute(
         except (OSError, RuntimeError, ValueError, TypeError,
                 subprocess.TimeoutExpired):
             return _deny(target, "FRESH_OPERATING_PREFLIGHT_FAILED")
-        if fresh.get("status") != READY or fresh.get("plan_id") != plan_id:
+        if fresh.get("status") != READY or execution_plan_id(fresh) != plan_id:
             return _deny(target, "EXPIRED_OR_CHANGED_OPERATING_PLAN")
         source = fresh.get("source_model")
         if source not in SUPPORTED or source == target:
