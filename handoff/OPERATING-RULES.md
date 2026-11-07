@@ -1,3 +1,13 @@
+## R1T — 2026-11-07 — Git BENCHMARK RESULTS MUST BE ALLOWLISTED, NOT RAW
+
+Model-based operator benchmark publications belong under **Git-tracked** `benchmarks/published/<served-model-id>/<original-sha256-prefix>.json` and index `benchmarks/published/README.md`. Source raw JSON under original `~/.local/state/blazux-wizard` or ignored `reports/` stays immutable, PRIVATE and never committed. Published fields only: stable model ID/repository/revision, explicit runtime, report timestamp, original raw SHA256 digest, exact bounded profile, benchmark and actual service-restoration outcome, allowlisted numeric throughput/TTFT/latency, and interpretative measurement limitations. NEVER publish original prompt/output, cache/log host filesystem paths, network/API endpoints, container IDs, plan IDs, user tokens, approval acknowledgments, keys, configuration secrets, memory telemetry, or complete raw execution JSON. Never confuse 27B client E2E throughput with decode proxy or standardized head-to-head model comparisons.
+
+Future export is user-reviewed, one original private receipt at a time: `python3 -m scripts.manager.benchmark_publication --model ... --source ... --plan`; `--write` requires explicitly matching current original source SHA256 and does not stage/commit/push. Existing published summary can only be verified or blocked on mismatch, never overwritten. Read-only original-file verification is `bash scripts/temporary/verify-published-benchmarks.sh`. CI tests exercise whitelisting and privacy; CI cannot validate original DGX receipt bytes not in Git. Any discovered mismatch blocks claiming full machine verification until reconciled.
+
+P3-C executed **NO** service transition in recent user log: exact SHA was typed with leading `[`, returned CANCELLED/executed=false/dispatched=false; plan readiness PASS does not grant downtime. Preserve current Flash-Next and explicit C approval policy.
+
+---
+
 ## R1S — 2026-11-07 — P3-C TRANSITION REQUIRES TRACKED OPERATOR + THREE NEW TTY ACKS
 
 Original D-016 agreement: agent may commit tracked operator-only scripts, tests, permanent docs and source CI on existing `feature/recipe-wizard-handoff`; **actual DGX source changes require clean fast-forward pull by operator**. No agent-initiated Docker stop/start/GPU benchmark, no PR merge. Latest DGX canonical C `--plan` showed READY/issues=[]/P1 evidence PASS, original Flash/27B identities unchanged. That is **NOT** authorization for actual Flash downtime. Historical C SHA `d5f200ff...` expires in the original plan window. Optional `evidence migrate --guided` was CANCELLED/copied=0 by typing `COPY`; it is NOT a C prerequisite and never authorizes it.
