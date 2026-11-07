@@ -212,6 +212,50 @@ class EvidenceCatalogCPU(unittest.TestCase):
         self.assertEqual(historical[0]["summary"]["from_model"], "27b")
         self.assertEqual(historical[0]["summary"]["to_model"], "flash-next")
 
+    def test_future_stage_c_receipt_is_indexed_not_executed(self):
+        # A fake local record exercises history only; it cannot authorize or
+        # dispatch any P3-C service transition.
+        self._put(self.legacy / "p3" / "stage-c.json", {
+            "stage": "c", "status": "PASS", "live_verified": True,
+            "source_model": "flash-next", "target_model": "27b",
+            "finished_at_utc": "2026-11-07T09:00:00+00:00"})
+        out = cat.history(model="27b", kind="transition", **self._kw())
+        self.assertTrue(any(x["action"] == "c" and
+                            x["summary"]["to_model"] == "27b"
+                            for x in out["records"]))
+        plan = cat.migration_plan(**self._kw())
+        self.assertTrue(any("/transitions/flash-next--to--27b/" in
+                            x["destination"] for x in plan["entries"]))
+        self.assertFalse(self.reports.exists())
+
+    def test_changed_destination_is_blocked_without_overwrite(self):
+        before = self.p2_bench.read_bytes()
+        plan = cat.migration_plan(**self._kw())
+        result = cat.copy_approved(plan["plan_id"], **self._kw())
+        self.assertEqual(result["status"], "COPY_COMPLETE")
+        target = Path(next(x for x in result["files"] if
+                           x.endswith(self.p2_bench.name)))
+        target.write_text('{"status":"TAMPERED"}')
+        target.chmod(0o600)
+        changed = cat.migration_plan(**self._kw())
+        self.assertEqual(changed["status"], "BLOCKED")
+        self.assertIsNone(changed["plan_id"])
+        self.assertTrue(any("DESTINATION_HASH_CONFLICT" in issue
+                            for issue in changed["issues"]))
+        self.assertEqual(self.p2_bench.read_bytes(), before)
+
+    def test_symlinked_project_report_root_cannot_be_targeted(self):
+        self.reports.parent.mkdir(exist_ok=True)
+        outside = self.base / "outside"
+        outside.mkdir()
+        self.reports.symlink_to(outside, target_is_directory=True)
+        plan = cat.migration_plan(**self._kw())
+        self.assertEqual(plan["status"], "BLOCKED")
+        self.assertEqual(plan["issues"], ["REPORTS_DIRECTORY_SYMLINK"])
+        self.assertEqual(list(outside.iterdir()), [])
+        report = cat.history(model="flash-next", **self._kw())
+        self.assertIn("UNTRUSTED_PROJECT_REPORTS_SYMLINK", report["issues"])
+
     def test_unknown_model_and_kind_are_blocked(self):
         self.assertEqual(cat.history(model="orcarouter", **self._kw())["count"], 0)
         self.assertEqual(cat.history(model="unknown", **self._kw())["status"], "BLOCKED")
