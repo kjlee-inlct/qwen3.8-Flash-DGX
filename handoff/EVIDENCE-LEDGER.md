@@ -1,3 +1,9 @@
+## 2026-11-08 — REAL DGX P4-B/C dry-run acceptance evidence (source-only vs actual)
+
+Operator-submitted terminal excerpt: 13/13 local Fake-DGX PASS; combined `READ_ONLY_DRY_RUN_PASS`; P4-A `READ_ONLY_INVENTORY_COMPLETE`; P4-B `READ_ONLY_REVIEW_COMPLETE` / issues=[] / 9 reviewed records (2 managed containers, 3 HF repositories, 4 Docker categories); P4-C `DRY_RUN_COMPLETE_RELEASE_GATED` / issues=[] with 2 transaction steps PASS, 2 DEFERRED_P5_OR_P8, 1 NOT_RELEASED, 1 NOT_EXECUTED. All nine simulated resources `would_execute=false`, selected=0; `plan_id=null`, `approval_accepted=false`, `operations_enabled=false`, `executed=false`, `production_released=false`, `live_execution_released=false`, `safe_reclaimable_bytes=null`. Review fingerprint `f6ee99301983f4439048c29c1032e5f6a6a58a3138430c17030120201ed2feb1` **is not approval**. Source-only CI [42404211649](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42404211649) SUCCESS on branch HEAD `66c7e5b` is separate. The operator excerpt does not independently show a checkout HEAD. Full detail: `docs/P4-BC-DGX-READONLY-DRY-RUN-EVIDENCE-20261108.md`.
+
+---
+
 ## 2026-11-08 — P4-B/C combined dry-run source implemented; DGX run next
 
 User directed P4-B asset/candidate review and P4-C cleanup transaction rehearsal in a single read-only script. Source `scripts/manager/p4_bc_dry_run.py`, `scripts/temporary/p4-bc-dry-run.sh`, Wizard `storage flash-next dry-run --json`; 13 Fake-DGX tests. CI [42403828742](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42403828742) SUCCESS, **902/902 CPU/Fake-DGX PASS (41 groups)**. Actual combined DGX run **PENDING**; prior P4-A real inventory PASS remains valid. P4-C live adapter **absent**, `P4_C_LIVE_EXECUTION_RELEASED=False`; no deletion now, only after separately approved P5 issue or P8 acceptance. [Design/runbook](../docs/P4-BC-ONE-SHOT-DRY-RUN-20261108.md). No P3 replay, P8 execution, or PR merge.

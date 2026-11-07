@@ -1,3 +1,11 @@
+## 2026-11-08 — P4-B/C one-shot REAL DGX dry-run accepted; no cleanup now
+
+The operator's combined report is **READ_ONLY_DRY_RUN_PASS**, 13/13 Fake-DGX PASS, P4-B review 9 assets / selected 0, P4-C `DRY_RUN_COMPLETE_RELEASE_GATED` with 2 PASS / 2 DEFERRED / 1 NOT_RELEASED / 1 NOT_EXECUTED and no mutation or approval. Record the result as **P4-B/C READ-ONLY DRY-RUN COMPLETE**, not real cleanup acceptance. Evidence: `docs/P4-BC-DGX-READONLY-DRY-RUN-EVIDENCE-20261108.md`.
+
+**NEXT:** Do not perform additional P4 deletion attempts, prune, switch 27B, run P5/P8 automatically or merge PR. Actual deletion adapter is absent and cannot be introduced until a new operator request for a real P5 problem or P8 acceptance with exact resource/link/rollback safety, fresh approval and verification. P4-B/C source/real-dry-run handoff may be closed. Older 'run P4-B/C dry-run next' instructions below are superseded.
+
+---
+
 ## 2026-11-08 — NEXT: one-shot P4-B/C dry-run on actual DGX, no deletion
 
 Source/CPU P4-B and P4-C rehearsal implemented; run after clean `git status --short` and `git pull --ff-only origin feature/recipe-wizard-handoff`: `bash scripts/temporary/p4-bc-dry-run.sh --json`. The script runs 13 Fake-DGX CPU tests then performs one **read-only P4-A** collection, pure P4-B review and pure P4-C transaction rehearsal. Return JSON, preserving distinction between CPU CI and real DGX run. No `--execute`, sudo, cache mutation, Docker prune, model stop or automatic P5/P8. Actual deletion is separately authorized only if P5 needs it or in P8. See `docs/P4-BC-ONE-SHOT-DRY-RUN-20261108.md`.

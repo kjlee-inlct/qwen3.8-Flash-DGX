@@ -1,3 +1,11 @@
+## 2026-11-08 — P4-B/C actual DGX combined dry-run PASS (read-only scope)
+
+Operator returned the one-shot P4-B/C log: **13/13 Fake-DGX CPU PASS**, `inventory_status=READ_ONLY_INVENTORY_COMPLETE`, P4-B `READ_ONLY_REVIEW_COMPLETE` / `issues=[]` / **9 resource records**, P4-C `DRY_RUN_COMPLETE_RELEASE_GATED` / `issues=[]`, final **`READ_ONLY_DRY_RUN_PASS`**. All 9 resources `selected_for_deletion=false` and `would_execute=false`; no safe reclaimable bytes or approved deletion plan. P4-C transaction steps: **2 PASS / 2 DEFERRED_P5_OR_P8 / 1 NOT_RELEASED / 1 NOT_EXECUTED**. No service or cache mutation; `executed=false`, `operations_enabled=false`, `live_deletion_approved=false`, `production_released=false`. No confirmed fresh DGX checkout SHA in supplied excerpt. Source CI 902/902 PASS in 41 groups is separate evidence. Detail: `docs/P4-BC-DGX-READONLY-DRY-RUN-EVIDENCE-20261108.md`.
+
+**Scope:** P4-B/C dry-run complete, real deletion adapter NOT IMPLEMENTED / NOT RELEASED. Exact HF snapshot/link ownership, Docker image/layer mapping, mount topology, P8 rollback prerequisites and target approvals remain deferred until a separately requested P5 issue or P8 trial. Do not delete, trigger P5/P8 or merge PR #1.
+
+---
+
 ## 2026-11-08 — P4-B/C combined dry-run source implemented; DGX run next
 
 User directed P4-B asset/candidate review and P4-C cleanup transaction rehearsal in a single read-only script. Source `scripts/manager/p4_bc_dry_run.py`, `scripts/temporary/p4-bc-dry-run.sh`, Wizard `storage flash-next dry-run --json`; 13 Fake-DGX tests. CI [42403828742](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42403828742) SUCCESS, **902/902 CPU/Fake-DGX PASS (41 groups)**. Actual combined DGX run **PENDING**; prior P4-A real inventory PASS remains valid. P4-C live adapter **absent**, `P4_C_LIVE_EXECUTION_RELEASED=False`; no deletion now, only after separately approved P5 issue or P8 acceptance. [Design/runbook](../docs/P4-BC-ONE-SHOT-DRY-RUN-20261108.md). No P3 replay, P8 execution, or PR merge.

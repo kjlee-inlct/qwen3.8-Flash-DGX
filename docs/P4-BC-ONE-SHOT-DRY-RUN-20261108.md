@@ -1,3 +1,9 @@
+## Actual DGX one-shot dry-run result — 2026-11-08
+
+**READ_ONLY_DRY_RUN_PASS / REAL DGX OBSERVED**: operator's attached output shows 13/13 Fake-DGX tests PASS, complete fresh P4-A inventory, P4-B `READ_ONLY_REVIEW_COMPLETE` with 9 review records / 0 selected deletions, P4-C `DRY_RUN_COMPLETE_RELEASE_GATED` and all nine `would_execute=false`. No live operation, approval, plan ID or verified reclaimable bytes. This is **not** end-to-end live deletion acceptance. P4-C gates: **2 PASS** (snapshot and bounded resource enumeration), **2 DEFERRED_P5_OR_P8**, **1 NOT_RELEASED**, **1 NOT_EXECUTED**. Preserve the five outstanding HF/Docker/mount/rollback reference gaps. The detailed operator-source evidence and its limitations are documented in [P4-BC-DGX-READONLY-DRY-RUN-EVIDENCE-20261108.md](P4-BC-DGX-READONLY-DRY-RUN-EVIDENCE-20261108.md). The lower section describing the real DGX run as pending is a pre-observation snapshot.
+
+---
+
 # P4-B + P4-C — combined dry-run and deferred deletion contract (2026-11-08)
 
 ## Operator direction and current scope
