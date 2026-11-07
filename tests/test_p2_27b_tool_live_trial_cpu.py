@@ -254,7 +254,7 @@ class NativeToolsLiveTrialCPU(unittest.TestCase):
     def test_preexisting_attempt_blocks_planning(self):
         with TemporaryDirectory() as tmp:
             root = Path(tmp)
-            (root / "attempt-" + PLAN_SHA + ".json").write_text("{}")
+            (root / ("attempt-" + PLAN_SHA + ".json")).write_text("{}")
             self.assertTrue(mod._prior_attempts(root))
 
     def test_read_only_plan_requires_real_template_and_p3_lineage(self):
