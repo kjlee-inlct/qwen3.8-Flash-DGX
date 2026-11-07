@@ -1,3 +1,14 @@
+## 2026-11-07 — Ordinary model-switch preview, source-only transaction and Fake-DGX tests
+
+- Added \`scripts/manager/operational_switch.py\`: strict independent read-only candidate (historical P3 provenance, fresh API, pinned Docker identity, foreign GPU and journal blockers), rotating non-executable fingerprint.
+- Added \`scripts/manager/operational_executor.py\`: guarded backend source for independent exact plan and two acknowledgments, separate lock/journal/attempts, stop-before-start, port/model identity, post-switch verification and best-effort restoration. **Not routed to any CLI or TTY execute; not DGX qualified.**
+- Updated model-first TTY \`wizard/console.py\` and P3 switching adapter to display an ordinary read-only switch preview without recommending replay of one-off stages.
+- Updated \`wizard/roadmap.py\` to separate local historical P1/P2/P3 evidence, current API, general switching, interactive UX and release qualification.
+- Added fake-DGX preview/transaction tests \`test_operational_switch_cpu.py\` and \`test_operational_executor_cpu.py\`; enrolled in \`.github/workflows/recipe-manifest-cpu.yml\`.
+- Created \`docs/OPERATING-SWITCH-UX-CONTRACT-20261107.md\`. Actual DGX 27B remains untouched, assets and P3 receipts preserved; Draft PR #1 still open/unmerged.
+
+---
+
 ## 2026-11-07 — P3-C 실제 최종 PASS, 새로운 P1–P7 수용 현황 및 대화 시작 프롬프트 최신화
 
 실제 DGX 운영자가 새로운 P3-C 계획/3개 독립 승인으로 전환했고, canonical Wizard가 `status=PASS/stage=c/executed=true/live_verified=true/active_model=27b`를 반환했다. wrapper `P3_C_PASS_FINAL_27B_ACTIVE`, `post_switch_status=LIVE_SERVICE_VERIFIED`, `post_switch_observed_model=27b`, `issues=[]`; 원본 `stage-c.json` 증거 보존. 이 결과는 10분 경계에서 승인 부족으로 BLOCKED되었던 과거 시도를 supersede하며, **현재 마지막 관측 모델은 NVIDIA 27B ACTIVE :8000**. 최신 Git 모델별 벤치 2개도 actual DGX private source와 VERIFIED.
