@@ -1,3 +1,7 @@
+> **2026-11-07 LIVE ATTEMPT UPDATE:** Operator executed wrapper `--plan`: `READY_FOR_SEPARATE_P3_C_OPERATOR_APPROVAL/issues=[]`, current Flash-Next, original 27B preserved, POST-B P1 evidence PASS; operator report `reports/transitions/flash-next--to--27b/p3-c-operator-20261107T004635Z-d9b59611f918.json`. Then `--execute` began prompting, but the first typed SHA included the prompt's leading `[`: `[56a30be...`. Exact comparison failed and emitted `CANCELLED`, `approval_accepted=false/executed=false/execution_dispatched=false`, report `p3-c-operator-20261107T004649Z-8bcc2d8a64fc.json`. No Docker stop/start or Stage-C service transition. **Important UX:** type ONLY the 64 lowercase hexadecimal characters, WITHOUT either displayed bracket. Old SHA and expiry cannot be reused. User additionally requested storing public benchmark metrics in Git: sanitized snapshots under `benchmarks/published/`; this does not authorize C or change original P1/P2/P3 runtime evidence.
+
+---
+
 # NVIDIA Flash-Next → NVIDIA 27B: final Stage-C operator runbook
 
 **Date:** 2026-11-07 (KST)  
