@@ -55,6 +55,10 @@ def execution_plan_id(preview: dict[str, Any]) -> str | None:
         "target_id": preview.get("target_container_id"),
         "source_image": preview.get("source_image"),
         "target_image": preview.get("target_image"),
+        "source_lineage": preview.get("source_lineage"),
+        "target_lineage": preview.get("target_lineage"),
+        "source_recipe_sha": preview.get("source_recipe_sha256"),
+        "target_recipe_sha": preview.get("target_recipe_sha256"),
         "expires_at": preview.get("expires_at_epoch_seconds"),
         "port": 8000,
     }
@@ -168,11 +172,22 @@ def execute(
                                    running=False):
                 raise RuntimeError("PRESERVED_TARGET_DRIFT")
             if target == "27b":
-                # Historical A provenance, not an approval token.
-                # Rechecking ID/image matters even if the label was read earlier.
-                if (((doc.get("Config") or {}).get("Labels") or {}).get(p3.LABEL)
-                        != fresh.get("p3_a_plan_id")):
-                    raise RuntimeError("PRESERVED_27B_PROVENANCE_MISSING")
+                lineage = fresh.get("target_lineage")
+                labels = ((doc.get("Config") or {}).get("Labels") or {})
+                if lineage == "CANONICAL_RECIPE":
+                    # Immutable Docker ID binds the checked startup config;
+                    # the fresh planner separately verified the canonical
+                    # recipe and included its SHA in the approved fingerprint.
+                    from scripts.manager.recipe_drift import load_desired
+                    _, recipe_sha = load_desired("27b")
+                    if (recipe_sha != fresh.get("target_recipe_sha256")
+                            or labels.get("blazux.recipe") != "qwen38-27b"):
+                        raise RuntimeError("CANONICAL_27B_RECIPE_PROVENANCE_CHANGED")
+                elif lineage == "HISTORICAL_P3_INSTANCE":
+                    if labels.get(p3.LABEL) != fresh.get("p3_a_plan_id"):
+                        raise RuntimeError("PRESERVED_27B_PROVENANCE_MISSING")
+                else:
+                    raise RuntimeError("UNQUALIFIED_27B_TARGET_LINEAGE")
             if p3._gpu_conflicts(p3.NAMES[source], run, inspect,
                                  require_source_running=False):
                 raise RuntimeError("FOREIGN_GPU_CONSUMER_BEFORE_START")
