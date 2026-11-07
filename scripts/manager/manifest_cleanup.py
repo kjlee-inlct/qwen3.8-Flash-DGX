@@ -100,8 +100,13 @@ def _evidence(entry: dict) -> tuple[str, str]:
     root = Path(location).expanduser()
     expected = entry["evidence_expected_status"]
     receipt = migration._safe_json(root / entry["evidence_result"])
-    if receipt.get("status") != expected or receipt.get("issues"):
+    if receipt.get("status") != expected:
         raise ValueError("RETIREMENT_SOURCE_RECEIPT_NOT_QUALIFIED")
+    if entry["name"] == VARIANT_CONTAINER and receipt.get("issues"):
+        raise ValueError("SUCCESSFUL_TRIAL_RECEIPT_CONTAINS_ISSUES")
+    if entry["name"] == EXPECTED_NAMES[0] and receipt.get("issues") != [
+            "MIGRATION_ERROR_NEW_CANONICAL_BENCHMARK_NOT_QUALIFIED"]:
+        raise ValueError("FAILED_CANDIDATE_RECEIPT_REASON_MISMATCH")
     if entry["name"] == VARIANT_CONTAINER:
         trial_id = entry["expected_labels"][
             "blazux.p2-final-native-tools-trial"]
