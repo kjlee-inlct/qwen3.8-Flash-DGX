@@ -1,3 +1,13 @@
+## TOP PRIORITY 2026-11-07 — Resume normal model switching Wizard UX, DEFER Tool Calling
+
+1. Complete GitHub CPU CI for newly wired guided path `wizard/console.py` option 6 / `operational guided --target` / `operational_wizard.py` / `operational_executor.py`. Resolve any regressions before user source pull. Preserve Draft PR #1.
+2. Continue executor recovery-hardening source + Fake-DGX failure-injection and journal tests. Keep `PRODUCTION_EXECUTION_RELEASED=False` until independent real DGX acceptance; release flag is **not** a user-configurable toggle.
+3. Make guided operator review concise: current/target, port :8000, protected container and model identity, plan expiry, interruption warning, exact independent SHA, target-specific downtime consent, PASS/restored/uncertain outcomes. Current CLI `operational guided --target` and console menu are **REVIEW ONLY**.
+4. After all code/recovery gates, separately review a **new downtime approval** and conduct independently approved real DGX ordinary 27B→Flash and Flash→27B trials and failure recovery; never replay historical P3 A/B/C or auto-switch.
+5. Only after P3 general recurring switch acceptance, revisit P4 conditional cleanup, P5 Orcarouter, P6 and P7. **Open WebUI 27B Tool Calling and recipe parser configuration intentionally postponed**, despite prior diagnosis.
+
+---
+
 ## 2026-11-07 — Current WebUI-vLLM 27B integration issue
 
 - [x] Real DGX 27B default chat/inference PASS; with `chat_template_kwargs.enable_thinking=false`, direct strict `DGX_OK` **PASS**. Distinguish formatting from actual generation.
