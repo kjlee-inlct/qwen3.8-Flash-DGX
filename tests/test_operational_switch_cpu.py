@@ -217,7 +217,7 @@ class FakeDGX(unittest.TestCase):
 
     def test_pinned_target_id_drift_blocks(self):
         self.docs[p3.NAMES["flash-next"]]["Id"] = "e" * 64
-        self.assertIn("CONTAINER_ID_MISMATCH", self.plan()["issues"])
+        self.assertIn("FLASH_NEW_INSTANCE_NEEDS_QUALIFIED_RECIPE", self.plan()["issues"])
 
     def test_competing_gpu_model_blocks(self):
         foreign = "foreign-gpu-container"
