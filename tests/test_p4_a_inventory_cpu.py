@@ -119,7 +119,7 @@ class P4AInventoryCPU(unittest.TestCase):
                 if args[:2] == ["docker", "system"]:
                     return subprocess.CompletedProcess(
                         args, 0,
-                        '{"Type":"Images","TotalCount":"2","Active":"1","Size":"3GB","Reclaimable":"1GB (33%)"}\\n',
+                        '{"Type":"Images","TotalCount":"2","Active":"1","Size":"3GB","Reclaimable":"1GB (33%)"}\n',
                         "")
                 return fake_run(args, timeout=timeout)
             doc = self.observe(root, run=incomplete_df)
