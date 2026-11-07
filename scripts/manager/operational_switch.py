@@ -17,7 +17,7 @@ from typing import Any, Callable
 
 from scripts.manager import p2_27b_gpu_trial as gpu
 from scripts.manager import p3_persistent_switch as p3
-from scripts.manager.service_journal import read_snapshot
+from scripts.manager.operational_audit import inspect_journal
 from scripts.manager.service_status import inspect_live_status
 
 ROOT = Path.home() / ".local/state/blazux-wizard/operational-switch"
@@ -124,11 +124,12 @@ def make_plan(
         image_target = "flash_image" if target == "flash-next" else "image_27b"
         source_id, target_id = a.get(key_source), a.get(key_target)
         source_image, target_image = a.get(image_source), a.get(image_target)
+    # Read the full write-ahead event chain, not just the current snapshot:
+    # a SIGKILL between fsync(journal) and replace(snapshot) must fail closed.
     try:
-        snapshot = read_snapshot(root / "journal")
-        if snapshot and snapshot.get("phase") not in ("COMMITTED", "RESTORED", "CANCELLED"):
-            issues.append("UNRESOLVED_OPERATING_SWITCH_JOURNAL")
-    except (OSError, ValueError, KeyError, TypeError, json.JSONDecodeError):
+        journal_audit = inspect_journal(root)
+        issues.extend(journal_audit["issues"])
+    except (OSError, RuntimeError, ValueError, KeyError, TypeError):
         issues.append("OPERATING_SWITCH_JOURNAL_UNTRUSTED")
     if source in SUPPORTED and not qualification["issues"]:
         try:
