@@ -48,6 +48,7 @@ class GuidedOperatingWizardCPU(TestCase):
             input_fn=prompt, emit=self.lines.append,
             release_qualified=release,
             is_tty=lambda: tty,
+            clock=lambda: 1000.0,
         )
 
     def token(self, target="flash-next"):
@@ -129,6 +130,33 @@ class GuidedOperatingWizardCPU(TestCase):
         self.assertEqual(rc, 3)
         self.assertEqual(self.tx.active(), "27b")
         self.assertFalse(any(c[:2] == ["docker", "stop"] for c in self.tx.commands))
+
+    def test_review_only_returns_ready_without_executing_backend(self):
+        with patch.object(wiz, "PRODUCTION_EXECUTION_RELEASED", False):
+            rc = wiz.guided("flash-next", planner=self.preview,
+                            executor=lambda *args: self.fail("must not execute"),
+                            emit=self.lines.append, review_only=True,
+                            clock=lambda: 1000.0)
+        self.assertEqual(rc, 0)
+        self.assertTrue(any("REVIEW_ONLY" in x for x in self.lines))
+
+    def test_expiring_window_blocks_before_approvals_and_no_downtime(self):
+        with patch.object(wiz, "PRODUCTION_EXECUTION_RELEASED", True):
+            rc = wiz.guided("flash-next", planner=self.preview,
+                            executor=lambda *args: self.fail("must not execute"),
+                            input_fn=lambda prompt: self.fail("no approval prompt"),
+                            emit=self.lines.append, release_qualified=True,
+                            clock=lambda: 1185.0,
+                            is_tty=lambda: True)
+        self.assertEqual(rc, 3)
+        self.assertTrue(any("less than 120" in x for x in self.lines))
+        self.assertEqual(self.tx.active(), "27b")
+
+    def test_public_cli_preview_always_avoids_executor(self):
+        with patch.object(wiz, "guided", return_value=0) as guided:
+            rc = wiz.main(["--target", "flash-next"])
+        self.assertEqual(rc, 0)
+        guided.assert_called_once_with("flash-next", review_only=True)
 
     def test_public_cli_execute_denied_without_any_preflight(self):
         with patch.object(wiz, "make_plan") as planner, contextlib.redirect_stdout(io.StringIO()) as output:
