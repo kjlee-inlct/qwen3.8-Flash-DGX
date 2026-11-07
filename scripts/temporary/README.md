@@ -1,3 +1,9 @@
+## 2026-11-07 — P3-C ACTUAL PASS; C wrapper is historical acceptance tooling
+
+사용자 실제 DGX에서 `bash scripts/temporary/p3-stage-c-operator.sh --execute`로 최종 Flash→NVIDIA 27B를 승인·완료했고, 결과는 `P3_C_PASS_FINAL_27B_ACTIVE`, `post_switch_status=LIVE_SERVICE_VERIFIED`, `post_switch_observed_model=27b`, canonical `stage-c.json`로 확인됐다. 그 아래 문서의 'C execution pending' 안내는 이전 시점의 기록이다. **현재 27B :8000 ACTIVE를 보존하고, stage-a/b/c 일회성 검증을 다시 실행하지 않는다.** 대화형 메인 Wizard의 일반 반복 전환 UX는 아직 미완성이고 새 별도 기능으로 개발/CPU 검증한다. 새 대화 시작: [SESSION-START-PROMPT](../../handoff/SESSION-START-PROMPT.md); [P1–P7 Acceptance](../../docs/P1-P7-WIZARD-ACCEPTANCE-STATUS-20261107.md).
+
+---
+
 ## 2026-11-07 — P3-C READ-ONLY FRESH PLAN WAIT IF 10-MINUTE WINDOW NEAR EXPIRY
 
 Actual DGX tried `--execute` at 10:08:14 and 10:09:30 KST, both `BLOCKED` before dispatch because plan expired 10:10 KST and fewer than 120s remained for three manual approvals; original Flash service stayed active. This is now improved **in the temporary Python wrapper only**; original canonical Wizard remains untouched.
