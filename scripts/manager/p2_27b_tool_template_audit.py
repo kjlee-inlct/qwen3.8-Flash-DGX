@@ -57,18 +57,20 @@ try:
     # Test the EXACT pinned template even if the tokenizer ignored the
     # standalone .jinja file. Do not mutate the actual model snapshot.
     tok.chat_template = source
-    tools = [{
-        "type": "function",
-        "function": {
-            "name": "get_probe_token",
-            "description": "Return a synthetic probe token",
-            "parameters": {
-                "type": "object",
-                "properties": {"key": {"type": "string"}},
-                "required": ["key"],
+    tools = [
+        {
+            "type": "function",
+            "function": {
+                "name": "get_probe_token",
+                "description": "Return a synthetic probe token",
+                "parameters": {
+                    "type": "object",
+                    "properties": {"key": {"type": "string"}},
+                    "required": ["key"],
+                },
             },
         },
-    }}]
+    ]
     msgs = [{"role": "user", "content": "Use get_probe_token for key test."}]
     prompted = tok.apply_chat_template(
         msgs, tools=tools, add_generation_prompt=True,
@@ -93,11 +95,22 @@ try:
         "Say hello." in ordinary and "<|im_start|>assistant" in ordinary
     )
     cycle = msgs + [
-        {"role": "assistant", "content": "",
-         "tool_calls": [{"type": "function", "function": {
-             "name": "get_probe_token", "arguments": {"key": "test"}}]},
-        {"role": "tool", "tool_call_id": "synthetic-only",
-         "content": "PROBE_TOKEN"},
+        {
+            "role": "assistant",
+            "content": "",
+            "tool_calls": [{
+                "type": "function",
+                "function": {
+                    "name": "get_probe_token",
+                    "arguments": {"key": "test"},
+                },
+            }],
+        },
+        {
+            "role": "tool",
+            "tool_call_id": "synthetic-only",
+            "content": "PROBE_TOKEN",
+        },
     ]
     continued = tok.apply_chat_template(
         cycle, tools=tools, add_generation_prompt=True,
