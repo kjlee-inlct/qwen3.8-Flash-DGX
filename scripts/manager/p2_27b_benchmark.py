@@ -22,6 +22,8 @@ from scripts.manager import p2_27b_gpu_trial as trial
 from scripts.manager.service_status import inspect_live_status
 
 VERSION = "p2-27b-api-benchmark-v1"
+CANONICAL_VERSION = "p2-27b-native-tools-canonical-benchmark-v2"
+CANONICAL_MAX_TOKENS = 128
 REQUEST_COUNT = 3
 MAX_TOKENS = 64
 SEED = 1234
@@ -123,8 +125,8 @@ def _stream_sample(response, start, *, clock=time.perf_counter):
                 finish_reason = choice["finish_reason"]
             if isinstance(delta.get("content"), str) and delta["content"]:
                 content_observed = True
-            if (isinstance(delta.get("reasoning_content"), str)
-                    and delta["reasoning_content"]):
+            if any(isinstance(delta.get(key), str) and delta[key]
+                   for key in ("reasoning_content", "reasoning")):
                 reasoning_observed = True
             if content_observed or reasoning_observed:
                 generated = True
@@ -138,14 +140,25 @@ def _stream_sample(response, start, *, clock=time.perf_counter):
 
 def measure(*, opener=urlopen, clock=time.perf_counter,
             memory_reader=memory_snapshot, identity=trial.api_ready,
-            chat_template_kwargs: dict[str, Any] | None = None) -> dict[str, Any]:
+            chat_template_kwargs: dict[str, Any] | None = None,
+            max_tokens: int = MAX_TOKENS,
+            version: str = VERSION) -> dict[str, Any]:
+    if (type(max_tokens) is not int or
+            (version, max_tokens) not in (
+                (VERSION, MAX_TOKENS),
+                (CANONICAL_VERSION, CANONICAL_MAX_TOKENS),
+            )):
+        raise ValueError("BENCHMARK_PROFILE_VERSION_AND_TOKEN_CAP_MISMATCH")
+    if (version == CANONICAL_VERSION and
+            chat_template_kwargs != {"enable_thinking": False}):
+        raise ValueError("CANONICAL_BENCHMARK_REQUIRES_EXPLICIT_NO_THINKING")
     if identity(trial.SERVED) is not True:
         raise RuntimeError("TARGET_API_IDENTITY_CHANGED")
     before = memory_reader()
     samples = []
     for index, prompt in enumerate(PROMPTS):
         payload = {"model": trial.SERVED, "messages": [{"role": "user", "content": prompt}],
-                   "temperature": 0, "seed": SEED, "max_tokens": MAX_TOKENS,
+                   "temperature": 0, "seed": SEED, "max_tokens": max_tokens,
                    "stream": True, "stream_options": {"include_usage": True}}
         # The canonical Native Tools runtime is qualified with the exact
         # NVIDIA Jinja non-thinking path. Keep historic benchmark defaults.
@@ -209,8 +222,8 @@ def measure(*, opener=urlopen, clock=time.perf_counter,
     complete = all(row["success"] for row in samples)
     return {
         "status": "PASS" if complete else "PARTIAL",
-        "benchmark_version": VERSION, "model": trial.SERVED,
-        "requests": REQUEST_COUNT, "max_tokens": MAX_TOKENS,
+        "benchmark_version": version, "model": trial.SERVED,
+        "requests": REQUEST_COUNT, "max_tokens": max_tokens,
         "seed": SEED, "concurrency": 1,
         "chat_template_kwargs": (
             dict(chat_template_kwargs) if chat_template_kwargs is not None else None
