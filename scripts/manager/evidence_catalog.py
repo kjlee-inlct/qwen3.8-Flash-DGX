@@ -134,9 +134,12 @@ def _records(*, legacy: Path, operator: Path, reports: Path,
         action = None
         category = "other"
         metric = None
+        summary: dict[str, Any] = {}
+        involved_model_ids: list[str] = []
         status = doc.get("status")
         if relative.startswith("models/"):
             model = relative.split("/", 1)[1]
+            involved_model_ids = [model]
             action = doc.get("action")
             if action in ("verify", "benchmark"):
                 category = action
@@ -151,26 +154,54 @@ def _records(*, legacy: Path, operator: Path, reports: Path,
                 category = "download"
             else:
                 category = "model_event"
-            bench = (doc.get("result") or {}).get("benchmark") if isinstance(doc.get("result"), dict) else None
+            result = doc.get("result")
+            if category == "verify" and isinstance(result, dict):
+                summary = {
+                    "baseline_status": result.get("baseline_status"),
+                    "extended_status": result.get("extended_status"),
+                    "probes": {key: (val.get("status") if isinstance(val, dict) else None)
+                               for key, val in (result.get("probes") or {}).items()
+                               if key in ("default_completion", "chat", "tools", "vision")},
+                }
+            bench = result.get("benchmark") if isinstance(result, dict) else None
             bench = bench or doc.get("benchmark")
             if isinstance(bench, dict):
                 metrics = bench.get("metrics") or {}
                 if isinstance(metrics, dict):
-                    metric = metrics.get("mean_tokens_per_sec") or metrics.get("tokens_per_sec")
-                metric = metric or bench.get("mean_tokens_per_sec")
+                    # 27B explicitly reports *two different* throughputs.
+                    # Do not present decode proxy as real end-to-end throughput.
+                    summary = {key: metrics.get(key) for key in (
+                        "ttft_p50_sec", "ttft_p95_sec",
+                        "latency_p50_sec", "latency_p95_sec",
+                        "mean_tokens_per_sec", "mean_e2e_tokens_per_sec",
+                        "mean_decode_tokens_per_sec_proxy",
+                        "total_completion_tokens") if metrics.get(key) is not None}
+                    metric = metrics.get("mean_tokens_per_sec")
+                    if metric is None:
+                        metric = metrics.get("mean_e2e_tokens_per_sec")
+                summary.update({
+                    "requests": bench.get("requests"),
+                    "concurrency": bench.get("concurrency"),
+                    "max_tokens": bench.get("max_tokens"),
+                    "benchmark_status": bench.get("status")})
         elif relative.startswith("transitions/"):
             category = "transition"
             action = doc.get("stage") or "transition"
             if action in STAGES:
                 source, target = STAGES[action]
-                model = ids.get(target)
             else:
-                observed = doc.get("post_switch_observed_model")
-                model = ids.get(observed) if isinstance(observed, str) else None
+                source, target = doc.get("source_model"), doc.get("target_model")
+                if source not in ids or target not in ids:
+                    source = target = None
+            involved_model_ids = [ids[x] for x in (source, target) if x in ids]
+            model = ids.get(target) if target in ids else None
+            summary = {"from_model": source, "to_model": target,
+                       "live_verified": doc.get("live_verified")}
             status = status or ("PASS" if doc.get("live_verified") is True else None)
         elif relative.startswith("diagnostics/"):
             category, action = "diagnostics", "diagnostics"
             model = relative.split("/", 1)[1]
+            involved_model_ids = [model]
         stamp = (doc.get("finished_at_utc") or doc.get("finished_utc")
                  or doc.get("started_at_utc") or doc.get("started_utc"))
         if not isinstance(stamp, str):
@@ -184,6 +215,8 @@ def _records(*, legacy: Path, operator: Path, reports: Path,
         found.append({
             "timestamp_utc": stamp,
             "model_id": model,
+            "involved_model_ids": involved_model_ids,
+            "summary": summary,
             "action": str(action) if action is not None else "unknown",
             "category": category, "status": str(status or "UNKNOWN"),
             "mean_tokens_per_sec": metric if type(metric) in (int, float) else None,
@@ -211,7 +244,7 @@ def history(*, model: str | None = None, kind: str = "all", limit: int = 20,
     # project-local provenance, keeping a verified original source reference.
     unique: dict[str, dict] = {}
     for rec in records:
-        if wanted and rec["model_id"] != wanted:
+        if wanted and wanted not in rec["involved_model_ids"]:
             continue
         if kind != "all" and rec["category"] != kind:
             continue
