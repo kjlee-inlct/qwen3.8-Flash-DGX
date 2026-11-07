@@ -1,3 +1,20 @@
+## 2026-11-07 — GIT-TRACKED BENCHMARK SUMMARIES / READ-ONLY PRIVATE SOURCE VERIFICATION
+
+User requested keeping measured results in Git, WITHOUT exposing raw private receipts. Two sanitized metric-only original DGX outcomes now committed at `benchmarks/published/qwen3.8-flash-next/f506db4c76430674.json` and `benchmarks/published/qwen3.8-27b/80f109dbd7c97460.json`. Machine-readable summary fields are exclusively model/revision/runtime, receipt SHA256, UTC time, workload, metrics, statuses/method/limitations. Original unredacted JSON, host paths, plan approvals, API prompts/responses, Docker IDs, logs and state remain in ignored/private local locations.
+
+After latest GitHub branch CI SUCCESS and DGX fast-forward pull, run this **read-only, no GPU/no Docker/no Git mutation** check:
+
+```bash
+cd ~/Workspace/llm/blazux-orcarouter
+bash scripts/temporary/verify-published-benchmarks.sh
+```
+
+Expected two `status=VERIFIED` records; source files are original 2026-11-06 Flash post-B `~/.local/state/blazux-wizard/p1/20261106T233031Z-66af25d31aab.json` and 27B `~/.local/state/blazux-wizard/p2/20261106T042642Z-0cacd3f29370.benchmark.json`. If mismatch/missing, STOP publication/claims and inspect private sources locally (do NOT commit them or change the numerical result without evidence). Tool `python3 -m scripts.manager.benchmark_publication` offers future `--plan` / `--verify-published` / exact raw-SHA-reviewed `--write`, never automatic Git add/commit/push. See [registry docs](../../benchmarks/published/README.md).
+
+Latest user P3-C actual `--execute` was **CANCELLED** with `executed=false/execution_dispatched=false`, because entered `[<sha>` with a leading bracket. It did NOT stop Flash or start 27B. Separate fresh C plan and exact THREE TTY inputs required for any intentional future switch; published metrics do not constitute C permission.
+
+---
+
 ## 2026-11-07 — TRACKED P3-C FINAL 27B CONTROLLER (ACTUAL READ-ONLY C PLAN PASS)
 
 **Newest real DGX evidence:** operator ran canonical `./wizard.sh switch flash-next-27b stage-c --plan --json`; result `READY_TO_REQUEST_TRANSITION_APPROVAL/issues=[]/p1_evidence.status=PASS/executed=false`. Original Flash-Next is still running on :8000, exact original NVIDIA 27B target remains preserved/stopped. P3-A/B canonical receipts and post-B Flash Verify/Benchmark/diagnostics are PASS. The old C plan ID is short-lived; MUST get a new plan. The optional `evidence migrate --guided` was CANCELLED with `copied=0` (typed `COPY`) and is unrelated to C readiness.
