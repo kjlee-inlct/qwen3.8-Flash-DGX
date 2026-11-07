@@ -11,6 +11,7 @@ import unittest
 from unittest.mock import patch
 
 from scripts.manager import operational_switch as op
+from scripts.manager import recipe_drift
 from scripts.manager import p3_persistent_switch as p3
 from wizard import console
 from wizard import main as router
@@ -32,6 +33,37 @@ def docker_doc(model: str, running: bool, *, identity: str | None = None) -> dic
         "HostConfig": {"AutoRemove": False, "RestartPolicy": {"Name": "no"},
                        "PortBindings": {"8000/tcp": [{"HostPort": "8000"}]}},
         "Config": {"Labels": {p3.LABEL: PLAN}, "Env": []},
+    }
+
+
+
+def canonical_27b_doc(*, running: bool, identity: str = "e" * 64) -> dict:
+    """Real canonical 27B command shape but fully fake Docker ownership."""
+    recipe, _ = recipe_drift.load_desired("27b")
+    spec = recipe_drift.desired_runtime(recipe)
+    cmd = [spec["cmd"]["_checkpoint"]]
+    for key, val in spec["cmd"].items():
+        if key == "_checkpoint":
+            continue
+        cmd.append(key)
+        if val is not True:
+            cmd.append(str(val))
+    return {
+        "Name": "/" + p3.NAMES["27b"], "Id": identity,
+        "Image": spec["image_id"], "State": {"Running": running},
+        "HostConfig": {
+            "AutoRemove": False, "RestartPolicy": {"Name": "no"},
+            "PortBindings": {"8000/tcp": [{"HostPort": "8000"}]},
+            "DeviceRequests": [{"Count": -1, "Capabilities": [["gpu"]]}],
+            "ShmSize": spec["shm_size"], "IpcMode": "host",
+        },
+        "Config": {
+            "Cmd": cmd,
+            "Env": ["HF_HOME=/hf", "HF_HUB_OFFLINE=1"],
+            "Labels": {"blazux.recipe": "qwen38-27b", "blazux.migration": "new-recipe-approval"},
+        },
+        "Mounts": [{"Source": "/home/inlc/.cache/huggingface",
+                    "Destination": "/hf", "RW": False, "Type": "bind"}],
     }
 
 
@@ -104,6 +136,49 @@ class FakeDGX(unittest.TestCase):
         self.docs[p3.NAMES["flash-next"]]["State"]["Running"] = True
         self.docs[p3.NAMES["27b"]]["State"]["Running"] = False
         self.assertEqual(self.plan("27b", current="flash-next")["status"], op.READY)
+
+    def test_current_canonical_27b_source_after_p3_recreation_is_ready(self):
+        self.docs[p3.NAMES["27b"]] = canonical_27b_doc(running=True)
+        candidate = self.plan()
+        self.assertEqual(candidate["status"], op.READY)
+        self.assertEqual(candidate["source_lineage"], "CANONICAL_RECIPE")
+        self.assertEqual(candidate["source_container_id"], "e"*64)
+        self.assertEqual(candidate["target_lineage"], "HISTORICAL_P3_INSTANCE")
+        self.assertTrue(candidate["current_ids_from_live_docker"])
+        self.assertEqual(len(candidate["source_recipe_sha256"]), 64)
+        # Immutable P3 record remains unrelated to the new current Docker ID.
+        self.assertEqual(json.loads((self.p3_root / "stage-a.json").read_text())["id_27b"], MODEL27)
+
+    def test_canonical_27b_target_after_recreation_uses_current_id(self):
+        self.docs[p3.NAMES["27b"]] = canonical_27b_doc(running=False)
+        self.docs[p3.NAMES["flash-next"]]["State"]["Running"] = True
+        candidate = self.plan("27b", current="flash-next")
+        self.assertEqual(candidate["status"], op.READY)
+        self.assertEqual(candidate["target_lineage"], "CANONICAL_RECIPE")
+        self.assertEqual(candidate["target_container_id"], "e"*64)
+        self.assertEqual(candidate["issues"], [])
+
+    def test_modified_canonical_parser_blocks_without_mutating(self):
+        self.docs[p3.NAMES["27b"]] = canonical_27b_doc(running=True)
+        flags = self.docs[p3.NAMES["27b"]]["Config"]["Cmd"]
+        flags[flags.index("--tool-call-parser") + 1] = "wrong"
+        result = self.plan()
+        self.assertIn("CANONICAL_27B_RUNTIME_DRIFT:cmd", result["issues"])
+        self.assertIsNone(result["plan_id"])
+        self.assertFalse(result["operations_enabled"])
+
+    def test_unknown_27b_identity_without_canonical_recipe_is_blocked(self):
+        self.docs[p3.NAMES["27b"]]["Id"] = "e"*64
+        result = self.plan()
+        self.assertIn("27B_UNQUALIFIED_INSTANCE_OR_LINEAGE", result["issues"])
+        self.assertIsNone(result["plan_id"])
+
+    def test_canonical_current_id_change_invalidates_fingerprint(self):
+        self.docs[p3.NAMES["27b"]] = canonical_27b_doc(running=True)
+        first = self.plan()["plan_id"]
+        self.docs[p3.NAMES["27b"]]["Id"] = "d"*64
+        second = self.plan()["plan_id"]
+        self.assertNotEqual(first, second)
 
     def test_current_target_does_not_offer_downtime(self):
         doc = self.plan("27b")
