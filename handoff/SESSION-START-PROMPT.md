@@ -1,3 +1,9 @@
+## 2026-11-07 — FIRST DGX D-G RUN: D/E BLOCKERS; FIXED SOURCE AWAITING READ-ONLY RETEST
+
+First actual DGX unified `--run`: D BLOCKED `HOST_PORT_8000_LISTENER_NOT_UNAMBIGUOUS` despite `gpu_process_exclusivity_verified=true`, E BLOCKED Flash parser + unqualified canonical Flash reinstall recipe, F local 119/119 CPU PASS, G verified operating journal/current-IDs PREVIEW PASS. Subsequent GitHub SOURCE fixes support dual-stack IPv4/IPv6 sockets, exact Docker proxy /proc-to-container-IP provenance, legacy Flash raw command inventory and writable mount review. CI 42371091647 **838/838 CPU PASS, 37 groups**. Actual DGX rerun not yet seen; do not call D/E real PASS or G real switch PASS. Next on clean DGX: `bash scripts/temporary/p3-d-g-acceptance.sh --run --report /tmp/p3-d-g-readonly-v2-$(date +%Y%m%dT%H%M%S).json`. Read `docs/P3-D-G-FIRST-DGX-DIAGNOSTIC-FIXES-20261107.md`. Do not replay P3 A/B/C or mutate current 27B.
+
+---
+
 ## 2026-11-07 — NEW OFFICIAL P3-D/E/F/G AND SINGLE-SCRIPT DRAFT
 
 User explicitly mapped four general Wizard operating tasks to P3-D/E/F/G, following permanently CLOSED P3-A/B/C. New one-command local runner: `bash scripts/temporary/p3-d-g-acceptance.sh --run --report /tmp/unique-p3-dg.json` after fast-forwarding `feature/recipe-wizard-handoff`. Implements D Docker/ss/nvidia-smi/proc read-only ownership, E Flash preserved Docker candidate and missing qualified recipe gate, F automatic CPU/Fake-DGX suites, G read-only switch/journal readiness; distinct verdicts and `acceptance_complete=false`. The batch must NOT call Docker mutation, automatically approve a downtime SHA, execute P3-A/B/C again, or claim real G PASS. Read `docs/P3-D-G-UNIFIED-WIZARD-DRAFT-ACCEPTANCE-20261107.md`. P4 optional Flash removal, P5 Orcarouter, P6 Orcarouter↔27B, P7 integration; keep existing PR #1 Draft and unmerged.
