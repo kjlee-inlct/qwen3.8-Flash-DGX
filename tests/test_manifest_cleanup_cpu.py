@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import contextlib
 import io
+import json
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from types import SimpleNamespace
@@ -79,6 +80,26 @@ class FakeDocker:
 
 
 class ManifestContainerCleanupCPU(unittest.TestCase):
+    @staticmethod
+    def precleanup_manifest():
+        before = dict(policy()["retired_containers"])
+        before.pop("completion", None)
+        return before, "f" * 64
+
+    @staticmethod
+    def completed_receipt(root):
+        cfg = policy()["retired_containers"]["completion"]
+        path = root / cfg["private_result_receipt"]
+        path.write_text(json.dumps({
+            "status": m.DONE, "issues": [],
+            "plan_id": cfg["consumed_plan_id"],
+            "active_container_id": cfg["verified_active_container_id"],
+            "preserved_original_model_service": True,
+            "remaining": [], "deleted": cfg["deleted"],
+        }))
+        path.chmod(0o600)
+        return path
+
     def test_both_canonical_models_are_removable_not_globally_protected(self):
         cfg = policy()
         for key in ("27b", "flash-next"):
@@ -111,6 +132,7 @@ class ManifestContainerCleanupCPU(unittest.TestCase):
     def test_exact_two_target_read_only_plan(self):
         d = FakeDocker()
         with TemporaryDirectory() as tmp, \
+             patch.object(m, "_load", side_effect=self.precleanup_manifest), \
              patch.object(m, "_evidence", return_value=("PASS_RESTORED", "f" * 64)), \
              patch.object(m.p3, "_gpu_conflicts", return_value=[]):
             data = m.make_plan(
@@ -133,6 +155,7 @@ class ManifestContainerCleanupCPU(unittest.TestCase):
         name = m.EXPECTED_NAMES[0]
         d.docs[name]["State"]["Running"] = True
         with TemporaryDirectory() as tmp, \
+             patch.object(m, "_load", side_effect=self.precleanup_manifest), \
              patch.object(m, "_evidence", return_value=("FAIL_RESTORED", "f"*64)), \
              patch.object(m.p3, "_gpu_conflicts", return_value=[]):
             result = m.make_plan(
@@ -145,6 +168,74 @@ class ManifestContainerCleanupCPU(unittest.TestCase):
             )
         self.assertEqual(result["status"], "BLOCKED")
         self.assertFalse(any(c[:2] == ("docker", "rm") for c in d.calls))
+
+    def test_completed_retirement_has_no_new_approval_plan(self):
+        d = FakeDocker()
+        d.names = [m.SOURCE_CONTAINER, m.FALLBACK_CONTAINER]
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.completed_receipt(root)
+            active = lambda: {
+                "status": "LIVE_CANONICAL_27B_NATIVE_TOOLS_VERIFIED",
+                "issues": [],
+            }
+            result = m.make_plan(
+                run=d.run, inspect=d.inspect,
+                active_status=active, root=root, now=NOW,
+            )
+            self.assertEqual(result["status"], "ALREADY_CLEANED", result)
+            self.assertEqual(result["issues"], [])
+            self.assertIsNone(result["plan_id"])
+            self.assertEqual(result["target_count"], 0)
+            self.assertFalse(any(c[:2] == ("docker", "rm") for c in d.calls))
+
+    def test_completed_retirement_matches_exact_manifest_receipt_and_live_api(self):
+        d = FakeDocker()
+        d.names = [m.SOURCE_CONTAINER, m.FALLBACK_CONTAINER]
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.completed_receipt(root)
+            result = m.status(
+                run=d.run,
+                active_status=lambda: {
+                    "status": "LIVE_CANONICAL_27B_NATIVE_TOOLS_VERIFIED",
+                    "issues": [],
+                },
+                root=root,
+            )
+            self.assertEqual(result["status"], m.DONE, result)
+            self.assertTrue(result["active_service_preserved"])
+            self.assertEqual(result["remaining"], [])
+            self.assertFalse(any(c[:2] == ("docker", "rm") for c in d.calls))
+
+    def test_completed_manifest_does_not_hide_receipt_or_docker_drift(self):
+        d = FakeDocker()
+        active = lambda: {
+            "status": "LIVE_CANONICAL_27B_NATIVE_TOOLS_VERIFIED",
+            "issues": [],
+        }
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.completed_receipt(root)
+            # A still-present old container blocks completion even if
+            # Git's manifest marks the old batch completed.
+            blocked = m.make_plan(
+                run=d.run, inspect=d.inspect,
+                active_status=active, root=root, now=NOW,
+            )
+            self.assertEqual(blocked["status"], "BLOCKED", blocked)
+            self.assertIn(
+                "COMPLETED_MANIFEST_BUT_DOCKER_OR_RECEIPT_DRIFT",
+                blocked["issues"],
+            )
+            d.names = [m.SOURCE_CONTAINER, m.FALLBACK_CONTAINER]
+            for file in root.iterdir():
+                file.unlink()
+            blocked_missing_receipt = m.make_plan(
+                run=d.run, inspect=d.inspect,
+                active_status=active, root=root, now=NOW,
+            )
+            self.assertEqual(blocked_missing_receipt["status"], "BLOCKED")
 
     def test_wrong_approval_blocks_without_inspecting_or_deleting(self):
         d = FakeDocker()
