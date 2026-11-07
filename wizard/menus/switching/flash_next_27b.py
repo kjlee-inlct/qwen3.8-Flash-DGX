@@ -17,6 +17,9 @@ SPEC = Stage(
 
 def run(argv, *, as_json=False, dry_run=False):
     args = list(argv)
+    if args and args[0] == "operational":
+        from scripts.manager.operational_switch import main
+        return main(args[1:])
     if args and args[0] in ("stage-a", "stage-b", "stage-c"):
         # Persistent switching is a distinct P3 executor. The individual
         # stage must receive its own exact-plan approval; never chain stages.
