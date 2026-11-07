@@ -173,6 +173,15 @@ class StageCOperatorCPU(unittest.TestCase):
             self.assertIn(value, out.getvalue())
             self.assertTrue(any(value in x for x in prompts))
         self.assertIn("KST", out.getvalue())
+        self.assertIn("do not type '[' or ']'", out.getvalue())
+        self.assertTrue(all("[" not in label and "]" not in label
+                            for label in prompts))
+
+    def test_sha_with_leading_bracket_is_rejected_without_dispatch(self):
+        # Regression from actual DGX input: user typed [<sha> after seeing
+        # the old bracket-decorated prompt and C was safely cancelled.
+        typed = iter(["[" + C_PLAN, op.DOWNTIME_ACK, op.C_ENTRY_ACK])
+        self.assertFalse(op.confirm(plan(), input_fn=lambda _: next(typed)))
 
     def test_wrong_ack_and_cancel_reject(self):
         self.assertFalse(op.confirm(plan(), input_fn=lambda _: ""))
