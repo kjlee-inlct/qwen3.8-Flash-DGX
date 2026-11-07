@@ -50,10 +50,10 @@ def fake_live():
 def fake_run(argv, *, timeout):
     if argv[:2] == ["docker", "system"]:
         return subprocess.CompletedProcess(argv, 0,
-            '{"Type":"Images","TotalCount":"3","Active":"2","Size":"120GB","Reclaimable":"20GB (16%)"}\\n'
-            '{"Type":"Containers","TotalCount":"3","Active":"1","Size":"20MB","Reclaimable":"10MB (50%)"}\\n', "")
+            '{"Type":"Images","TotalCount":"3","Active":"2","Size":"120GB","Reclaimable":"20GB (16%)"}\n'
+            '{"Type":"Containers","TotalCount":"3","Active":"1","Size":"20MB","Reclaimable":"10MB (50%)"}\n', "")
     if argv[:4] == ["du", "-s", "-B1", "--"]:
-        return subprocess.CompletedProcess(argv, 0, "4096\\t/private/secret-path\\n", "")
+        return subprocess.CompletedProcess(argv, 0, "4096\t/private/secret-path\n", "")
     raise AssertionError("Unexpected command " + str(argv))
 
 
@@ -126,7 +126,7 @@ class P4AInventoryCPU(unittest.TestCase):
             def bad_run(args, *, timeout):
                 if args[0] == "docker":
                     return subprocess.CompletedProcess(args, 0,
-                        '{"Type":"Images","TotalCount":"1","Active":"1","Size":"/secret","Reclaimable":"x"}\\n', "")
+                        '{"Type":"Images","TotalCount":"1","Active":"1","Size":"/secret","Reclaimable":"x"}\n', "")
                 return fake_run(args, timeout=timeout)
             doc = self.observe(root, run=bad_run)
             self.assertEqual(doc["status"], "READ_ONLY_INVENTORY_PARTIAL")

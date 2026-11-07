@@ -24,8 +24,8 @@ MAX_ROOTS = 8
 MAX_DF_OUTPUT = 32 * 1024
 MAX_SIZE_LINE = 1024
 UINT = re.compile(r"^[0-9]{1,24}$")
-SIZE = re.compile(r"^[0-9]+(?:\\.[0-9]+)?\\s?(?:B|kB|MB|GB|TB|PB|KiB|MiB|GiB|TiB|PiB)$")
-RECLAIM = re.compile(r"^[0-9]+(?:\\.[0-9]+)?\\s?(?:B|kB|MB|GB|TB|PB|KiB|MiB|GiB|TiB|PiB)(?: \\([0-9]{1,3}%\\))?$")
+SIZE = re.compile(r"^[0-9]+(?:\.[0-9]+)?\s?(?:B|kB|MB|GB|TB|PB|KiB|MiB|GiB|TiB|PiB)$")
+RECLAIM = re.compile(r"^[0-9]+(?:\.[0-9]+)?\s?(?:B|kB|MB|GB|TB|PB|KiB|MiB|GiB|TiB|PiB)(?: \([0-9]{1,3}%\))?$")
 
 
 def _run(cmd: list[str], *, timeout: int) -> subprocess.CompletedProcess:
@@ -207,7 +207,9 @@ def inspect_p4_a(*,
                 if (isinstance(mount, dict) and mount.get("Destination") == "/hf"
                         and mount.get("Type") == "bind"
                         and isinstance(mount.get("Source"), str)
-                        and Path(mount["Source"]).is_absolute()):
+                        and Path(mount["Source"]).is_absolute()
+                        and Path(mount["Source"]).is_dir()
+                        and (Path(mount["Source"]) / "hub").is_dir()):
                     configured.append((Path(mount["Source"]), "MANAGED_CONTAINER_HF_BIND"))
         seen: set[str] = set()
         roots_uniq: list[tuple[Path, str]] = []
