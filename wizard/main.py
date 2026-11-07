@@ -13,7 +13,7 @@ USAGE = """Blazux Wizard (vLLM 0.32 only)
   ./wizard.sh                                simple model-first interactive menu\n  ./wizard.sh select 27b --json              read-only lifecycle selection plan\n  ./wizard.sh model choose flash-next --json same planner
   ./wizard.sh list --json                    model/switch/storage/operations catalog\n  ./wizard.sh model list --installed --json   read-only pinned and legacy cache discovery\n  ./wizard.sh workflow 27b --json            full model lifecycle actions and gates\n  ./wizard.sh roadmap --json                 complete P1-P7 acceptance checklist\n  ./wizard.sh workflow 27b --for-action start --json  read-only action capability
   ./wizard.sh model flash-next status --json
-  ./wizard.sh model 27b plan --for-action prepare --json
+  ./wizard.sh model 27b recipe-diff --json  normalized desired/observed read-only diff\n  ./wizard.sh model 27b lifecycle restart --plan --json  read-only recreate decision\n  ./wizard.sh model 27b lifecycle remove --plan --json  scoped removal preview (no execute)\n  ./wizard.sh model 27b plan --for-action prepare --json
   ./wizard.sh model orcarouter-flash-next status --json
   ./wizard.sh switch flash-next-27b plan --for-action switch \
     --from-model flash-next --to-model 27b --json
@@ -200,7 +200,11 @@ def main(argv: list[str] | None = None) -> int:
         return 3
     try:
         args = _normalized(args)
-        if not (len(args) >= 2 and args[:2] in (["model", "choose"], ["model", "list"])):
+        lifecycle_route = (len(args) >= 3 and args[0] == "model"
+                           and args[1] in ("flash-next", "27b", "orcarouter")
+                           and args[2] in ("lifecycle", "recipe-diff"))
+        if not lifecycle_route and not (len(args) >= 2 and args[:2] in
+                                       (["model", "choose"], ["model", "list"])):
             args = _resolve_stage(args)
     except ValueError as exc:
         print(json.dumps({"status": "BLOCKED", "error": str(exc)}))
@@ -215,6 +219,43 @@ def main(argv: list[str] | None = None) -> int:
     if args[0] in ("help", "--help", "-h"):
         print(USAGE)
         return 0
+    if lifecycle_route:
+        # Explicit read-only generic lifecycle route. Never pass --execute to a
+        # legacy stage handler or turn a candidate SHA into execution approval.
+        model = args[1]
+        tail = args[2:]
+        if tail[0] == "recipe-diff":
+            action, options = "status", tail[1:]
+        else:
+            action = tail[1] if len(tail) >= 2 else "status"
+            options = tail[2:] if len(tail) >= 2 else []
+        if options not in ([], ["--plan"]):
+            print(json.dumps({
+                "status": "BLOCKED", "executed": False,
+                "approval_accepted": False, "plan_id": None,
+                "issues": ["LIFECYCLE_CLI_READ_ONLY_NO_EXECUTE_OR_APPROVAL"],
+            }, sort_keys=True))
+            return 3
+        from scripts.manager.recipe_drift import plan
+        doc = plan(model, action)
+        if dry_run:
+            doc["dry_run"] = True
+        if as_json:
+            print(json.dumps(doc, ensure_ascii=False, indent=2, sort_keys=True))
+        else:
+            print("Model lifecycle (read-only): " + doc["status"])
+            print("  Model: " + model + " | action: " + action)
+            print("  Decision: " + str(doc.get("decision", "BLOCKED")))
+            for change in doc.get("diff", []):
+                print("  Changed " + change["field"] + ":")
+                print("    desired=" + str(change["desired"]))
+                print("    observed=" + str(change["observed"]))
+            for issue in doc.get("issues", []):
+                print("  Blocker: " + issue)
+            for note in doc.get("advisories", []):
+                print("  Note: " + note)
+            print("  No Docker/GPU/API mutation authorized.")
+        return 0 if doc["status"] != "BLOCKED" else 3
     if len(args) >= 2 and args[:2] == ["model", "list"]:
         if args[2:] != ["--installed"]:
             print(json.dumps({"status": "BLOCKED", "executed": False,
