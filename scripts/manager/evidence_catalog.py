@@ -114,6 +114,9 @@ def _records(*, legacy: Path, operator: Path, reports: Path,
     found: list[dict[str, Any]] = []
     issues: list[str] = []
     src = _sources(legacy=legacy, operator=operator, reports=reports, ids=ids)
+    if include_project and reports.is_symlink():
+        issues.append("UNTRUSTED_PROJECT_REPORTS_SYMLINK")
+        include_project = False
     if include_project:
         # Only known narrow report trees; never scan arbitrary repo paths.
         for key, model in ids.items():
@@ -209,8 +212,14 @@ def _records(*, legacy: Path, operator: Path, reports: Path,
         stamp = (doc.get("finished_at_utc") or doc.get("finished_utc")
                  or doc.get("started_at_utc") or doc.get("started_utc"))
         if not isinstance(stamp, str):
-            # Timestamp is metadata only, never a transition authorization.
-            stamp = datetime.fromtimestamp(path.stat().st_mtime, timezone.utc).isoformat()
+            # Copies have a NEW mtime. Prefer the source UTC filename to avoid
+            # falsely dating an old P2 benchmark or legacy P3 operator run.
+            observed = re.search(r"(\d{8}T\d{6}Z)", path.name)
+            if observed:
+                stamp = datetime.strptime(observed.group(1), "%Y%m%dT%H%M%SZ").replace(
+                    tzinfo=timezone.utc).isoformat()
+            else:
+                stamp = datetime.fromtimestamp(path.stat().st_mtime, timezone.utc).isoformat()
         try:
             parsed = datetime.fromisoformat(stamp.replace("Z", "+00:00"))
             stamp = parsed.astimezone(timezone.utc).isoformat() if parsed.tzinfo else ""
@@ -268,6 +277,10 @@ def migration_plan(*, legacy: Path = LEGACY, operator: Path = LEGACY_OPERATOR,
     ids = model_ids(policy)
     entries = []
     issues = []
+    if reports.is_symlink():
+        return {"status": "BLOCKED", "executed": False, "approved": False,
+                "issues": ["REPORTS_DIRECTORY_SYMLINK"], "plan_id": None,
+                "entries": [], "copy_count": 0, "already_copied": 0}
     for path, root, relative, origin in _sources(
             legacy=legacy, operator=operator, reports=reports, ids=ids):
         try:
@@ -311,6 +324,16 @@ def copy_approved(plan_id: str | None, *, legacy: Path = LEGACY,
                 "issues": ["MIGRATION_PLAN_CHANGED_OR_BLOCKED"]}
     written = []
     try:
+        if reports.is_symlink():
+            raise ValueError("REPORTS_DIRECTORY_SYMLINK")
+        # Ensure private roots, not only private leaf folders. Existing
+        # non-private ancestors are rejected, never chmod'd silently.
+        for parent in (reports, reports / "models", reports / "transitions",
+                       reports / "diagnostics"):
+            if parent.exists() and (parent.is_symlink()
+                                    or not parent.is_dir()
+                                    or parent.stat().st_mode & 0o077):
+                raise ValueError("REPORT_ROOT_PERMISSIONS_UNSAFE")
         for item in plan["entries"]:
             if item["state"] == "ALREADY_COPIED":
                 continue
