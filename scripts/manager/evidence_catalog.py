@@ -350,7 +350,8 @@ def copy_approved(plan_id: str | None, *, legacy: Path = LEGACY,
             for component in ("", *dest.parent.relative_to(reports).parts):
                 if component:
                     directory = directory / component
-                directory.mkdir(mode=0o700, exist_ok=True)
+                directory.mkdir(mode=0o700, parents=(directory == reports),
+                                exist_ok=True)
                 if (directory.is_symlink() or not directory.is_dir()
                         or directory.stat().st_mode & 0o077):
                     raise ValueError("UNSAFE_REPORT_DIRECTORY")
