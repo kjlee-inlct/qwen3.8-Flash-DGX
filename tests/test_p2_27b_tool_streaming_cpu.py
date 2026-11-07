@@ -59,6 +59,7 @@ class SSEProbeCPU(unittest.TestCase):
     def test_missing_done_blocks(self):
         r = mod.evaluate_stream(good_stream()[:-1])
         self.assertIn("SSE_DONE_MISSING", r["issues"])
+        self.assertFalse(r["reasoning_separation"])
 
     def test_missing_finish_blocks(self):
         chunks = good_stream()
