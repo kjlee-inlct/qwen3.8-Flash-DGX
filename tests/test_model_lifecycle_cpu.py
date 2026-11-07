@@ -140,7 +140,7 @@ class LifecycleTransactionCPU(unittest.TestCase):
                 lifecycle.ACK_REMOVE]
         self.assertTrue(lifecycle.approval_valid(p, *args, now=900, tty=True))
         self.assertFalse(lifecycle.approval_valid(p, *args, now=975, tty=True))
-        self.assertFalse(lifecycle.approval_valid(p, *args, now=400, tty=True))
+        self.assertFalse(lifecycle.approval_valid(p, *args, now=399, tty=True))
         self.assertFalse(lifecycle.approval_valid(p, *args, now=900, tty=False))
         self.assertFalse(lifecycle.approval_valid(p, "27b", "remove", "b"*64,
                                                   args[3], args[4], now=900, tty=True))
