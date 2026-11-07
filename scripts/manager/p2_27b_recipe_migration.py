@@ -441,10 +441,22 @@ def make_plan(*,
     """No state changes; this plan only applies to the ORIGINAL unmodified 27B."""
     issues: list[str] = []
     try:
-        if root.is_symlink() or (root.exists() and (
-                list(root.glob("attempt-*.json"))
-                or (root / "latest-27b-benchmark.json").exists())):
-            issues.append("PRIOR_RECIPE_MIGRATION_REQUIRES_RECONCILIATION")
+        prior = None
+        if root.is_symlink() or (
+                root.exists() and (root / "latest-27b-benchmark.json").exists()):
+            issues.append("PRIOR_RECIPE_MIGRATION_ALREADY_PROMOTED_OR_UNSAFE")
+        if root.exists() and list(root.glob("attempt-*.json")):
+            reviewed = inspect_failed_rollback(
+                root=root, run=run, inspect=inspect, api=api,
+                historical=historical, ordinary_audit=audit,
+            )
+            if (reviewed.get("status") !=
+                    "PRIOR_BENCH_FAIL_ROLLBACK_VERIFIED_READ_ONLY"
+                    or reviewed.get("manual_reconciliation_recorded") is not True):
+                issues.append("PRIOR_RECIPE_MIGRATION_REQUIRES_RECONCILIATION")
+                issues.extend(reviewed.get("issues") or [])
+            else:
+                prior = reviewed["prior_plan_id"]
         recipe, recipe_sha = _load_recipe()
         hist = historical()
         old = (hist.get("records") or {}).get("a") or {}
@@ -515,9 +527,10 @@ def make_plan(*,
         if p3._gpu_conflicts(SOURCE_CONTAINER, run, inspect):
             issues.append("OTHER_GPU_MODEL_RUNNING")
         backup = BACKUP_PREFIX + str(source.get("Id", ""))[:12]
-        failed = FAIL_PREFIX + str(source.get("Id", ""))[:12]
-        if backup in names or failed in names:
-            issues.append("RECIPE_MIGRATION_BACKUP_OR_FAILURE_NAME_OCCUPIED")
+        if backup in names:
+            issues.append("RECIPE_MIGRATION_BACKUP_NAME_OCCUPIED")
+        # A previous FAILED native candidate may be preserved for diagnosis.
+        # The separate rollback audit has already verified its provenance.
         if not api(SERVED):
             issues.append("CANONICAL_27B_API_UNHEALTHY")
         if (source.get("HostConfig") or {}).get("AutoRemove") is not False:
@@ -531,9 +544,15 @@ def make_plan(*,
             "variant_id": variant["Id"], "trial_approval": label,
             "flash_id": flash["Id"], "recipe_sha": recipe_sha,
             "old_journal_hash": ordinary.get("last_event_hash"),
+            "previous_reconciled_attempt": prior,
             "window": window, "port": 8000,
         }
         plan = _hash(facts)
+        # Failed migration container names are unique to each attempt. The
+        # previously failed trial's preserved container remains untouched.
+        failed = FAIL_PREFIX + plan[:12]
+        if failed in names:
+            return _issue("RECIPE_MIGRATION_NEW_FAILED_NAME_OCCUPIED")
         # Verify command generation with the actual pinned cache mount.
         _candidate(recipe, mount, source["Image"], plan)
         return {
@@ -545,6 +564,7 @@ def make_plan(*,
             "backup_name": backup, "failed_name": failed,
             "image_id": source["Image"], "cache_mount": str(mount),
             "recipe_sha256": recipe_sha,
+            "previous_reconciled_attempt": prior,
             "expires_at_epoch_seconds": (window+1)*600,
             "port": 8000, "target_container": SOURCE_CONTAINER,
             "retain_model_files_and_image": True,
@@ -947,8 +967,20 @@ def main(argv: list[str] | None = None) -> int:
     import argparse
     parser = argparse.ArgumentParser(
         description="Migrate original canonical 27B to pinned Native Tools recipe")
-    parser.add_argument("action", choices=("plan", "execute", "status"))
+    parser.add_argument(
+        "action",
+        choices=("plan", "execute", "status", "audit-failure", "reconcile"),
+    )
     args = parser.parse_args(argv)
+    if args.action == "audit-failure":
+        report = inspect_failed_rollback()
+        print(json.dumps(report, indent=2, sort_keys=True))
+        return (0 if report.get("status") ==
+                "PRIOR_BENCH_FAIL_ROLLBACK_VERIFIED_READ_ONLY" else 3)
+    if args.action == "reconcile":
+        code, report = accept_reconciliation()
+        print(json.dumps(report, indent=2, sort_keys=True))
+        return code
     if args.action == "status":
         summary = inspect_promoted_service()
         print(json.dumps(summary, indent=2, sort_keys=True))
