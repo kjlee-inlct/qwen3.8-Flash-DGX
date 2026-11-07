@@ -12,6 +12,9 @@ Canonical 27B Native Tools recipe migration:
   bash scripts/temporary/p2-27b-native-recipe-migrate.sh --plan
     Read-only Docker/receipt/API/recipe preflight. No service changes.
 
+  bash scripts/temporary/p2-27b-native-recipe-migrate.sh --status
+    Read-only post-migration canonical Docker/API and fresh benchmark audit.
+
   bash scripts/temporary/p2-27b-native-recipe-migrate.sh --execute
     DOWNTIME: requires TTY, fresh plan SHA, downtime + container deletion
     acknowledgements. Stop original qwen38-27b, rename backup, RECREATE
@@ -35,6 +38,10 @@ case "${1:---plan}" in
   --plan)
     [[ $# -le 1 ]] || { echo "Plan does not accept approval flags" >&2; exit 2; }
     exec python3 -m scripts.manager.p2_27b_recipe_migration plan
+    ;;
+  --status)
+    [[ $# -eq 1 ]] || { echo "Status does not accept arguments" >&2; exit 2; }
+    exec python3 -m scripts.manager.p2_27b_recipe_migration status
     ;;
   --execute)
     [[ $# -eq 1 ]] || { echo "Execute accepts no command-line approval flags" >&2; exit 2; }
