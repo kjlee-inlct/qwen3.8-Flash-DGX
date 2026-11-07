@@ -1,0 +1,49 @@
+# Open WebUI 27B automatic tool-choice incompatibility — 2026-11-07
+
+## Observed actual DGX (operator-provided)
+
+- Active NVIDIA pinned `qwen3.8-27b` on vLLM 0.32 and :8000; direct `/health`, `/v1/models` and `/v1/chat/completions` **PASS**.
+- `chat_template_kwargs.enable_thinking=false` on direct non-tool chat returns **exactly `DGX_OK`**, `finish_reason=stop`, `reasoning=null`, 4 generated tokens. This is **REAL DGX** and resolves the direct text-format anomaly for that request only.
+- Selecting 27B in Open WebUI and asking a question yields: `"auto" tool choice requires --enable-auto-tool-choice and --tool-call-parser to be set`. WebUI exact version, attached/builtin tools, raw request, live Docker `Config.Cmd` and current parser list are **NOT YET OBSERVED**. Do not claim the model itself failed.
+
+## Evidence-backed source distinction
+
+- `scripts/manager/p2_27b_launch_preview.py::_candidate_argv` builds the 27B Docker/vLLM command **without** `--enable-auto-tool-choice`, `--tool-call-parser` or `--reasoning-parser`. `p2_27b_gpu_trial.py::trial_command` derives from it; persistent P3 restored the preserved 27B container rather than rebuilding its arguments. This matches the error, but is **source inference, not a fresh inspect of running Docker arguments**.
+- `scripts/serve_flash-next.sh` **does** include `--enable-auto-tool-choice --tool-call-parser qwen3_coder --reasoning-parser qwen3`. Do not infer that Flash's tested parser automatically qualifies this pinned NVIDIA 27B.
+- vLLM 0.32 documents that `tool_choice=auto` requires auto-tool-choice enabled and a compatible tool-call parser. Open WebUI current documentation states built-in tools are injected by default in Native mode and can be disabled per-model.
+
+## Immediate safe workaround: Open WebUI only, NO DGX lifecycle change
+
+In Open WebUI **Workspace → Models → edit 27B → Capabilities → Builtin Tools: OFF**. Disable any workspace Tools attached to the selected model and chat-specific Integrations/Tools or injected features for that test. Start a new 27B chat and ask a plain text question. The exact UI may vary with Open WebUI version. This disables the associated autonomous built-in tools (memory, web, code, etc.); it is a test/workaround, NOT verified full WebUI agentic acceptance. **Do not change 27B Docker/service/port**.
+
+To check the *actual* preserved 27B container command without stopping it:
+
+~~~bash
+docker inspect qwen38-27b --format '{{json .Config.Cmd}}' | python3 -m json.tool
+~~~
+
+The mere absence of parser flags is diagnostic; a `docker restart` **cannot add new startup arguments**. Do NOT manually `docker rm`, `docker run`, build, stop or replace the preserved container.
+
+## Future qualified solution (source plan only, not executed)
+
+For production Open WebUI Native Tool Calling, define and test a per-model vLLM **startup profile** that enables `--enable-auto-tool-choice` plus a parser matching the exact pinned NVIDIA checkpoint and its tokenizer/chat template. The upstream vLLM recipe for related Qwen3.5 27B lists `qwen3_coder` with `qwen3` reasoning parser, and the local Flash launcher also selects this combination. This is a **candidate**, not proof of Qwen3.8 NVIDIA 27B parser capability on the existing custom vLLM 0.32 image. Qualify parser availability, request `tools` schema, auto decision, tool_calls/arguments, tool-response continuation, streaming and reasoning separation using Fake-DGX source tests and an independently approved bounded DGX trial.
+
+Any update of an existing Docker container's launch command requires a separately planned replacement/recreation or rollback-friendly migration, **new scoped operator downtime consent**, and fresh pinned-image/provenance/port/one-model checks. Preserve old P3 A/B/C receipts, 27B active service, Flash fallback, HF caches, containers and Draft PR. No environment or service changes authorized by this diagnosis.
+
+## Source references
+
+- https://docs.vllm.ai/en/v0.32.0/features/tool_calling/
+- https://docs.openwebui.com/features/extensibility/plugin/tools/
+- https://recipes.vllm.ai/Qwen/Qwen3.5-27B
+
+## Acceptance gates
+
+| Dimension | Scope | Status |
+|---|---|---|
+| Live 27B chat without tools | Real DGX | PASS |
+| Exact reply with per-request thinking disabled | Real DGX | PASS for one request |
+| Open WebUI native `tool_choice=auto` | Real DGX | ERROR / BLOCKED |
+| Builtin Tools-off WebUI workaround | Real WebUI | NOT_RUN |
+| Verified live Docker `Config.Cmd` | Real DGX read-only | NOT_RUN |
+| 27B auto tool parser on pinned runtime | SOURCE/CPU + DGX | NOT_QUALIFIED |
+| General 27B ↔ Flash operating switch | DGX | NOT_QUALIFIED |
