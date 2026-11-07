@@ -55,5 +55,12 @@ except (ValueError, KeyError, TypeError, IndexError) as exc:
     sys.exit("FAIL: 27B inference: " + str(exc))
 print("INFERENCE_PASS model=qwen3.8-27b finish_reason="
       + str(finish) + " content_preview=" + repr(content[:160]))
+# Distinguish functional token generation from the stricter instruction
+# "Reply with exactly DGX_OK". A formatting deviation is not a dead model.
+if content.strip() == "DGX_OK":
+    print("FORMAT_PASS exact DGX_OK")
+else:
+    print("FORMAT_DEVIATION extra_visible_text=true think_end_marker_present="
+          + str("</think>" in content).lower())
 '
 echo "27B_CURL_SMOKE_PASS health + identity + real text generation"
