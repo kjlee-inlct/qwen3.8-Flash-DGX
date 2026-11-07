@@ -1,5 +1,8 @@
 ## 2026-11-07 — P3-D/E/F/G ONE-COMMAND DRAFT ACCEPTANCE: NEXT DGX STEP
 
+**Source completion evidence:** P3-D~G unified draft implementation code HEAD `efb0dda` was tested by GitHub Actions **42369840239 SUCCESS, 829/829 tests / 37 groups**. The user still needs to run the ONE non-mutating DGX batch; no actual D/E/F/G real acceptance evidence is claimed.
+
+
 **Stage labels are now P3-D/E/F/G** after completed P3-A/B/C. Run ONE read-only acceptance batch on DGX after clean pull:
 
 ```bash
