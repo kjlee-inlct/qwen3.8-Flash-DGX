@@ -72,7 +72,7 @@ class FakeDGX(unittest.TestCase):
             }
             p3._write_once(self.p3_root, "stage-" + stage + ".json", receipt)
 
-    def run(self, cmd: list[str], timeout: int = 35):
+    def docker_run(self, cmd: list[str], timeout: int = 35):
         self.commands.append(cmd)
         if cmd[:3] == ["docker", "ps", "-a"]:
             return SimpleNamespace(returncode=0,
@@ -85,7 +85,7 @@ class FakeDGX(unittest.TestCase):
 
     def plan(self, target="flash-next", *, current="27b", good=True, now=1000):
         return op.make_plan(target, live=lambda: live(current, good=good),
-                            run=self.run, inspect=lambda name: self.docs[name],
+                            run=self.docker_run, inspect=lambda name: self.docs[name],
                             p3_root=self.p3_root, root=self.ops, now=now)
 
     def test_verified_historical_a_b_c_and_source_27b_to_flash(self):
