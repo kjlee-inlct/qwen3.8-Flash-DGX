@@ -1,3 +1,34 @@
+## 2026-11-07 — TRACKED P3-C FINAL 27B CONTROLLER (ACTUAL READ-ONLY C PLAN PASS)
+
+**Newest real DGX evidence:** operator ran canonical `./wizard.sh switch flash-next-27b stage-c --plan --json`; result `READY_TO_REQUEST_TRANSITION_APPROVAL/issues=[]/p1_evidence.status=PASS/executed=false`. Original Flash-Next is still running on :8000, exact original NVIDIA 27B target remains preserved/stopped. P3-A/B canonical receipts and post-B Flash Verify/Benchmark/diagnostics are PASS. The old C plan ID is short-lived; MUST get a new plan. The optional `evidence migrate --guided` was CANCELLED with `copied=0` (typed `COPY`) and is unrelated to C readiness.
+
+**Tracked source files (D-016):**
+- `scripts/temporary/p3-stage-c-operator.sh` / `scripts/temporary/p3_stage_c_operator.py` — exact human C scope, wrapper ONLY of existing canonical `./wizard.sh switch flash-next-27b stage-c`.
+- `tests/test_p3_stage_c_operator_cpu.py` — fake-DGX CPU-only tests (approval, 3 prompts, original A/B identities, current Flash API, unchanged 27B container, P1 gate, plan rotation/expiry, fake final success/recovery, immutable canonical C receipt and private operator report).
+- `docs/P3-STAGE-C-FINAL-27B-OPERATOR-20261107.md` — source/liveness/rollback restrictions and operator commands.
+
+**After newest GitHub source CI PASS only**, operator performs clean fast-forward pull:
+
+```bash
+cd ~/Workspace/llm/blazux-orcarouter
+git pull --ff-only origin feature/recipe-wizard-handoff
+bash scripts/temporary/p3-stage-c-operator.sh --plan
+```
+
+Default is non-disruptive and issues the **NEW, current** C SHA and its short expiry. Source proof and GitHub CI do NOT authorize actual Flash-Next downtime. When `--plan` reports `READY_FOR_SEPARATE_P3_C_OPERATOR_APPROVAL`, empty issues, `executed=false`, then STOP until fresh independent operator authorization.
+
+**Only after the operator explicitly accepts stopping the LIVE Flash API**, initiate the actual guarded final stage with:
+
+```bash
+bash scripts/temporary/p3-stage-c-operator.sh --execute
+```
+
+This mode requires a real terminal and separately types the currently printed Stage-C 64-char SHA, `I_ACCEPT_FLASH_NEXT_DOWNTIME`, `I_SEPARATELY_AUTHORIZE_FINAL_27B_STAGE_C`. The independent third C acknowledgement is wrapper-only (canonical C expects null `--enter-p3`). After a fresh matching plan/API recheck, the canonical Wizard owns the stop/start/recovery and final `stage-c.json` journal/receipt. New supplementary operator report is unique private 0600 `<repo>/reports/transitions/flash-next--to--27b/p3-c-operator-<UTC>-<nonce>.json`. No source/preserved-model deletion. Final success must show `P3_C_PASS_FINAL_27B_ACTIVE`, live `qwen3.8-27b` on :8000 AND original immutable Stage-C receipt PASS. 27B intentionally stays active and Flash image/container retained. Any BLOCKED/RECOVERY_FAILED/OPERATOR_REVIEW_REQUIRED requires inspection and STOP, never blind retry.
+
+Actual P3-C execution remains **NOT_RUN and NOT_AUTHORIZED** until those new human inputs; no PR merge, automatic model switch or P1 repeat.
+
+---
+
 ## 2026-11-07 — SOURCE CI VERIFIED, NEXT DGX ACTION STILL READ-ONLY
 
 `67ff9cc2e4ece0c89c911513673f7d5d55c98fa4` passed GitHub Actions [run 42310408411](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42310408411), **501/501 CPU PASS in 23 groups**. Draft PR #1 reviewed and not merged. New read-only `bash scripts/temporary/p1-post-b-audit.sh` has **not yet run on real DGX**; P1 POST-B Verify/Benchmark and P3-C are not authorized. After clean fast-forward pull, this one script is the next operator step; no GPU inference, service mutations or auto approvals.
