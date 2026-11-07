@@ -76,6 +76,71 @@ def _actions_menu(model: str) -> None:
             invoke_model_action(model, action, workflow=doc)
 
 
+
+
+def _history_menu(model: str) -> None:
+    """Read-only history from local project and immutable legacy receipts.
+
+    No /health, inference, Docker or GPU calls. Results are summaries; the
+    model ID is resolved from the service-policy manifest by the catalog.
+    """
+    from scripts.manager.evidence_catalog import history
+    categories = {"1": "all", "2": "verify", "3": "benchmark",
+                  "4": "transition", "5": "trial", "6": "diagnostics"}
+    while True:
+        print("\nPast model results (read-only, 0 back)")
+        print(" 1. All records")
+        print(" 2. Verify")
+        print(" 3. Benchmark")
+        print(" 4. Model transitions")
+        print(" 5. GPU trials")
+        print(" 6. Diagnostics")
+        picked = _input("History (0 back): ")
+        if picked in (None, "0"):
+            return
+        if picked not in categories:
+            print("Unknown category; nothing executed.")
+            continue
+        try:
+            doc = history(model=model, kind=categories[picked], limit=20)
+        except (OSError, ValueError, TypeError) as exc:
+            print("History unavailable: " + type(exc).__name__)
+            continue
+        if doc["status"] != "READ_ONLY_HISTORY":
+            print("History blocked: " + ", ".join(doc.get("issues") or []))
+            continue
+        print("\nModel: " + doc["model"] + " | " + doc["category"]
+              + " | " + str(doc["count"]) + " unique records")
+        for rec in doc["records"]:
+            print(" - " + rec["timestamp_utc"] + " | "
+                  + rec["category"] + " | " + rec["status"])
+            summary = rec.get("summary") or {}
+            if rec["category"] == "verify":
+                print("   baseline=" + str(summary.get("baseline_status"))
+                      + ", extended=" + str(summary.get("extended_status")))
+                for name, status in summary.get("probes", {}).items():
+                    print("   " + name + "=" + str(status))
+            if rec["category"] == "benchmark":
+                for key, caption, unit in (
+                    ("mean_tokens_per_sec", "Mean throughput", "tokens/sec"),
+                    ("mean_e2e_tokens_per_sec", "Mean E2E throughput", "tokens/sec"),
+                    ("mean_decode_tokens_per_sec_proxy", "Decode proxy", "tokens/sec"),
+                    ("ttft_p50_sec", "TTFT p50", "sec"),
+                    ("ttft_p95_sec", "TTFT p95", "sec"),
+                    ("latency_p50_sec", "Latency p50", "sec"),
+                    ("latency_p95_sec", "Latency p95", "sec"),
+                ):
+                    if summary.get(key) is not None:
+                        print("   " + caption + ": " + str(summary[key]) + " " + unit)
+            if rec["category"] == "transition":
+                print("   " + str(summary.get("from_model")) + " -> "
+                      + str(summary.get("to_model"))
+                      + "; live verified=" + str(summary.get("live_verified")))
+            print("   Evidence: " + rec["path"])
+        if doc.get("issues"):
+            print("Note: " + str(len(doc["issues"]))
+                  + " unreadable/untrusted file(s) not displayed. No files changed.")
+
 def _model_screen(model: str) -> None:
     while True:
         doc = model_workflow(model)
@@ -83,6 +148,7 @@ def _model_screen(model: str) -> None:
         print("  1. Continue recommended step")
         print("  2. All model actions / diagnostics")
         print("  3. Refresh observed state")
+        print("  4. Past Verify / Benchmark / transitions (read only)")
         print("  0. Back")
         selected = _input("Choice (0 back): ")
         if selected in (None, "0"):
@@ -108,6 +174,8 @@ def _model_screen(model: str) -> None:
             _actions_menu(model)
         elif selected == "3":
             continue
+        elif selected == "4":
+            _history_menu(model)
         else:
             print("Unknown option; nothing executed.")
 
