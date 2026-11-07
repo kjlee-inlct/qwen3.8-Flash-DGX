@@ -21,7 +21,8 @@ USAGE = """Blazux Wizard (vLLM 0.32 only)
   ./wizard.sh operations system status --json
   ./wizard.sh service manager status --json   manifest + local API identity (read-only)\n  ./wizard.sh service manager health --json  read-only local API identity\n  ./wizard.sh service manager logs --json    bounded local log tail
   ./wizard.sh service manager plan --for-action restart --json
-  ./wizard.sh model 27b benchmark --plan --json  read-only exact P2 benchmark plan\n  ./wizard.sh model 27b benchmark --execute --approve-plan SHA64 --ack-downtime ACK\n  ./wizard.sh switch flash-next-27b operational --target flash-next --plan --json  read-only ordinary switch preview\n  ./wizard.sh switch flash-next-27b operational guided --target flash-next  release-gated TTY review\n  ./wizard.sh switch flash-next-27b sequence --plan --json  P3 manual-entry read-only sequence\n  ./wizard.sh switch flash-next-27b stage-a --plan --json  read-only planned activation Flash-Next -> 27B\n  ./wizard.sh switch flash-next-27b stage-b --plan --json  read-only planned return 27B -> Flash-Next\n  ./wizard.sh switch flash-next-27b stage-c --plan --json  read-only final plan after post-B P1 rebenchmark\n  ./wizard.sh switch flash-next-27b roundtrip --execute --approve-plan SHA64  RETIRED/BLOCKED\n  ./wizard.sh model 27b status --inspect-runtime --json  read-only qualification
+  ./wizard.sh model 27b benchmark --plan --json  read-only exact P2 benchmark plan\n  ./wizard.sh model 27b benchmark --execute --approve-plan SHA64 --ack-downtime ACK\n  ./wizard.sh switch flash-next-27b operational --target flash-next --plan --json  read-only ordinary switch preview\n  ./wizard.sh switch flash-next-27b operational guided --target flash-next  release-gated TTY review
+  ./wizard.sh switch flash-next-27b operational acceptance --target flash-next --plan --json  separate read-only DGX trial preflight\n  ./wizard.sh switch flash-next-27b operational acceptance --target flash-next --execute  trial ONLY, separate TTY downtime approval\n  ./wizard.sh switch flash-next-27b sequence --plan --json  P3 manual-entry read-only sequence\n  ./wizard.sh switch flash-next-27b stage-a --plan --json  read-only planned activation Flash-Next -> 27B\n  ./wizard.sh switch flash-next-27b stage-b --plan --json  read-only planned return 27B -> Flash-Next\n  ./wizard.sh switch flash-next-27b stage-c --plan --json  read-only final plan after post-B P1 rebenchmark\n  ./wizard.sh switch flash-next-27b roundtrip --execute --approve-plan SHA64  RETIRED/BLOCKED\n  ./wizard.sh model 27b status --inspect-runtime --json  read-only qualification
   ./wizard.sh model 27b plan --for-action start --launch-preview --json  blocked dedicated 27B preview
   ./wizard.sh model 27b plan --for-action download --json
   ./wizard.sh model 27b download --guided
@@ -30,7 +31,7 @@ Compatibility (same handler, same safety boundaries):
   ./wizard.sh p1 status --json
   ./wizard.sh --stage p3 --action switch --from-model flash-next --to-model 27b --json
 
-P1 execution and P2 download retain exact plan ID approval; generic operating switch execution is NOT exposed by the Wizard. P3 A/B/C one-off stages are historical acceptance only.
+P1/P2 guarded actions retain original approval. Routine production switching remains release-gated; only the dedicated one-switch acceptance trial can request fresh independent TTY downtime consent. P3 A/B/C are historical and MUST NOT be replayed.
 """
 
 
