@@ -1,3 +1,11 @@
+## E-20261107-OPERATING-SWITCH-GUIDED-ACCEPTANCE-SOURCE — Fake-DGX, NOT real switch
+
+Tracked source in `feature/recipe-wizard-handoff`: `wizard/console.py` main option 4/model option 6; `scripts/manager/operational_wizard.py` release-gated normal UX; `scripts/manager/operational_acceptance.py` independent four-input real-DGX trial-only CLI; `scripts/temporary/operational-switch-acceptance.sh` tracked operator wrapper; `scripts/manager/operational_executor.py` stop→start, exact-target verification, inference + recovery; `scripts/manager/operational_audit.py` full journal/hash/snapshot/receipt consistency; `scripts/manager/operational_probe.py` bounded chat. CPU tests `test_operational_{switch,executor,wizard,audit,probe,acceptance}_cpu.py`, CI workflow. **No new user-provided real DGX ordinary-transfer log**, no stop/start, no real restore, no model deletion, no P3 A/B/C replay. The user-provided last live check remains 27B only served model with successful generation on port 8000; current source changes do not alter it.
+
+Acceptance statuses must remain: `SOURCE_IMPL_COMPLETE_CANDIDATE`, `CPU_FAKE_DGX_VALIDATED_IF_CI_GREEN`, `REAL_ORDINARY_DGX_NOT_RUN`, `PRODUCTION_RELEASE_GATED`. GitHub latest HEAD / CI link recorded independently after last source/doc updates. Runbook: `docs/OPERATING-SWITCH-DGX-ACCEPTANCE-RUNBOOK-20261107.md`.
+
+---
+
 ## E-20261107-OPERATING-WIZARD-GUIDED-SOURCE — not actual DGX switch
 
 Current GitHub source branch includes `scripts/manager/operational_wizard.py` and `tests/test_operational_wizard_cpu.py`; existing ordinary-switch preview and independent executor are now connected **only through a release-gated guided operator boundary**. Execution SHA domain-separate from preview candidate; Fake-DGX simulated both directions, cancellation, no TTY, stale plan, and production release lock. Record latest head-specific GitHub CI separately when completed. **Actual ordinary model switch and rollback NOT_RUN**; current real DGX remains 27B active at :8000 from operator logs. No P3 A/B/C replay, actual Docker stop/start, model delete/restart, tool-parser addition or original private evidence mutation.
