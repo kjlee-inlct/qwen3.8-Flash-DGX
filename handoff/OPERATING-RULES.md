@@ -1,3 +1,13 @@
+## R1R — 2026-11-07 — READ-ONLY HISTORY + EXPLICIT P2/P3 COPY, P3-C SEPARATE AUTHORIZATION
+
+The model history command and integrated Wizard menu are READ ONLY: no CUDA, inference, health check, service or Docker commands. Scan private bounded JSON records from declared legacy and new report directories; dedup by immutable SHA256 and report unreadable/untrusted files. Model names come from `runtimes/service-policy.json` not internal rollout stage numbers. 27B throughput reports separate E2E and decode proxy; do not compare it unqualified with Flash direct throughput.
+
+Import is a separately approved COPY-ONLY operation, not service migration: `./wizard.sh evidence migrate --plan` then optional `--guided` requiring current full plan_id. Plans are rehashed immediately before execution. Use O_EXCL, 0600 immutable JSON and private 0700 project directories. Do NOT copy mutable P2/P3 locks/journal/state/attempt markers or .target.log, do NOT delete originals, and do NOT silently switch the canonical P2/P3 paths. Any partial/invalid/mismatched copy BLOCKS review, never overwrite. Imported files are Git-ignored local artifacts, not synchronized backups. Phase-2 native P2/P3 report mirrors and phase-3 active state relocation are postponed pending independent design/recovery qualification.
+
+Original actual P3-B + post-B P1 Verify/Benchmark evidence remains valid as previously supplied. P3-C currently NOT_AUTHORIZED, NOT_RUN. Next operator action is fresh `./wizard.sh switch flash-next-27b stage-c --plan --json` (read-only), after source CI+clean pull; only if all gates READY and the operator separately approves Flash downtime can stage-C execute through the canonical guarded switch. Never infer live approval from prior test results or historical stage A/B plan IDs. See [contract](../docs/MODEL-EVIDENCE-HISTORY-MIGRATION-20261107.md).
+
+---
+
 ## R1Q — 2026-11-07 — Model-centric UX change; actual post-B P1 PASS and private evidence continuity
 
 Operator ZIP contains actual POST-B P1 Verify PASS (baseline/extended plus all four functional probes) and 3-request numeric Benchmark PASS, distinct fresh action SHA approvals; the latest earlier read-only doctor/inventory rc=3 diagnosis PASS for the original Flash own-name/own-port collision. These facts supersede old P1 NOT_RUN entries. They **do not** grant P3-C downtime authorization. Keep Flash-Next service API :8000 active, ONE_ACTIVE_MODEL_ONLY, vLLM 0.32, SGLang unused.
