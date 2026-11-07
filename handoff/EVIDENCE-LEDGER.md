@@ -1,3 +1,9 @@
+## E-20261107-27B-CURL-SMOKE-SOURCE — inference-specific proof gate
+
+User correctly distinguished `LIVE_SERVICE_VERIFIED` (current API identity) from actual `/v1/chat/completions` functional inference. New bounded, localhost-only `scripts/temporary/operational-27b-curl-smoke.sh` and offline CPU tests `tests/test_operational_curl_smoke_cpu.py` ensure 27B health, exclusive served model identity and one user-visible response are separately checked. Wizard read-only preview provides exact command. Source CI to be checked at latest commit. **Real DGX inference smoke NOT_RUN / output not yet supplied.** Do not conflate script/test creation, old benchmark evidence or PREVIEW READY with fresh model functional acceptance; running 27B and preserved Flash assets remain untouched.
+
+---
+
 ## 2026-11-07 — Source-only ordinary operating switch development evidence (NOT a new GPU trial)
 
 GitHub source changes: independent read-only switch preview and new unexposed guarded transaction source, Fake-DGX CPU unit tests, CLI/TTY preview, separated readiness dashboard, and CPU workflow changes. Track \`scripts/manager/operational_switch.py\`, \`scripts/manager/operational_executor.py\`, \`tests/test_operational_switch_cpu.py\`, \`tests/test_operational_executor_cpu.py\` and \`docs/OPERATING-SWITCH-UX-CONTRACT-20261107.md\`. Latest CPU run should be verified on GitHub at its actual HEAD; historical CI was 565/565 before these new suites. These are CI/source evidence **only**, not actual DGX. No new physical DGX probe, stop, start, API inference, benchmark, service switch or actual rollback occurred.
