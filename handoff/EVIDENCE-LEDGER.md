@@ -1,3 +1,9 @@
+## E-20261107-27B-OPENWEBUI-AUTO-TOOL-BLOCKED — real operator observation
+
+Direct actual DGX `/v1/chat/completions` with `chat_template_kwargs.enable_thinking=false`: matching `model=qwen3.8-27b`, `message.content="DGX_OK"`, `reasoning=null`, `finish_reason=stop`, `completion_tokens=4`, vLLM `0.32.0-bfe01fe9`. This confirms strict visible-output formatting for **one no-tool request** and no longer implies unconditional reasoning leakage. Separately, real Open WebUI 27B question failed with exact `"auto" tool choice requires --enable-auto-tool-choice and --tool-call-parser to be set`. Neither WebUI settings nor current Docker Cmd were supplied, so root cause is **strongly supported by source 27B launcher flags omission, not fully observed in container**. No changes to running 27B or Open WebUI settings by assistant. Investigate using `docs/OPENWEBUI-27B-TOOL-CALLING-20261107.md`; do not infer Native Tool Calling PASS.
+
+---
+
 ## E-20261107-27B-CURL-SMOKE-REAL-DGX-PASS — received original operator terminal output
 
 Actual DGX operator ran direct localhost `curl` for `/health`, `/v1/models`, and `/v1/chat/completions`, followed by fast-forward from `df3ec01` to `05c1968` and `bash scripts/temporary/operational-27b-curl-smoke.sh`. No Docker mutation or model switch. Direct /v1/models sole ID `qwen3.8-27b`, NVIDIA model root revision `482ca0f3832238542f8f5295dde86b5f22711d80`, `max_model_len=8192`. Direct chat model `qwen3.8-27b`, finish `stop`, 26 completion tokens, `system_fingerprint=vllm-0.32.0-bfe01fe9`; success included `DGX_OK` but also reasoning-like text and literal `</think>` in `message.content` while `message.reasoning` null. Updated smoke printed `HEALTH_PASS`, `IDENTITY_PASS`, `INFERENCE_PASS`, `27B_CURL_SMOKE_PASS`. **REAL DGX generation PASS; EXACT OUTPUT FORMATTING NOT PASS.** Console text is the evidentiary source, not a fabricated private JSON receipt; raw private logs, request IDs and output are not published in repo.
