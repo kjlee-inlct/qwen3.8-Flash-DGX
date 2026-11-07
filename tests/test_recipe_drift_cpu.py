@@ -56,12 +56,15 @@ def observe(target=None, *, running=False, flash_running=False, foreign=False):
     live = []
     gpu = []
     if target is not None:
+        target = copy.deepcopy(target)
+        target["State"]["Running"] = running
         all_docs["qwen38-27b"] = target
         if running:
             live.append("qwen38-27b")
             gpu.append("qwen38-27b")
     if flash_running:
-        all_docs["qwen38-flash"] = {"Id": "b" * 64, "Name": "/qwen38-flash"}
+        all_docs["qwen38-flash"] = {"Id": "b" * 64, "Name": "/qwen38-flash",
+                                   "State": {"Running": True}}
         live.append("qwen38-flash")
         gpu.append("qwen38-flash")
     if foreign:
@@ -81,6 +84,27 @@ def preview(target=None, *, action="status", running=False,
 
 
 class RecipeDriftCPU(unittest.TestCase):
+    def test_real_port_owner_conflict_blocks_lifecycle(self):
+        snapshot = observe(docker_doc(), running=False)
+        snapshot["port_owners"] = ["other-container"]
+        result = drift.plan("27b", "start", observer=lambda: snapshot)
+        self.assertIn("UNMANAGED_HOST_PORT_8000_OWNER", result["issues"])
+        self.assertIsNone(result["plan_id"])
+
+    def test_changed_cache_source_changes_plan_hash(self):
+        snapshot = observe(docker_doc(), running=False)
+        a = drift.plan("27b", "recreate", observer=lambda: snapshot,
+                       cache_source="/hf-a", now=1794050000)
+        b = drift.plan("27b", "recreate", observer=lambda: snapshot,
+                       cache_source="/hf-b", now=1794050000)
+        self.assertNotEqual(a["plan_id"], b["plan_id"])
+
+    def test_inconsistent_docker_ps_and_inspect_is_blocked(self):
+        snapshot = observe(docker_doc(), running=False)
+        snapshot["containers"]["qwen38-27b"]["State"]["Running"] = True
+        result = drift.plan("27b", "restart", observer=lambda: snapshot)
+        self.assertIn("INCONSISTENT_MANAGED_CONTAINER_RUNNING_STATE", result["issues"])
+
     def test_pinned_recipe_hash_is_not_rewritten(self):
         _, sha = canonical()
         self.assertRegex(sha, r"^[a-f0-9]{64}$")
