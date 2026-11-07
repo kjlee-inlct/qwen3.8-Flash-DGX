@@ -1,3 +1,13 @@
+## START HERE — 2026-11-07 LATEST: P2 Tool Calling HTTP 400 CONFIRMED; ordinary switch real bidirectional PASS
+
+**Latest operator's real DGX at source HEAD `09c6780`**: fresh source fast-forward completed; **NVIDIA 27B is ACTIVE** on `:8000/v1` (`qwen38-27b`, `qwen3.8-27b`, `LIVE_SERVICE_VERIFIED`, `issues=[]`). The *independent ordinary operating journal* is `VERIFIED/COMMITTED`, **14 events**, `issues=[]`. This corroborates BOTH real ordinary operating switch directions `27B→Flash` and `Flash→27B` PASS. Historical P3-A/B/C and P3-C final PASS remain **CLOSED**; never rerun them. **Normal main Wizard execution remains gated** (`PRODUCTION_EXECUTION_RELEASED=False`); actual production menu acceptance and real forced-failure recovery are distinct and still outstanding.
+
+**P2-FINAL tool support remains OPEN**: operator directly inspected preserved `qwen38-27b` Docker `Config.Cmd`, which has `modelopt_mixed`/BF16/context 8192, **NO `--enable-auto-tool-choice`, `--tool-call-parser`, or `--reasoning-parser`**. `serve_27b.sh --tools-profile` displays correct opt-in source flags `qwen3_coder` + `qwen3`; `serve_27b.sh --tools-probe` returns **`BLOCKED/LOCAL_API_HTTP_ERROR_400`**, structured tool cycle **NOT PASS**. Git source change does not retrofit existing container. Do not guess the exact HTTP 400 body, or claim migration/Parser/Open WebUI Native PASS. Next task is **safe separate tool-enabled model recipe/variant and rollback design**, with vLLM 0.32, one active model and `:8000` unchanged. Any actual runtime mutation requires new operator downtime consent. Original containers/images/HF caches and private receipts preserved. Draft PR #1 stays unmerged.
+
+Read **[current state](CURRENT-STATE.md)**, **[next actions](NEXT-ACTIONS.md)**, **[evidence ledger](EVIDENCE-LEDGER.md)**, **[new conversation starter](SESSION-START-PROMPT.md)**, and **[P2-FINAL acceptance](../docs/P2-27B-FINAL-TOOL-CALLING-ACCEPTANCE-20261107.md)** before older snapshots. Earlier lines below (P3-C NOT_RUN, Flash active, first direction outstanding) are historical, NOT current. Latest branch SHA/CI should always be queried from GitHub.
+
+---
+
 ## 2026-11-07 — START HERE: P3-C 실제 DGX PASS, NVIDIA 27B ACTIVE, 이제 Wizard UX 개발
 
 **가장 최신 확정 상태:** P1 Flash-Next Verify/Benchmark와 P3-B 후 P1 재검증/진단, P2 NVIDIA 27B trial/benchmark, P3-A/B/C 실제 양방향 stage 순차 실행이 전부 PASS. 최종 `P3_C_PASS_FINAL_27B_ACTIVE`, `post_switch_observed_model=27b`, `post_switch_status=LIVE_SERVICE_VERIFIED` at port 8000. **원본 모델/컨테이너/HF 캐시 보존; P3-A/B/C 재실행 금지.** Git 공개 모델별 benchmark 원본 대조는 2/2 VERIFIED. 이 아래 오래된 `P3-C NOT_RUN`, `Flash active`, `benchmark comparison pending` 문구는 당시 이력이며 **현재 상태가 아님**.
