@@ -9,7 +9,6 @@ operator acceptance tool and is ALWAYS unexecuted here.
 from __future__ import annotations
 
 import argparse
-from datetime import datetime, timezone
 import json
 import os
 from pathlib import Path
@@ -34,7 +33,6 @@ PROC_ROOT = Path("/proc")
 MODEL_NAMES = ("27b", "flash-next")
 SHA = re.compile(r"^[0-9a-f]{64}$")
 PID = re.compile(r"pid=(\d+)")
-PORT = re.compile(r"(?:^|[.:\]])8000(?:\s|$)")
 
 
 def result(stage: str, status: str, *, issues: list[str] | None = None,
@@ -44,7 +42,7 @@ def result(stage: str, status: str, *, issues: list[str] | None = None,
 
 
 def proc_belongs(pid: int, docker_id: str, *, root: Path = PROC_ROOT) -> bool:
-    """Conservative proof via cgroup or host parent/child Docker init ancestry.
+    """Conservative proof via a readable Linux process cgroup identity.
 
     No permission, namespace ambiguity or missing proc info can yield PASS.
     """
@@ -180,8 +178,14 @@ def stage_e(snapshot: dict, *, historical: dict | None = None) -> dict:
     if qualified.get("status") != "LOCAL_P3_A_B_C_RECEIPTS_VERIFIED":
         issues.extend(qualified.get("issues") or ["FLASH_P3_PROVENANCE_MISSING"])
     try:
-        recipe_drift.load_desired("flash-next")
+        recipe, _ = recipe_drift.load_desired("flash-next")
         canonical_recipe_registered = True
+        if candidate is not None and isinstance(flash, dict):
+            desired = recipe_drift.desired_runtime(
+                recipe, cache_source=candidate.get("hf_cache_source"))
+            observed = recipe_drift.observed_runtime(flash)
+            issues.extend("FLASH_CANONICAL_RECIPE_DRIFT:" + row["field"]
+                          for row in recipe_drift.difference(desired, observed))
     except (OSError, ValueError, TypeError, KeyError):
         canonical_recipe_registered = False
     if not canonical_recipe_registered:
@@ -247,6 +251,9 @@ def stage_g(live: dict, *, planner: Callable[[str], dict] = operational_switch.m
         return result("P3-G", "BLOCKED", issues=["OPERATING_PREFLIGHT_FAILED:" + type(exc).__name__])
     if plan.get("status") != operational_switch.READY or plan.get("issues"):
         issues.extend(plan.get("issues") or ["OPERATING_PREVIEW_NOT_READY"])
+    if plan.get("status") == operational_switch.READY and plan.get(
+            "current_ids_from_live_docker") is not True:
+        issues.append("OPERATING_PREVIEW_CURRENT_DOCKER_ID_NOT_VERIFIED")
     if (journal.get("status") not in ("VERIFIED", "EMPTY")
             or journal.get("issues")):
         issues.extend(journal.get("issues") or ["OPERATING_JOURNAL_NOT_VERIFIED"])
@@ -285,7 +292,6 @@ def acceptance(*, cpu_only: bool = False, snapshot_fn=recipe_drift.collect_docke
             for key, probe in (
                 ("P3-D", lambda: d_fn(snapshot, live)),
                 ("P3-E", lambda: e_fn(snapshot, historical=p3_fn())),
-                ("P3-G", lambda: g_fn(live)),
             ):
                 try:
                     sections[key] = probe()
@@ -299,6 +305,13 @@ def acceptance(*, cpu_only: bool = False, snapshot_fn=recipe_drift.collect_docke
             subprocess.TimeoutExpired) as exc:
         sections["P3-F"] = result("P3-F", "BLOCKED", issues=[
             "CPU_TEST_RUNNER_UNAVAILABLE:" + type(exc).__name__])
+    if not cpu_only and snapshot is not None and live is not None:
+        try:
+            sections["P3-G"] = g_fn(live)
+        except (OSError, ValueError, RuntimeError, TypeError, KeyError,
+                subprocess.TimeoutExpired) as exc:
+            sections["P3-G"] = result("P3-G", "BLOCKED", issues=[
+                "STAGE_READ_ONLY_PROBE_FAILED:" + type(exc).__name__])
     blocked = [key for key, part in sections.items() if part["status"] == "BLOCKED"]
     return {
         "schema_version": 1, "action": "P3_D_G_DRAFT_ACCEPTANCE",
