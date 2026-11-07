@@ -1,3 +1,11 @@
+## 2026-11-07 — ACTUAL DGX READ-ONLY RECIPE DIFF: MATCHED + NEXT SOURCE TESTS
+
+**Operator console output, after local fast-forward 9ec7420 -> 5456eae:** current `qwen38-27b` ID `00094794475a9eaa62296c9e9fcb880bf6f3e01abdb77e3dd3ac5f964d5b2d4a`; `model 27b recipe-diff` -> `READ_ONLY_STATUS`, `diff=[]`, `issues=[]`; served `qwen3.8-27b`; Docker image `sha256:9479fc92a9244fcf137afb36ed778e07495e29663a81db193736fcaa1f15e137`; recipe SHA `301c9c7980690b97e357db5fb57090fc82c507ab9c1116c8e154739e360bbbbb`; observed HF mount host `/home/inlc/.cache/huggingface` to `/hf` read-only. `restart --plan` predicts RESTART_EXISTING; `reinstall --plan` predicts RECREATE by explicit action, neither executed. `service manager status` -> `LIVE_SERVICE_VERIFIED`, `API_IDENTITY_CONFIRMED`, issues=[] and all eight status checks true. The GPU exclusivity and process-level port ownership flags were NOT verified by this command.
+
+**Independent SOURCE CI** after updating current-ID-aware ordinary switch and explicit read-only host mount comparison: GitHub Actions run 42367665200 SUCCESS **814/814 CPU/Fake-DGX tests across 36 groups**, no real DGX switching. Historic P3 stage files and benchmark unchanged. Full detail: `docs/WIZARD-27B-LIVE-DRIFT-CURRENT-ID-20261107.md`.
+
+---
+
 ## 2026-11-07 — SOURCE-ONLY CI EVIDENCE (NO DGX RUNTIME CLAIM)
 
 Generic recipe drift / lifecycle code was committed on feature/recipe-wizard-handoff and passed GitHub Actions SOURCE-ONLY run 42355750124: **799/799 CPU/Fake-DGX tests across 36 groups, conclusion SUCCESS**. New files scripts/manager/recipe_drift.py, scripts/manager/model_lifecycle.py, tests/test_recipe_drift_cpu.py, tests/test_model_lifecycle_cpu.py; new Wizard model menu option 7, CLI read-only recipe diff and lifecycle plans. Production executor disabled and actual DGX operations not run. No existing P2 Native Tools, P3-C, historical container-cleanup receipt, benchmark or active 27B state was changed. See docs/WIZARD-LIFECYCLE-SOURCE-IMPLEMENTATION-20261107.md. The following real-DGX observations remain historical evidence from the operator, not checks made this session.
