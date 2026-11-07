@@ -1,3 +1,16 @@
+## E-20261107-LATEST-27B-POST-REVERSE-AND-P2-TOOLS-HTTP400 — actual operator DGX, source `09c6780`
+
+**Real DGX after both independently approved ordinary switching directions PASS:**
+1. `./wizard.sh service manager status --json`: `LIVE_SERVICE_VERIFIED`, active `qwen38-27b`, one served ID `qwen3.8-27b`, port 8000, `issues=[]`; API identity confirmed. `gpu_exclusivity_verified=false` = not independently qualified by status inspector, not an observed conflict.
+2. `operational_audit --json`: `VERIFIED`, final phase `COMMITTED`, **14** journal events, `issues=[]`, last event hash `ece2b07f40d972761565b95c3c9b99552876079783af4e4aa4e2db5053a5724e`. This is **new independent post-reverse corroboration**; supersedes prior statement that Flash→27B postcheck is pending.
+3. Preserved `qwen38-27b` Docker `Config.Cmd`: pinned `nvidia/Qwen3.8-27B-NVFP4` revision `482ca0f3832238542f8f5295dde86b5f22711d80`; `--served-model-name qwen3.8-27b`, `modelopt_mixed`, BF16, 8192, 1 seq, 0.70, `--enforce-eager`, **none of three auto tool/reasoning switches**. The exact Docker Cmd was provided by operator, not inferred from source code.
+4. Source `scripts/serve_27b.sh --tools-profile`: `SOURCE_PROFILE_ONLY_DGX_NOT_QUALIFIED`, all five candidate argument tokens (flag + parser pair + reasoning pair), `container_recreated=false`, `production_enabled=false`.
+5. Local harmless `scripts/serve_27b.sh --tools-probe`: `BLOCKED`, `LOCAL_API_HTTP_ERROR_400`, `parser_flags_observed=false`, structured tool call/result continuation/reasoning separation **false**. The current API rejected the test; without raw HTTP body do not infer its exact wording from this probe. No actual Docker/GPU lifecycle change.
+
+**Evidence-based verdict:** historical P2 GPU/benchmark PASS and original P3-C CLOSED/PASS preserved; ordinary operating switching both physical directions PASS with latest 14-event audit. **P2-FINAL Tool Calling is NOT PASS**; current running 27B lacks auto-parser startup flags. Updating opt-in Python source does not modify the container; a separately approved, pinned, rollback-safe tool-enabled runtime variant is required. Open WebUI Native actual end-to-end, streaming, parser compatibility and reasoning separation are not tested. Normal main Wizard release still OFF. Preserve original images/containers/cache, old P3 receipts and private operational receipts. Git source 680/680 CPU PASS at `09c6780` is distinct from these real-DGX results.
+
+---
+
 ## E-20261107-P2-FINAL-TOOLS-PROFILE-SOURCE-AND-REVERSE-OPERATING-ACTUAL — evidence boundary
 
 Operator's latest REAL DGX ordinary operating acceptance Flash→27B (distinct from earlier P3-C): 4 exact separate TTY approvals, `Live transition result: PASS`, `Observed model: 27b`, private receipt `completed-a811068f8059525f1960bbc4b746b78ad77f14da4ba55ed6a8006c5d9f5bf6f4.json`. Prior ordinary 27B→Flash real PASS with independent Flash API status `LIVE_SERVICE_VERIFIED` and operating audit `VERIFIED/COMMITTED`. Reverse 27B postcheck/audit NOT YET SUPPLIED, source-only tests are not actual DGX network proof.
