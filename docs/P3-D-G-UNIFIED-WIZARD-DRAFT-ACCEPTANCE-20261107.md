@@ -1,5 +1,8 @@
 # P3-D / P3-E / P3-F / P3-G — Unified Wizard Acceptance Draft
 
+**SOURCE CI VERIFIED (final implementation commit `efb0dda78a4e6f894afe39c97a6839e1d7cf4d53`):** GitHub Actions run [42369840239](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42369840239) completed **SUCCESS, 829/829 CPU tests in 37 reported groups**, including an automatic `python -m scripts.manager.p3_dg_acceptance --cpu-only` invocation. This is source/CI verification, **not actual DGX hardware acceptance or production release**. The subsequent handoff-document-only commits did not require/source-trigger a new hardware test.
+
+
 **Status:** SOURCE DRAFT IMPLEMENTED, CPU tests pending/qualifying, real DGX D-G acceptance NOT COMPLETE.  
 **Branch:** `feature/recipe-wizard-handoff`; existing PR #1 remains Draft, unmerged.  
 **Policy:** vLLM 0.32, one GPU model active at a time, fixed API port 8000. SGLang not permitted. Canonical 27B Native Tools recipe SHA and historic P3 A/B/C receipts must not be changed.
