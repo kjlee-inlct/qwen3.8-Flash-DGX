@@ -1,3 +1,19 @@
+## Addendum — 2026-11-07: 27B real-generation curl smoke (DGX execution NOT_RUN)
+
+The operator correctly highlighted that `LIVE_SERVICE_VERIFIED` only proves running container, HTTP `/health` and `/v1/models` **identity**, not successful token generation. Before concluding NVIDIA 27B is functionally healthy **now**, run the one-shot, non-disruptive script from the actual DGX when 27B remains the current active model:
+
+~~~bash
+cd ~/Workspace/llm/blazux-orcarouter
+git pull --ff-only origin feature/recipe-wizard-handoff
+bash scripts/temporary/operational-27b-curl-smoke.sh
+~~~
+
+This invokes **curl** against 127.0.0.1:8000, requiring: HTTP 200 /health; exactly `qwen3.8-27b` in /v1/models; and a non-empty final chat reply with matching model ID from one /v1/chat/completions request, bounded to max 256 output tokens and an HTTP timeout. No docker lifecycle, switch, network target override, file deletion, API key or benchmark. A 27B thinking response that emits no final message fails closed for this **user-visible completion** criterion and requires operator review (not a launch/rollback instruction). Output markers: `HEALTH_PASS`, `IDENTITY_PASS`, `INFERENCE_PASS`, then `27B_CURL_SMOKE_PASS`; on failure nonzero exit, do NOT infer successful inference from existing P3 receipts. Paste stdout/stderr for verification. The Wizard ordinary switch preview *displays* this optional smoke instruction but never runs it implicitly. `tests/test_operational_curl_smoke_cpu.py` uses an offline fake curl binary to test PASS/wrong IDs/empty completion/HTTP/transport errors and verifies no non-local target is accepted.
+
+**Source-only script and Fake-CPU tests are not proof of fresh real-DGX execution.** Existing 27B active status is last operator reported, not live observed from this assistant. General operating switch, its execution UX and real rollback remain unqualified/unreleased; P3 A/B/C never rerun.
+
+---
+
 ## Addendum — 2026-11-07: independent guarded transaction SOURCE now present, still NOT RELEASED
 
 The independent \`scripts/manager/operational_executor.py\` source has now been added, using a fresh plan recheck, two exact operator acknowledgments, private lock and single-use attempt marker, append-only journal separate from P3, stop-before-start, port release, exact container/image IDs, 27B label, target API served ID and original-container preservation, with best-effort restoration and explicit failure outcomes. It is **NOT routed through Wizard CLI/TTY** and is not authorized for live DGX use. CPU Fake-DGX tests in \`tests/test_operational_executor_cpu.py\` cover both directional successes, cancellation/invalid IDs, failure/recovery branches and one-time plan attempts. This updates the "required executor" portion below: **source implementation exists, but release qualification, guided approval flow and independently approved real DGX validation are still outstanding**. No running 27B service was altered, no P3 stage rerun or real operating transition occurred. CPU success never authorizes downtime.
