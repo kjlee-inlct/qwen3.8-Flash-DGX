@@ -19,6 +19,7 @@ from typing import Any, Callable
 from scripts.manager import p2_27b_gpu_trial as gpu
 from scripts.manager import p3_persistent_switch as p3
 from scripts.manager.operational_switch import make_plan, READY, ROOT, SUPPORTED
+from scripts.manager.operational_probe import verify_chat
 from scripts.manager.service_status import inspect_live_status
 
 ACK_DOWNTIME = "I_ACCEPT_DGX_MODEL_SWITCH_DOWNTIME"
@@ -73,6 +74,7 @@ def execute(
     inspect: Callable[..., dict] = gpu.docker_info,
     waiter: Callable[..., bool] = gpu.wait_for,
     live: Callable[..., dict] = inspect_live_status,
+    inference: Callable[[str], bool] = verify_chat,
 ) -> tuple[int, dict]:
     """Guarded backend; only a separately qualified Wizard release may dispatch.
 
@@ -130,14 +132,18 @@ def execute(
                 "started_at_utc": datetime.now(timezone.utc).isoformat(),
             })
             p3._record(root, "OBSERVED", source, target, source, plan_id)
+            phase = "OBSERVED"
             p3._record(root, "PLANNED", source, target, source, plan_id)
-            p3._record(root, "OLD_STOPPING", source, target, source, plan_id)
-            phase = "OLD_STOPPING"
+            phase = "PLANNED"
+            # Guard against TOCTOU identity drift while source is still live.
+            # A failure here closes PLANNED -> CANCELLED without downtime.
             before = inspect(p3.NAMES[source])
             if p3._container_checks(before, name=p3.NAMES[source],
                                    image=source_image, expected_id=source_id,
                                    running=True):
                 raise RuntimeError("SOURCE_DRIFT_BEFORE_STOP")
+            p3._record(root, "OLD_STOPPING", source, target, source, plan_id)
+            phase = "OLD_STOPPING"
             old_stop_attempted = True
             if run(["docker", "stop", "--time", "45", p3.NAMES[source]],
                    timeout=80).returncode:
@@ -188,6 +194,8 @@ def execute(
                     or observed.get("expected_served_id") != p3.IDS[target]
                     or observed.get("issues")):
                 raise RuntimeError("TARGET_SERVED_MODEL_ID_UNVERIFIED")
+            if not inference(p3.IDS[target]):
+                raise RuntimeError("TARGET_CHAT_INFERENCE_UNVERIFIED")
             old = inspect(p3.NAMES[source])
             if p3._container_checks(old, name=p3.NAMES[source],
                                    image=source_image, expected_id=source_id,
@@ -224,6 +232,9 @@ def execute(
                        "issues": [error_code],
                        "notice": "Reconcile current API, journal and receipts manually."}
         try:
+            if phase == "PLANNED" and not old_stop_attempted:
+                p3._record(root, "CANCELLED", source, target, source, plan_id)
+                phase = "CANCELLED"
             if phase == "OLD_STOPPING":
                 p3._record(root, "FAILED", source, target, None, plan_id)
                 phase = "FAILED"
@@ -254,7 +265,7 @@ def execute(
             outcome = "FAIL_RESTORED"
         else:
             outcome = "BLOCKED"
-        return 4, {
+        return (3 if outcome == "BLOCKED" else 4), {
             "status": outcome, "executed": old_stop_attempted,
             "active_model": source if outcome == "FAIL_RESTORED" else None,
             "error_code": error_code, "restoration": restored,
