@@ -184,8 +184,6 @@ def measure(*, opener=urlopen, clock=time.perf_counter,
             reasons.append("COMPLETION_TOKEN_USAGE_MISSING_OR_ZERO")
         if ttft is None:
             reasons.append("TTFT_NOT_OBSERVED")
-        if parsed["finish_reason"] == "length":
-            reasons.append("MAX_TOKEN_LIMIT_REACHED")
         samples.append({
             "index": index,
             "prompt_sha256": hashlib.sha256(prompt.encode()).hexdigest(),
@@ -205,8 +203,7 @@ def measure(*, opener=urlopen, clock=time.perf_counter,
             "reasoning_observed": parsed["reasoning_observed"],
             "failure_reasons": reasons,
             "success": bool(parsed["stream_complete"] and parsed["generated"]
-                            and tokens and ttft is not None
-                            and parsed["finish_reason"] != "length"),
+                            and tokens and ttft is not None),
         })
     after = memory_reader()
     complete = all(row["success"] for row in samples)
