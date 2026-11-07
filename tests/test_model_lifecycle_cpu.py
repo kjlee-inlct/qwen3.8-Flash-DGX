@@ -102,9 +102,9 @@ class LifecycleTransactionCPU(unittest.TestCase):
             "diff": [{"field": "cmd", "desired": {"a": 1}, "observed": {"a": 2}}],
             "issues": [], "advisories": [],
         }
-        with patch("wizard.console._input", side_effect=["4", "0"]), \\
-             patch("scripts.manager.recipe_drift.plan", return_value=report) as planner, \
-             contextlib.redirect_stdout(io.StringIO()) as output:
+        with (patch("wizard.console._input", side_effect=["4", "0"]),
+              patch("scripts.manager.recipe_drift.plan", return_value=report) as planner,
+              contextlib.redirect_stdout(io.StringIO()) as output):
             _lifecycle_review("27b")
         planner.assert_called_once_with("27b", "restart")
         self.assertIn("Changed cmd", output.getvalue())
