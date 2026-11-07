@@ -1,3 +1,13 @@
+## 2026-11-07 — Canonical 27B Native Tools runtime recipe (supersedes separate variant switch design)
+
+The user chose **one canonical `qwen38-27b` container**, not persistent original-vs-native two-container switching. New `recipes/qwen38-27b.runtime.json` pins the ACTUALLY DGX-verified `qwen3_coder`, `qwen3`, NVIDIA Jinja, exact vLLM image and :8000 launch profile. Desired `runtimes/service-policy.json` now references this canonical recipe; it does NOT mean existing Docker `Config.Cmd` was changed.
+
+The separate `recipes/qwen38-27b-native-tools-v1.candidate.yaml` remains a historical incomplete trial candidate, **not the production recipe**. The existing `recipes/qwen38-27b.candidate.yaml` remains intentionally invalid/historical; neither should be launched. One-shot native tool inference was REAL DGX PASS, but canonical migration is **NOT_RUN** until explicit fresh operator TTY approval.
+
+Use `bash scripts/temporary/p2-27b-native-recipe-migrate.sh --plan` first, then `--execute` only after downtime and verified-old-container-deletion acknowledgement; successful migration validates normal chat/tools/SSE, completes a fresh 3-request benchmark, atomically replaces **only the latest active benchmark pointer** and deletes ONLY verified stopped old backup Docker container. Existing benchmark receipts, P3 A/B/C receipts, images and HF caches survive. `--status` is a separate read-only post migration audit. See [canonical runtime migration runbook](../docs/P2-27B-CANONICAL-NATIVE-RECIPE-MIGRATION-20261107.md).
+
+---
+
 ## 2026-11-07 — P2-FINAL Native Tools V1 separate candidate (NOT LAUNCHABLE)
 
 `recipes/qwen38-27b-native-tools-v1.candidate.yaml` declares a distinct container name `qwen38-27b-native-tools-v1` using the same pinned NVIDIA 27B and :8000 **only after** stopping the original. This second YAML is deliberately schema-INCOMPLETE (unverified exact image/source), source-only and NOT in the live service manifest. Never use `docker run` from a preview. Use `bash scripts/serve_27b.sh --tools-variant-plan` for fail-closed read-only inspection (expected exit code 3); see `docs/P2-27B-NATIVE-TOOLS-V1-PROTECTED-VARIANT-20261107.md`. Original `qwen38-27b`, P3 receipts, Flash and HF caches remain protected. A source recipe cannot grant downtime consent.
