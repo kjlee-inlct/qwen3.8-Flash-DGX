@@ -208,6 +208,9 @@ def main(argv: list[str] | None = None) -> int:
         if sys.stdin.isatty() and not as_json:
             return interactive()
         args = ["list"]
+    if args[0] == "evidence":
+        from scripts.manager.evidence_catalog import main as evidence_main
+        return evidence_main(args[1:])
     if args[0] in ("help", "--help", "-h"):
         print(USAGE)
         return 0
