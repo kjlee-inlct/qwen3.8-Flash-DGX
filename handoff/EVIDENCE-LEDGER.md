@@ -1,5 +1,8 @@
 ## 2026-11-07 — P3-D/E/F/G SOURCE DRAFT AND CI (NOT REAL DGX ACCEPTANCE)
 
+**CI qualification for new source (not DGX):** GitHub Actions run **42369840239** SUCCESS on source commit `efb0dda`, **829/829 CPU/Fake-DGX tests across 37 groups**, including unified D-G `--cpu-only` orchestrator. Real D/G process measurements, Flash E reinstall qualification and G live roundtrip/fault restore remain not run.
+
+
 New official stages defined by operator: D independent GPU/host port process audit; E preserved Flash canonical reinstall recipe; F unified lifecycle/rollback/journal/Fake-DGX; G real DGX general model-switch/rollback/UX. Historical P3-A/B/C actual PASS untouched. GitHub SOURCE now includes `scripts/manager/p3_dg_acceptance.py`, shell wrapper, dedicated CPU/Fake-DGX tests and `docs/P3-D-G-UNIFIED-WIZARD-DRAFT-ACCEPTANCE-20261107.md`. `--run` is read-only probes + CPU tests; no service change or GPU inference and **not real G acceptance**. Operator DGX output of this batch not yet received. For code proof inspect GitHub Actions associated with updated source HEAD. Do not conflate the previously actual `READY_FOR_OPERATOR_REVIEW_ONLY` switch preflight with live post-canonical-migration 27B↔Flash→27B switching.
 
 ---
