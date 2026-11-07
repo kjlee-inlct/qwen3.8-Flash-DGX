@@ -33,7 +33,7 @@ class GuidedOperatingWizardCPU(TestCase):
             planner=self.tx.planner, run=self.tx.runner,
             inspect=lambda name: self.tx.fake.docs[name],
             waiter=lambda name, model, timeout, run: True,
-            live=self.tx.live,
+            live=self.tx.live, inference=lambda model: True,
         )
 
     def guided(self, target="flash-next", *, release=False, answers=(), tty=True,
