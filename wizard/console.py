@@ -184,7 +184,8 @@ def _model_screen(model: str) -> None:
         print("  2. All model actions / diagnostics")
         print("  3. Refresh observed state")
         print("  4. Past Verify / Benchmark / transitions (read only)")
-        print("  5. Review ordinary model switch (read only)")\n        print("  6. Guided operating switch (release gated)")
+        print("  5. Review ordinary model switch (read only)")
+        print("  6. Guided operating switch (release gated)")
         print("  0. Back")
         selected = _input("Choice (0 back): ")
         if selected in (None, "0"):
