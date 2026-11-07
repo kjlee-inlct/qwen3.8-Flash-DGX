@@ -3,7 +3,7 @@ from ..common import Stage, run as run_stage
 
 SPEC = Stage(
     "p7", "Integrated service / proxy / gateway qualification",
-    ("inventory", "service", "proxy", "gateway", "storage", "audit", "integration"),
+    ("inventory", "service", "proxy", "gateway", "storage", "audit", "integration", "acceptance"),
     ("P1-P6 qualified and P4 storage disposition documented",
      "service/proxy/gateway/storage integration design",
      "integrated component checks and source/CI gates",
