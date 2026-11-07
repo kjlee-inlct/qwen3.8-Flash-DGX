@@ -1,3 +1,9 @@
+## 2026-11-07 — APPROVAL PROMPT FIX AFTER REAL BRACKETED INPUT
+
+New C operator `confirm()` now displays `Paste exactly <current 64-char SHA> (no brackets; Enter cancels):`, with explicit warning against `[` or `]`. The real previous `[<sha>` submission safely returned CANCELLED/dispatched=false and is NOT a switch. When operator *separately* decides to stop Flash-Next, use a NEW fresh plan, then type only the 64 hex chars and both exact independent acknowledgements; no auto approval. This UX change does not change canonical C, service status or model files. Verify original Git-tracked benchmark summaries first with read-only `bash scripts/temporary/verify-published-benchmarks.sh`.
+
+---
+
 ## 2026-11-07 — NEXT: VERIFY PUBLISHED BENCHMARK SUMMARIES READ-ONLY, THEN SEPARATELY APPROVED C
 
 1. Confirm latest GitHub branch and CI, then on operator DGX `git pull --ff-only origin feature/recipe-wizard-handoff`. **Do not** restart GPU containers, merge PR or edit/copy original benchmark receipts.
