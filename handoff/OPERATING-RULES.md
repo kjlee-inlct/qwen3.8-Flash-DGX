@@ -1,3 +1,13 @@
+## R1V — 2026-11-07 — P3 최종 PASS 이후 일반 운영 UX 개발, one-off 전환 재실행 금지
+
+실제 DGX P3-A/B/C 전환이 모두 실행/검증되었고 최종 활성 모델은 **NVIDIA 27B :8000**. 원본 Flash 컨테이너/이미지/HF cache 및 27B 자산, 기존 canonical P3 journal/receipt/attempt marker를 그대로 보존한다. 아래 과거의 'P3-C 준비·별도 승인·NOT_RUN'은 **당시 승인 경계 기록**이지 완료된 Stage C를 다시 실행하라는 지시가 아니다. P1/P2/POST-B/P3 재시험·Flash 복귀·27B 중단은 새 작업 목적 및 신규 승인 없이는 금지.
+
+`./wizard.sh` 메인 UI의 stage 선택은 `--plan`만 호출하므로 **P1~P3의 CLI/backend 검증 PASS와 최종 사용자 Wizard UX PASS를 혼동하지 않는다**. 다음 소스 목표는 모델 선택→신규 scoped 승인→일반 반복 전환→API 확인을 사용성 좋게 연결하는 것. 완성 전에는 P3 one-off `stage-a/b/c`를 일반 운영 전환에 전용하지 않는다. 대시보드는 actual canonical 증거, 실시간 API, 운영/UX 인수증을 구별해야 하며 정적 PASS 또는 정적 NOT_QUALIFIED로 실제 증거를 대체하지 않는다.
+
+최신 [P1–P7 acceptance snapshot](../docs/P1-P7-WIZARD-ACCEPTANCE-STATUS-20261107.md), [new conversation starter](SESSION-START-PROMPT.md). 모든 변경은 기존 브랜치와 Draft PR #1에 코드/CPU 테스트 후 CI/문서 동기화. 실제 GPU/서비스 downtime/cleanup은 새 별도 승인. Docker 이미지/컨테이너/모델 파일/cache 증거 삭제 및 무단 머지 금지.
+
+---
+
 ## R1U — 2026-11-07 — P3-C APPROVAL PLAN TIME WINDOW ROTATION IS READ-ONLY UNTIL NEW THREE MANUAL ACKS
 
 The canonical Stage C SHA expires at the next 10-minute UTC bucket. Previous user attempts near the window end were BLOCKED/pre-dispatch, not a failure of model health. The temporary `--execute` wrapper MAY wait at most 150 seconds using only `service manager status --json` and canonical `stage-c --plan --json` to obtain a NEW, DISTINCT, fully qualified SHA with >=120s before expiry; `--plan` remains immediate and read-only. This wait is strictly pre-authorization; it MUST NOT execute the switch, rotate a previously typed SHA, script or pipe approval strings, auto-approve downtime, or run new benchmarks. If the source Flash API/model/images/27B CID/P1 or P2 evidence/Git state change, or SHA changes ahead of its expected time boundary, or wait times out/interrupted, fail closed and preserve service.
