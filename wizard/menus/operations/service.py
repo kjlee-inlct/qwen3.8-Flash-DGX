@@ -15,7 +15,7 @@ from scripts.manager.service_logs import inspect_logs
 
 SPEC = Stage(
     "svc", "Service management",
-    ("status", "inventory", "health", "logs", "start", "stop", "restart",
+    ("status", "inventory", "health", "logs", "cleanup", "start", "stop", "restart",
      "rollback", "proxy", "gateway"),
     ("read-only service/port/container inventory",
      "identified active model and exact runtime ownership",
@@ -26,6 +26,23 @@ SPEC = Stage(
 
 def run(argv, *, as_json=False, dry_run=False):
     args = list(argv)
+    if args and args[0] == "cleanup":
+        # The only supported cleanup is manifest-owned, exact two stopped
+        # test containers. No arbitrary Docker names or flags are accepted.
+        from scripts.manager.manifest_cleanup import main as manifest_cleanup_main
+        if args[1:] in ([], ["--plan"], ["plan"]):
+            return manifest_cleanup_main(["plan"])
+        if args[1:] in (["status"], ["--status"]):
+            return manifest_cleanup_main(["status"])
+        if args[1:] in (["execute"], ["--execute"]):
+            if dry_run:
+                print(json.dumps({"status": "BLOCKED", "executed": False,
+                                  "issues": ["DRY_RUN_CLEANUP_EXECUTION_DENIED"]}))
+                return 3
+            return manifest_cleanup_main(["execute"])
+        print(json.dumps({"status": "BLOCKED", "executed": False,
+                          "issues": ["ONLY_EXACT_MANIFEST_CLEANUP_PLAN_OR_TTY_EXECUTE"]}))
+        return 2
     if args == ["logs"]:
         try:
             document = inspect_logs()
