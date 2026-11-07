@@ -25,6 +25,7 @@ on:
       - 'tests/test_wizard_roadmap_cpu.py'
       - 'tests/test_operational_switch_cpu.py'
       - 'tests/test_operational_executor_cpu.py'
+      - 'tests/test_operational_wizard_cpu.py'
       - 'tests/test_operational_curl_smoke_cpu.py'
       - 'tests/test_wizard_operator_ux_cpu.py'
       - 'tests/test_operational_curl_smoke_cpu.py'
@@ -116,6 +117,7 @@ jobs:
           python -m unittest discover -s tests -p 'test_wizard_roadmap_cpu.py' -v
           python -m unittest discover -s tests -p 'test_operational_switch_cpu.py' -v
           python -m unittest discover -s tests -p 'test_operational_executor_cpu.py' -v
+          python -m unittest discover -s tests -p 'test_operational_wizard_cpu.py' -v
           python -m unittest discover -s tests -p 'test_operational_curl_smoke_cpu.py' -v
           python -m unittest discover -s tests -p 'test_wizard_operator_ux_cpu.py' -v
           python -m unittest discover -s tests -p 'test_evidence_catalog_cpu.py' -v
