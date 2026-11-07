@@ -1,3 +1,9 @@
+## 2026-11-07 — LATEST SOURCE-ONLY Wizard lifecycle implementation
+
+New generic 27B recipe drift comparator, read-only Wizard lifecycle CLI and interactive menu option 7, and guarded container-only lifecycle/rollback scaffold were implemented on feature/recipe-wizard-handoff. GitHub Actions CI 42355750124: **799/799 CPU/Fake-DGX PASS (36 groups)**. No DGX service mutation was authorized or performed; production dispatch remains hard-blocked. Read docs/WIZARD-LIFECYCLE-SOURCE-IMPLEMENTATION-20261107.md and newest entries in CURRENT-STATE.md / NEXT-ACTIONS.md for source-vs-real status and remaining blockers. The previously recorded canonical live 27B and P3-C evidence below remains historical, not a fresh live probe.
+
+---
+
 ## 2026-11-07 — HANDOFF DOCUMENT AUDIT / NEXT CONVERSATION READY
 
 The user starts the next development phase in a separate conversation. **Audit verified all 8 handoff docs, 12 implementation docs and 5 recipe/manifest/benchmark indices exist (25/25), plus both published benchmark collection directories and current source/evidence files.** The pre-audit HEAD `9ec7420b74369e7a76785577dc543f9dafb8897d` had GitHub Actions run `42352654468` SUCCESS, **757/757 CPU tests in 34 groups**. This CI is source-only. New documentation commits advance HEAD; inspect GitHub afresh.
