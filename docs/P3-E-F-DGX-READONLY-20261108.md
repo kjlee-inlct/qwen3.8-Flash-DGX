@@ -1,3 +1,9 @@
+## 2026-11-08 — Flash command parser CI confirmation
+
+The 3-test follow-up source commit [bb4d64e](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/commit/bb4d64e02e0d73d6406e6e0d7c593ec86ba4c954) passed GitHub Actions [42388253469](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42388253469): **865/865 CPU/Fake-DGX tests in 38 groups, SOURCE-ONLY**. The operator's 150/150 DGX-local CPU result predates these 3 source tests; new DGX-local CPU execution has not yet been observed. P3-D privileged PID check remains optional explicit operator step; E remains reinstall-unqualified, F unreleased, G historically real PASS/CLOSED, P8 NOT_RUN.
+
+---
+
 # P3-E/F real DGX read-only diagnostic — operator supplied, 2026-11-08
 
 This record summarizes operator-pasted output from `./wizard.sh service manager status --json` and the existing `p3-d-g-acceptance.sh --run --report ...` on DGX Spark. **No new GPU run, Docker mutation, start/stop, reinstall, or fault injection was executed by GitHub source work.** This is a new observation of a 27B service, not a new P3-G successful transfer.
