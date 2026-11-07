@@ -1,3 +1,9 @@
+## 2026-11-07 — UPDATE TO CURRENT NEW CONVERSATION STARTER: SOURCE IMPLEMENTATION ALREADY COMMITTED
+
+The generic 27B recipe diff, read-only Wizard lifecycle interface and gated lifecycle/rollback transaction scaffold now exist in scripts/manager/recipe_drift.py and scripts/manager/model_lifecycle.py. New CPU/Fake-DGX tests are included in GitHub workflow; latest confirmed run 42355750124 **799/799 PASS in 36 groups**. This is NOT actual DGX lifecycle qualification; both generic lifecycle and ordinary production switch gates remain False. Before starting a new session, inspect live GitHub HEAD, PR #1, CI and docs/WIZARD-LIFECYCLE-SOURCE-IMPLEMENTATION-20261107.md. Highest priorities: current DGX read-only recipe comparison, preserve exact 27B recipe SHA, upgrade old P3 live-ID assumptions, qualified Flash recipe, backup cleanup and benchmark publication, separate DGX acceptance. Do not redo already real-PASS P2-FINAL/P3-C or infer these are re-opened. Older starter text below represents the prior implementation handoff.
+
+---
+
 # CURRENT NEW CONVERSATION STARTER — 2026-11-07 (canonical, supersedes older P2-FINAL starter)
 
 **Copy the complete prompt immediately below.** The history following the separator is archived context and must NOT override newer DGX evidence or the user-approved model uninstall/reinstall policy. Standalone source: [START-NEXT-WIZARD-LIFECYCLE-20261107.md](START-NEXT-WIZARD-LIFECYCLE-20261107.md).
