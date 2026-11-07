@@ -361,7 +361,9 @@ def execute(plan_id: str, downtime_ack: str, delete_ack: str, *,
             chat: Callable[[str], bool] = verify_chat,
             tools: Callable[[], dict] = structured_probe,
             stream: Callable[[], dict] = probe_stream,
-            benchmark: Callable[[], dict] = benchmark_measure,
+            benchmark: Callable[[], dict] = lambda: benchmark_measure(
+                chat_template_kwargs={"enable_thinking": False}
+            ),
             api: Callable[[str], bool] = gpu.api_ready,
             root: Path = ROOT, clock: Callable[[], float] = time.time
             ) -> tuple[int, dict]:
@@ -469,6 +471,46 @@ def execute(plan_id: str, downtime_ack: str, delete_ack: str, *,
             result["native_tools_pass"] = True
             _event(root, plan_id, "NATIVE_TOOLS_VERIFIED")
             measured = benchmark()
+            # Preserve per-request diagnostics BEFORE the acceptance test;
+            # the prior failure discarded these values, leaving only a
+            # generic NEW_CANONICAL_BENCHMARK_NOT_QUALIFIED error.
+            # Benchmark output contains token counts, times and prompt hashes,
+            # never generated text or user prompts.
+            if not isinstance(measured, dict):
+                raise ValueError("BENCHMARK_RETURNED_NON_OBJECT")
+            samples = measured.get("samples")
+            summary = {
+                "status": measured.get("status"),
+                "benchmark_version": measured.get("benchmark_version"),
+                "model": measured.get("model"),
+                "requests": measured.get("requests"),
+                "chat_template_kwargs": measured.get("chat_template_kwargs"),
+                "metrics": measured.get("metrics"),
+                "samples": [{
+                    "index": row.get("index"),
+                    "success": row.get("success"),
+                    "stream_complete": row.get("stream_complete"),
+                    "stream_finish_reason": row.get("stream_finish_reason"),
+                    "usage_reported": row.get("usage_reported"),
+                    "content_observed": row.get("content_observed"),
+                    "reasoning_observed": row.get("reasoning_observed"),
+                    "completion_tokens": row.get("completion_tokens"),
+                    "ttft_sec": row.get("ttft_sec"),
+                    "failure_reasons": row.get("failure_reasons", []),
+                } for row in samples if isinstance(row, dict)]
+                if isinstance(samples, list) else None,
+            }
+            result["benchmark_diagnostics"] = summary
+            p3._write_once(root, "benchmark-observed-" + plan_id + ".json", measured)
+            _event(root, plan_id, "BENCHMARK_MEASURED", {
+                "status": summary["status"],
+                "all_samples_pass": (
+                    isinstance(samples, list)
+                    and len(samples) == 3
+                    and all(isinstance(row, dict) and row.get("success") is True
+                            for row in samples)
+                ),
+            })
             if (measured.get("status") != "PASS"
                     or measured.get("model") != SERVED
                     or measured.get("requests") != 3
