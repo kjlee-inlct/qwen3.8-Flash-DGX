@@ -166,6 +166,7 @@ def make_plan(
                       target_served_id=p3.IDS[target],
                       source_container_id=source_id, target_container_id=target_id,
                       source_image=source_image, target_image=target_image,
+                      p3_a_plan_id=a.get("plan_id"),
                       historical_acceptance=qualification["status"],
                       expires_at_epoch_seconds=(window + 1) * 600,
                       plan_id=candidate_id)
