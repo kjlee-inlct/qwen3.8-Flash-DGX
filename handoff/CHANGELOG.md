@@ -1,3 +1,9 @@
+## 2026-11-07 — P2 final tool-calling opt-in source / P3-C completed-history freeze
+
+Per operator ordering, created dedicated final P2 item for 27B Native Tool Calling. Verified official Qwen3.8-27B vLLM flags `--enable-auto-tool-choice --tool-call-parser qwen3_coder --reasoning-parser qwen3`; implemented opt-in candidate argv flag (legacy P2 launch remains unchanged), source-only profile and bounded localhost structured auto tool-call/continuation probe (no real tool execution, no Docker mutation), plus 27B dedicated entrypoint flags and Fake-DGX regression suite. Historical P2 GPU/benchmark passed and P3-C Stage A/B/C passed on DGX unchanged; appended P2 Tool Calling requires real parser/migration/Open WebUI tests before full P2 closure. Last actual ordinary reverse Flash→27B trial PASS, independent final status/audit still not supplied. Production main Wizard remains release gated; no P3-C rerun, no asset deletion or PR merge.
+
+---
+
 ## 2026-11-07 — Independent post-switch Flash service and journal VERIFIED; reverse 27B plan ready
 
 Operator subsequently read live DGX service: `flash-next` ACTIVE / `LIVE_SERVICE_VERIFIED`, sole `qwen3.8-flash-next` on :8000, `issues=[]`; operating journal `VERIFIED`, `COMMITTED`, 7 events, no issues. Separate read-only ordinary reverse plan `flash-next→27b` `READY_FOR_SEPARATE_TRIAL_APPROVAL`, issues none, **not executed**. First 27B→Flash physically accepted switch is now corroborated by independent read-only after-checks. Reverse still needs fresh explicit downtime consent and manual exact approvals. No new model transfer/cleanup or PR merge in this documentation update.
