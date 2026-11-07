@@ -1,3 +1,9 @@
+## 2026-11-07 — P3-D/E first actual DGX diagnostics repaired in source, 838/838 CI PASS
+
+User's first read-only D-G DGX runner: D port `ss` single-listener assumption BLOCKED, E Flash legacy `Config.Cmd` canonical-27B parser BLOCKED, F 119/119 CPU PASS, G current-ID and journal PREVIEW PASS; no real switch. Corrected dual-stack socket proof, strict Docker proxy `/proc`/Docker-IP attribution and legacy Flash raw argv/mount capture. Canonical Flash reinstall recipe remains unqualified and production release gates remain locked. Source GitHub Actions 42371091647 SUCCESS 838/838 tests. Full evidence: `docs/P3-D-G-FIRST-DGX-DIAGNOSTIC-FIXES-20261107.md`.
+
+---
+
 ## 2026-11-07 — P3-D/E/F/G phase expansion and unified draft source entry point
 
 Committed new common Wizard milestone map (D GPU/port ownership, E Flash recipe, F generic lifecycle, G actual DGX roundtrip/restore/UX) and non-mutating one-command `scripts/temporary/p3-d-g-acceptance.sh` with Python stage orchestrator, Fake-DGX regressions, CI and detailed acceptance contract. Real D-G runner has NOT yet executed on DGX; no service mutation was authorized. Historical A/B/C remain closed. Draft verdicts cannot claim full P3-G acceptance.
