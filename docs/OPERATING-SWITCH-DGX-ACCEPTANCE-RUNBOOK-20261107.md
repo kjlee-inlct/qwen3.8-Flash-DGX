@@ -1,3 +1,9 @@
+## LATEST BOTH-DIRECTION REAL DGX operating check — 2026-11-07
+
+Ordinary recurring source-backed operator acceptance `27B→Flash` **PASS** and `Flash→27B` **PASS** on original immutable preserved containers, distinct from historical P3 A/B/C. Independent post-reverse DGX check now confirms latest running `qwen38-27b` (`qwen3.8-27b`, `:8000`, `LIVE_SERVICE_VERIFIED`, `issues=[]`) and independent operating event audit `VERIFIED/COMMITTED` with **14** events, `issues=[]`. The former runbook notes saying reverse direction NOT_RUN are superseded, not deleted. **Normal main/model switch Wizard remains source release gated** (`PRODUCTION_EXECUTION_RELEASED=False`), as actual menu-driven approval, forced failure restoration and a future tool-enabled 27B service migration are separate qualifications. No new actual switch or P3 stage replay authorized by this updated document. P2-FINAL Tool Calling is currently blocked (original 27B Docker Cmd lacks auto parser flags, benign local probe HTTP 400); handle under separate protected variant runbook. No asset deletion.
+
+---
+
 ## ACTUAL DGX acceptance update — 2026-11-07: first direction PASS
 
 The operator performed the **new ordinary** 27B→Flash one-switch acceptance (not original P3-B), on source `4054eb2`, with initial `LIVE_SERVICE_VERIFIED` 27B / empty operating journal, ready fresh independent plan (issues `[]`) and four manually typed approvals. The new backend emitted **`Live transition result: PASS`, `Observed model: flash-next`**, and a private completion receipt in `~/.local/state/blazux-wizard/operational-switch/`. This supersedes original runbook header saying *all ordinary switching NOT_RUN*. **Last observed active is now Flash-Next**; original 27B container/model cache preserved. New one-switch backend PASS includes model identity, bounded chat, receipt and journal internal verification; independently rerunning read-only postchecks is still warranted.
