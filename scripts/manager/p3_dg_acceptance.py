@@ -135,7 +135,8 @@ def docker_proxy_belongs(pid: int, doc: dict, *, root: Path = PROC_ROOT) -> bool
 def stage_d(snapshot: dict, live: dict, *,
             run: Callable[..., Any] = gpu.call,
             proc_owner: Callable[[int, str], bool] = proc_belongs,
-            proxy_owner: Callable[[int, dict], bool] = docker_proxy_belongs) -> dict:
+            proxy_owner: Callable[[int, dict], bool] = docker_proxy_belongs,
+            allow_sudo_ss: bool = False) -> dict:
     """GPU/container + host port/process checks; unknown is NOT a pass."""
     issues: list[str] = []
     running = snapshot.get("running")
@@ -182,23 +183,40 @@ def stage_d(snapshot: dict, live: dict, *,
                 issues.append("HOST_PORT_8000_LISTENER_NOT_OBSERVED")
             elif len(port_listener_rows) > 4:
                 issues.append("HOST_PORT_8000_LISTENER_COUNT_UNEXPECTED")
-            elif any(not PID.findall(row) for row in port_listener_rows):
-                issues.append("HOST_PORT_PROCESS_PID_UNAVAILABLE")
             else:
-                listener_pids = sorted({int(pid) for row in port_listener_rows
-                                       for pid in PID.findall(row)})
-                if docker_id and isinstance(doc, dict):
-                    for pid in listener_pids:
-                        if proc_owner(pid, docker_id):
-                            port_pid_attribution[str(pid)] = "CONTAINER_CGROUP"
-                        elif proxy_owner(pid, doc):
-                            port_pid_attribution[str(pid)] = "QUALIFIED_DOCKER_PROXY"
+                if any(not PID.findall(row) for row in port_listener_rows) and allow_sudo_ss:
+                    # Only explicitly requested, non-interactive, read-only
+                    # root socket inventory. A changed/partial snapshot is not
+                    # allowed to attest ownership of the earlier sockets.
+                    elevated = run(
+                        ["sudo", "-n", "ss", "-H", "-ltnp", "sport = :8000"],
+                        timeout=12)
+                    if elevated.returncode:
+                        issues.append("HOST_PORT_PRIVILEGED_SS_UNAVAILABLE")
+                    else:
+                        fresh_rows = _ss_port_listeners(elevated.stdout)
+                        local = lambda rows: sorted(row.split()[3] for row in rows)
+                        if local(fresh_rows) != local(port_listener_rows):
+                            issues.append("HOST_PORT_PRIVILEGED_SS_SNAPSHOT_CHANGED")
                         else:
-                            port_pid_attribution[str(pid)] = "UNVERIFIED"
-                    port_pid_verified = all(v != "UNVERIFIED"
-                                            for v in port_pid_attribution.values())
-                    if not port_pid_verified:
-                        issues.append("HOST_PORT_PROCESS_CONTAINER_OWNERSHIP_UNVERIFIED")
+                            port_listener_rows = fresh_rows
+                if any(not PID.findall(row) for row in port_listener_rows):
+                    issues.append("HOST_PORT_PROCESS_PID_UNAVAILABLE")
+                else:
+                    listener_pids = sorted({int(pid) for row in port_listener_rows
+                                           for pid in PID.findall(row)})
+                    if docker_id and isinstance(doc, dict):
+                        for pid in listener_pids:
+                            if proc_owner(pid, docker_id):
+                                port_pid_attribution[str(pid)] = "CONTAINER_CGROUP"
+                            elif proxy_owner(pid, doc):
+                                port_pid_attribution[str(pid)] = "QUALIFIED_DOCKER_PROXY"
+                            else:
+                                port_pid_attribution[str(pid)] = "UNVERIFIED"
+                        port_pid_verified = all(v != "UNVERIFIED"
+                                                for v in port_pid_attribution.values())
+                        if not port_pid_verified:
+                            issues.append("HOST_PORT_PROCESS_CONTAINER_OWNERSHIP_UNVERIFIED")
     except (OSError, RuntimeError, ValueError, subprocess.TimeoutExpired):
         issues.append("HOST_PORT_PROCESS_AUDIT_UNAVAILABLE")
     try:
@@ -234,6 +252,7 @@ def stage_d(snapshot: dict, live: dict, *,
         port_pid_attribution=port_pid_attribution,
         observed_gpu_pids=sorted(set(gpu_pids)),
         port_process_ownership_verified=port_pid_verified,
+        sudo_ss_requested=allow_sudo_ss,
         gpu_process_exclusivity_verified=gpu_pid_verified,
         limitation="Docker/ss/nvidia-smi/proc evidence only; no GPU workload or mutation.")
 
@@ -496,7 +515,8 @@ def stage_g(live: dict, *, planner: Callable[[str], dict] = operational_switch.m
         limitation="No mutation and no independent operator execution consent.")
 
 
-def acceptance(*, cpu_only: bool = False, snapshot_fn=recipe_drift.collect_docker,
+def acceptance(*, cpu_only: bool = False, allow_sudo_ss: bool = False,
+               snapshot_fn=recipe_drift.collect_docker,
                live_fn=inspect_live_status, p3_fn=operational_switch.historical_p3_receipts,
                d_fn=stage_d, e_fn=stage_e, f_fn=stage_f, g_fn=stage_g) -> dict:
     """Continue through all stages after individual probe failures."""
@@ -517,7 +537,8 @@ def acceptance(*, cpu_only: bool = False, snapshot_fn=recipe_drift.collect_docke
                     "DGX_READ_ONLY_OBSERVATION_UNAVAILABLE:" + type(exc).__name__])
         if snapshot is not None and live is not None:
             for key, probe in (
-                ("P3-D", lambda: d_fn(snapshot, live)),
+                ("P3-D", lambda: (d_fn(snapshot, live, allow_sudo_ss=True)
+                                  if allow_sudo_ss else d_fn(snapshot, live))),
                 ("P3-E", lambda: e_fn(snapshot, historical=p3_fn())),
             ):
                 try:
@@ -563,10 +584,14 @@ def main(argv: list[str] | None = None) -> int:
     mode.add_argument("--plan", action="store_true", help="show stage contract; no probes")
     mode.add_argument("--run", action="store_true", help="CPU tests + DGX read-only probes")
     mode.add_argument("--cpu-only", action="store_true", help="CPU regression only")
+    parser.add_argument("--sudo-ss", action="store_true",
+                        help="explicitly allow sudo -n ss read-only PID fallback; no password prompt")
     parser.add_argument("--strict", action="store_true",
                         help="nonzero unless all stages actually accepted (not possible in draft)")
     parser.add_argument("--report", help="save the resulting JSON (local file only)")
     args = parser.parse_args(argv)
+    if args.sudo_ss and not args.run:
+        parser.error("--sudo-ss requires --run, never --plan or --cpu-only")
     if args.plan:
         data = {"action": "P3_D_G_DRAFT_ACCEPTANCE", "status": "PLAN_ONLY",
                 "stage_order": ["P3-D", "P3-E", "P3-F", "P3-G"],
@@ -576,7 +601,7 @@ def main(argv: list[str] | None = None) -> int:
                 "G": "read-only operating switch/journal; real transfer + rollback not run",
                 "executed": False, "production_released": False}
     else:
-        data = acceptance(cpu_only=args.cpu_only)
+        data = acceptance(cpu_only=args.cpu_only, allow_sudo_ss=args.sudo_ss)
     encoded = json.dumps(data, indent=2, sort_keys=True, ensure_ascii=False) + "\n"
     if args.report:
         path = Path(args.report).expanduser()
