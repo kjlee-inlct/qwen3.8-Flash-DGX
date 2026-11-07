@@ -20,6 +20,7 @@ from scripts.manager import p2_27b_gpu_trial as gpu
 from scripts.manager import p3_persistent_switch as p3
 from scripts.manager.operational_switch import make_plan, READY, ROOT, SUPPORTED
 from scripts.manager.operational_probe import verify_chat
+from scripts.manager.operational_audit import inspect_journal
 from scripts.manager.service_status import inspect_live_status
 
 ACK_DOWNTIME = "I_ACCEPT_DGX_MODEL_SWITCH_DOWNTIME"
@@ -194,6 +195,8 @@ def execute(
                     or observed.get("expected_served_id") != p3.IDS[target]
                     or observed.get("issues")):
                 raise RuntimeError("TARGET_SERVED_MODEL_ID_UNVERIFIED")
+            if p3._gpu_conflicts(p3.NAMES[target], run, inspect):
+                raise RuntimeError("FOREIGN_GPU_CONSUMER_AFTER_START")
             if not inference(p3.IDS[target]):
                 raise RuntimeError("TARGET_CHAT_INFERENCE_UNVERIFIED")
             old = inspect(p3.NAMES[source])
@@ -215,6 +218,12 @@ def execute(
             }
             name = "completed-" + plan_id + ".json"
             p3._write_once(root, name, receipt)
+            final_audit = inspect_journal(root)
+            if final_audit.get("status") != "VERIFIED" or final_audit.get("phase") != "COMMITTED":
+                return 4, {"status": "COMMITTED_EVIDENCE_INCOMPLETE",
+                           "executed": True, "active_model": target,
+                           "issues": final_audit.get("issues") or ["POST_COMMIT_JOURNAL_UNVERIFIED"],
+                           "notice": "Do not reverse or retry automatically; reconcile API and journal."}
             return 0, {"status": "PASS", "executed": True,
                        "live_verified": True, "active_model": target,
                        "served_id": p3.IDS[target],
