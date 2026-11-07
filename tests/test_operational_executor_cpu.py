@@ -15,7 +15,7 @@ from scripts.manager import operational_executor as exe
 from scripts.manager import operational_switch as op
 from scripts.manager import p3_persistent_switch as p3
 from scripts.manager.service_journal import read_snapshot
-from test_operational_switch_cpu import FakeDGX
+from test_operational_switch_cpu import FakeDGX, canonical_27b_doc
 
 
 class FakeOperatingTransactionCPU(unittest.TestCase):
@@ -113,6 +113,28 @@ class FakeOperatingTransactionCPU(unittest.TestCase):
         self.assertEqual(rc, 0)
         self.assertEqual(doc["served_id"], "qwen3.8-27b")
         self.assertEqual(self.active(), "27b")
+
+    def test_recreated_canonical_27b_source_uses_current_identity(self):
+        self.fake.docs[p3.NAMES["27b"]] = canonical_27b_doc(running=True)
+        old_receipt = (self.fake.p3_root / "stage-a.json").read_bytes()
+        preview = self.planner("flash-next", root=self.fake.ops)
+        self.assertEqual(preview["source_lineage"], "CANONICAL_RECIPE")
+        self.assertEqual(preview["source_container_id"], "e"*64)
+        rc, result = self.execute("flash-next")
+        self.assertEqual(rc, 0)
+        self.assertEqual(result["status"], "PASS")
+        self.assertEqual(self.active(), "flash-next")
+        self.assertEqual((self.fake.p3_root / "stage-a.json").read_bytes(), old_receipt)
+
+    def test_recreated_canonical_27b_target_can_be_selected(self):
+        self.fake.docs[p3.NAMES["27b"]] = canonical_27b_doc(running=False)
+        self.fake.docs[p3.NAMES["flash-next"]]["State"]["Running"] = True
+        preview = self.planner("27b", root=self.fake.ops)
+        self.assertEqual(preview["target_lineage"], "CANONICAL_RECIPE")
+        rc, result = self.execute("27b")
+        self.assertEqual(rc, 0)
+        self.assertEqual(result["status"], "PASS")
+        self.assertEqual(result["served_id"], "qwen3.8-27b")
 
     def test_no_approval_or_incorrect_sha_never_stops(self):
         for sha, ack in (("b" * 64, True), ("a" * 64, False), ("bad", True)):
