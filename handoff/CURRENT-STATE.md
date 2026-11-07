@@ -1,3 +1,13 @@
+## LATEST SCOPE DECISION — 2026-11-07: P2 final native Tool Calling added; P3-C historical CLOSED
+
+**Current last user-reported LIVE model = NVIDIA 27B**, after independent ordinary Flash-Next→27B trial with fresh SHA, four human approvals, `Live transition result: PASS`, `Observed model: 27b`, private `completed-a811068f…json`. This is NOT old P3-C. Prior ordinary 27B→Flash had PASS and independent Flash status/journal verified. Separate post-reverse `service manager status --json` and operating journal `operational_audit --json` have NOT been provided yet. The **normal `./wizard.sh` switch menu is still `PRODUCTION_EXECUTION_RELEASED=False`**, despite backend bidirectional real PASS; do not claim live main menu UX release.
+
+**User approved plan ordering:** P2 final pending item is official **Native Tool Calling** on pinned NVIDIA `nvidia/Qwen3.8-27B-NVFP4`, served `qwen3.8-27b` (internal architecture `Qwen3_5` is NOT a new model ID). vLLM 0.32 official Qwen3.8 recipe flags: `--enable-auto-tool-choice --tool-call-parser qwen3_coder --reasoning-parser qwen3`. New opt-in `_candidate_argv(..., tool_calling=True)` and source/local harmless probing via `scripts/serve_27b.sh --tools-profile|--tools-probe`. **Existing real 27B preserved container startup arguments do not change from Git source edits**. Tool Calling real DGX trial, structured tool-call, streaming, reasoning separation and Open WebUI native complete cycle remain NOT_QUALIFIED. Migration must preserve P3/P2 receipts and original containers, port 8000 and single active model. Do not mark P2-FINAL PASS without real proof.
+
+**P3-C** one-off stage already REAL DGX PASS on 2026-11-07 and is **CLOSED/IMMUTABLE**; never rerun stage C. Preserve Draft PR #1 and HF cache; no GPU change or PR merge from this source update. Main contract: `docs/P2-27B-FINAL-TOOL-CALLING-ACCEPTANCE-20261107.md`.
+
+---
+
 ## LATEST REAL DGX POST-SWITCH CHECK — 2026-11-07: Flash-Next live VERIFIED, journal COMMITTED, reverse plan READY
 
 **New operator read-only evidence after the earlier real 27B→Flash ordinary `PASS`:**
