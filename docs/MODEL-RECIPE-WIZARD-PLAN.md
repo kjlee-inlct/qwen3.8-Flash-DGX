@@ -1,3 +1,11 @@
+## 2026-11-07 — P3 MILESTONE EXTENSION (A-G) / ONE-COMMAND D-G DRAFT
+
+P3-A, B, C: actual DGX one-off PASS/CLOSED, preserve immutable historical evidence; **never rerun**. New P3-D: GPU process exclusivity and :8000 host process owner independently audited. P3-E: canonical Flash-Next reinstall-ready runtime recipe verified against preserved Docker and actual pinned source (NOT the 27B flags). P3-F: generic lifecycle restart/remove/reinstall/recreate and repeatable switches with robust rollback/journal/benchmark handling and CPU/Fake-DGX tests. P3-G: separately authorized actual DGX roundtrip, failure/restore and Wizard user experience acceptance, independent postchecks and production release decision. No hardcoded permanent deletion ban for either canonical model; removal remains explicit action with guards.
+
+A source-only first version of the **single-command judge** exists as `bash scripts/temporary/p3-d-g-acceptance.sh --run` (`--plan`, `--cpu-only`, `--strict`, `--report <new-path>`). It runs D/E/G read-only DGX probes and F CPU tests, does not restart/install/remove/switch, and **cannot grant final P3-G execution acceptance**. See `docs/P3-D-G-UNIFIED-WIZARD-DRAFT-ACCEPTANCE-20261107.md`. Following P3-G, choose optional P4 disposition then P5 Orcarouter, P6 inter-model switch and P7 integration. The canonical NVIDIA 27B recipe stays immutable.
+
+---
+
 > **2026-11-07 P3-C REAL DGX PASS — 최신 우선 판정:** P1 Flash-Next API/Verify/3요청 Benchmark 및 P3-B 후 P1 재검증·진단 PASS, P2 NVIDIA 27B GPU trial/Benchmark/원본 복구 PASS, P3-A/B/C 실제 DGX 순차 전환 모두 PASS. 최종 관측은 NVIDIA 27B `qwen3.8-27b` `:8000/v1` ACTIVE, canonical `stage-c.json`, wrapper `P3_C_PASS_FINAL_27B_ACTIVE`, 독립 API `LIVE_SERVICE_VERIFIED`. 기존 Flash/27B 컨테이너/HF 캐시 보존. **이 문서에 남아 있는 P2/P3 NOT_RUN / Flash ACTIVE / P3-C 승인 준비는 당시 역사적 시점이며 현재 수행 지시가 아님.** 단, 메인 `./wizard.sh`의 P3 메뉴는 여전히 `--plan` only이므로 **대화형 Wizard UX/반복 가능한 일반 전환의 수용은 미완료**. 다음 작업은 기존 서비스 변경 없는 Wizard UX 개발/CPU 테스트. 최신 기준: [P1–P7 검증 현황](P1-P7-WIZARD-ACCEPTANCE-STATUS-20261107.md), [최신 상태](../handoff/CURRENT-STATE.md), [새 대화 프롬프트](../handoff/SESSION-START-PROMPT.md).
 
 ---
