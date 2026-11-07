@@ -1,3 +1,9 @@
+## 2026-11-08 — P4-B/C REAL DGX combined dry-run PASS (source + observation only)
+
+Operator-provided actual DGX terminal: 13 local Fake-DGX tests PASS; `inventory_status=READ_ONLY_INVENTORY_COMPLETE`; `candidate_review.status=READ_ONLY_REVIEW_COMPLETE` / 9 reviewed resources (2 managed containers, 3 HF repos, 4 Docker categories), zero deletion candidates selected; `cleanup_rehearsal.status=DRY_RUN_COMPLETE_RELEASE_GATED` with 2 PASS, 2 DEFERRED_P5_OR_P8, 1 NOT_RELEASED, 1 NOT_EXECUTED; overall `READ_ONLY_DRY_RUN_PASS`. Source CI 902/902 in 41 groups is **independent source-only evidence**. **P4-B/C dry-run acceptance PASS/CLOSED; actual cleanup NOT_RUN, no production release or adapter.** No active model switch, no deletion, no verified reclaimable bytes or approved plan. Detailed [DGX evidence](P4-BC-DGX-READONLY-DRY-RUN-EVIDENCE-20261108.md). P5 actual work and P8 real fault/restore/final acceptance remain not run and require independent authorization.
+
+---
+
 ## 2026-11-08 — P4-B/C read-only source implementation and one-shot dry-run
 
 P4-B candidate/reference review + P4-C deletion transaction rehearsal are available from `./wizard.sh storage flash-next dry-run --json` and `bash scripts/temporary/p4-bc-dry-run.sh --json`. 13 Fake-DGX tests integrated into CI: [42403828742](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42403828742) **SUCCESS 902/902 CPU/Fake-DGX across 41 groups**. No new actual DGX P4-B/C result yet. Previous actual P4-A PASS remains established. No live deletion adapter exists (`P4_C_LIVE_EXECUTION_RELEASED=False`); P5 operational issue or P8 acceptance requires separate authorization and an exact-resource adapter/test before real cleanup. Never infer safe reclaim bytes. Reference: `docs/P4-BC-ONE-SHOT-DRY-RUN-20261108.md`.

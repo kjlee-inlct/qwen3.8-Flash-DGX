@@ -1,3 +1,9 @@
+## 2026-11-08 — Current P4-B/C one-shot actual DGX dry-run: PASS / no deletion
+
+Operator-side one-shot report: 13/13 Fake-DGX local PASS, P4-B `READ_ONLY_REVIEW_COMPLETE`, P4-C `DRY_RUN_COMPLETE_RELEASE_GATED`, combined `READ_ONLY_DRY_RUN_PASS`. Nine resource records reviewed, none selected or executed; no approved reclaimable bytes. 2 rehearsal steps PASS, 2 deferred to P5/P8, 1 live adapter NOT_RELEASED, 1 actual delete/postcheck NOT_EXECUTED. The **only** acceptance is real DGX read-only review/rehearsal, not production cleanup. Evidence: `docs/P4-BC-DGX-READONLY-DRY-RUN-EVIDENCE-20261108.md`. Prior P4-A actual inventory PASS remains closed; P5/P8 live work NOT_RUN. PR #1 remains Draft/Open/Unmerged.
+
+---
+
 ## 2026-11-08 — P4-B/C combined dry-run source implemented; DGX run next
 
 User directed P4-B asset/candidate review and P4-C cleanup transaction rehearsal in a single read-only script. Source `scripts/manager/p4_bc_dry_run.py`, `scripts/temporary/p4-bc-dry-run.sh`, Wizard `storage flash-next dry-run --json`; 13 Fake-DGX tests. CI [42403828742](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42403828742) SUCCESS, **902/902 CPU/Fake-DGX PASS (41 groups)**. Actual combined DGX run **PENDING**; prior P4-A real inventory PASS remains valid. P4-C live adapter **absent**, `P4_C_LIVE_EXECUTION_RELEASED=False`; no deletion now, only after separately approved P5 issue or P8 acceptance. [Design/runbook](../docs/P4-BC-ONE-SHOT-DRY-RUN-20261108.md). No P3 replay, P8 execution, or PR merge.
