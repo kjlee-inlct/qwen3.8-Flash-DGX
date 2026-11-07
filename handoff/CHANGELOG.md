@@ -1,3 +1,9 @@
+## 2026-11-07 — Separate current 27B curl inference smoke from identity-only switch preview (source only)
+
+Added one-command non-disruptive localhost `curl` 27B smoke with explicit /health, /v1/models and one bounded /v1/chat/completions verification; Fake-CPU failure modes and CI; Wizard ordinary-switch hint; operating switch UX doc and permanent handoff updates. Does **not** enable ordinary switch dispatch, perform real DGX curl, repeat P3 A/B/C or alter Docker/GPU service state. Await operator's actual 27B smoke output.
+
+---
+
 ## 2026-11-07 — Ordinary model-switch preview, source-only transaction and Fake-DGX tests
 
 - Added \`scripts/manager/operational_switch.py\`: strict independent read-only candidate (historical P3 provenance, fresh API, pinned Docker identity, foreign GPU and journal blockers), rotating non-executable fingerprint.
