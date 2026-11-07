@@ -202,7 +202,7 @@ class StageCOperatorCPU(unittest.TestCase):
 
     def invoke(self, *, execute=False, tty=False, approved=False,
                expire_seconds=300, rotate=False, core_status="PASS",
-               post_model="27b", c_ok=True, clean=True):
+               post_model="27b", c_ok=True, clean=True, confirm_cb=None):
         pp = plan(datetime.now(timezone.utc).timestamp() + expire_seconds)
         calls, persisted = [], []
         probes = 0
@@ -246,7 +246,8 @@ class StageCOperatorCPU(unittest.TestCase):
              patch.object(op, "git_clean", return_value=clean), \
              patch.object(op, "run_readonly", side_effect=run), \
              patch.object(op, "persist", side_effect=lambda d: persisted.append(dict(d)) or "/ignored/reports.json"), \
-             patch.object(op, "confirm", return_value=approved), \
+             patch.object(op, "confirm", side_effect=(confirm_cb if confirm_cb is not None
+                             else lambda _: approved)), \
              patch.object(op.sys.stdin, "isatty", return_value=tty), \
              contextlib.redirect_stdout(io.StringIO()):
             rc = op.main(["--execute"] if execute else ["--plan"])
@@ -386,10 +387,10 @@ class StageCOperatorCPU(unittest.TestCase):
         def approved_for_exact_new_plan(pl):
             observed.append(pl["plan_id"])
             return False  # cancellation before canonical execution
-        with patch.object(op, "await_approval_window", side_effect=refreshed), \
-             patch.object(op, "confirm", side_effect=approved_for_exact_new_plan):
+        with patch.object(op, "await_approval_window", side_effect=refreshed):
             rc, calls, reports, _ = self.invoke(
-                execute=True, tty=True, approved=True, expire_seconds=45)
+                execute=True, tty=True, approved=True, expire_seconds=45,
+                confirm_cb=approved_for_exact_new_plan)
         self.assertEqual(rc, 3)
         self.assertEqual(observed, [fresh_sha])
         self.assertEqual(calls, [])
