@@ -1,3 +1,8 @@
+## 2026-11-08 — NEXT: one-shot P4-B/C dry-run on actual DGX, no deletion
+
+Source/CPU P4-B and P4-C rehearsal implemented; run after clean `git status --short` and `git pull --ff-only origin feature/recipe-wizard-handoff`: `bash scripts/temporary/p4-bc-dry-run.sh --json`. The script runs 13 Fake-DGX CPU tests then performs one **read-only P4-A** collection, pure P4-B review and pure P4-C transaction rehearsal. Return JSON, preserving distinction between CPU CI and real DGX run. No `--execute`, sudo, cache mutation, Docker prune, model stop or automatic P5/P8. Actual deletion is separately authorized only if P5 needs it or in P8. See `docs/P4-BC-ONE-SHOT-DRY-RUN-20261108.md`.
+
+---
 ## 2026-11-08 — P4-A operator real DGX inventory collected; pause before P4-B
 
 P4-A is now **actual DGX READ_ONLY_INVENTORY_COMPLETE / issues=[]**, not merely source ready. Evidence and exact bytes: `docs/P4-A-DGX-READONLY-CAPACITY-EVIDENCE-20261108.md`. Current model 27B API verified, Flash stopped/present, Orcarouter source present, ~324.88 GB (33.06%) filesystem free. Docker reclaimable 182.7 MB containers and 2.088 MB build-cache are **display estimates only** and no verified safe reclaim. Preserve caches, Docker images, stopped Flash, 27B, Orcarouter, receipts, Open WebUI and Portainer. **Do not begin P4-B review/candidate work or P4-C deletion without another operator instruction**. P8 real install/fault/release remains separate. GitHub branch source checkout for the real inventory was `a29cd6e` (889/889 source tests verified on preceding CI); later documentation-only commits do not retroactively change observed DGX runtime.
