@@ -35,6 +35,9 @@ class FlashHostAssetsCPU(unittest.TestCase):
                              "LOCAL_ASSET_METADATA_OBSERVED_REINSTALL_UNQUALIFIED")
             self.assertEqual(out["issues"], [])
             self.assertEqual(out["indexed_shard_count"], 1)
+            self.assertEqual(out["index_weight_map_structure"], "OBJECT")
+            self.assertEqual(out["index_weight_map_entry_count_observed"], 1)
+            self.assertEqual(out["index_weight_map_entry_limit"], assets.MAX_INDEX_WEIGHTS)
             self.assertTrue(out["pinned_command_identity_matched"])
             self.assertTrue(out["prepared_view_path_observed"])
             self.assertFalse(out["verified_model_revision"])
@@ -160,6 +163,50 @@ class FlashHostAssetsCPU(unittest.TestCase):
             self.assertFalse(out["launch_allowed"])
             self.assertEqual(out["failed_stage"], "PARSE_SHARD_INDEX")
             self.assertEqual(out["failure_reason_code"], "FLASH_SHARD_INDEX_PATH_UNQUALIFIED")
+
+    def test_weight_map_entry_limit_reports_count_without_relaxing_policy(self):
+        from unittest.mock import patch
+        with tempfile.TemporaryDirectory() as tmp:
+            doc, view = self.make_complete(Path(tmp))
+            index = view / "model.safetensors.index.json"
+            weight_map = {
+                "layer." + str(i): "model-00001.safetensors"
+                for i in range(9)
+            }
+            index.write_text(json.dumps({"weight_map": weight_map}))
+            with patch.object(assets, "MAX_INDEX_WEIGHTS", 8):
+                out = assets.inspect_assets(doc)
+            self.assertEqual(out["status"], "BLOCKED")
+            self.assertEqual(out["failed_stage"], "PARSE_SHARD_INDEX")
+            self.assertEqual(out["failure_reason_code"],
+                             "FLASH_WEIGHT_MAP_ENTRY_LIMIT_EXCEEDED")
+            self.assertEqual(out["index_weight_map_structure"], "OBJECT")
+            self.assertEqual(out["index_weight_map_entry_count_observed"], 9)
+            self.assertEqual(out["index_weight_map_entry_limit"], 8)
+            self.assertFalse(out["launch_allowed"])
+            self.assertFalse(out["full_docker_runtime_reinstall_qualified"])
+            self.assertNotIn("layer.", json.dumps(out))
+
+    def test_missing_empty_and_wrong_type_map_have_distinct_safe_codes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            doc, view = self.make_complete(Path(tmp))
+            index = view / "model.safetensors.index.json"
+            for payload, expected_code, expected_shape, expected_count in (
+                ({}, "FLASH_WEIGHT_MAP_MISSING_OR_WRONG_TYPE",
+                 "MISSING_OR_WRONG_TYPE", None),
+                ({"weight_map": []}, "FLASH_WEIGHT_MAP_MISSING_OR_WRONG_TYPE",
+                 "MISSING_OR_WRONG_TYPE", None),
+                ({"weight_map": {}}, "FLASH_WEIGHT_MAP_EMPTY", "OBJECT", 0),
+            ):
+                with self.subTest(code=expected_code, payload=payload):
+                    index.write_text(json.dumps(payload))
+                    out = assets.inspect_assets(doc)
+                    self.assertEqual(out["failed_stage"], "PARSE_SHARD_INDEX")
+                    self.assertEqual(out["failure_reason_code"], expected_code)
+                    self.assertEqual(out["index_weight_map_structure"], expected_shape)
+                    self.assertEqual(out["index_weight_map_entry_count_observed"],
+                                     expected_count)
+                    self.assertFalse(out["launch_allowed"])
 
     def test_missing_template_and_private_env_do_not_leak(self):
         with tempfile.TemporaryDirectory() as tmp:

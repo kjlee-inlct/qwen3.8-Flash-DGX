@@ -1,3 +1,13 @@
+## 2026-11-08 — Real DGX index within file-size cap; weight-map structure/count unknown
+
+Real DGX output confirmed `index_file_size_bytes_observed=31907813` (~30.43 MiB), below `index_file_size_limit_bytes=134217728` (128 MiB). Thus the separate bounded reader successfully reached JSON parsing. It then returned `PARSE_SHARD_INDEX:FLASH_SHARD_INDEX_UNQUALIFIED`, before shard checks.
+
+The original bundled validation `not isinstance(weight_map, dict) or not 0 < len(weight_map) <= 100000` could not distinguish malformed/missing or empty `weight_map` from an otherwise valid but greater-than-100,000-entry map. **Do not claim the tensor count is known from this log.** Source-only follow-up emits safe `index_weight_map_structure`, `index_weight_map_entry_count_observed` and `index_weight_map_entry_limit`, with distinct `FLASH_WEIGHT_MAP_MISSING_OR_WRONG_TYPE`, `FLASH_WEIGHT_MAP_EMPTY`, and `FLASH_WEIGHT_MAP_ENTRY_LIMIT_EXCEEDED` errors.
+
+This does not raise the 100,000-entry policy. The operator should run the same **read-only** command after pulling the branch and report the redacted entry count. Then the actual model profile and bounded-parser memory risk can be reviewed before changing limits. No model files, HF cache, Docker services, P3-G historical state or production release gates are changed.
+
+---
+
 ## 2026-11-08 — Actual DGX BLOCKED reason identified: shard index exceeds generic 8 MiB cap
 
 The follow-up actual DGX `python3 -m scripts.manager.flash_host_assets --json` returned:

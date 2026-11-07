@@ -39,6 +39,8 @@ SAFE_ERROR_CODES = frozenset({
     "REQUIRED_ENV_UNVERIFIED", "TEMPLATE_NOT_READ_ONLY",
     "HF_CACHE_NOT_A_DIRECTORY", "FLASH_VIEW_OUTSIDE_CACHE",
     "FLASH_SHARD_INDEX_UNQUALIFIED", "FLASH_SHARD_INDEX_PATH_UNQUALIFIED",
+    "FLASH_WEIGHT_MAP_MISSING_OR_WRONG_TYPE", "FLASH_WEIGHT_MAP_EMPTY",
+    "FLASH_WEIGHT_MAP_ENTRY_LIMIT_EXCEEDED",
     "INVALID_FLASH_COMMAND", "UNQUALIFIED_FLASH_CHECKPOINT",
     "DUPLICATE_FLASH_OPTION", "BOOLEAN_FLASH_OPTION_WITH_VALUE",
     "MISSING_FLASH_OPTION_VALUE", "EMPTY_FLASH_OPTION_VALUE",
@@ -122,6 +124,10 @@ def inspect_assets(docker: dict, *, draft_loader=review.load_draft) -> dict[str,
         "metadata_sha256": {},
         "index_file_size_bytes_observed": None,
         "index_file_size_limit_bytes": MAX_INDEX_BYTES,
+        # Counts and schema status only; never emit tensor names or mappings.
+        "index_weight_map_entry_count_observed": None,
+        "index_weight_map_entry_limit": MAX_INDEX_WEIGHTS,
+        "index_weight_map_structure": "NOT_PARSED",
         "template_sha256": None,
         "indexed_shard_count": 0,
         "indexed_shard_bytes_observed": 0,
@@ -202,9 +208,18 @@ def inspect_assets(docker: dict, *, draft_loader=review.load_draft) -> dict[str,
                 stage = "PARSE_SHARD_INDEX"
                 idx = json.loads(payload)
                 weight_map = idx.get("weight_map") if isinstance(idx, dict) else None
-                if (not isinstance(weight_map, dict)
-                        or not 0 < len(weight_map) <= MAX_INDEX_WEIGHTS):
-                    raise ValueError("FLASH_SHARD_INDEX_UNQUALIFIED")
+                if not isinstance(weight_map, dict):
+                    result["index_weight_map_structure"] = "MISSING_OR_WRONG_TYPE"
+                    raise ValueError("FLASH_WEIGHT_MAP_MISSING_OR_WRONG_TYPE")
+                result["index_weight_map_structure"] = "OBJECT"
+                result["index_weight_map_entry_count_observed"] = len(weight_map)
+                if not weight_map:
+                    raise ValueError("FLASH_WEIGHT_MAP_EMPTY")
+                if len(weight_map) > MAX_INDEX_WEIGHTS:
+                    # Do not raise the entry-count policy merely because
+                    # unknown data exceeded it: publish a safe numeric count
+                    # for an explicit bounded policy review.
+                    raise ValueError("FLASH_WEIGHT_MAP_ENTRY_LIMIT_EXCEEDED")
                 shards = set(weight_map.values())
                 if (not 0 < len(shards) <= MAX_INDEX_SHARDS
                         or any(not isinstance(s, str) or
