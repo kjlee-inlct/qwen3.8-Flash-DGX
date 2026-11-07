@@ -79,7 +79,7 @@ class FakeDocker:
                     "Config": {"Env": []},
                     "State": {"Running": True},
                 }
-            return SimpleNamespace(returncode=0, stdout="\n".join(names) + "\n")
+            return SimpleNamespace(returncode=0, stdout="\n".join(names) + ("\n" if names else ""))
         if args[:2] == ["docker", "stop"]:
             name = args[-1]
             self.state[name]["State"]["Running"] = False
