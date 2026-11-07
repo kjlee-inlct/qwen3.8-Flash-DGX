@@ -1,3 +1,13 @@
+## IMMEDIATE — FINISH P3; HOLD P4 (2026-11-08)
+
+The operator explicitly prohibited starting P4. P4 source module/test/CI were reverted in [1110681](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/commit/1110681f451bc72470454bbbee1e1d79d6406a1d). **P4 NOT_STARTED/OPERATOR_HOLD**. Read `docs/P3-CLOSEOUT-AND-P8-HANDOFF-20261108.md`.
+
+**Two remaining P3 read-only confirmations**: run `python3 -m scripts.manager.flash_host_assets --json` after pulling the new 400,000-key source to check real shard metadata/template; run `python3 -m scripts.manager.p3_dg_acceptance --cpu-only` to record latest 7-suite P3-F local CPU count/production release lock. No GPU/model stop, Docker mutation or fault injection. Save redacted results as evidence.
+
+**P8, not P3:** canonical Flash runtime/reinstall qualification, independently authorized real install/recreate/rollback, general lifecycle production adapter, fault/automatic restore and final release. Historical P3-G remains real PASS/CLOSED. P4 cannot start without another explicit instruction; don't merge PR #1.
+
+---
+
 ## 2026-11-08 — P3-E actual DGX 30.43 MiB index parsed, weight_map condition under investigation
 
 **Operator read-only evidence:** `python3 -m scripts.manager.flash_host_assets --json` on DGX observed `model.safetensors.index.json` size **31,907,813 bytes (~30.43 MiB)**, below the 128 MiB cap (134,217,728 bytes). The tool reached `PARSE_SHARD_INDEX` and returned `FLASH_SHARD_INDEX_UNQUALIFIED`. Source code combined three cases into one: a missing/non-dict `weight_map`, an empty map, or a map with **more than 100,000 entries**. No count was in that output; **cause within these three cases not yet resolved**. `indexed_shard_count=0` means no shard enumeration, not model damage or missing shards. Pinned command and prepared `-fp8hybrid` view observed; last actual active service remains 27B :8000.

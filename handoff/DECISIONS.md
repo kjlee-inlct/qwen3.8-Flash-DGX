@@ -1,3 +1,9 @@
+## D-066 — 2026-11-08 — P4 held, P3 source closeout distinguished from P8 live acceptance
+
+Current operator instruction **DO NOT START P4** supersedes earlier optional-phase sequencing. Premature P4 source-only work was reverted ([1110681](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/commit/1110681f451bc72470454bbbee1e1d79d6406a1d)); P4 remains NOT_STARTED. P3-E requires only current read-only host-asset evidence before source-handoff completion, P3-F requires current CPU-only 7-suite evidence and release gate OFF. Their **real production** Flash reinstall, generic lifecycle execution and recovery are P8 acceptance work, not P3 PASS. Historical real P3-G successful two-way switch PASS/CLOSED. P8 fault/automatic restoration/production GO NOT_RUN; no new execution approval. See `docs/P3-CLOSEOUT-AND-P8-HANDOFF-20261108.md`.
+
+---
+
 ## D-065 — 2026-11-08 — Do not equate a large FP8-hybrid weight_map with corruption or blindly enlarge its entry cap
 
 Actual operator DGX read-only Flash metadata index: 31,907,813 bytes, successfully within 128 MiB file cap; `PARSE_SHARD_INDEX:FLASH_SHARD_INDEX_UNQUALIFIED` after JSON decoding. Historical code collapsed type/empty/>100,000-count conditions, so genuine tensor count **unmeasured**. Commit [135f75c](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/commit/135f75c8cc652ed63b8508d10fcf5f079dff24ef) separates safe numeric/shape diagnosis without increasing limits. 2 CPU tests; GitHub CI [42392277467](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42392277467) **878/878 PASS, 39 groups** (source-only). Model file damage, missing shard and fresh reinstall qualification not established; no service mutation or approval to execute. Keep P3-G original real PASS/CLOSED and P8 independently gated.

@@ -1,3 +1,9 @@
+## R1AB — 2026-11-08 — P4 no-start instruction and P3/P8 scope boundary
+
+No P4 source code, inventories, cleanups or container/storage activities without fresh explicit user authorization. P3-E is source draft and bounded read-only host evidence; P3-F is CPU/Fake-DGX source proof with production lock. P8 exclusively owns independently approved real Flash reinstall, lifecycle release, injected fault/automatic recovery and final signoff. Preserve vLLM 0.32, one active GPU model, :8000, HF caches, 27B canonical recipe and historical P3 receipts. `docs/P3-CLOSEOUT-AND-P8-HANDOFF-20261108.md`.
+
+---
+
 ## 2026-11-08 — P3-E real DGX Flash host asset preflight blocked; diagnostic patch/source CI
 
 **Actual operator DGX evidence, no Docker mutation:** `python3 -m scripts.manager.flash_host_assets --json` returned `status=BLOCKED`, issue `FLASH_HOST_ASSET_PREFLIGHT:ValueError`, `legacy_hf_bind_writable=true`, `indexed_shard_count=0`, `metadata_sha256={}`, `template_sha256=null`, `verified_model_revision=true`. This only establishes that the **old observer** advanced past pinned command/env/cache bind, then raised a ValueError during an unidentified local-file validation step. Neither zero shards nor `verified_model_revision=true` proves a missing model or verified revision bytes. **No user-provided evidence of broken inference or failed reinstall.**

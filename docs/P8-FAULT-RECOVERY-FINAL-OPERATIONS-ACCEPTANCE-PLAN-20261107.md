@@ -1,3 +1,13 @@
+## 2026-11-08 — Explicit P3-E/F handoff to P8; P4 is held
+
+Operator directs P3 closeout, **P4 NOT_STARTED**. See `docs/P3-CLOSEOUT-AND-P8-HANDOFF-20261108.md`. P3-E source/read-only evidence and P3-F CPU/Fake-DGX evidence must not be mistaken for real fresh Flash reinstall or production lifecycle acceptance.
+
+Add subtracks within the existing P8 stages (all NONEXECUTABLE until separately approved): **R0** canonical desired Flash Docker/image/env/cache/template/security/network/restart specification and Fake-DGX drift tests; **R1** exact-plan/TTY-approved fresh real Flash reinstall, 27B source preservation, port/GPU checks; **R2** functional API/tool/vision/benchmark/idempotence/journal and authorized return; **R3** independently approved fault injection, verifiable automatic original restoration and final Wizard UX/security/operations release after P5/P6/P7 prerequisites.
+
+Latest DGX index: 31,907,813 bytes, 299,845 tensor-map keys. Source bounded cap 400,000 verified by [GitHub CPU CI 42392758148](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42392758148) 880/880 PASS; actual host read-only rerun pending. P3-F current local 7-suite rerun pending. Neither command authorizes Docker mutation, P8 fault trials or final release.
+
+---
+
 # P8 — Fault recovery, automatic rollback and final operational acceptance
 
 **Decision:** Operator requested on 2026-11-07 that **“장애 발생 후 자동 복구 검증과 최종 운영 수용은 P8로 이동”**. This is the canonical milestone assignment. **P3-G is complete (REAL BIDIRECTIONAL DGX PASS)** based on two separately TTY-approved successful 27B→Flash-Next→27B transfers, verified served model IDs, `:8000` and committed journal; final 27B recipe `diff=[]`. The P3-G gate therefore no longer depends on controlled fault injection, automatic restoration validation or general production signoff. These requirements are **not waived**; they are **P8-only**.
