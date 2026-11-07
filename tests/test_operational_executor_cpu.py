@@ -66,6 +66,11 @@ class FakeOperatingTransactionCPU(unittest.TestCase):
             listener = ("LISTEN 0 128 127.0.0.1:8000\n"
                         if self.active() is not None else "")
             return SimpleNamespace(returncode=0, stdout=listener)
+        if cmd[:2] == ["docker", "ps"] and "-a" not in cmd:
+            active = [name for name, row in self.fake.docs.items()
+                      if row["State"]["Running"]]
+            return SimpleNamespace(returncode=0,
+                                   stdout=("\n".join(active) + "\n") if active else "")
         return self.fake.docker_run(cmd, timeout=timeout)
 
     def planner(self, target, *, root):
