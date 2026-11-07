@@ -156,6 +156,12 @@ def _switch_preview(model: str) -> None:
         print("  Candidate fingerprint (NOT an executable approval): " + doc["plan_id"])
     for issue in doc.get("issues", []):
         print("  Blocker: " + issue)
+    if (doc.get("source_model") == "27b"
+            and doc.get("current_live_status") == "LIVE_SERVICE_VERIFIED"):
+        print("  API identity alone does NOT prove 27B text generation.")
+        print("  Optional live 27B curl smoke (one inference, no model switch):")
+        print("    bash scripts/temporary/operational-27b-curl-smoke.sh")
+        print("  Smoke is not invoked by this read-only preview.")
     print("  No service stopped or started. Historical P3 A/B/C are not rerun.")
     print("  Actual operating execution remains blocked until the independent")
     print("  guarded executor, recovery tests and operator downtime approval qualify.")
