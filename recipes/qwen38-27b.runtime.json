@@ -54,5 +54,30 @@
     "do_not_modify_hf_cache": true,
     "rollback_on_failure": true,
     "delete_only_verified_backup_container_after_success": true
+  },
+  "benchmark": {
+    "version": "p2-27b-native-tools-canonical-benchmark-v2",
+    "model": "qwen3.8-27b",
+    "requests": 3,
+    "concurrency": 1,
+    "max_tokens": 128,
+    "seed": 1234,
+    "temperature": 0,
+    "stream": true,
+    "stream_options": {
+      "include_usage": true
+    },
+    "chat_template_kwargs": {
+      "enable_thinking": false
+    },
+    "require": [
+      "HTTP_200",
+      "SSE_DONE",
+      "NONEMPTY_CONTENT_OR_REASONING",
+      "PROMPT_AND_COMPLETION_USAGE",
+      "OBSERVED_TTFT",
+      "POSITIVE_E2E_TOKENS_PER_SEC"
+    ],
+    "note": "Short-answer 3-request acceptance and TTFT/throughput. v2 is distinct from historical 64-token v1 and must not be compared directly. Production reasoning behavior remains request-controlled."
   }
 }
