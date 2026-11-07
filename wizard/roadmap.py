@@ -92,6 +92,7 @@ def readiness_report(*, service: dict[str, Any] | None = None,
         from scripts.manager.operational_audit import inspect_journal
         from scripts.manager.operational_switch import ROOT as OPERATING_ROOT
         operating_audit = inspect_journal(OPERATING_ROOT)
+    from scripts.manager.operational_wizard import PRODUCTION_EXECUTION_RELEASED
     if model_history is None:
         model_history = {
             "flash_verify": _local_history("flash-next", "verify"),
@@ -147,7 +148,7 @@ def readiness_report(*, service: dict[str, Any] | None = None,
         "download_running": download_running,
         "p2_checkpoint_status": checkpoint.get("checkpoint_status"),
         "operating_journal_audit": operating_audit,
-        "ordinary_switch_production_released": False,
+        "ordinary_switch_production_released": PRODUCTION_EXECUTION_RELEASED,
         "milestones": milestones, "release_ready": False,
         "issues": sorted(set((service.get("issues") or [])
                              + (checkpoint.get("issues") or [])
