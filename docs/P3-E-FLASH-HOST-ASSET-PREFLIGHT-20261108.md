@@ -1,3 +1,28 @@
+## 2026-11-08 — Actual DGX BLOCKED reason identified: shard index exceeds generic 8 MiB cap
+
+The follow-up actual DGX `python3 -m scripts.manager.flash_host_assets --json` returned:
+
+- `failed_stage=READ_SHARD_INDEX`, `failure_reason_code=FILE_EXCEEDS_BOUNDED_READ`.
+- `pinned_command_identity_matched=true`, `prepared_view_path_observed=true`.
+- `indexed_shard_count=0`, `metadata_sha256={}`, `template_sha256=null`: **verification not reached**, not proof of missing or corrupt weights.
+- No Docker or GPU mutation. Flash canonical reinstall remains **NOT QUALIFIED**, `launch_allowed=false`.
+
+Root cause for THIS diagnostic is the source tool applying the 8 MiB general small-metadata limit to `model.safetensors.index.json`. The index's actual size was not measured in the previous result, so there is no basis to say it is within 128 MiB yet.
+
+**Corrective source approach:** retain the 8 MiB cap for `config.json` and `tokenizer_config.json`, and 256 KiB for template, but apply a separate hard **128 MiB** read cap for the shard index only. Bound the file read itself (`read(limit+1)`) to close stat/read growth races, retain JSON structural and shard-count/path checks, and report nonsecret `index_file_size_bytes_observed` and `index_file_size_limit_bytes`. No unbounded reads, uncapped JSON, shard content reads, launch promotion, or silent limit bypass.
+
+**Next read-only DGX step after updating GitHub branch:**
+
+```bash
+cd ~/Workspace/llm/blazux-orcarouter
+git pull --ff-only origin feature/recipe-wizard-handoff
+python3 -m scripts.manager.flash_host_assets --json
+```
+
+If the dedicated 128 MiB limit or a later stage still blocks, capture `failed_stage`, `failure_reason_code` and the numeric index size/limit; do **not** raise limits again blindly. Even a clean result remains only `LOCAL_ASSET_METADATA_OBSERVED_REINSTALL_UNQUALIFIED`, not an approved reinstall or P8 acceptance.
+
+---
+
 ## 2026-11-08 — First real DGX invocation BLOCKED; refine failure classification
 
 Operator ran `python3 -m scripts.manager.flash_host_assets --json` after the source landed. It returned `FLASH_HOST_ASSET_PREFLIGHT:ValueError`, zero indexed shards, empty metadata hashes, `legacy_hf_bind_writable=true`, and `verified_model_revision=true`. **That does not identify the failing asset.** The original implementation set the last boolean after validating a pinned command/cache mount, *before* checking the prepared files; thus it was misleading as content verification. This is a preflight failure only, not evidence of a broken or unusable model. No service change occurred.

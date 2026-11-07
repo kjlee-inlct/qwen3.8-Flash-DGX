@@ -63,6 +63,43 @@ class FlashHostAssetsCPU(unittest.TestCase):
             self.assertTrue(out["prepared_view_path_observed"])
             self.assertTrue(out["pinned_command_identity_matched"])
 
+    def test_large_index_over_ordinary_metadata_limit_is_bounded_and_accepted(self):
+        # Real NVFP4/ModelOpt weight maps are not 8 MiB config files.
+        # Generate >8 MiB JSON but keep a single valid index shard.
+        with tempfile.TemporaryDirectory() as tmp:
+            doc, view = self.make_complete(Path(tmp))
+            index = view / "model.safetensors.index.json"
+            padding = "a" * (assets.MAX_META_BYTES + 128)
+            index.write_text(json.dumps({
+                "weight_map": {"layer.weight": "model-00001.safetensors"},
+                "metadata": {"description": padding},
+            }))
+            out = assets.inspect_assets(doc)
+            self.assertEqual(out["status"],
+                             "LOCAL_ASSET_METADATA_OBSERVED_REINSTALL_UNQUALIFIED")
+            self.assertEqual(out["issues"], [])
+            self.assertGreater(out["index_file_size_bytes_observed"], assets.MAX_META_BYTES)
+            self.assertEqual(out["index_file_size_limit_bytes"], assets.MAX_INDEX_BYTES)
+            self.assertEqual(out["indexed_shard_count"], 1)
+            self.assertFalse(out["launch_allowed"])
+            self.assertNotIn(padding[:128], json.dumps(out))
+            self.assertNotIn(str(Path(tmp)), json.dumps(out))
+
+    def test_index_dedicated_limit_exceeded_fails_closed_with_size(self):
+        from unittest.mock import patch
+        with tempfile.TemporaryDirectory() as tmp:
+            doc, view = self.make_complete(Path(tmp))
+            index = view / "model.safetensors.index.json"
+            with patch.object(assets, "MAX_INDEX_BYTES", 5):
+                out = assets.inspect_assets(doc)
+            self.assertEqual(out["status"], "BLOCKED")
+            self.assertEqual(out["failed_stage"], "READ_SHARD_INDEX")
+            self.assertEqual(out["failure_reason_code"], "FILE_EXCEEDS_BOUNDED_READ")
+            self.assertEqual(out["index_file_size_bytes_observed"], index.stat().st_size)
+            self.assertEqual(out["indexed_shard_count"], 0)
+            self.assertFalse(out["verified_model_revision"])
+            self.assertFalse(out["full_docker_runtime_reinstall_qualified"])
+
     def test_malformed_json_index_reports_bounded_diagnostic(self):
         with tempfile.TemporaryDirectory() as tmp:
             doc, view = self.make_complete(Path(tmp))

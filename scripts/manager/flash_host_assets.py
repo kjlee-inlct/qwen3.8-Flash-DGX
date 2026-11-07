@@ -18,6 +18,10 @@ from typing import Any
 from scripts.manager import flash_recipe_review as review
 
 MAX_META_BYTES = 8 * 1024 * 1024
+# Large modelopt/NVFP4 weight maps may be much larger than ordinary metadata.
+# A separate 128 MiB hard ceiling bounds read/JSON allocation; do NOT use
+# this limit for smaller config/tokenizer files or the mounted chat template.
+MAX_INDEX_BYTES = 128 * 1024 * 1024
 MAX_TEMPLATE_BYTES = 256 * 1024
 MAX_INDEX_SHARDS = 256
 MAX_INDEX_WEIGHTS = 100000
@@ -92,7 +96,12 @@ def _small_digest(path: Path, *, limit: int, root: Path | None = None) -> tuple[
     resolved, n = _regular(path, root=root)
     if n > limit:
         raise ValueError("FILE_EXCEEDS_BOUNDED_READ")
-    payload = resolved.read_bytes()
+    # A second size check while reading enforces the cap even if the file
+    # grows after stat; never use unbounded Path.read_bytes() on host files.
+    with resolved.open("rb") as handle:
+        payload = handle.read(limit + 1)
+    if len(payload) > limit:
+        raise ValueError("FILE_EXCEEDS_BOUNDED_READ")
     if len(payload) != n:
         raise ValueError("FILE_CHANGED_DURING_READ")
     return hashlib.sha256(payload).hexdigest(), payload
@@ -111,6 +120,8 @@ def inspect_assets(docker: dict, *, draft_loader=review.load_draft) -> dict[str,
         "failed_stage": None,
         "failure_reason_code": None,
         "metadata_sha256": {},
+        "index_file_size_bytes_observed": None,
+        "index_file_size_limit_bytes": MAX_INDEX_BYTES,
         "template_sha256": None,
         "indexed_shard_count": 0,
         "indexed_shard_bytes_observed": 0,
@@ -175,7 +186,17 @@ def inspect_assets(docker: dict, *, draft_loader=review.load_draft) -> dict[str,
                 "tokenizer_config.json": "READ_TOKENIZER_CONFIG",
                 "model.safetensors.index.json": "READ_SHARD_INDEX",
             }[name]
-            digest, payload = _small_digest(view / name, limit=MAX_META_BYTES, root=cache)
+            if name == "model.safetensors.index.json":
+                # Numeric size is nonsecret and useful if the dedicated limit
+                # still blocks. Metadata digest and shard count remain unknown
+                # until the bounded read and index parse both succeed.
+                _, index_size = _regular(view / name, root=cache)
+                result["index_file_size_bytes_observed"] = index_size
+            digest, payload = _small_digest(
+                view / name,
+                limit=(MAX_INDEX_BYTES if name == "model.safetensors.index.json"
+                       else MAX_META_BYTES),
+                root=cache)
             hashes[name] = digest
             if name == "model.safetensors.index.json":
                 stage = "PARSE_SHARD_INDEX"
