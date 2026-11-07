@@ -1,3 +1,17 @@
+## 2026-11-07 — NEXT OPERATOR ACTION: READ-ONLY D/E DIAGNOSTIC RETEST
+
+The first actual DGX P3-D~G unified batch was run. F 119/119 CPU PASS and G current-ID/journal PREVIEW PASS. D host socket attribution and E Flash parser blocked (NOT demonstrated hardware/service failure). New source safely repairs dual-stack host PID recognition, Docker proxy attribution, and legacy Flash candidate collection; CI 42371091647 **838/838 PASS**.
+
+On a clean DGX checkout:
+```bash
+git status --short
+git pull --ff-only origin feature/recipe-wizard-handoff
+bash scripts/temporary/p3-d-g-acceptance.sh --run --report /tmp/p3-d-g-readonly-v2-$(date +%Y%m%dT%H%M%S).json
+```
+Examine D `observed_port_listener_rows`, `port_pid_attribution`, `ss_returncode`, E `observed_candidate.raw_cmd` / `cmd_normalization_error` / `advisories`; do not claim D PASS without actual attribution. E is expected to remain DRAFT_REVIEW_REQUIRED until a separate reviewed/reinstall-qualified Flash recipe; do not force G real switch/rollback from the automatic batch. Historical A/B/C and canonical 27B SHA untouched. Detailed `docs/P3-D-G-FIRST-DGX-DIAGNOSTIC-FIXES-20261107.md`.
+
+---
+
 ## 2026-11-07 — P3-D/E/F/G ONE-COMMAND DRAFT ACCEPTANCE: NEXT DGX STEP
 
 **Source completion evidence:** P3-D~G unified draft implementation code HEAD `efb0dda` was tested by GitHub Actions **42369840239 SUCCESS, 829/829 tests / 37 groups**. The user still needs to run the ONE non-mutating DGX batch; no actual D/E/F/G real acceptance evidence is claimed.
