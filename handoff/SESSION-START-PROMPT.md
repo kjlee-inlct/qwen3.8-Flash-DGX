@@ -1,3 +1,13 @@
+## 2026-11-07 — CURRENT P3-C HANDOFF (SUPERSEDES OLDER "P1 NOT_RUN"/"B PENDING")
+
+User completed actual P3-A and P3-B transitions, original Flash-Next remains live on :8000. Post-B P1 Verify and numeric 3-request Benchmark PASS, original doctor/inventory own-port collision diagnosed as benign. Actual DGX `./wizard.sh switch flash-next-27b stage-c --plan --json` is `READY_TO_REQUEST_TRANSITION_APPROVAL`, `issues=[]`, `p1_evidence.status=PASS`, `executed=false`, original Flash CID `90f39a4dbccd0b5f97efa0ff163c61402ddace3dd3cb4da986a91dff7eb45ed5`, preserved 27B CID `6d9ede0904c2b8e9e632d45b51aba4acbaf4502ae648da60cca77677948b0e2d`. Its short-lived plan SHA must not be reused. Optional `evidence migrate --guided` received literal `COPY` and returned `CANCELLED/copied=0`; import optional, independent of C.
+
+Per D-016, new GitHub-tracked `scripts/temporary/p3-stage-c-operator.sh` and Python `p3_stage_c_operator.py` invoke canonical C Wizard after separate live approval; default `--plan` non-disruptive. `--execute` requires TTY + independent EXACT new SHA, `I_ACCEPT_FLASH_NEXT_DOWNTIME`, `I_SEPARATELY_AUTHORIZE_FINAL_27B_STAGE_C`, then fresh plan/API recheck. Third literal is wrapper-only; core C expects no `--enter-p3`. Final C success requires independently verified 27B :8000 API + immutable old-root stage-c receipt and leaves 27B serving. Preserve Flash/27B models and original P2/P3 canonical state. CPU tests/fake DGX + CI required; no actual new C switch or PR merge. See `docs/P3-STAGE-C-FINAL-27B-OPERATOR-20261107.md`.
+
+Next operator: confirm latest GitHub HEAD and CI, clean `git pull --ff-only origin feature/recipe-wizard-handoff`, run ONLY `bash scripts/temporary/p3-stage-c-operator.sh --plan`; if READY/empty issues, separately secure explicit user Flash downtime authorization before `--execute`. Do not auto-run or blindly repeat C on failure.
+
+---
+
 ## 2026-11-07 — Latest handoff override (read before historical prompt below)
 
 **Current stage:** P2 complete; P3-A actual DGX PASS; **P3-B actual DGX PASS** with original Flash-Next restored and served `qwen3.8-flash-next` on port 8000. The previous "P3-B NOT_RUN / 27B ACTIVE" headings below are historical. Canonical B receipt `~/.local/state/blazux-wizard/p3/stage-b.json`; wrapper old report misnamed `~/blazux-p3-reports/p3-a-operator-20261106T223124Z-14861d75.json`. P1 post-B inspect-only readiness PASS `~/blazux-p1-reports/20261106T224010Z-d2095867/result.json`. P1 Verify/Benchmark after B NOT_RUN and doctor/inventory post-B raw cause needs a new independent audit. P3-C NOT_RUN/NOT_AUTHORIZED.
