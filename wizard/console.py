@@ -141,6 +141,26 @@ def _history_menu(model: str) -> None:
             print("Note: " + str(len(doc["issues"]))
                   + " unreadable/untrusted file(s) not displayed. No files changed.")
 
+def _switch_preview(model: str) -> None:
+    """Review one ordinary switch candidate; never launch the P3 one-off stages."""
+    if model not in ("flash-next", "27b"):
+        print("General switching for this model is not runtime-qualified.")
+        return
+    from scripts.manager.operational_switch import make_plan
+    doc = make_plan(model)
+    print("\nOrdinary model switch — read-only candidate")
+    print("  Current: " + str(doc.get("source_model") or "unverified"))
+    print("  Requested: " + model + " | API stays :8000/v1")
+    print("  Status: " + doc["status"])
+    if doc.get("plan_id"):
+        print("  Candidate fingerprint (NOT an executable approval): " + doc["plan_id"])
+    for issue in doc.get("issues", []):
+        print("  Blocker: " + issue)
+    print("  No service stopped or started. Historical P3 A/B/C are not rerun.")
+    print("  Actual operating execution remains blocked until the independent")
+    print("  guarded executor, recovery tests and operator downtime approval qualify.")
+
+
 def _model_screen(model: str) -> None:
     while True:
         doc = model_workflow(model)
@@ -149,6 +169,7 @@ def _model_screen(model: str) -> None:
         print("  2. All model actions / diagnostics")
         print("  3. Refresh observed state")
         print("  4. Past Verify / Benchmark / transitions (read only)")
+        print("  5. Review ordinary model switch (read only)")
         print("  0. Back")
         selected = _input("Choice (0 back): ")
         if selected in (None, "0"):
@@ -176,6 +197,8 @@ def _model_screen(model: str) -> None:
             continue
         elif selected == "4":
             _history_menu(model)
+        elif selected == "5":
+            _switch_preview(model)
         else:
             print("Unknown option; nothing executed.")
 
@@ -269,9 +292,9 @@ def _stage_actions(module) -> None:
     spec = module.SPEC
     actions = list(spec.actions)
     if spec.key == "p3":
-        # P3 stage planning is available in the TTY. Never infer approval to
-        # switch from selecting a menu item; no automatic phase advancement.
-        actions.extend(("stage-a", "stage-b", "stage-c"))
+        # One-off P3 A/B/C acceptance is complete. Keep CLI compatibility,
+        # but do not invite operators to replay those stages from a menu.
+        actions.append("ordinary-switch-preview")
     while True:
         print("\n" + spec.title + " (0 back)")
         for i, action in enumerate(actions, 1):
@@ -281,6 +304,14 @@ def _stage_actions(module) -> None:
             return
         if not selected:
             print("Unknown option.")
+            continue
+        if spec.key == "p3" and selected == "ordinary-switch-preview":
+            direction = _choice(_input("Review target: 1 Flash-Next / 2 NVIDIA 27B (0 back): "),
+                                ["flash-next", "27b"])
+            if direction in ("flash-next", "27b"):
+                _switch_preview(direction)
+            elif direction is not None:
+                print("Unknown target; nothing executed.")
             continue
         if spec.key == "p3" and selected in ("sequence", "stage-a", "stage-b", "stage-c"):
             # Read-only P3 planning only. Each actual service transfer requires
