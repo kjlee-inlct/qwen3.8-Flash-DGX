@@ -1,3 +1,19 @@
+## ACTUAL DGX acceptance update — 2026-11-07: first direction PASS
+
+The operator performed the **new ordinary** 27B→Flash one-switch acceptance (not original P3-B), on source `4054eb2`, with initial `LIVE_SERVICE_VERIFIED` 27B / empty operating journal, ready fresh independent plan (issues `[]`) and four manually typed approvals. The new backend emitted **`Live transition result: PASS`, `Observed model: flash-next`**, and a private completion receipt in `~/.local/state/blazux-wizard/operational-switch/`. This supersedes original runbook header saying *all ordinary switching NOT_RUN*. **Last observed active is now Flash-Next**; original 27B container/model cache preserved. New one-switch backend PASS includes model identity, bounded chat, receipt and journal internal verification; independently rerunning read-only postchecks is still warranted.
+
+**NEXT READ-ONLY:**
+~~~bash
+cd ~/Workspace/llm/blazux-orcarouter
+./wizard.sh service manager status --json
+python3 -m scripts.manager.operational_audit --json
+bash scripts/temporary/operational-switch-acceptance.sh --target 27b --plan --json
+~~~
+
+Expect one live `qwen3.8-flash-next`, operating audit `VERIFIED` with terminal `COMMITTED`, read-only plan `flash-next` → `27b` if preserved prerequisites still match. **This does not authorize a reverse transition.** Reverse `--target 27b --execute` requires a brand-new scoped Flash downtime approval, unique fresh SHA, the four exact operator TTY acknowledgments and readiness checks; never reuse first trial approval. Real rollback test is a separate authorization. Full production guided menu remains release-gated until both directions and recovery qualification.
+
+---
+
 # Ordinary Flash-Next ↔ NVIDIA 27B operating switch — DGX acceptance runbook
 
 **Scope:** existing `./wizard.sh` source implementation only, with one dedicated operator-approved acceptance route. Do not confuse immutable P3 A/B/C one-off success with acceptance of ordinary recurring switch UX. As of this writing **real ordinary operating switch has NOT_RUN**; last operator-observed service is 27B on :8000. Open WebUI 27B tool-calling profile is explicitly out of scope.
