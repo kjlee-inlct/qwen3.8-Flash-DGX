@@ -184,7 +184,7 @@ class DraftUnifiedRunnerCPU(unittest.TestCase):
                 "P3-F", "SOURCE_CPU_PASS_NOT_RELEASED")),
             g_fn=lambda live: (called.append("G") or dg.result(
                 "P3-G", "PREVIEW_PASS_REAL_SWITCH_NOT_RUN")))
-        self.assertEqual(called, ["G", "F"])
+        self.assertEqual(called, ["F", "G"])
         self.assertEqual(out["status"], "BLOCKED")
         self.assertFalse(out["acceptance_complete"])
 
