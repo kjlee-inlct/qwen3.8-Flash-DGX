@@ -10,7 +10,6 @@ can override this production gate.
 """
 from __future__ import annotations
 
-import hashlib
 import json
 import sys
 from typing import Any, Callable
@@ -22,36 +21,6 @@ from scripts.manager.operational_switch import make_plan, READY, SUPPORTED
 # Deliberately not a CLI flag or environment toggle. Changing this requires
 # reviewed source, CPU CI, and independently approved live switch acceptance.
 PRODUCTION_EXECUTION_RELEASED = False
-
-
-def execution_plan_id(preview: dict[str, Any]) -> str | None:
-    """Domain-separate executable consent from preview-only plan fingerprint."""
-    raw = preview.get("plan_id")
-    if (preview.get("status") != READY or not isinstance(raw, str)
-            or len(raw) != 64 or not all(ch in "0123456789abcdef" for ch in raw)
-            or preview.get("source_model") not in SUPPORTED
-            or preview.get("target_model") not in SUPPORTED
-            or preview["source_model"] == preview["target_model"]):
-        return None
-    facts = {
-        "kind": "INDEPENDENT_OPERATING_EXECUTION_APPROVAL_V1",
-        "preview_id": raw,
-        "source": preview["source_model"],
-        "target": preview["target_model"],
-        "source_id": preview.get("source_container_id"),
-        "target_id": preview.get("target_container_id"),
-        "source_image": preview.get("source_image"),
-        "target_image": preview.get("target_image"),
-        "expires_at": preview.get("expires_at_epoch_seconds"),
-        "port": 8000,
-    }
-    if not all(facts.get(k) for k in (
-            "source_id", "target_id", "source_image", "target_image",
-            "expires_at")):
-        return None
-    return hashlib.sha256(
-        json.dumps(facts, sort_keys=True, separators=(",", ":")).encode()
-    ).hexdigest()
 
 
 def guided(
@@ -93,7 +62,7 @@ def guided(
 
     fingerprint = preview.get("plan_id")
     emit("  Read-only preview fingerprint (NOT executable): " + str(fingerprint))
-    token = execution_plan_id(preview)
+    token = operational_executor.execution_plan_id(preview)
     if token is None:
         emit("BLOCKED: independent execution approval cannot be constructed.")
         return 3
