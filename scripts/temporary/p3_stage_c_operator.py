@@ -183,10 +183,12 @@ def confirm(plan: dict, *, input_fn=input) -> bool:
         )
         print("\nP3-C FINAL 27B requires THREE NEW confirmations.", flush=True)
         print("P3-A/B or evidence-import consent is NOT approval for C.", flush=True)
+        print("Paste the literal values ONLY; do not type '[' or ']' characters.",
+              flush=True)
         print("Expires: " + expiry_kst(plan["expires_at_epoch_seconds"]), flush=True)
         for title, value in parts:
             print(f"{title}: {value}", flush=True)
-            if input_fn(f"Type exactly [{value}] (Enter cancels): ").strip() != value:
+            if input_fn(f"Paste exactly {value} (no brackets; Enter cancels): ").strip() != value:
                 return False
         return True
     except (KeyError, TypeError, ValueError, EOFError, KeyboardInterrupt):
