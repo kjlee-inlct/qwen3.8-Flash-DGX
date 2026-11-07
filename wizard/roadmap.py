@@ -1,6 +1,6 @@
-"""Operator's full P1–P7 readiness dashboard, evidence scoped and read-only.
+"""Operator's full P1–P8 readiness dashboard, evidence scoped and read-only.
 
-This is an overview for debugging milestones as P2→P7 are qualified. It never
+This is an overview for debugging milestones as P2→P8 are qualified. It never
 promotes source files, an existing Docker container or historic P1 evidence into
 new runtime/GPU/benchmark/rollback PASS.
 """
@@ -13,11 +13,12 @@ from typing import Any
 MILESTONES = (
     ("P1", "Flash-Next install / API / benchmark"),
     ("P2", "NVIDIA 27B download / runtime / API / benchmark"),
-    ("P3", "Flash-Next <-> 27B switch and restore"),
+    ("P3", "Flash-Next <-> 27B real bidirectional transfers"),
     ("P4", "Conditional storage / protected cleanup"),
     ("P5", "Orcarouter Flash-Next runtime / benchmark"),
-    ("P6", "Orcarouter <-> 27B switch and restore"),
-    ("P7", "Full service / proxy / gateway / release acceptance"),
+    ("P6", "Orcarouter <-> 27B real transfers"),
+    ("P7", "Service / proxy / gateway integration qualification"),
+    ("P8", "Fault injection, automatic restoration and final operations signoff"),
 )
 
 
@@ -107,7 +108,8 @@ def readiness_report(*, service: dict[str, Any] | None = None,
         "P4": "CONDITIONAL_SOURCE_ONLY_NO_DELETE_APPROVAL",
         "P5": "ORCAROUTER_ADAPTER_UNQUALIFIED",
         "P6": "SWITCH_EXECUTOR_NOT_QUALIFIED",
-        "P7": "RELEASE_GATES_NOT_COMPLETED",
+        "P7": "SERVICE_PROXY_GATEWAY_INTEGRATION_NOT_QUALIFIED",
+        "P8": "FAULT_RECOVERY_AND_FINAL_OPERATIONS_NOT_RUN",
     }
     evidence = {
         "P1": {"verify": model_history.get("flash_verify", {"status": "UNAVAILABLE"}),
@@ -115,7 +117,13 @@ def readiness_report(*, service: dict[str, Any] | None = None,
         "P2": {"benchmark": model_history.get("27b_benchmark", {"status": "UNAVAILABLE"})},
         "P3": {"stage_a_b_c": p3_history.get("status", "UNAVAILABLE"),
                "issues": p3_history.get("issues", []),
-               "independent_operating_journal": operating_audit},
+               "independent_operating_journal": operating_audit,
+               "p3_g_real_bidirectional_acceptance":
+                   "OPERATOR_REPORTED_PASS_DOCUMENTED_REVIEW_EVIDENCE_SEPARATELY",
+               "p8_fault_restore_required_for_p3_g": False},
+        "P8": {"fault_restore_live_verified": False,
+               "final_operational_signoff_verified": False,
+               "status": "NOT_RUN_AND_NOT_RELEASED"},
     }
     milestones = [
         {"stage": stage, "title": title, "state": scopes[stage],
@@ -130,13 +138,13 @@ def readiness_report(*, service: dict[str, Any] | None = None,
          "interactive_wizard_ux_acceptance": (
              "SOURCE_MENU_PRESENT_ACTUAL_DGX_NOT_VERIFIED"
              if stage == "P3" else "NOT_VERIFIED"),
-         "requires_separate_approval": stage in ("P2", "P3", "P4", "P5", "P6", "P7")}
+         "requires_separate_approval": stage in ("P2", "P3", "P4", "P5", "P6", "P7", "P8")}
         for stage, title in MILESTONES
     ]
     observed_live = live_status if isinstance(live_status, dict) else {}
     return {
-        "schema_version": 2, "interface": "P1_P7_ACCEPTANCE_DASHBOARD",
-        "stage": "p7", "scope": "DGX_READ_ONLY",
+        "schema_version": 2, "interface": "P1_P8_ACCEPTANCE_DASHBOARD",
+        "stage": "p8", "scope": "DGX_READ_ONLY",
         "status": "NOT_RELEASE_QUALIFIED",
         "executed": False, "operations_enabled": False,
         "api_host_port": 8000, "max_active_gpu_models": 1,
@@ -155,7 +163,9 @@ def readiness_report(*, service: dict[str, Any] | None = None,
                              + (observed_live.get("issues") or []))),
         "notice": "Historical P1/P2 records, immutable P3 A/B/C receipts, current live API, "
                   "source-guided switch, trial acceptance and live production UX are separate. "
-                  "No historical PASS substitutes for a current switch approval.",
+                  "No historical PASS substitutes for a current switch approval. "
+                  "P3-G bidirectional transfer and P8 fault/restore and final "
+                  "signoff are distinct acceptance tracks.",
     }
 
 
@@ -166,7 +176,7 @@ def run_cli(*, as_json: bool = False, dry_run: bool = False) -> int:
     if as_json:
         print(json.dumps(document, ensure_ascii=False, sort_keys=True, indent=2))
     else:
-        print("P1–P7 acceptance status — NOT_RELEASE_QUALIFIED")
+        print("P1–P8 acceptance status — NOT_RELEASE_QUALIFIED")
         print("Active model observed:", document["observed_model"] or "unknown/none")
         print("Current API:", document["live_service_status"],
               "| Served ID:", document["live_api_served_id"] or "unverified")
