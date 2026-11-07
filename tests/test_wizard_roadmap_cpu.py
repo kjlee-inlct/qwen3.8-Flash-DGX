@@ -81,5 +81,42 @@ class RoadmapCPU(unittest.TestCase):
             self.assertFalse(json.loads(output.getvalue())["executed"])
 
 
+    def test_historical_p3_pass_is_distinct_from_generic_switch_and_ux(self):
+        doc = roadmap.readiness_report(
+            service=service(),
+            checkpoint={"source_files_present": True,
+                        "checkpoint_status": "SOURCE_FILES_PRESENT_PINNED_CANDIDATE",
+                        "issues": []},
+            live_status={"status": "LIVE_SERVICE_VERIFIED",
+                         "observed_model": "flash-next",
+                         "expected_served_id": "qwen3.8-flash-next", "issues": []},
+            p3_history={"status": "LOCAL_P3_A_B_C_RECEIPTS_VERIFIED", "issues": []},
+            model_history={})
+        p3 = doc["milestones"][2]
+        self.assertIn("ONE_OFF_A_B_C_RECEIPTS_PRESENT", p3["state"])
+        self.assertEqual(p3["historical_backend_evidence"]["stage_a_b_c"],
+                         "LOCAL_P3_A_B_C_RECEIPTS_VERIFIED")
+        self.assertEqual(p3["general_operating_switch"],
+                         "READ_ONLY_PREVIEW_EXECUTOR_NOT_QUALIFIED")
+        self.assertEqual(p3["interactive_wizard_ux_acceptance"], "NOT_VERIFIED")
+        self.assertFalse(p3["runtime_pass_claimed"])
+        self.assertEqual(doc["live_api_served_id"], "qwen3.8-flash-next")
+        self.assertFalse(doc["release_ready"])
+
+    def test_missing_p3_receipts_must_not_override_actual_host_history(self):
+        doc = roadmap.readiness_report(
+            service=service(),
+            checkpoint={"source_files_present": False, "checkpoint_status": "UNKNOWN",
+                        "issues": []},
+            p3_history={"status": "UNAVAILABLE", "issues": [
+                "P3_IMMUTABLE_STAGE_RECEIPTS_UNAVAILABLE"]},
+            model_history={})
+        self.assertIn("LOCAL_P3_RECEIPTS_UNAVAILABLE",
+                      doc["milestones"][2]["state"])
+        self.assertEqual(doc["live_service_status"], "NOT_CHECKED")
+        self.assertIsNone(doc["live_api_served_id"])
+        self.assertFalse(doc["milestones"][2]["runtime_pass_claimed"])
+
+
 if __name__ == "__main__":
     unittest.main()
