@@ -175,6 +175,43 @@ class EvidenceCatalogCPU(unittest.TestCase):
         self.assertEqual(plan["status"], "BLOCKED")
         link.unlink()
 
+    def test_guided_import_repeats_exact_sha_and_cancel_stays_read_only(self):
+        plan = cat.migration_plan(**self._kw())
+        with patch.object(cat, "migration_plan", return_value=plan), \
+             patch.object(cat, "copy_approved", return_value={
+                 "status": "COPY_COMPLETE", "executed": True,
+                 "copied": 8}) as copier, \
+             patch("builtins.input", return_value=plan["plan_id"]) as typed, \
+             contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(cat.main(["migrate", "--guided"]), 0)
+        self.assertIn("Type exactly [" + plan["plan_id"] + "]",
+                      typed.call_args.args[0])
+        copier.assert_called_once_with(plan["plan_id"])
+        with patch.object(cat, "migration_plan", return_value=plan), \
+             patch.object(cat, "copy_approved") as copier, \
+             patch("builtins.input", return_value=""), \
+             contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(cat.main(["migrate", "--guided"]), 0)
+        copier.assert_not_called()
+        self.assertFalse(self.reports.exists())
+
+    def test_copy_preserves_original_timestamp_from_filename(self):
+        before = cat.history(model="27b", kind="benchmark", **self._kw())
+        original_time = before["records"][0]["timestamp_utc"]
+        self.assertEqual(original_time, "2026-11-06T04:26:42+00:00")
+        plan = cat.migration_plan(**self._kw())
+        self.assertEqual(cat.copy_approved(plan["plan_id"], **self._kw())["status"],
+                         "COPY_COMPLETE")
+        after = cat.history(model="27b", kind="benchmark", **self._kw())
+        self.assertEqual(after["records"][0]["timestamp_utc"], original_time)
+
+    def test_historically_misnamed_p3_b_operator_classified_by_stage(self):
+        doc = cat.history(model="flash-next", kind="transition", **self._kw())
+        historical = [r for r in doc["records"] if "legacy-p3-operators" in r["path"]]
+        self.assertEqual(len(historical), 1)
+        self.assertEqual(historical[0]["summary"]["from_model"], "27b")
+        self.assertEqual(historical[0]["summary"]["to_model"], "flash-next")
+
     def test_unknown_model_and_kind_are_blocked(self):
         self.assertEqual(cat.history(model="orcarouter", **self._kw())["count"], 0)
         self.assertEqual(cat.history(model="unknown", **self._kw())["status"], "BLOCKED")
