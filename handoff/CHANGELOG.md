@@ -1,3 +1,9 @@
+## 2026-11-07 — P3-D/E/F/G phase expansion and unified draft source entry point
+
+Committed new common Wizard milestone map (D GPU/port ownership, E Flash recipe, F generic lifecycle, G actual DGX roundtrip/restore/UX) and non-mutating one-command `scripts/temporary/p3-d-g-acceptance.sh` with Python stage orchestrator, Fake-DGX regressions, CI and detailed acceptance contract. Real D-G runner has NOT yet executed on DGX; no service mutation was authorized. Historical A/B/C remain closed. Draft verdicts cannot claim full P3-G acceptance.
+
+---
+
 ## 2026-11-07 — LIVE DGX CURRENT-ID ORDINARY SWITCH PREVIEW PASSED READ-ONLY
 
 On actual DGX after operator pulled 4189a79, 27B recipe drift including pinned explicit host cache source yielded no drift/advisories, 27B -> Flash-Next `operational --plan` yielded `READY_FOR_OPERATOR_REVIEW_ONLY`, zero issues, correct current Docker IDs and source CANONICAL_RECIPE / target HISTORICAL_P3_INSTANCE, and manager status `LIVE_SERVICE_VERIFIED`. No model changes were made. Full report: `docs/WIZARD-27B-OPERATIONAL-PREVIEW-DGX-PASS-20261107.md`. Source CI baseline remains 814/814 PASS. Release gates remain disabled.
