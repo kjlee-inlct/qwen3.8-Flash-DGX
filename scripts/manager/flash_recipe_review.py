@@ -147,12 +147,12 @@ def compare_observation(observed: dict, docker: dict, *,
         template = [m for m in mounts
                     if m.get("Destination") == dr["required_ro_template_mount"]]
         check(len(hf) == 1 and hf[0].get("Type") == "bind"
-              and hf[0].get("RW") is not True, "HF_MOUNT_MODE_DIFFERENT")
+              and hf[0].get("Destination") == "/hf", "HF_BIND_MOUNT_UNVERIFIED")
         # The draft explicitly describes the HISTORICAL writable HF mount.
         # It is a review risk, not permission for a new writable deployment.
         if len(hf) == 1:
-            check(hf[0].get("RW") is not dr["hf_mount"]["read_only"],
-                  "HF_MOUNT_WRITABLE_LEGACY_STATE_CHANGED")
+            check(hf[0].get("RW") is (not dr["hf_mount"]["read_only"]),
+                  "HF_MOUNT_LEGACY_ACCESS_MODE_CHANGED")
             check(isinstance(hf[0].get("Source"), str)
                   and hf[0]["Source"].startswith("/"),
                   "HF_MOUNT_SOURCE_NOT_ABSOLUTE")
