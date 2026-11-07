@@ -1,3 +1,9 @@
+## 2026-11-07 — SOURCE CI independently VERIFIED for protected Native Tools V1
+
+GitHub Actions [Recipe manifest CPU run 42339037935](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42339037935) **SUCCESS** at exact source SHA `695e4b1f6a10825324d66b01695cda6b0ffeb02d`: **706/706 offline CPU tests in 34 groups PASS**, including the new protected identity, ModelOpt, streaming and malformed-request regressions; both intentionally unqualified candidate YAML recipes were confirmed non-launchable. This CI establishes SOURCE/Fake-DGX correctness only, not DGX parser availability, Tool Calling WebUI or a tested service rollback. Original 27B runtime and ordinary journal were not touched. The subsequent handoff-only update does not alter verified runtime code or CI workflow.
+
+---
+
 > **2026-11-07 later source-only update:** P2-FINAL now has `p2_27b_tool_variant.py` (new protected `qwen38-27b-native-tools-v1`), intentionally invalid `recipes/qwen38-27b-native-tools-v1.candidate.yaml`, `--tools-variant-plan` read-only preflight, and `--tools-stream-probe` SSE inference probe with CPU tests. Consult `docs/P2-27B-NATIVE-TOOLS-V1-PROTECTED-VARIANT-20261107.md`. No new actual DGX run, no parser validation, no cutover executor, no production release; P2-FINAL remains OPEN. Original NVIDIA 27B at :8000 and old HTTP 400 are last operator observations. Historical P3-C remains closed. Re-check HEAD/CI/PR at the start of the new session; do NOT replay P3 or use a candidate argv as executable approval.
 
 ---

@@ -1,3 +1,9 @@
+## 2026-11-07 — SOURCE CI independently VERIFIED for protected Native Tools V1
+
+GitHub Actions [Recipe manifest CPU run 42339037935](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42339037935) **SUCCESS** at exact source SHA `695e4b1f6a10825324d66b01695cda6b0ffeb02d`: **706/706 offline CPU tests in 34 groups PASS**, including the new protected identity, ModelOpt, streaming and malformed-request regressions; both intentionally unqualified candidate YAML recipes were confirmed non-launchable. This CI establishes SOURCE/Fake-DGX correctness only, not DGX parser availability, Tool Calling WebUI or a tested service rollback. Original 27B runtime and ordinary journal were not touched. The subsequent handoff-only update does not alter verified runtime code or CI workflow.
+
+---
+
 ## LATEST SOURCE 2026-11-07 — P2-FINAL protected Native Tools V1 candidate added; REAL DGX unchanged
 
 On existing Draft PR #1 / `feature/recipe-wizard-handoff`, added separate protected `qwen38-27b-native-tools-v1` source-only variant, intentionally incomplete YAML recipe, read-only `--tools-variant-plan`, strict SSE `--tools-stream-probe`, and offline CPU tests. The existing P2/P3 default `qwen38-27b` argv, service-policy, operational executor and production release gate are unchanged. The variant source is NOT executable; no parser-audited tool-enabled container has been created, no migration/rollback executor released, and no actual DGX tests run in this update. P2-FINAL remains OPEN/NOT_QUALIFIED. Latest operator-observed real DGX evidence still: original NVIDIA 27B on port 8000 LIVE_SERVICE_VERIFIED; journal VERIFIED/COMMITTED 14; old Docker Cmd missing auto-tool flags; local probe HTTP 400. Historical P3-C PASS/CLOSED, recurring switch both actual directions PASS; Wizard production menu still locked. Read `docs/P2-27B-NATIVE-TOOLS-V1-PROTECTED-VARIANT-20261107.md` before advancing.

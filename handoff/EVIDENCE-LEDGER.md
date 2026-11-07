@@ -1,3 +1,9 @@
+## 2026-11-07 — SOURCE CI independently VERIFIED for protected Native Tools V1
+
+GitHub Actions [Recipe manifest CPU run 42339037935](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42339037935) **SUCCESS** at exact source SHA `695e4b1f6a10825324d66b01695cda6b0ffeb02d`: **706/706 offline CPU tests in 34 groups PASS**, including the new protected identity, ModelOpt, streaming and malformed-request regressions; both intentionally unqualified candidate YAML recipes were confirmed non-launchable. This CI establishes SOURCE/Fake-DGX correctness only, not DGX parser availability, Tool Calling WebUI or a tested service rollback. Original 27B runtime and ordinary journal were not touched. The subsequent handoff-only update does not alter verified runtime code or CI workflow.
+
+---
+
 ## E-20261107-P2-NATIVE-TOOLS-V1-SOURCE — GitHub SOURCE/CPU ONLY; NO new DGX evidence
 
 Tracked source: `scripts/manager/p2_27b_tool_variant.py` (distinct new variant identity and read-only original/fallback/GPU checks); `scripts/manager/p2_27b_tool_streaming.py` (strict bounded SSE test); `recipes/qwen38-27b-native-tools-v1.candidate.yaml` intentionally schema invalid; new Fake-DGX/SSE tests, `scripts/serve_27b.sh` read-only/inference probe routes. CI outcome should be tied to the exact subsequent HEAD/run, not presumed from historical 680 tests. No protected container ID/image/cache or P2/P3/ordinary receipts changed by GitHub source writes; no observed live model or parser verification in this phase. Previously supplied REAL DGX remains authoritative: NVIDIA 27B LIVE_SERVICE_VERIFIED at :8000, ordinary journal VERIFIED 14 COMMITTED, Docker Cmd no tool flags, original local auto Tool probe HTTP 400. P2-FINAL remains NOT_QUALIFIED, P3-C historical PASS/CLOSED. The source-only preflight fingerprint is NOT a runtime plan/approval.

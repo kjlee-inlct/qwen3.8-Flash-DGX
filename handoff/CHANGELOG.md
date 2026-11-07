@@ -1,3 +1,9 @@
+## 2026-11-07 — SOURCE CI independently VERIFIED for protected Native Tools V1
+
+GitHub Actions [Recipe manifest CPU run 42339037935](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42339037935) **SUCCESS** at exact source SHA `695e4b1f6a10825324d66b01695cda6b0ffeb02d`: **706/706 offline CPU tests in 34 groups PASS**, including the new protected identity, ModelOpt, streaming and malformed-request regressions; both intentionally unqualified candidate YAML recipes were confirmed non-launchable. This CI establishes SOURCE/Fake-DGX correctness only, not DGX parser availability, Tool Calling WebUI or a tested service rollback. Original 27B runtime and ordinary journal were not touched. The subsequent handoff-only update does not alter verified runtime code or CI workflow.
+
+---
+
 ## 2026-11-07 — P2-FINAL protected Native Tools V1 SOURCE implementation (no DGX operations)
 
 Created distinct `qwen38-27b-native-tools-v1` source candidate and deliberately unqualified pinned recipe; implemented read-only source/original/fallback/port/GPU inspection with no execute, plus strict SSE auto tool-call parsing with bounded data/time and HTTP/error guard. New offline regressions cover original immutability, variant collisions, other GPU users, source image/port/cache drift, malformed/truncated streaming/JSON and model mismatch. Extended `scripts/serve_27b.sh` CLI. Documented isolated cutover, independent approval, journal and rollback contract as **future implementation gates**; do not confuse SOURCE/CPU with actual DGX acceptance. Existing P3-C, original 27B/Flash, cache, operating journal and normal Wizard production gate untouched. P2-FINAL remains OPEN.

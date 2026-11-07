@@ -1,3 +1,9 @@
+## 2026-11-07 — SOURCE CI independently VERIFIED for protected Native Tools V1
+
+GitHub Actions [Recipe manifest CPU run 42339037935](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42339037935) **SUCCESS** at exact source SHA `695e4b1f6a10825324d66b01695cda6b0ffeb02d`: **706/706 offline CPU tests in 34 groups PASS**, including the new protected identity, ModelOpt, streaming and malformed-request regressions; both intentionally unqualified candidate YAML recipes were confirmed non-launchable. This CI establishes SOURCE/Fake-DGX correctness only, not DGX parser availability, Tool Calling WebUI or a tested service rollback. Original 27B runtime and ordinary journal were not touched. The subsequent handoff-only update does not alter verified runtime code or CI workflow.
+
+---
+
 ## LATEST NEXT ACTIONS 2026-11-07 — after source-only protected 27B Native Tools V1
 
 1. **CI and source review:** confirm latest feature branch CI for `p2_27b_tool_variant.py`, `p2_27b_tool_streaming.py`, new test suites, intentionally invalid V1 YAML and shell CLI. GitHub CPU PASS is not DGX qualification.
