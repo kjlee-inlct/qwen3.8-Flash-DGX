@@ -100,6 +100,9 @@ class OperatingAcceptanceCPU(unittest.TestCase):
         self.assertTrue(any("Live transition result: PASS" in line
                             for line in self.outputs))
         self.assertEqual(len(self.inputs), 4)
+        self.assertIn(acc.ACCEPTANCE_ACK, self.inputs[0])
+        self.assertIn(exe.ACK_DOWNTIME, self.inputs[2])
+        self.assertIn(exe.ACK_TARGET["flash-next"], self.inputs[3])
         self.assertFalse(any(c[:2] == ["docker", "rm"] for c in self.tx.commands))
 
     def test_dgx_fake_flash_to_27b_pass(self):
