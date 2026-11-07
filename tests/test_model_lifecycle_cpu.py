@@ -2,6 +2,9 @@
 from __future__ import annotations
 
 import unittest
+from unittest.mock import patch
+import contextlib
+import io
 
 from scripts.manager import model_lifecycle as lifecycle
 
@@ -89,6 +92,34 @@ class LifecycleTransactionCPU(unittest.TestCase):
             p, fake, {"recipe_id": "qwen38-27b"}, cache,
             record=lambda phase, data: events.append((phase, data)))
         return result, events
+
+    def test_interactive_model_lifecycle_review_is_read_only(self):
+        from wizard.console import _lifecycle_review
+        report = {
+            "status": "DRIFT_REQUIRES_RECREATE", "installed": True,
+            "running": True, "container_id": "a"*64,
+            "recipe_sha256": "b"*64, "decision": "RECREATE",
+            "diff": [{"field": "cmd", "desired": {"a": 1}, "observed": {"a": 2}}],
+            "issues": [], "advisories": [],
+        }
+        with patch("wizard.console._input", side_effect=["4", "0"]), \\
+             patch("scripts.manager.recipe_drift.plan", return_value=report) as planner, \
+             contextlib.redirect_stdout(io.StringIO()) as output:
+            _lifecycle_review("27b")
+        planner.assert_called_once_with("27b", "restart")
+        self.assertIn("Changed cmd", output.getvalue())
+        self.assertIn("No service, Docker or cache changes", output.getvalue())
+
+    def test_post_remove_receipt_failure_never_reports_restored(self):
+        fake = FakeDGX(**{"qwen38-27b": True})
+        def record(phase, detail):
+            if phase == "COMPLETE":
+                raise RuntimeError("FAILED_TO_PERSIST_RECEIPT")
+        out = lifecycle._run_transaction(
+            preview("remove", "REMOVE_ACTIVE", active="27b", running=True),
+            fake, {"recipe_id": "qwen38-27b"}, "/hf-cache", record=record)
+        self.assertEqual(out["status"], "RECOVERY_UNCERTAIN")
+        self.assertNotIn("qwen38-27b", fake.states)
 
     def test_production_dispatch_stays_locked(self):
         rc, result = lifecycle.execute(
