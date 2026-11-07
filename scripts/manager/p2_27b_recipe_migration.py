@@ -118,6 +118,217 @@ def _trial_pass(label: str) -> bool:
         return False
 
 
+def _previous_failure_file_audit(root: Path) -> tuple[dict | None, list[str]]:
+    """Verify the PREVIOUS failed run's immutable receipts and complete chain.
+
+    Do not treat a mere FAIL_RESTORED JSON value as trustworthy without the
+    event hashes, exact attempt SHA, and terminal RESTORED phase.
+    """
+    issues = []
+    try:
+        if root.is_symlink() or not root.is_dir() or root.stat().st_mode & 0o077:
+            return None, ["PRIVATE_MIGRATION_DIRECTORY_UNTRUSTED"]
+        attempts = sorted(root.glob("attempt-*.json"))
+        if len(attempts) != 1:
+            return None, ["EXACTLY_ONE_PRIOR_ATTEMPT_REQUIRED"]
+        attempt = _safe_json(attempts[0])
+        plan = attempt.get("plan_id")
+        if (not isinstance(plan, str) or not p3.SHA.fullmatch(plan)
+                or attempts[0].name != "attempt-" + plan + ".json"):
+            return None, ["PRIOR_ATTEMPT_ID_INVALID"]
+        receipt_path = root / ("result-" + plan + ".json")
+        result = _safe_json(receipt_path)
+        if (result.get("plan_id") != plan
+                or result.get("status") != "FAIL_RESTORED"
+                or result.get("executed") is not True
+                or result.get("native_tools_pass") is not True
+                or result.get("benchmark_pass") is not False
+                or result.get("benchmark_promoted") is not False
+                or result.get("backup_container_deleted") is not False
+                or result.get("original_restored") is not True
+                or result.get("issues") != [
+                    "MIGRATION_ERROR_NEW_CANONICAL_BENCHMARK_NOT_QUALIFIED"
+                ]):
+            issues.append("PRIOR_RESULT_NOT_EXACT_BENCHMARK_FAIL_RESTORED")
+        files = sorted(root.glob("event-*.json"))
+        previous = None
+        phases = []
+        for idx, file in enumerate(files, 1):
+            event = _safe_json(file)
+            digest = event.get("event_hash")
+            body = {k: v for k, v in event.items() if k != "event_hash"}
+            if (file.name != f"event-{idx:04d}.json"
+                    or event.get("seq") != idx
+                    or event.get("plan_id") != plan
+                    or event.get("previous_hash") != previous
+                    or digest != _hash(body)):
+                issues.append("PRIOR_MIGRATION_EVENT_CHAIN_INVALID")
+                break
+            previous = digest
+            phases.append(event.get("phase"))
+        required = [
+            "PLANNED", "OLD_STOPPING", "OLD_STOPPED", "BACKUP_PRESERVED",
+            "NEW_STARTING", "NATIVE_TOOLS_VERIFIED", "RESTORED",
+        ]
+        if phases != required:
+            issues.append("PRIOR_MIGRATION_NOT_TERMINALLY_RESTORED")
+        if (root / "latest-27b-benchmark.json").exists():
+            issues.append("LATEST_BENCHMARK_ALREADY_PROMOTED")
+        if (root / ("benchmark-" + plan + ".json")).exists():
+            issues.append("PRIOR_BENCHMARK_MUST_NOT_HAVE_BEEN_PROMOTED")
+        result_sha = hashlib.sha256(receipt_path.read_bytes()).hexdigest()
+        if issues:
+            return None, issues
+        return {
+            "prior_plan_id": plan,
+            "prior_original_id": attempt.get("source_id"),
+            "prior_result_sha256": result_sha,
+            "last_event_hash": previous,
+        }, []
+    except (OSError, ValueError, TypeError, KeyError, UnicodeError,
+            json.JSONDecodeError):
+        return None, ["PRIOR_MIGRATION_EVIDENCE_UNAVAILABLE"]
+
+
+def inspect_failed_rollback(*,
+        root: Path = ROOT, run: Callable[..., Any] = gpu.call,
+        inspect: Callable[..., dict] = gpu.docker_info,
+        api: Callable[[str], bool] = gpu.api_ready,
+        historical: Callable[[], dict] = historical_p3_receipts,
+        ordinary_audit: Callable[..., dict] = inspect_journal) -> dict:
+    """Read-only independent post-FAIL_RESTORED reconciliation evidence."""
+    report = {
+        "schema_version": 1,
+        "action": "P2_27B_RECIPE_MIGRATION_FAILED_ROLLBACK_AUDIT",
+        "status": "BLOCKED", "issues": [], "executed": False,
+        "docker_state_mutated": False, "prior_plan_id": None,
+        "manual_reconciliation_recorded": False,
+    }
+    previous, issues = _previous_failure_file_audit(root)
+    if issues or previous is None:
+        report["issues"] = issues
+        return report
+    report["prior_plan_id"] = previous["prior_plan_id"]
+    report["prior_result_sha256"] = previous["prior_result_sha256"]
+    report["last_event_hash"] = previous["last_event_hash"]
+    try:
+        names = _run_names(run, all_containers=True)
+        running = _run_names(run, all_containers=False)
+        old_id = previous["prior_original_id"]
+        failed_name = FAIL_PREFIX + str(old_id)[:12]
+        backup_name = BACKUP_PREFIX + str(old_id)[:12]
+        if not all(n in names for n in (
+                SOURCE_CONTAINER, FALLBACK_CONTAINER, VARIANT_CONTAINER,
+                failed_name)):
+            issues.append("PROTECTED_OR_FAILED_CONTAINERS_MISSING")
+        if backup_name in names:
+            issues.append("OLD_BACKUP_NAME_STILL_OCCUPIED")
+        if issues:
+            report["issues"] = sorted(set(issues))
+            return report
+        original, failed, flash, variant = (
+            inspect(SOURCE_CONTAINER), inspect(failed_name),
+            inspect(FALLBACK_CONTAINER), inspect(VARIANT_CONTAINER),
+        )
+        historical_result = historical()
+        lineage = (historical_result.get("records") or {}).get("a") or {}
+        if (historical_result.get("status") != "LOCAL_P3_A_B_C_RECEIPTS_VERIFIED"
+                or historical_result.get("issues")
+                or lineage.get("id_27b") != old_id
+                or lineage.get("image_27b") != PINNED_IMAGE):
+            issues.append("P3_ORIGINAL_LINEAGE_UNVERIFIED")
+        if (original.get("Id") != old_id
+                or original.get("Image") != PINNED_IMAGE
+                or original.get("Name") != "/" + SOURCE_CONTAINER
+                or original.get("State", {}).get("Running") is not True
+                or SOURCE_CONTAINER not in running):
+            issues.append("ORIGINAL_27B_RESTORED_IDENTITY_UNVERIFIED")
+        labels = (failed.get("Config") or {}).get("Labels") or {}
+        if (failed.get("Name") != "/" + failed_name
+                or failed.get("Image") != PINNED_IMAGE
+                or (failed.get("State") or {}).get("Running") is not False
+                or failed_name in running
+                or labels.get("blazux.migration") != previous["prior_plan_id"]):
+            issues.append("FAILED_NEW_NATIVE_CONTAINER_NOT_STOPPED_OR_OWNED")
+        if (flash.get("State") or {}).get("Running") or (
+                variant.get("State") or {}).get("Running"):
+            issues.append("PRESERVED_FLASH_OR_TRIAL_VARIANT_RUNNING")
+        if p3._gpu_conflicts(SOURCE_CONTAINER, run, inspect):
+            issues.append("FOREIGN_GPU_OWNER_AFTER_ROLLBACK")
+        if not api(SERVED):
+            issues.append("ORIGINAL_27B_API_HEALTH_UNVERIFIED")
+        operation = ordinary_audit(OPS_ROOT)
+        if (operation.get("status") != "VERIFIED"
+                or operation.get("phase") != "COMMITTED"
+                or operation.get("issues")):
+            issues.append("ORDINARY_OPERATING_JOURNAL_NOT_CLEAN")
+        marker = root / ("reconciled-" + previous["prior_plan_id"] + ".json")
+        if marker.exists():
+            item = _safe_json(marker)
+            report["manual_reconciliation_recorded"] = (
+                item.get("prior_plan_id") == previous["prior_plan_id"]
+                and item.get("prior_result_sha256") == previous["prior_result_sha256"]
+                and item.get("last_event_hash") == previous["last_event_hash"]
+                and item.get("original_id") == old_id
+            )
+            if not report["manual_reconciliation_recorded"]:
+                issues.append("RECONCILIATION_MARKER_DOES_NOT_MATCH_EVIDENCE")
+    except (OSError, RuntimeError, ValueError, TypeError, KeyError,
+            subprocess.TimeoutExpired):
+        issues.append("READ_ONLY_RECONCILIATION_INSPECTION_FAILED")
+    report["issues"] = sorted(set(issues))
+    if not issues:
+        report["status"] = "PRIOR_BENCH_FAIL_ROLLBACK_VERIFIED_READ_ONLY"
+        report["original_container_id"] = previous["prior_original_id"]
+    return report
+
+
+def accept_reconciliation() -> tuple[int, dict]:
+    """Operator records explicit review; NO Docker or model-state mutation."""
+    report = inspect_failed_rollback()
+    if report.get("status") != "PRIOR_BENCH_FAIL_ROLLBACK_VERIFIED_READ_ONLY":
+        return 3, report
+    if report["manual_reconciliation_recorded"]:
+        return 3, {**report, "status": "ALREADY_RECONCILED"}
+    if not (sys.stdin.isatty() and sys.stdout.isatty()):
+        return 3, {**report, "status": "BLOCKED",
+                   "issues": ["REAL_OPERATOR_TTY_REQUIRED"]}
+    expected = report["prior_plan_id"]
+    print("Verified restored original Docker/API, event chain, and failed"
+          " new container (read-only). This does not restart anything.")
+    print("Prior failed migration ID: " + expected)
+    try:
+        typed = input("Type exact PRIOR failed plan SHA to record reconciliation: ")
+        ack = input("Type I_REVIEWED_27B_BENCHMARK_FAILURE_AND_RESTORED_SERVICE: ")
+    except (EOFError, KeyboardInterrupt):
+        return 3, {**report, "status": "CANCELLED"}
+    if (typed != expected
+            or ack != "I_REVIEWED_27B_BENCHMARK_FAILURE_AND_RESTORED_SERVICE"):
+        return 3, {**report, "status": "CANCELLED"}
+    try:
+        p3._private_dir(ROOT)
+        # Re-verify after operator input; no blind assertion from stale stdout.
+        updated = inspect_failed_rollback()
+        if (updated.get("status") != "PRIOR_BENCH_FAIL_ROLLBACK_VERIFIED_READ_ONLY"
+                or updated.get("prior_plan_id") != expected):
+            return 3, {**updated, "status": "BLOCKED"}
+        path = ROOT / ("result-" + expected + ".json")
+        previous = _safe_json(path)
+        p3._write_once(ROOT, "reconciled-" + expected + ".json", {
+            "prior_plan_id": expected,
+            "prior_result_sha256": updated["prior_result_sha256"],
+            "last_event_hash": updated["last_event_hash"],
+            "original_id": updated["original_container_id"],
+            "previous_status": previous["status"],
+            "reconciled_at_utc": datetime.now(timezone.utc).isoformat(),
+        })
+        return 0, {**updated, "status": "RECONCILIATION_RECORDED",
+                   "manual_reconciliation_recorded": True}
+    except (OSError, ValueError, RuntimeError):
+        return 3, {**report, "status": "BLOCKED",
+                   "issues": ["RECONCILIATION_MARKER_WRITE_FAILED"]}
+
+
 def _load_recipe() -> tuple[dict, str]:
     raw = RECIPE.read_bytes()
     if len(raw) > 32768:
