@@ -233,16 +233,24 @@ def _restore(
                     raise RuntimeError("TRIAL_VARIANT_STOP_FAILED")
             if (inspect(VARIANT_CONTAINER).get("State") or {}).get("Running"):
                 raise RuntimeError("TRIAL_VARIANT_STILL_RUNNING")
-        if not gpu.port_free(run):
-            raise RuntimeError("RESTORE_PORT_8000_BUSY")
-        if p3._gpu_conflicts(SOURCE_CONTAINER, run, inspect,
-                             require_source_running=False):
-            raise RuntimeError("FOREIGN_GPU_BEFORE_ORIGINAL_RESTORE")
         if not _inspect_original(plan["source_container_id"],
                                  plan["source_image"], inspect=inspect):
             raise RuntimeError("ORIGINAL_ID_IMAGE_CHANGED_DURING_TRIAL")
         old = inspect(SOURCE_CONTAINER)
-        if not (old.get("State") or {}).get("Running"):
+        old_running = (old.get("State") or {}).get("Running") is True
+        if old_running and VARIANT_CONTAINER in names and (
+                inspect(VARIANT_CONTAINER).get("State") or {}).get("Running"):
+            raise RuntimeError("PARALLEL_MODELS_BEFORE_RESTORE")
+        if not old_running:
+            for _ in range(25):
+                if gpu.port_free(run):
+                    break
+                time.sleep(1)
+            else:
+                raise RuntimeError("RESTORE_PORT_8000_BUSY")
+            if p3._gpu_conflicts(SOURCE_CONTAINER, run, inspect,
+                                 require_source_running=False):
+                raise RuntimeError("FOREIGN_GPU_BEFORE_ORIGINAL_RESTORE")
             r = run(["docker", "start", SOURCE_CONTAINER], timeout=90)
             if r.returncode:
                 raise RuntimeError("ORIGINAL_27B_RESTART_FAILED")
@@ -312,14 +320,15 @@ def execute(
         cmd = fresh.get("command_private_for_guarded_executor")
         if not isinstance(cmd, list) or fresh["source_image"] not in cmd:
             return 3, _blocked("PINNED_VARIANT_COMMAND_NOT_VERIFIED")
-        _record(root, plan_id, "PLANNED")
-        # Immutable O_EXCL marker blocks any uncertain repeat after a crash.
+        # Immutable O_EXCL marker FIRST: even a crash while writing a new
+        # journal event must block blind retry after a partial transaction.
         p3._write_once(root, "attempt-" + plan_id + ".json", {
             "plan_id": plan_id, "action": "P2_FINAL_NATIVE_TOOLS_ONESHOT",
             "source_id": fresh["source_container_id"],
             "source_image": fresh["source_image"],
             "started_at_utc": datetime.now(timezone.utc).isoformat(),
         })
+        _record(root, plan_id, "PLANNED")
         old_stop_attempted = False
         result: dict[str, Any] = {
             "schema_version": 1, "action": "P2_FINAL_NATIVE_TOOLS_ONESHOT",
@@ -469,6 +478,8 @@ def main(argv: list[str] | None = None) -> int:
     if remaining < 120:
         print("BLOCKED: plan expires too soon, re-run after renewal")
         return 3
+    print("Fresh exact trial SHA: " + plan["plan_id"])
+    print("Expires (epoch seconds): " + str(plan["expires_at_epoch_seconds"]))
     print("Temporary API downtime required; no guarantee after host/Docker crash.")
     print("Original 27B WILL be restored after the probe even if PASS.")
     print("Native Tools trial-only; historical P3 receipts are immutable.")
@@ -479,7 +490,14 @@ def main(argv: list[str] | None = None) -> int:
     except (KeyboardInterrupt, EOFError):
         print("CANCELLED; no service action")
         return 3
-    code, outcome = execute(exact, downtime, target)
+    old_handler = signal.getsignal(signal.SIGTERM)
+    def _shutdown(_signum: int, _frame: Any) -> None:
+        raise KeyboardInterrupt("NATIVE_TOOLS_TRIAL_INTERRUPTED_BY_SIGTERM")
+    signal.signal(signal.SIGTERM, _shutdown)
+    try:
+        code, outcome = execute(exact, downtime, target)
+    finally:
+        signal.signal(signal.SIGTERM, old_handler)
     print(json.dumps(outcome, indent=2, sort_keys=True))
     return code
 
