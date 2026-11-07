@@ -26,6 +26,15 @@ ORIGINAL_CONTAINER = "qwen38-flash"
 ORIGINAL_ID = "qwen3.8-flash-next"
 HOST_PORT = 8000
 
+# Official vLLM Qwen3.8-27B recipe tool profile. Opt-in ONLY: the
+# historical P2/P3 exact-approved container is immutable and may NOT be
+# recreated or have its startup flags changed by merely updating source.
+TOOL_CALLING_ARGS = (
+    "--enable-auto-tool-choice",
+    "--tool-call-parser", "qwen3_coder",
+    "--reasoning-parser", "qwen3",
+)
+
 # Conservative *unvalidated* first-boot settings. Not a memory-fit claim.
 PROFILE = {
     "max_model_len": 8192,
@@ -44,12 +53,18 @@ def _cache_path(cache_root: Path | None) -> Path:
         "HF_CACHE", str(Path.home() / ".cache/huggingface"))).expanduser().resolve()
 
 
-def _candidate_argv(cache: Path, image_id: str) -> list[str]:
-    """Source-only command preview. Never pass its value to subprocess."""
+def _candidate_argv(cache: Path, image_id: str, *,
+                    tool_calling: bool = False) -> list[str]:
+    """Source-only command candidate; opt-in tool profile never changes old trials.
+
+    Existing P2/P3 executions use tool_calling=False by default. Do NOT use
+    this command to replace the preserved 27B container; separate runtime
+    migration, rollback planning, and operator downtime consent are required.
+    """
     if not IMAGE_RE.fullmatch(image_id):
         raise ValueError("invalid immutable local image ID")
     snapshot = f"/hf/hub/{REPO_DIR}/snapshots/{REVISION}"
-    return [
+    command = [
         "docker", "run", "-d", "--name", TARGET_CONTAINER,
         "--gpus", "all", "--ipc=host", "--shm-size", "16g",
         "-p", f"{HOST_PORT}:8000",
@@ -66,6 +81,9 @@ def _candidate_argv(cache: Path, image_id: str) -> list[str]:
         "--gpu-memory-utilization", PROFILE["gpu_memory_utilization"],
         "--enforce-eager",
     ]
+    if tool_calling:
+        command.extend(TOOL_CALLING_ARGS)
+    return command
 
 
 def build_27b_launch_preview(
