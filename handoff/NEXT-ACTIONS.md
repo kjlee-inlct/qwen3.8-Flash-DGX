@@ -1,3 +1,11 @@
+## 2026-11-07 current immediate operator read-only / inference task
+
+- [ ] On *real DGX*, while NVIDIA 27B is still active, pull source only and run `bash scripts/temporary/operational-27b-curl-smoke.sh`. Supply output (health, served ID, completion). It makes **one bounded localhost GPU inference** but does NOT switch/stop/start containers. `LIVE_SERVICE_VERIFIED` alone is not inference proof. Do not claim actual pass before output.
+- [ ] Review source-only CPU CI for the new fake-curl tests and Wizard hint. Do not authorize general switch execution from a smoke result.
+- [ ] Continue source hardening of the separately guarded general operating switch, crash-recovery fail-closed behavior and guided UX, with **real DGX switching NOT_RUN**. P3-A/B/C are complete and must never be replayed. Draft PR #1 remains unmerged.
+
+---
+
 ## 2026-11-07 — NEXT after source-only operating switch implementation
 
 The new ordinary switch PREVIEW and independent guarded executor SOURCE are implemented on the existing branch. **No Wizard execute route and no actual DGX operation were enabled.** Next: (1) confirm the new Fake-DGX executor and preflight CI passes including stop→start, exact identity, rollback success/fail and retry denial; (2) review the new execution contract and identify state machine/lock/recovery limitations; (3) implement a real user-friendly guided review/approval flow only after safety gates and CPU tests qualify, keeping live execution disabled until separately authorized DGX maintenance; (4) run operator-initiated read-only \`./wizard.sh switch flash-next-27b operational --target flash-next --plan --json\` optionally after safe fast-forward pull; (5) request a separately scoped consent before ANY live 27B downtime or repeated switch test. P4 remains conditional, P5 Orcarouter source audit after UX, P6 after P5 GPU qualification, P7 after service/proxy/gateway integration. Do not reuse one-off P3 stage receipts as authorization.
