@@ -167,6 +167,15 @@ def _switch_preview(model: str) -> None:
     print("  guarded executor, recovery tests and operator downtime approval qualify.")
 
 
+def _switch_guided(model: str) -> None:
+    """Model-first, release-gated review; never replay P3 acceptance stages."""
+    if model not in ("flash-next", "27b"):
+        print("General switching for this model is not runtime-qualified.")
+        return
+    from scripts.manager.operational_wizard import guided
+    guided(model)
+
+
 def _model_screen(model: str) -> None:
     while True:
         doc = model_workflow(model)
@@ -175,7 +184,7 @@ def _model_screen(model: str) -> None:
         print("  2. All model actions / diagnostics")
         print("  3. Refresh observed state")
         print("  4. Past Verify / Benchmark / transitions (read only)")
-        print("  5. Review ordinary model switch (read only)")
+        print("  5. Review ordinary model switch (read only)")\n        print("  6. Guided operating switch (release gated)")
         print("  0. Back")
         selected = _input("Choice (0 back): ")
         if selected in (None, "0"):
@@ -205,6 +214,8 @@ def _model_screen(model: str) -> None:
             _history_menu(model)
         elif selected == "5":
             _switch_preview(model)
+        elif selected == "6":
+            _switch_guided(model)
         else:
             print("Unknown option; nothing executed.")
 
