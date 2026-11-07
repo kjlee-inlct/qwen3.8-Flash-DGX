@@ -15,6 +15,10 @@ from scripts.manager.p2_27b_tool_variant import (
     SOURCE_CONTAINER, TOOL_CHAT_TEMPLATE, VARIANT_ID,
 )
 
+# Actual DGX hash of the exact pinned NVIDIA snapshot template (2026-11-07).
+# Pinning the contents as well as the revision makes drift fail closed.
+EXPECTED_TEMPLATE_SHA256 = "c3cf9e34abf4f9e36c2d72165aa9c132d3e2a725b6c2586aaa3a8af9d7a81041"
+
 # Executed inside the existing running container with -B and HF offline.
 # Avoid printing any prompt bodies or private tokenizer contents.
 CPU_PROBE = r'''
@@ -42,6 +46,8 @@ try:
     if not 1000 <= len(source.encode("utf-8")) <= 100000:
         raise ValueError("PINNED_CHAT_TEMPLATE_SIZE_UNEXPECTED")
     r["template_sha256"] = hashlib.sha256(source.encode("utf-8")).hexdigest()
+    if r["template_sha256"] != "__EXPECTED_TEMPLATE_SHA256__":
+        r["issues"].append("PINNED_CHAT_TEMPLATE_SHA256_MISMATCH")
     for marker in ("<tool_call>", "<function=", "<parameter=",
                    "<tool_response>", "enable_thinking"):
         if marker not in source:
@@ -143,7 +149,9 @@ except Exception as exc:
 r["status"] = ("CPU_TEMPLATE_RENDER_VALIDATED_ONLY"
                if not r["issues"] else "BLOCKED")
 print(json.dumps(r, ensure_ascii=False, sort_keys=True))
-'''.replace("__TEMPLATE_PATH__", TOOL_CHAT_TEMPLATE)
+'''.replace("__TEMPLATE_PATH__", TOOL_CHAT_TEMPLATE).replace(
+    "__EXPECTED_TEMPLATE_SHA256__", EXPECTED_TEMPLATE_SHA256,
+)
 
 
 def _stderr_hint(stderr: str | None) -> str | None:
@@ -184,6 +192,7 @@ def inspect_template_cpu(
         "status": "BLOCKED", "variant_id": VARIANT_ID,
         "original_container": SOURCE_CONTAINER,
         "template_path": TOOL_CHAT_TEMPLATE,
+        "expected_template_sha256": EXPECTED_TEMPLATE_SHA256,
         "docker_state_mutated": False, "gpu_inference_executed": False,
         "execution_enabled": False, "approval_accepted": False,
         "plan_id": None, "issues": [],
