@@ -1,3 +1,9 @@
+## R1AC — 2026-11-08 — P4-A read-only inventory authorized; no cleanup inferred
+
+P4-A may inspect Docker container/API inventory, `docker system df`, configured/mounted HF caches and known model repository directory allocated sizes/free space with bounded no-shell read-only commands. Redact host paths, env and private resources. Report Docker reclaimable as unverified estimates and avoid adding model repo + parent cache totals. Model storage sizes are not verified safe-reclaimable bytes; P8 real Flash reinstall/rollback may require those cached assets. **No P4-B candidate decisions, P4-C execute/approval, Docker stop/start/rm, image/prune, cache writes or model switch** without later explicit user instruction and fresh per-action consent. P3 E/F source-level closeout is complete, but P8 production acceptance remains pending.
+
+---
+
 ## R1AB — 2026-11-08 — P4 no-start instruction and P3/P8 scope boundary
 
 No P4 source code, inventories, cleanups or container/storage activities without fresh explicit user authorization. P3-E is source draft and bounded read-only host evidence; P3-F is CPU/Fake-DGX source proof with production lock. P8 exclusively owns independently approved real Flash reinstall, lifecycle release, injected fault/automatic recovery and final signoff. Preserve vLLM 0.32, one active GPU model, :8000, HF caches, 27B canonical recipe and historical P3 receipts. `docs/P3-CLOSEOUT-AND-P8-HANDOFF-20261108.md`.

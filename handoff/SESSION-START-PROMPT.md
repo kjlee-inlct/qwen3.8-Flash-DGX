@@ -1,3 +1,13 @@
+## NEXT — ONLY P4-A READ-ONLY CAPACITY/STATE INVENTORY, NO DELETION
+
+P3-E and P3-F DGX verification have completed in their **source/metadata/CPU handoff scope**, NOT runtime reinstall or production lifecycle release. Actual: E 11 indexed shards / 129,771,270,410 apparent bytes / metadata-template hashes / issues=[], F 168/168 CPU PASS in 7 suites, 27B API 8/8. See `docs/P3-CLOSEOUT-AND-P8-HANDOFF-20261108.md`.
+
+**Operator now authorizes P4-A observation as the next stage before any disposition decision; previous P4 hold remains valid for all mutation and P4-B/C work.** Source-only Wizard command `./wizard.sh storage flash-next inventory --json` (alias `./wizard.sh p4 inventory --json`) reports Docker capacity *estimates*, configured HF cache/repository allocated bytes, filesystem free/total, model/container activity and uncertainty. No raw paths/secrets, no deletion plan or approval. Actual DGX P4-A command has NOT_RUN. See `docs/P4-A-STORAGE-CAPACITY-AND-ASSET-INVENTORY-20261108.md`.
+
+After inspecting actual P4-A output, decide *whether* any cleanup is useful, accounting for shared image layers, symlinked checkpoint views, P8 rollback/reinstall asset requirements. Do not begin P4-B candidate deletion work or P4-C cleanup until another explicit operator decision. Preserve vLLM 0.32, single GPU model, :8000, 27B currently live, P3 receipts, HF assets, P8 release locks and Draft PR #1.
+
+---
+
 ## IMMEDIATE — FINISH P3; HOLD P4 (2026-11-08)
 
 The operator explicitly prohibited starting P4. P4 source module/test/CI were reverted in [1110681](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/commit/1110681f451bc72470454bbbee1e1d79d6406a1d). **P4 NOT_STARTED/OPERATOR_HOLD**. Read `docs/P3-CLOSEOUT-AND-P8-HANDOFF-20261108.md`.

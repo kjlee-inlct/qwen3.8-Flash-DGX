@@ -1,3 +1,11 @@
+## 2026-11-08 — Actual P3 source-handoff evidence and P4-A-only capacity observation
+
+P3-E host assets actual read-only PASS within **metadata/index/shard presence** scope: pinned FP8-hybrid view, index 31,907,813 bytes/299,845 entries, 11 shards size sum 129,771,270,410 apparent bytes, template/meta hashes; never full cryptographic shard integrity or fresh reinstall. P3-F actual local 7-suite 168/168 CPU PASS with production gate off; 27B API current 8/8 PASS. This completes P3's **source/CPU handoff** prerequisites to P8, not P8 runtime signoff.
+
+P4-A begins as Wizard read-only capacity inventory. No measured real DGX P4-A storage output yet, and no deletion decision is implied. Preserve all Flash/27B/Orcarouter assets pending P8 acceptance and an explicit separate P4 disposal choice. P8-R0/R1/R2/R3 scope stays unchanged; real canonical reinstall, induced fault recovery and production release NOT_RUN.
+
+---
+
 ## 2026-11-08 — Explicit P3-E/F handoff to P8; P4 is held
 
 Operator directs P3 closeout, **P4 NOT_STARTED**. See `docs/P3-CLOSEOUT-AND-P8-HANDOFF-20261108.md`. P3-E source/read-only evidence and P3-F CPU/Fake-DGX evidence must not be mistaken for real fresh Flash reinstall or production lifecycle acceptance.

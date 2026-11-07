@@ -1,3 +1,11 @@
+## D-067 — 2026-11-08 — P3 source closeout verified; P4-A read-only capacity review precedes any removal decision
+
+Operator's newest DGX logs completed P3-E bounded asset examination (11 reference shards, 129,771,270,410 apparent bytes, 299,845 weight-map entries, hashes/issues=[]), P3-F local seven-suite CPU 168/168 PASS (release false), and 27B current 8/8 health. These are not complete model weight integrity, canonical Flash reinstall, general production lifecycle or recovery approval, all handed to P8.
+
+The operator clarified P4: do not begin deletion decisions or operations first. **P4-A must inventory actual current state and storage capacities using the Wizard, read-only**. Earlier P4 prohibition is superseded only to permit this inventory stage; P4-B candidate review and P4-C deletion remain NOT_STARTED/unapproved. Docker df reclaimable and nested HF repo allocations are not additive or intrinsically safe to remove. Explicit consent required for later B/C scope and each real mutating action. Source CI [42395243458](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42395243458) 887/887 PASS, 40 groups; actual DGX P4-A report pending. Document: `docs/P4-A-STORAGE-CAPACITY-AND-ASSET-INVENTORY-20261108.md`.
+
+---
+
 ## D-066 — 2026-11-08 — P4 held, P3 source closeout distinguished from P8 live acceptance
 
 Current operator instruction **DO NOT START P4** supersedes earlier optional-phase sequencing. Premature P4 source-only work was reverted ([1110681](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/commit/1110681f451bc72470454bbbee1e1d79d6406a1d)); P4 remains NOT_STARTED. P3-E requires only current read-only host-asset evidence before source-handoff completion, P3-F requires current CPU-only 7-suite evidence and release gate OFF. Their **real production** Flash reinstall, generic lifecycle execution and recovery are P8 acceptance work, not P3 PASS. Historical real P3-G successful two-way switch PASS/CLOSED. P8 fault/automatic restoration/production GO NOT_RUN; no new execution approval. See `docs/P3-CLOSEOUT-AND-P8-HANDOFF-20261108.md`.
