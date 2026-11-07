@@ -287,9 +287,11 @@ def _service_menu() -> None:
             print("Unknown option.")
             continue
         if selected == "cleanup":
-            print("Manifest-owned cleanup: only TWO stopped historical 27B"
-                  " test containers; never remove active model, image, HF"
-                  " cache or immutable evidence.")
+            print("This cleanup batch selects TWO stopped historical 27B"
+                  " test containers from the manifest. It does not uninstall"
+                  " the currently running model. Other models remain removable"
+                  " and reinstallable through separately approved lifecycle actions."
+                  " Images, HF cache and evidence are not removed by this batch.")
             rc = manager.run(["cleanup", "--plan"])
             if rc:
                 print("No approved cleanup preview. Docker remains unchanged.")
