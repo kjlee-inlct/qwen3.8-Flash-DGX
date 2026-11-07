@@ -81,7 +81,7 @@ class FakeOperatingTransactionCPU(unittest.TestCase):
 
     def execute(self, target="flash-next", *, sha=None, ack=True):
         if sha is None:
-            sha = self.planner(target, root=self.fake.ops).get("plan_id")
+            sha = exe.execution_plan_id(self.planner(target, root=self.fake.ops))
         return exe.execute(
             target, sha, exe.ACK_DOWNTIME if ack else "not approved",
             exe.ACK_TARGET[target], root=self.fake.ops,
@@ -125,8 +125,16 @@ class FakeOperatingTransactionCPU(unittest.TestCase):
                 self.assertEqual(before, after)
                 self.assertEqual(self.active(), "27b")
 
+    def test_read_only_preview_fingerprint_cannot_authorize_backend(self):
+        preview = self.planner("flash-next", root=self.fake.ops)
+        self.assertNotEqual(preview["plan_id"], exe.execution_plan_id(preview))
+        rc, doc = self.execute(sha=preview["plan_id"])
+        self.assertEqual(rc, 3)
+        self.assertIn("EXPIRED_OR_CHANGED_OPERATING_PLAN", doc["issues"])
+        self.assertFalse(any(c[:2] == ["docker", "stop"] for c in self.commands))
+
     def test_expired_or_changed_fingerprint_rejected_pre_dispatch(self):
-        good = self.planner("flash-next", root=self.fake.ops)["plan_id"]
+        good = exe.execution_plan_id(self.planner("flash-next", root=self.fake.ops))
         def drifted(target, *, root):
             data = self.planner(target, root=root)
             data["plan_id"] = "0" * 64
