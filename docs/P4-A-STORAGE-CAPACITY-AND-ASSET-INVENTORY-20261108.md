@@ -1,5 +1,9 @@
 # P4-A — Wizard capacity and state inventory (read-only, 2026-11-08)
 
+## Actual real-DGX P4-A result — 2026-11-08
+
+**PASS / READ_ONLY_INVENTORY_COMPLETE / issues=[]** at checkout `a29cd6e`, supplied by operator after running the Wizard. See [actual DGX capacity evidence](P4-A-DGX-READONLY-CAPACITY-EVIDENCE-20261108.md). File-system total 982,819,848,192 bytes / free 324,880,961,536 bytes (~33.06%); two cache roots returned identical filesystem totals/free (do not add), root allocated 267,995,971,584 / 192,507,006,976 bytes, 27B API verified. Docker estimates only, `reclaimable_bytes_verified=false`. **No deletion; P4-B/C unauthorized; P8 NOT_RUN/NOT_RELEASED.** Historical statements lower down about DGX inventory pending are pre-observation state.
+
 ## Decision / stage separation
 
 Operator requested **P4-A capacity and current-asset state reconnaissance BEFORE deciding whether anything should be deleted**. This supersedes the earlier P4 no-start instruction **only for P4-A read-only implementation and observation**. **P4-B disposal candidates and P4-C retirement execution are NOT_STARTED/NOT_APPROVED.** This is not an implicit instruction to delete Flash, containers, Docker images, HF blobs, derivative views, or historical evidence.

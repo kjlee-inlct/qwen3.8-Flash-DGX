@@ -1,3 +1,9 @@
+## 2026-11-08 — P4-A operator real DGX inventory collected; pause before P4-B
+
+P4-A is now **actual DGX READ_ONLY_INVENTORY_COMPLETE / issues=[]**, not merely source ready. Evidence and exact bytes: `docs/P4-A-DGX-READONLY-CAPACITY-EVIDENCE-20261108.md`. Current model 27B API verified, Flash stopped/present, Orcarouter source present, ~324.88 GB (33.06%) filesystem free. Docker reclaimable 182.7 MB containers and 2.088 MB build-cache are **display estimates only** and no verified safe reclaim. Preserve caches, Docker images, stopped Flash, 27B, Orcarouter, receipts, Open WebUI and Portainer. **Do not begin P4-B review/candidate work or P4-C deletion without another operator instruction**. P8 real install/fault/release remains separate. GitHub branch source checkout for the real inventory was `a29cd6e` (889/889 source tests verified on preceding CI); later documentation-only commits do not retroactively change observed DGX runtime.
+
+---
+
 ## 2026-11-08 — P4-A next: actual DGX read-only inventory, revised completeness safeguards
 
 P4-A source now treats incomplete Docker capacity categories and GPU/port owners inconsistent with the API-verified active model as **partial evidence**, not a clean inventory. Review the actual operator-side `./wizard.sh storage flash-next inventory --json` output after a safe fast-forward. Confirm all four Docker categories and host cache allocated/free bytes; do not infer reclaimable disk capacity or perform cleanup. P4-B/C and P8 remain separately gated. Source CI must be checked after the latest commit; actual DGX P4-A has not been reported.

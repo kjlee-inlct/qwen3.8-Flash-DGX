@@ -1,3 +1,9 @@
+## 2026-11-08 — P4-A actual DGX capacity inventory: READ_ONLY PASS / COMPLETE
+
+Operator ran `./wizard.sh storage flash-next inventory --json` at checkout `a29cd6e`: `READ_ONLY_INVENTORY_COMPLETE`, `issues=[]`, `active_api_verified=true`, 27B active, stopped Flash preserved, Orcarouter model cache present without a container, one GPU and one port-8000 owner, all four Docker capacity categories. File-system total **982,819,848,192 bytes**, free **324,880,961,536 bytes** (~**33.06% free**); both HF cache roots returned the *same* filesystem total/free, so never add those values. Root allocated bytes **267,995,971,584** and **192,507,006,976**; known model-repository allocated sizes: Flash **75,967,504,384**, 27B **21,932,584,960**, Orcarouter **177,686,446,080**. Docker displayed reclaimable: containers **182.7MB**, build cache **2.088MB**, images/volumes **0B**; **not** verified safe reclaimable bytes. See `docs/P4-A-DGX-READONLY-CAPACITY-EVIDENCE-20261108.md` for bounded source, units, and non-additivity caveats. No deletion or service mutation; **P4-B/C NOT_STARTED/NOT_APPROVED**, **P8 NOT_RUN/NOT_RELEASED**. Do not repeat P3-A/B/C/G.
+
+---
+
 ## 2026-11-08 — P4-A source guard: Docker category completeness and live owner matching
 
 The read-only inventory now fails closed to partial when any Docker `system df` category is missing or when the single reported GPU/host-port-8000 owner is another managed container rather than the API-verified active model. Added Fake-DGX regression cases for both. No GPU, Docker, HF, recipe, or service mutations; no P4-B/C authorization. CI and real DGX capacity remain separate evidence.
