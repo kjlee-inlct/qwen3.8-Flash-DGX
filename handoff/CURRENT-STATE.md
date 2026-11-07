@@ -1,3 +1,13 @@
+## 2026-11-07 — HISTORICAL EVIDENCE VIEW AND GUARDED P2/P3 COPY ADDED (SOURCE ONLY)
+
+Latest source adds a **read-only model-indexed history** for original Flash Verify/Benchmark, 27B GPU trials/benchmarks, stage A/B model transitions, diagnostics and optional operator reports. The service-policy manifest supplies human-facing model IDs; the UI hides internal P-codes. It distinguishes Flash-Next direct throughput from 27B E2E and decode-proxy throughput. History reads both old `~/.local/state/blazux-wizard/p1,p2,p3` and new ignored repo `reports/`, deduplicates byte-identical SHA256, and sorts by UTC event time. CPU-only synthetic fixtures test this.
+
+Stage 1 copy-only consolidation: `./wizard.sh evidence migrate --plan` / `--guided` or main Wizard `3 Advanced → 8` generates and revalidates a digest-bound fresh copy plan, requires the literal full SHA in prompt, writes private 0600 append-only files under `reports/models/<served-id>`, `reports/transitions/<direction>`, `reports/diagnostics/<served-id>`; no source deletion. P2/P3 original state/journal/locks and original trial/transition evidence remain authoritative; no change to their live writers or restore mechanics. Stage 2 native writer mirrors and stage 3 full state relocation are **not implemented**, by design until later real-DGX review. Source approval tests are not evidence of a DGX import.
+
+**P3-C next:** Actual operator-provided P3-B and post-B P1 PASS; fresh stage-C read-only plan on DGX NOT_RUN. Request `./wizard.sh switch flash-next-27b stage-c --plan --json` after source CI+ff-only update, then evaluate its exact live source/target/receipt gates. C downtime NOT_AUTHORIZED and no switch performed. See [migration document](../docs/MODEL-EVIDENCE-HISTORY-MIGRATION-20261107.md) and [next actions](NEXT-ACTIONS.md).
+
+---
+
 ## 2026-11-07 — OPERATOR POST-B P1 ACTUAL PASS / MODEL-CENTERED WIZARD UX SOURCE UPDATE
 
 The operator supplied `blazux-wizard.zip`, confirming DGX **P1 Verify PASS** (baseline/extended + text/chat/tools/vision, UTC 2026-11-06T23:26:27Z) and **P1 Benchmark PASS** (UTC 23:30:31Z, 3 requests, 64 tokens, concurrency 1, seed 1234; 37.9527 tokens/sec; TTFT p50 1.384594 s, p95 1.779602 s; latency p50 1.724560 s, p95 1.813754 s). Both have distinct typed exact plan IDs and immutable old-path receipts under `~/.local/state/blazux-wizard/p1`. P3-B stage-B canonical state PASS, existing original NVIDIA Flash-Next serving :8000 and post-B read-only diagnostics PASS with expected own name/port collision rc3. **P3-C NOT_AUTHORIZED/NOT_RUN**; no automatic phase transition. Original historical receipts must never be rewritten.
