@@ -25,6 +25,10 @@ VARIANT_CONTAINER = "qwen38-27b-native-tools-v1"
 SOURCE_CONTAINER = TARGET_CONTAINER
 FALLBACK_CONTAINER = "qwen38-flash"
 SNAPSHOT = "/snapshots/" + REVISION
+# Use the NVIDIA-published template from the exact pinned snapshot, not a
+# locally invented or floating-branch copy. Source-only until live validation.
+TOOL_CHAT_TEMPLATE = ("/hf/hub/models--nvidia--Qwen3.8-27B-NVFP4"
+                      + SNAPSHOT + "/chat_template.jinja")
 FULL_SHA = re.compile(r"^[0-9a-f]{64}$")
 
 
@@ -37,6 +41,11 @@ def variant_command(cache: Path, image_id: str) -> list[str]:
     if command[name_at] != SOURCE_CONTAINER:
         raise ValueError("ORIGINAL_RECIPE_IDENTITY_DRIFT")
     command[name_at] = VARIANT_CONTAINER
+    # A standalone chat_template.jinja exists in NVIDIA revision 482ca0f;
+    # tokenizer_config.json has no embedded chat_template. Explicitly pin it
+    # for the variant so tool formatting is deterministic on vLLM 0.32.
+    tool_start = len(command) - len(TOOL_CALLING_ARGS)
+    command[tool_start:tool_start] = ["--chat-template", TOOL_CHAT_TEMPLATE]
     image_at = command.index(image_id)
     command[image_at:image_at] = [
         "--label", "blazux.variant=" + VARIANT_ID,
@@ -222,11 +231,13 @@ def inspect_variant(
         "api_model_id": SERVED, "host_port": 8000,
         "vllm_version_policy": "0.32",
         "tool_calling_args": list(TOOL_CALLING_ARGS),
+        "tool_chat_template_path": TOOL_CHAT_TEMPLATE,
         "launch_profile": dict(PROFILE),
         "candidate_command_NOT_EXECUTABLE": candidate,
         "outstanding_gates": [
             "verify_exact_vllm032_image_parser_registry_qwen3_coder_and_qwen3",
             "verify_pinned_nvidia_tokenizer_chat_template_tool_and_reasoning_compatibility",
+            "run_cpu_only_template_render_audit_before_live_variant_approval",
             "qualify_isolated_variant_start_stop_original_rollback_with_fault_injection",
             "integrate_variant_into_service_manifest_and_journal_before_any_execute",
             "independent_fresh_operator_downtime_approval_and_TTY",
