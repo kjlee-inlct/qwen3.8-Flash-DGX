@@ -1,3 +1,9 @@
+## D-064 — 2026-11-08 — Model index uses separate bounded read cap, not an 8 MiB general metadata cap
+
+Real DGX read-only Flash preflight returned `READ_SHARD_INDEX:FILE_EXCEEDS_BOUNDED_READ`, showing a generic-metadata limit mismatch in the **observer**, not demonstrated model damage. Source-only fix [56d39e4](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/commit/56d39e4acb5d4e69777372283fe5f8839a16fc7c) introduces a hard, independent 128 MiB max for the model's safetensors index, while retaining 8 MiB for small metadata and 256 KiB for chat template. Never read beyond limit+1 bytes; report only safe size numbers. Keep index JSON and path checks fail-closed. Operator did not provide actual index size; if it exceeds dedicated max, investigate and request a policy review rather than silently widening it. CI [42391564016](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42391564016) **876/876 PASS source-only**. No promotion of Flash reinstall, no service mutation or P8 release.
+
+---
+
 ## 2026-11-08 — P3-E real DGX Flash host asset preflight blocked; diagnostic patch/source CI
 
 **Actual operator DGX evidence, no Docker mutation:** `python3 -m scripts.manager.flash_host_assets --json` returned `status=BLOCKED`, issue `FLASH_HOST_ASSET_PREFLIGHT:ValueError`, `legacy_hf_bind_writable=true`, `indexed_shard_count=0`, `metadata_sha256={}`, `template_sha256=null`, `verified_model_revision=true`. This only establishes that the **old observer** advanced past pinned command/env/cache bind, then raised a ValueError during an unidentified local-file validation step. Neither zero shards nor `verified_model_revision=true` proves a missing model or verified revision bytes. **No user-provided evidence of broken inference or failed reinstall.**
