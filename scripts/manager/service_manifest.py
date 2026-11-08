@@ -31,19 +31,50 @@ def manifest_from_observation(inv: dict, *, desired: str | None = None,
     models = cfg["models"]
     if desired is not None and desired not in models:
         raise ValueError("invalid desired model")
+    # Trial candidates are not canonical model registrations: recognize the
+    # exact pinned P5 development container separately without promoting it.
+    # Never use loose "qwen38-orcarouter*" prefix matching.
+    errors = list(inv.get("errors", []))
+    trial_name = None
+    trial_served_id = None
+    try:
+        recipe = manifest_registry.load("orcarouter_recipe")
+        trial = recipe["trial"]
+        profile = recipe["profiles"][trial["profile"]]
+        if (recipe["model"]["repo_id"] != models["orcarouter"]["checkpoint"]
+            or recipe["model"]["revision"] != models["orcarouter"]["pinned_revision"]
+            or recipe["vllm_version"] != "0.32.0"
+            or recipe["launch_allowed"] is not False
+            or recipe["register_as_runtime_recipe"] is not False
+            or trial["profile"] != "mtp0"
+            or not trial["container_name"].startswith("qwen38-orcarouter-")
+            or trial["container_name"] == models["orcarouter"]["container_name"]
+            or not trial["adapter"].startswith("qwen4exp-qsa62318-lmhead-v032-")
+            or not isinstance(profile["served_id"], str)
+            or profile["served_id"] != models["orcarouter"]["proposed_served_ids"]["mtp0"]):
+            raise ValueError("P5_TRIAL_POLICY_IDENTITY_DRIFT")
+        trial_name, trial_served_id = trial["container_name"], profile["served_id"]
+    except (OSError, KeyError, ValueError, TypeError):
+        errors.append("P5_TRIAL_RECIPE_OBSERVATION_UNAVAILABLE")
     present = []
     running = []
     for model_key, desc in models.items():
-        for container in inv.get("containers", []):
-            if container.get("name") != desc["container_name"]:
-                continue
-            row = {"model": model_key, "container_name": desc["container_name"],
-                   "image_id": container.get("image_id"),
-                   "status": container.get("status"),
-                   "ports": container.get("ports")}
-            present.append(row)
-            if str(container.get("status", "")).startswith("Up"):
-                running.append(row)
+        allowed = [(desc["container_name"], False)]
+        if model_key == "orcarouter" and trial_name:
+            allowed.append((trial_name, True))
+        for name, is_trial in allowed:
+            for container in inv.get("containers", []):
+                if container.get("name") != name:
+                    continue
+                row = {"model": model_key, "container_name": name,
+                       "image_id": container.get("image_id"),
+                       "status": container.get("status"),
+                       "ports": container.get("ports"),
+                       "p5_development_trial": is_trial,
+                       "served_id": trial_served_id if is_trial else desc.get("served_id")}
+                present.append(row)
+                if str(container.get("status", "")).startswith("Up"):
+                    running.append(row)
     # Managed-model removal/reinstallation is a separate lifecycle operation,
     # NOT prohibited by the selected test-container cleanup inventory.
     lifecycle = {
@@ -73,7 +104,6 @@ def manifest_from_observation(inv: dict, *, desired: str | None = None,
         str(c.get("status", "")).startswith("Up")
         for c in download_containers
     )
-    errors = list(inv.get("errors", []))
     if len(running) > 1:
         errors.append("SINGLE_ACTIVE_MODEL_POLICY_VIOLATION")
     host_port = cfg["api"]["host_port"]
@@ -95,6 +125,9 @@ def manifest_from_observation(inv: dict, *, desired: str | None = None,
         "desired_model": desired,
         "observed_state": state, "observed_model": live_owner,
         "managed_containers": present,
+        "p5_trial_active": (len(running) == 1 and
+                            running[0].get("p5_development_trial") is True),
+        "p5_trial_candidate_name": trial_name,
         "managed_container_lifecycle": lifecycle,
         "retired_container_inventory": retired_seen,
         "retired_container_manifest_names": sorted(retire_names),
