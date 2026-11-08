@@ -10,6 +10,15 @@
 
 ---
 
+## 2026-11-08 — REAL DGX pinned LM-head metadata PASS; P5 CPU suite BLOCKED (117 executed, exit 1)
+
+Operator fast-forwarded to `596a6839cd34117f234fd28d80c0412857994326` and ran the non-mutating `python3 -m scripts.manager.p5_checkpoint_preflight --json`. **Real pinned checkpoint metadata PASS**: `ignore_lm_head=false`, explicit matched quant group `group_0`; `lm_head.weight` F8_E4M3 shape `[248320,2560]` in `model-00017-of-00017.safetensors`; `lm_head.weight_scale` BF16 shape `[248320,1]` in `model-00016-of-00017.safetensors`. Manifest PASS; checkpoint issues empty. This rules against simple LM-head ignore/no-quant-target hypotheses **for this snapshot**; does NOT prove engine quant-method resolution, actual registered parameter or GPU correctness (`weight_registration_verified=false`, `gpu_verified=false`).
+
+The same real DGX preflight returned **`status=BLOCKED`**, `cpu_tests.count=117` (number **executed, not passed**), `cpu_tests.exit_code=1`, `issues=["P5_PREFLIGHT_CPU_TESTS_FAILED"]`. The original one-shot script suppressed the unittest failure lines, so the exact failing case remains **UNKNOWN**, not an observed checkpoint defect. Previous GitHub Actions 117/117 CPU result at the same source HEAD and the DGX local nonzero exit are distinct evidence; do not override one with the other.
+
+Remediation commits following this observation update `scripts/manager/p5_checkpoint_preflight.py` to record **only bounded test IDs, failure counts and exception class names** in JSON (no raw paths, model prompts, cache content, or tracebacks); CPU execution is pinned to repository ROOT. Additional safe-output tests were added. **Operator next:** after new CI and `git pull --ff-only`, repeat exactly `python3 -m scripts.manager.p5_checkpoint_preflight --json` and return `cpu_tests.failing_test_ids`, `reported_failure_counts`, `exception_types`, `issues`. Do not attempt `p5 trial prepare/plan/execute` while preflight is BLOCKED. A later source PASS is not GPU acceptance. Keep original checkpoint, images, cache, services, old trial receipts, Draft PR and all operating constraints.
+
+
 
 ## 2026-11-08 — P5 pinned LM-head checkpoint preflight (NEW SOURCE, NOT GPU QUALIFIED)
 
