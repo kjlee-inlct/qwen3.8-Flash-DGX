@@ -89,7 +89,8 @@ def run(argv, *, as_json=False, dry_run=False):
         else:
             print("Service status — " + document["status"])
             print(json.dumps(document, sort_keys=True, indent=2))
-        return 0 if document["status"] == "LIVE_SERVICE_VERIFIED" else 3
+        return 0 if document["status"] in ("LIVE_SERVICE_VERIFIED",
+                                           "LIVE_P5_TRIAL_API_VERIFIED") else 3
     if args == ["inventory"]:
         try:
             document = inspect_service()
