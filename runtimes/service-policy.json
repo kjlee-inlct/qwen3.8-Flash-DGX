@@ -43,7 +43,7 @@
       "served_id": null,
       "container_name": "qwen38-orcarouter",
       "qualification": "NOT_VERIFIED",
-      "comment": "P5 source recipe/ABI audits are opt-in and non-executable; no managed Orcarouter service start or live identity verification is released.",
+      "comment": "Canonical Docker name qwen38-orcarouter is reserved for approved Orcarouter Flash-Next service. QSA/LM-head v1-v3 suffix containers are temporary P5 trial candidates; runtime/API identity must be observed and verified separately. Current P5 v3 may serve port 8000 as a DEVELOPMENT_TRIAL without production promotion.",
       "pinned_revision": "3a3b63161c0745390e5270179af42e46efc70799",
       "source_recipe": "recipes/qwen38-orcarouter.runtime.json",
       "reference_implementation": "YSLAB-ai/Qwen3.8-Flash-Next-NVFP4-BF16PLE-DGX-Spark@9492b78c6bc04638587b42f2ffeb0680b0fcb3ef",
