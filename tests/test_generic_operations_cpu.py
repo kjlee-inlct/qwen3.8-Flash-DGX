@@ -1,0 +1,144 @@
+"""CPU-only tests of all registered-model P5/P6/P7/P8 contracts."""
+from __future__ import annotations
+
+import contextlib
+import io
+import json
+import tempfile
+from pathlib import Path
+import unittest
+from unittest.mock import patch
+
+from scripts.manager import generic_operations as g
+from wizard.main import main as wizard_main
+
+
+class GenericOperationsCPU(unittest.TestCase):
+    def test_catalog_discovers_all_manifest_models_not_hardcoded_pair(self):
+        cat = g.model_catalog()
+        self.assertEqual(set(cat["models"]), {"flash-next", "27b", "orcarouter"})
+        self.assertTrue(cat["models"]["orcarouter"]["served_id_provisional"])
+        self.assertEqual(cat["api_port"], 8000)
+        self.assertFalse(cat["production_released"])
+
+    def test_future_model_addition_automatically_expands_fault_matrix(self):
+        from scripts.manager.service_manifest import policy
+        cfg = policy()
+        cfg = json.loads(json.dumps(cfg))
+        cfg["models"]["future"] = {
+            "checkpoint": "example/model",
+            "container_name": "example-service",
+            "served_id": "example-id"}
+        doc = g.fault_matrix(config=cfg)
+        self.assertEqual(doc["pair_count"], 12)
+        self.assertEqual(doc["test_count"], 48)
+        self.assertEqual(doc["status"], "PASS_FAKE_DGX_EXPECTED_OUTCOMES")
+
+    def test_all_pairs_and_failure_modes_obey_exclusivity(self):
+        doc = g.fault_matrix()
+        self.assertEqual(doc["pair_count"], 6)
+        self.assertEqual(doc["test_count"], 24)
+        self.assertEqual(doc["status"], "PASS_FAKE_DGX_EXPECTED_OUTCOMES")
+        for case in doc["cases"]:
+            self.assertFalse(case["invariant_issues"])
+            self.assertFalse(case["executed"])
+            self.assertIsNone(case["plan_id"])
+            self.assertTrue(all(len(item["active_models"]) <= 1 for item in case["journal"]))
+            actions = [step["action"] for step in case["journal"]]
+            self.assertLess(actions.index("stop-source-and-release-port"),
+                            actions.index("start-target") if "start-target" in actions
+                            else actions.index("target-start-failed"))
+            if case["injected_fault"] == "restore-source":
+                self.assertIn("target-api-id-mismatch", actions)
+                self.assertEqual(case["status"], "FAIL_FAKE_RECOVERY")
+
+    def test_invalid_pairs_and_identity_fail_closed(self):
+        with self.assertRaises(ValueError):
+            g.simulate("27b", "27b")
+        with self.assertRaises(ValueError):
+            g.preflight("not-registered", "27b", live={})
+        with self.assertRaises(ValueError):
+            g.simulate("27b", "flash-next", fault="other")
+        with self.assertRaises(ValueError):
+            g.model_catalog({"models": {}, "api": {"host_port": 8000},
+                             "max_active_gpu_models": 2})
+
+    def test_preflight_never_executes_even_when_live_evidence_good(self):
+        observed = {
+            "observed_model": "27b", "status": "LIVE_SERVICE_VERIFIED",
+            "expected_served_id": "qwen3.8-27b",
+            "active_container": {"name": "qwen38-27b"},
+            "gpu_exclusivity_verified": True,
+            "port_process_ownership_verified": True}
+        doc = g.preflight("27b", "flash-next", live=observed)
+        self.assertEqual(doc["status"], "BLOCKED")
+        self.assertIn("REAL_SWITCH_EXECUTOR_NOT_RELEASED", doc["issues"])
+        self.assertNotIn("SOURCE_NOT_CANONICAL_RUNTIME", doc["issues"])
+        self.assertFalse(doc["operations_enabled"])
+        doc = g.preflight("27b", "orcarouter", live=observed)
+        self.assertIn("TARGET_CANONICAL_RUNTIME_NOT_QUALIFIED", doc["issues"])
+
+    def test_resource_review_needs_bound_interval_and_benchmark(self):
+        base = g.resource_review("27b", {}, {})
+        self.assertIn("RESOURCE_MODEL_IDENTITY_NOT_BOUND", base["issues"])
+        self.assertEqual(base["status"], "INCOMPLETE_EVIDENCE")
+        telemetry = {
+            "model": "27b",
+            "snapshots": [{}, {}],
+            "interval_summary": {
+                "status": "OBSERVED_INTERVAL",
+                "cgroup_container_identity_continuous": True,
+                "cgroup_memory_event_deltas": {"oom_delta": 0, "oom_kill_delta": 0},
+            }}
+        result = g.resource_review(
+            "27b", telemetry,
+            {"model": "27b", "ttft_seconds": 0.25, "tokens_per_second": 11.2})
+        self.assertEqual(result["status"], "SOURCE_METRICS_PRESENT_NOT_LIVE_ACCEPTANCE")
+        self.assertFalse(result["production_released"])
+        telemetry["interval_summary"]["cgroup_memory_event_deltas"]["oom_delta"] = 1
+        self.assertIn("OOM_EVENTS_OBSERVED",
+                      g.resource_review("27b", telemetry, {}).get("issues"))
+
+    def test_integration_requires_four_model_bound_components(self):
+        doc = g.integration_review("flash-next", {})
+        self.assertEqual(doc["status"], "BLOCKED")
+        self.assertEqual(len(doc["issues"]), 4)
+        evidence = {
+            key: {"status": "PASS", "model": "flash-next", "evidence_id": "sha256:demo"}
+            for key in ("service", "proxy", "gateway", "storage")}
+        doc = g.integration_review("flash-next", evidence)
+        self.assertEqual(doc["status"], "SOURCE_EVIDENCE_COMPLETE_NOT_RUNTIME_ACCEPTANCE")
+        self.assertFalse(doc["real_dgx_verified"])
+        evidence["gateway"]["model"] = "27b"
+        self.assertIn("GATEWAY_MODEL_BOUND_EVIDENCE_MISSING",
+                      g.integration_review("flash-next", evidence)["issues"])
+
+    def test_cli_routing_is_read_only_and_all_model_matrix(self):
+        with patch("subprocess.run", side_effect=AssertionError("no Docker")), \
+             contextlib.redirect_stdout(io.StringIO()) as out:
+            rc = wizard_main(["operations", "generic", "fault-matrix", "--json"])
+        self.assertEqual(rc, 0)
+        report = json.loads(out.getvalue())
+        self.assertEqual(report["test_count"], 24)
+        self.assertFalse(report["executed"])
+        with contextlib.redirect_stdout(io.StringIO()) as out:
+            rc = wizard_main(["operations", "generic", "preflight",
+                              "--from-model", "27b", "--to-model", "27b", "--json"])
+        self.assertEqual(rc, 3)
+        self.assertEqual(json.loads(out.getvalue())["status"], "BLOCKED")
+
+    def test_bounded_evidence_file_read_does_not_mutate(self):
+        with tempfile.TemporaryDirectory() as temp:
+            file = Path(temp) / "evidence.json"
+            file.write_text(json.dumps({"model": "27b"}))
+            self.assertEqual(g._load_evidence(str(file)), {"model": "27b"})
+            with self.assertRaises(ValueError):
+                g._load_evidence("relative/path")
+            link = Path(temp) / "link.json"
+            link.symlink_to(file)
+            with self.assertRaises(ValueError):
+                g._load_evidence(str(link))
+
+
+if __name__ == "__main__":
+    unittest.main()
