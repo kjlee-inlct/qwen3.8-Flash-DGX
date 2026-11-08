@@ -714,12 +714,30 @@ def status() -> dict:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("action", choices=("prepare", "plan", "execute", "status"))
+    parser.add_argument("action", choices=(
+        "prepare", "plan", "execute", "status",
+        "cleanup-plan", "cleanup-execute"))
     parser.add_argument("--approve-plan")
     parser.add_argument("--ack-downtime")
+    parser.add_argument("--ack-cleanup")
     parser.add_argument("--json", action="store_true")
     args = parser.parse_args(argv)
-    if args.action == "execute":
+    if args.action == "cleanup-plan":
+        from scripts.manager import p5_trial_cleanup
+        if args.approve_plan or args.ack_downtime or args.ack_cleanup:
+            result = {"status": "BLOCKED", "issues": ["CLEANUP_PLAN_IS_READ_ONLY"]}
+        else:
+            result = p5_trial_cleanup.plan()
+    elif args.action == "cleanup-execute":
+        from scripts.manager import p5_trial_cleanup
+        if args.ack_downtime:
+            result = {"status": "BLOCKED", "issues": ["UNRELATED_DOWNTIME_ACK"]}
+        else:
+            result = p5_trial_cleanup.execute(
+                args.approve_plan, args.ack_cleanup)
+    elif args.ack_cleanup:
+        result = {"status": "BLOCKED", "issues": ["CLEANUP_ACK_ONLY_FOR_CLEANUP_EXECUTE"]}
+    elif args.action == "execute":
         result = execute(args.approve_plan, args.ack_downtime)
     elif args.approve_plan or args.ack_downtime:
         result = {"status": "BLOCKED", "issues": ["APPROVAL_FLAGS_ONLY_FOR_EXECUTE"]}
@@ -731,7 +749,7 @@ def main(argv: list[str] | None = None) -> int:
         result = status()
     print(json.dumps(result, ensure_ascii=False, sort_keys=True,
                      indent=2 if args.json else None))
-    return 0 if result.get("status") in ("PASS", "READY_TO_APPROVE", "PASS_GPU_TRIAL", "RUNNING") else 3
+    return 0 if result.get("status") in ("PASS", "READY_TO_APPROVE", "PASS_GPU_TRIAL", "RUNNING", "NOTHING_TO_CLEAN") else 3
 
 if __name__ == "__main__":
     raise SystemExit(main())
