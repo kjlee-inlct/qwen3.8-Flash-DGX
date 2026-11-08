@@ -118,11 +118,27 @@ def abi_source_audit() -> dict:
                     "ple_mmap_lookup_ids", "torch.bfloat16")
         if not all(marker in code for marker in required):
             raise ValueError("P5_BLAZUX_BF16_PLE_HOOK_MISSING")
+        patch_source = (ROOT / "src/p5_patch_qwen4exp_v032.py").read_text(encoding="utf-8")
+        ast.parse(patch_source)
+        patch_markers = ("VLLM_P5_ORCAROUTER", "compressed-tensors ignore remap",
+                         "quant_config=(self.quant_config if ",
+                         "native BF16 MTP tensor mismatch",
+                         "P5_EXPLICIT_IMAGE_BUILD", 'VLLM = "0.32.0"')
+        if not all(marker in patch_source for marker in patch_markers):
+            raise ValueError("P5_VLLM032_CANDIDATE_PATCH_INCOMPLETE")
+        candidate_dockerfile = (ROOT / "Dockerfile.p5.candidate").read_text(
+            encoding="utf-8")
+        if ("ARG P5_QUALIFIED_BASE_IMAGE" not in candidate_dockerfile or
+                "P5_EXPLICIT_IMAGE_BUILD=1" not in candidate_dockerfile):
+            raise ValueError("P5_ISOLATED_DOCKER_CANDIDATE_CONTRACT_FAILED")
         if recipe["runtime"]["image_id"] is not None:
             raise ValueError("P5_RUNTIME_IMAGE_UNQUALIFIED")
         return _gate("blazux_032_source_hooks", PASS,
-                     ple_bf16_static_hook=True, gpu_abi_verified=False,
-                     mtp_runtime_abi_verified=False)
+                     ple_bf16_static_hook=True,
+                     quantized_lm_head_source_patch_candidate=True,
+                     compressed_tensors_ignore_source_patch_candidate=True,
+                     native_mtp_31_bf16_guard_source_patch_candidate=True,
+                     gpu_abi_verified=False, mtp_runtime_abi_verified=False)
     except (OSError, ValueError, SyntaxError, TypeError, KeyError):
         return _gate("blazux_032_source_hooks", FAIL, "P5_SOURCE_OR_RECIPE_CONTRACT_FAILED",
                      gpu_abi_verified=False)

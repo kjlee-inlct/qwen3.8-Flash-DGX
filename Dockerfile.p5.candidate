@@ -1,0 +1,16 @@
+# P5 candidate only — NOT a production image; no implicit build authorization.
+# Pass a separately qualified immutable Blazux vLLM 0.32 image ref as build arg.
+# Never build, run or stop 27B without an independently approved work plan.
+ARG P5_QUALIFIED_BASE_IMAGE
+FROM ${P5_QUALIFIED_BASE_IMAGE}
+LABEL blazux.p5.state="SOURCE_CANDIDATE_NOT_QUALIFIED" \
+      blazux.p5.vllm="0.32.0" \
+      blazux.p5.service_execution_allowed="false"
+ARG SP=/usr/local/lib/python3.12/dist-packages
+COPY src/p5_patch_qwen4exp_v032.py /tmp/p5_patch_qwen4exp_v032.py
+RUN P5_EXPLICIT_IMAGE_BUILD=1 python3 /tmp/p5_patch_qwen4exp_v032.py \
+      --site-packages ${SP} --apply --json \
+ && python3 -c "import ast; [ast.parse(open(p).read()) for p in ('${SP}/vllm/models/qwen4_exp/nvidia/model.py', '${SP}/vllm/models/qwen4_exp/nvidia/mtp.py')]" \
+ && rm /tmp/p5_patch_qwen4exp_v032.py
+# Opt-in VLLM_P5_ORCAROUTER=1 is deliberately not activated by this Dockerfile.
+# No GPU model, MTP2, API, WebUI or benchmark qualification is claimed.

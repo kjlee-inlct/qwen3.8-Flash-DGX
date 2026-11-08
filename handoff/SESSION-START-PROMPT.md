@@ -1,3 +1,13 @@
+## 2026-11-08 — P5 vLLM 0.32 source patch candidate; image not built
+
+Verified the official `vllm-project/vllm@v0.32.0` Qwen4Exp `model.py` and `mtp.py` static anchors (one occurrence each). v0.32 `CompressedTensorsConfig.ignore` is separate from `ignored_layers` and `exclude_modules`, requiring a scoped remap for donor MTP BF16 bypass.
+
+`src/p5_patch_qwen4exp_v032.py` is the **P5-only optional source patch** for quantized LM head, compressed-tensors ignore remap, and strict 31/31 native BF16 MTP name/dtype guard. Other models are unaffected when `VLLM_P5_ORCAROUTER` is unset. The source candidate requires exactly installed vLLM 0.32.0 and fail-closed anchor matching. `Dockerfile.p5.candidate` has no fixed base; its required `P5_QUALIFIED_BASE_IMAGE` must be provided only after independently verified Blazux v0.32 image pin and explicit image-build permission. `P5_EXPLICIT_IMAGE_BUILD=1` permits source patching *inside that isolated candidate image build only*; **no image has been built or loaded**. `tests/test_p5_vllm032_patch_cpu.py` validates pure-source patch behavior without Docker/GPU. Actual ARM64 ABI, GPU model load, MTP0/MTP2 API, OpenWebUI and benchmark remain **NOT_RUN**.
+
+This is not permission to run `docker build`, generate a multi-GB BF16 MTP overlay, interrupt the active 27B on :8000 or merge Draft PR #1. Existing standalone source-only one-shot `--gpu-trial` stays BLOCKED. Await final CI for this addition before reporting test PASS.
+
+---
+
 ## 2026-11-08 — Updated P5 continuation: implementation/CPU passed, runtime unqualified
 
 Existing feature branch and Draft PR #1: first source P5 commit `33adec1` and [Actions 42429745463 SUCCESS](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42429745463). Pinned YSLAB metadata/safetensors/BF16PLE/31-donor-tensor overlay source was imported (not deployed), unqualified P5 recipe + Wizard + one-shot and 20 new CPU tests were committed. Further detailed per-case reporting is in a follow-up commit requiring CI. **Do NOT repeat P5 source implementation from zero.** Review current branch HEAD and docs, and run actual DGX **read-only** command `bash scripts/temporary/p5-one-shot-acceptance.sh --read-only --json` after safe fast-forward, along with `--plan` and `--cpu-only`. Report observed pinned caches/donor integrity, current 27B status, exact DGX checkout and actual vLLM0.32 ABI. Any MTP overlay file creation requires its own asset-write consent; independent GPU trial and 27B stop require new exact TTY maintenance approval and a proven rollback. Current `--gpu-trial` returns BLOCKED by design. No P4 delete/P3 replay/P6/P8 trial/PR merge. Full runbook: `docs/P5-SOURCE-ACCEPTANCE-AND-DGX-READONLY-RUNBOOK-20261108.md`.
