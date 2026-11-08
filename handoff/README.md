@@ -8,6 +8,8 @@
 
 [Current technical record](../docs/P5-ORCAROUTER-BF16PLE-VLLM032-ADOPTION-20261108.md) · [Full documentation audit](../docs/HANDOFF-DOCUMENT-AUDIT-FULL-P5-20261108.md)
 
+**P5~P8 범용 기능 (2026-11-09):** 등록 모델 전체에 공통인 리소스/벤치 증거(P5), 전환 사전검사(P6), 통합 UX 및 서비스·프록시·게이트웨이 근거(P7), Fake-DGX 장애 매트릭스(P8)를 분리 구현했다. 07:18 KST DGX 유휴 관측과 소스 CI를 실기 전환/복구 승인으로 간주하지 않는다. [범용 기능 계약](../docs/P5-P8-MODEL-AGNOSTIC-OPERATIONS-20261109.md).
+
 ---
 
 ## CURRENT P5 DOCUMENT SUPERSESSION — 2026-11-08 (v3 live PASS, safe resource work next)
