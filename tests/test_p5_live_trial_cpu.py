@@ -189,8 +189,8 @@ class P5LiveTrialCPU(unittest.TestCase):
                           return_value={"Id": src_id}) as inspect:
             self.assertEqual(live._ensure_local_base_tag(src_id), alias)
         self.assertEqual(calls[1], ["docker", "tag", src_id, alias])
-        self.assertNotIn("stop", str(calls))
-        self.assertNotIn("rm", str(calls))
+        self.assertFalse(any(args[:2] in (["docker", "stop"], ["docker", "rm"],
+                                          ["docker", "rmi"]) for args in calls))
         inspect.assert_called_once_with(alias, image=True)
 
     def test_preexisting_correct_base_alias_is_read_only(self):
