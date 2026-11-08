@@ -106,7 +106,7 @@ class UpstreamQSA62318CPU(unittest.TestCase):
             abi.BLAZUX_FUSE,
             "        self.fuse_indexer_projection = True\n"
             "        if self.fuse_indexer_projection:\n")
-        with self.assertRaisesRegex(ValueError, "QSA_FUSE_GUARD_ANCHOR_COUNT_0"):
+        with self.assertRaisesRegex(ValueError, "UNKNOWN_QSA_HYBRID_ABI"):
             abi._patched_pair(MODEL, broken)
 
     def test_blazux_candidate_patch_apply_isolates_modified_files(self):
