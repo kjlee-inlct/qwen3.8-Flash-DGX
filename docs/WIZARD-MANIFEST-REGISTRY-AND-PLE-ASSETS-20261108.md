@@ -1,3 +1,13 @@
+## 2026-11-08 — PLE schema v2; format independence and DGX Spark reference adoption
+
+Superseding update: `runtimes/ple-assets.json` is **schema v2**, independent PLE storage dtype, scale mode, scale dtype, packing and placement; the fixed Orcarouter BF16 asset remains untouched. `runtimes/ple-loader-profiles.json` is now included in the **seven-document** common Wizard registry and separately records target vLLM **0.32.0** ABI/GB10 capabilities as **UNQUALIFIED**. Other models may register FP8 etc PLE separately; BF16 is not a global assumption. `scripts/manager/ple_format.py` and `service_transition_preview.py` enforce unmap/release/reload/no-unverified-hot-swap for PLE model/profile/dtype changes, preserve rollback sources, GPU allocations and port 8000.
+
+References were reviewed, NOT installed: [dolf3131 pinned vLLM NVFP4 lane](https://github.com/dolf3131/dgx-spark-llm-serving/blob/45e3d47771577dabab0998e9013e85dd0915ae4f/lanes/vllm-nvfp4/README.md) and [NVIDIA DGX Spark forum](https://forums.developer.nvidia.com/t/nvidia-official-qwen3-8-flash-next-checkpoint-for-single-dgx-spark/385994). The former records FP8 PLE with one BF16 per-table scale, mixed-quantizer bypass and TP1 offload worker hang; the latter discusses a different NVIDIA FP4-Local checkpoint requiring B12X-specific runtime flags. No automatic reuse of these images/settings in pinned Blazux 0.32.
+
+The operator clarified the DGX is a development machine with **service downtime/GPU testing permitted**; preserve one active GPU model, :8000, caches, images, receipts, and recoverable transition. Permission is **not** proof that an Orcarouter vLLM0.32 image/ABI/PLE loader was qualified; P5 `--gpu-trial` remains blocked until such executor and rollback are ready. Latest code `d395368` passed [CI #42436269922](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42436269922). No DGX runtime commands executed in this GitHub session. See [detailed engineering note](../docs/P5-PLE-FORMAT-AND-DGX-SPARK-REFERENCE-ADOPTION-20261108.md).
+
+---
+
 # Shared Wizard Manifest Registry and Managed PLE Assets — 2026-11-08
 
 ## Decision and ownership

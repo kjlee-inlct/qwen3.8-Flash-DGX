@@ -1,3 +1,11 @@
+## P5 follow-up 2026-11-08: PLE schema v2 and cross-engine reference discipline
+
+The operator allows development DGX service downtime and GPU experiments. Shared Wizard `runtimes/ple-assets.json` now schema v2 (model-specific dtype/scale/placement; Orcarouter pinned BF16 unchanged), `runtimes/ple-loader-profiles.json` is in the common registry as seventh manifest, and `scripts/manager/ple_format.py` plus transition preview require independent source mapping/GPU release and rollback during switches. External DGX references dolf3131 (pinned 45e3d477) and NVIDIA October FP4-Local forum provide **research only**; no alternative container/image adopted, and Blazux vLLM0.32 remains mandatory.
+
+[Source commit d395368](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/commit/d395368645b04ebc4d2367f33314ea07fb68ff1b) / [CI #42436269922 SUCCESS](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42436269922). GPU P5 remains NOT_RUN; this GitHub session did not stop 27B despite downtime permission. Exact new docs `docs/P5-PLE-FORMAT-AND-DGX-SPARK-REFERENCE-ADOPTION-20261108.md`; check current HEAD/PR/CI. Read-only DGX validation is next; no deletion, unapproved GPU executor, P3 replay or Draft PR merge.
+
+---
+
 ## 2026-11-08 — Shared Wizard manifest refactor and first-class BF16 PLE registry
 
 `a17b361`: canonical `runtimes/manifest-registry.json`, `runtimes/ple-assets.json`, shared strict loader and cross-reference validator `scripts/manager/manifest_registry.py`, read-only metadata-backed PLE controller `scripts/manager/ple_assets.py`, registration links in service/discovery/Orcarouter recipe, Wizard manifest status/validate command, model list, P5 status/doctor and service status integration. Added 14+ dedicated manifest-registry tests and 11 PLE asset integration tests, plus existing P1–P4 regression. [CI #42433160630 SUCCESS](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42433160630), 996 executed CPU cases over 44 invocations (repeats included). Follow-up model-first selector display and documentation require their own CI.

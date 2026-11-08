@@ -3,6 +3,9 @@ on:
   push:
     paths:
       - 'schemas/**'
+      - 'handoff/**'
+      - 'docs/P5-*'
+      - 'docs/WIZARD-MANIFEST-*'
       - 'recipes/**'
       - 'scripts/manager/**'
       - 'scripts/temporary/**'
@@ -78,6 +81,9 @@ on:
       - 'tests/test_p3_stage_c_operator_cpu.py'
       - 'tests/test_service_status_cpu.py'
       - 'schemas/**'
+      - 'handoff/**'
+      - 'docs/P5-*'
+      - 'docs/WIZARD-MANIFEST-*'
       - 'recipes/**'
       - 'scripts/manager/**'
       - 'tests/test_manager_manifest_cpu.py'

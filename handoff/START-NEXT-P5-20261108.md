@@ -1,3 +1,11 @@
+## P5 follow-up 2026-11-08: PLE schema v2 and cross-engine reference discipline
+
+The operator allows development DGX service downtime and GPU experiments. Shared Wizard `runtimes/ple-assets.json` now schema v2 (model-specific dtype/scale/placement; Orcarouter pinned BF16 unchanged), `runtimes/ple-loader-profiles.json` is in the common registry as seventh manifest, and `scripts/manager/ple_format.py` plus transition preview require independent source mapping/GPU release and rollback during switches. External DGX references dolf3131 (pinned 45e3d477) and NVIDIA October FP4-Local forum provide **research only**; no alternative container/image adopted, and Blazux vLLM0.32 remains mandatory.
+
+[Source commit d395368](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/commit/d395368645b04ebc4d2367f33314ea07fb68ff1b) / [CI #42436269922 SUCCESS](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42436269922). GPU P5 remains NOT_RUN; this GitHub session did not stop 27B despite downtime permission. Exact new docs `docs/P5-PLE-FORMAT-AND-DGX-SPARK-REFERENCE-ADOPTION-20261108.md`; check current HEAD/PR/CI. Read-only DGX validation is next; no deletion, unapproved GPU executor, P3 replay or Draft PR merge.
+
+---
+
 ## 2026-11-08 — P5 manifest management update
 
 First source commit `a17b361`, [CI #42433160630 SUCCESS](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42433160630). Canonical shared Wizard manifest registry and first-class PLE asset management implemented, with model-discovery/service-policy/Orcarouter recipe references and read-only status/validate. Follow-up model-selector UX/docs commit requires CI separately. Original operator DGX log at `8f8ad0c` showed PLE 128 BF16 PASS, donor 31 BF16/3 SHA PASS, live 27B API PASS, but does NOT validate the new code. Next: run `./wizard.sh manifest validate --json`, `./wizard.sh model list --installed --json`, `./wizard.sh p5 status --json`, `./wizard.sh p5 doctor --read-only --json` safely on DGX, then qualify isolated vLLM0.32 adapter only after asset/maintenance approvals. Reference `docs/WIZARD-MANIFEST-REGISTRY-AND-PLE-ASSETS-20261108.md`. No production GPU release, rollback trial, P3/P4/P6/P8 action or Draft PR merge.
