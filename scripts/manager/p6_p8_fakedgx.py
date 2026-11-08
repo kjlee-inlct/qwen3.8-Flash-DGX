@@ -82,61 +82,11 @@ def preflight(source: str, target: str, *, live: dict[str, Any] | None = None,
 
 
 def simulate(source: str, target: str, *, fault: str = "none") -> dict:
-    """Exercise a deliberately *fake* service/port state machine only."""
+    """Legacy two-model route reuses the shared model-agnostic Fake-DGX engine."""
     if (source, target) not in DIRECTIONS:
         raise ValueError("P6_UNSUPPORTED_DIRECTION")
-    if fault not in FAULTS:
-        raise ValueError("P6_UNSUPPORTED_FAULT")
-    owner: str | None = source
-    port_owner: str | None = source
-    journal = []
-    invariants = []
-    def record(phase: str, action: str) -> None:
-        active = [] if owner is None else [owner]
-        if len(active) > 1 or port_owner != owner:
-            invariants.append("ONE_MODEL_OR_PORT_INVARIANT_VIOLATION")
-        journal.append({"phase": phase, "action": action,
-                        "active_models": active, "port_8000_owner": port_owner})
-    record("OBSERVED", "verify-source")
-    owner = port_owner = None
-    record("OLD_STOPPED", "stop-source-and-release-port")
-    if fault != "target-start":
-        owner = port_owner = target
-        record("NEW_STARTING", "start-target")
-    else:
-        record("NEW_STARTING", "target-start-failed")
-    if fault == "none":
-        record("NEW_VERIFYING", "verify-target-api-id")
-        record("COMMITTED", "append-success-journal")
-        outcome = "PASS_FAKE_SWITCH"
-    else:
-        if fault == "target-api":
-            record("NEW_VERIFYING", "target-api-id-mismatch")
-        if owner == target:
-            owner = port_owner = None
-            record("ROLLBACK_STARTING", "stop-failed-target")
-        if fault == "restore-source":
-            record("RECOVERY_FAILED", "source-restore-failed")
-            outcome = "FAIL_FAKE_RECOVERY"
-        else:
-            owner = port_owner = source
-            record("ROLLBACK_STARTING", "restore-source")
-            record("RESTORED", "verify-source-api-id")
-            outcome = "PASS_FAKE_RECOVERY"
-    if invariants:
-        outcome = "FAIL_FAKE_INVARIANTS"
-    return {
-        "schema_version": 1, "stage": "p6" if fault == "none" else "p8",
-        "scope": "IN_MEMORY_FAKE_DGX_ONLY",
-        "status": outcome, "source_model": source, "target_model": target,
-        "injected_fault": fault, "api_port": 8000,
-        "journal": journal, "invariant_issues": invariants,
-        "final_active_model": owner, "final_port_owner": port_owner,
-        "fake_executed": True, "executed": False,
-        "operations_enabled": False, "approval_accepted": False,
-        "plan_id": None, "production_released": False,
-        "real_dgx_verified": False, "automatic_real_recovery_verified": False,
-    }
+    from scripts.manager.generic_operations import simulate as shared_simulate
+    return shared_simulate(source, target, fault=fault)
 
 
 def fault_matrix() -> dict:

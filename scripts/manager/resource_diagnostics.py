@@ -1,4 +1,4 @@
-"""Non-mutating DGX resource observations for active P5 Orcarouter.
+"""Non-mutating DGX resource observations for selected registered model.
 
 No Docker start/stop, inference, sysctl, governor, power or cgroup writes.
 All unavailable sensor values remain explicitly unsupported/unobserved.
@@ -17,6 +17,36 @@ import time
 
 ROOT = Path(__file__).resolve().parents[2]
 RECIPE = ROOT / "recipes/qwen38-orcarouter.runtime.json"
+# Compatibility default remains the P5 trial, but --model selects a registered
+# model. Absence of an approved recipe is NOT a startup capacity approval.
+
+
+def _recipe_for_model(model: str) -> dict:
+    from scripts.manager.service_manifest import policy
+    models = policy()["models"]
+    if model not in models:
+        raise ValueError("UNREGISTERED_RESOURCE_MODEL")
+    spec = models[model]
+    name = spec.get("source_recipe") or spec.get("runtime_recipe")
+    if name:
+        relative = Path(name)
+        if (relative.is_absolute() or ".." in relative.parts or
+                not relative.parts or relative.parts[0] != "recipes"):
+            raise ValueError("RESOURCE_RECIPE_PATH_NOT_ALLOWED")
+        path = ROOT / relative
+        if path.is_symlink() or not path.is_file():
+            raise ValueError("RESOURCE_RECIPE_UNAVAILABLE")
+        recipe = json.loads(path.read_text(encoding="utf-8"))
+        if recipe.get("model", {}).get("repo_id") != spec["checkpoint"]:
+            raise ValueError("RESOURCE_RECIPE_MODEL_MISMATCH")
+    else:
+        recipe = {"model": {"repo_id": spec["checkpoint"]},
+                  "runtime": {"container_name": spec["container_name"]},
+                  "profiles": {"mtp0": {"served_id": spec.get("served_id")}}}
+    # Canonical status always comes from the shared registry, not an arbitrary
+    # trial image or a mutable locally inferred container prefix.
+    recipe["canonical_container_name"] = spec["container_name"]
+    return recipe
 PROC = Path("/proc")
 SYS = Path("/sys")
 GIB = 1024 ** 3
@@ -258,9 +288,12 @@ def _cgroup(proc: Path, sysfs: Path, pid: int) -> dict:
 
 def _docker(recipe: dict, proc: Path, sysfs: Path, runner) -> dict:
     candidate = recipe.get("trial", {}).get("container_name")
-    canonical = recipe.get("runtime", {}).get("container_name")
-    allowed = {candidate, canonical}
-    if not all(isinstance(n, str) and _ALLOWED.fullmatch(n) for n in allowed):
+    canonical = (recipe.get("canonical_container_name")
+                 or recipe.get("runtime", {}).get("container_name")
+                 or recipe.get("service", {}).get("container_name"))
+    allowed = {name for name in (candidate, canonical) if name is not None}
+    if not allowed or not all(isinstance(n, str) and _ALLOWED.fullmatch(n)
+                              for n in allowed):
         return {"status": "BLOCKED", "issues": ["INVALID_RECIPE_CONTAINER_ID"]}
     listed = _command(["docker", "ps", "--format", "{{.Names}}"], runner)
     if listed is None:
@@ -312,8 +345,8 @@ def _docker(recipe: dict, proc: Path, sysfs: Path, runner) -> dict:
 
 
 def snapshot(*, proc: Path = PROC, sysfs: Path = SYS, runner=subprocess.run,
-             recipe: dict | None = None) -> dict:
-    recipe = recipe if recipe is not None else json.loads(RECIPE.read_text(encoding="utf-8"))
+             recipe: dict | None = None, model: str = "orcarouter") -> dict:
+    recipe = recipe if recipe is not None else _recipe_for_model(model)
     mem = _kv_bytes(_read(proc / "meminfo"))
     selected = ("MemTotal", "MemAvailable", "MemFree", "Cached",
                 "SReclaimable", "Dirty", "Writeback", "SwapTotal", "SwapFree")
@@ -326,9 +359,11 @@ def snapshot(*, proc: Path = PROC, sysfs: Path = SYS, runner=subprocess.run,
            "scope": "READ_ONLY_HOST_AND_ALLOWED_DOCKER_INSPECTION",
            "status": "OBSERVED_PARTIAL" if "MemAvailable" in mem else "BLOCKED",
            "executed": False, "resource_limits_changed": False,
+           "model": model,
            "model_repo": recipe.get("model", {}).get("repo_id"),
            "model_revision": recipe.get("model", {}).get("revision"),
-           "api_served_id_declared": recipe.get("profiles", {}).get("mtp0", {}).get("served_id"),
+           "api_served_id_declared": (recipe.get("profiles", {}).get("mtp0", {}).get("served_id")
+                                      or recipe.get("model", {}).get("served_id")),
            "recipe_resource_policy": recipe.get("resource_policy"),
            "model_identity_verified_by_api": False,
            "ple_declared_mmap_bytes": recipe.get("model", {}).get("expected_ple", {}).get("mmap_bytes"),
@@ -520,6 +555,9 @@ def _save_private(doc: dict) -> str:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Non-mutating DGX resource diagnostics")
     parser.add_argument("action", choices=("snapshot", "observe", "preflight"))
+    from scripts.manager.service_manifest import policy
+    parser.add_argument("--model", choices=sorted(policy()["models"]), default="orcarouter",
+                        help="registered model key; default retains P5 compatibility") 
     parser.add_argument("--samples", type=int, default=2)
     parser.add_argument("--interval", type=float, default=2.0)
     parser.add_argument("--save", action="store_true", help="write private 0600 evidence JSON only")
@@ -532,8 +570,9 @@ def main(argv: list[str] | None = None) -> int:
     for i in range(count):
         if i:
             time.sleep(args.interval)
-        samples.append(snapshot())
-    doc = {"stage": "p5", "action": args.action, "executed": False,
+        samples.append(snapshot(model=args.model))
+    doc = {"stage": "p5", "action": args.action, "model": args.model,
+           "executed": False,
            "service_mutated": False, "snapshots": samples}
     doc["warnings"] = evaluate_warnings(samples[-1])
     if args.action == "observe":
