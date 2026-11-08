@@ -156,7 +156,7 @@ def _validate_bundle(parts: dict[str, dict[str, Any]], *, root: Path = ROOT) -> 
         "derived_overlay_required": False,
         "production_launch_allowed": False,
         "source_immutable": True,
-        "runtime_strategy": "RECIPE_PINNED_QSA62318_DERIVED_IMAGE_FROM_EXISTING_VLLM032",
+        "runtime_strategy": "RECIPE_PINNED_QSA62318_LMHEAD_V2_DERIVED_IMAGE_FROM_EXISTING_VLLM032",
         "require_image_build": True,
         "allow_source_patch": False,
         "read_only_image_capability_probe": True,
@@ -314,9 +314,9 @@ def _validate_bundle(parts: dict[str, dict[str, Any]], *, root: Path = ROOT) -> 
               and adapter.get("mtp_profile_candidates") == ["mtp0", "mtp2"]
               and adapter.get("container_image_digest") is None
               and adapter.get("source_adapter_state") ==
-                  "SCOPED_UPSTREAM_QSA62318_IMAGE_CANDIDATE_UNQUALIFIED"
+                  "SCOPED_QSA62318_LMHEAD_V2_IMAGE_CANDIDATE_UNQUALIFIED"
               and adapter.get("runtime_strategy") ==
-                  "RECIPE_PINNED_QSA62318_DERIVED_IMAGE_FROM_EXISTING_VLLM032"
+                  "RECIPE_PINNED_QSA62318_LMHEAD_V2_DERIVED_IMAGE_FROM_EXISTING_VLLM032"
               and adapter.get("compatibility_adapter_id") ==
                   orca["compatibility_adapter"]["id"]
               and adapter.get("original_engine_image_patched") is False
