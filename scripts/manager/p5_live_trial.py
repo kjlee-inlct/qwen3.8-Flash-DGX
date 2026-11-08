@@ -22,6 +22,7 @@ import time
 from urllib.request import Request, urlopen
 
 from scripts.manager import manifest_registry
+from scripts.manager.p5_lm_head_checkpoint_audit import inspect as inspect_lm_head_checkpoint
 from scripts.manager.ple_assets import ASSET_ID, asset_spec, inspect_ple_asset
 from scripts.manager.p5_orcarouter import ORCA_REPO, ORCA_REV
 from scripts.manager.service_manifest import policy
@@ -351,6 +352,19 @@ def _metadata_gate() -> tuple[list[str], dict]:
         issues.append("PINNED_PLE_METADATA_UNVERIFIED")
     if not _source_snapshot():
         issues.append("PINNED_SNAPSHOT_NOT_FOUND")
+    # Pure read-only pinned checkpoint/header preflight. A successful source
+    # patch or PLE metadata audit does not prove the quantized head scale can
+    # be registered by compressed-tensors. Block before any candidate build.
+    try:
+        head = inspect_lm_head_checkpoint(SNAPSHOT, CACHE)
+    except (OSError, ValueError, TypeError):
+        head = {"status": "BLOCKED",
+                "issues": ["P5_LMHEAD_CHECKPOINT_AUDIT_EXCEPTION"],
+                "checkpoint_metadata_verified": False}
+    ple = {**ple, "lm_head_checkpoint": head}
+    if (head.get("status") != "PASS" or
+        head.get("checkpoint_metadata_verified") is not True):
+        issues.extend(head.get("issues") or ["P5_LMHEAD_CHECKPOINT_UNVERIFIED"])
     return issues, ple
 
 def _git_head() -> str:
@@ -402,6 +416,7 @@ def prepare() -> dict:
               "original_engine_patched": False, "gpu_verified": False,
               "adapter": ADAPTER, "issues": []}
     issues, ple = _metadata_gate()
+    report["lm_head_checkpoint"] = ple.get("lm_head_checkpoint")
     if issues or not ple.get("metadata_verified"):
         report["issues"] = issues or ["PINNED_PLE_METADATA_UNVERIFIED"]
         return report
@@ -467,6 +482,7 @@ def _plan_data() -> dict:
             "operation": identity["operation"], "details": details,
             "image_capabilities": capabilities,
             "ple_metadata_verified": ple.get("metadata_verified") is True,
+            "lm_head_checkpoint": ple.get("lm_head_checkpoint"),
             "automatic_restore": False, "preserve_source_images_and_cache": True,
             "original_engine_patched": False,
             "adapter_backport_in_derived_image": True,
