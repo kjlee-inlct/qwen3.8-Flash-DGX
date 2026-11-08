@@ -64,7 +64,22 @@
     "failed_new_model_rollback_to_old": true,
     "no_automatic_deletion": true,
     "append_only_transition_journal": true,
-    "actual_docker_state_overrides_stored_manifest": true
+    "actual_docker_state_overrides_stored_manifest": true,
+    "trial_overrides": {
+      "p5_orcarouter_mtp0": {
+        "purpose": "DEVELOPMENT_GPU_TRIAL",
+        "source_model": "27b",
+        "target_model": "orcarouter",
+        "one_active_model_only": true,
+        "host_api_port": 8000,
+        "stop_source_before_target": true,
+        "automatic_restore_on_failure": false,
+        "retain_stopped_source_container": true,
+        "preserve_all_images_and_cached_snapshots": true,
+        "requires_exact_plan_and_downtime_ack": true,
+        "trial_result_does_not_produce_production_release": true
+      }
+    }
   },
   "download": {
     "may_overlap_live_inference": true,

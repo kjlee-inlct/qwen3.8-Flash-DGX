@@ -17,7 +17,7 @@ USAGE = """Blazux Wizard (vLLM 0.32 only)
   ./wizard.sh model orcarouter-flash-next status --json
   ./wizard.sh model orcarouter-flash-next doctor --json
   ./wizard.sh model orcarouter-flash-next recipe --profile mtp0 --json
-  ./wizard.sh p5 doctor --read-only --json  source/PLE/donor and live 27B audit
+  ./wizard.sh p5 doctor --read-only --json  source/PLE/donor and live 27B audit\n  ./wizard.sh p5 trial prepare --json    build isolated vLLM0.32 P5 candidate (27B stays up)\n  ./wizard.sh p5 trial plan --json       exact no-rollback MTP0 GPU plan\n  ./wizard.sh p5 trial execute --approve-plan SHA64 --ack-downtime I_ACCEPT_P5_NO_ROLLBACK --json
   bash scripts/temporary/p5-one-shot-acceptance.sh --plan --json
   bash scripts/temporary/p5-one-shot-acceptance.sh --cpu-only --json
   bash scripts/temporary/p5-one-shot-acceptance.sh --read-only --json
@@ -233,6 +233,13 @@ def main(argv: list[str] | None = None) -> int:
         if sys.stdin.isatty() and not as_json:
             return interactive()
         args = ["list"]
+    if len(args) >= 2 and args[:2] == ["p5", "trial"]:
+        if dry_run and "execute" in args[2:]:
+            print(json.dumps({"status": "BLOCKED",
+                              "issues": ["P5_TRIAL_DRY_RUN_EXECUTION_CONFLICT"]}))
+            return 3
+        from scripts.manager.p5_live_trial import main as p5_live_main
+        return p5_live_main(args[2:] + (["--json"] if as_json else []))
     if args[0] == "manifest":
         from scripts.manager.manifest_registry import main as manifest_main
         return manifest_main(args[1:] + (["--json"] if as_json else [])

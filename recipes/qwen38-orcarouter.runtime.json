@@ -115,5 +115,16 @@
     "forbid_p3_replay": true,
     "forbid_p8_fault_trials": true,
     "merge_requires_separate_approval": true
+  },
+  "trial": {
+    "profile": "mtp0",
+    "mode": "ONE_SHOT_DEVELOPMENT_GPU_NO_ROLLBACK",
+    "start_interface": "./wizard.sh p5 trial",
+    "requires_exact_plan": true,
+    "automatic_restore_on_failure": false,
+    "preserve_source_container_and_image": true,
+    "derived_overlay_required": false,
+    "production_launch_allowed": false,
+    "source_immutable": true
   }
 }

@@ -132,6 +132,31 @@ def _validate_bundle(parts: dict[str, dict[str, Any]], *, root: Path = ROOT) -> 
         pin = discovered.get("pinned_revision")
         _required(pin is None or (isinstance(pin, str) and REV.fullmatch(pin) is not None),
                   "MODEL_REVISION_INVALID")
+    dev_trial = svc.get("transitions", {}).get("trial_overrides", {}).get(
+        "p5_orcarouter_mtp0")
+    _required(dev_trial == {
+        "purpose": "DEVELOPMENT_GPU_TRIAL",
+        "source_model": "27b", "target_model": "orcarouter",
+        "one_active_model_only": True, "host_api_port": 8000,
+        "stop_source_before_target": True,
+        "automatic_restore_on_failure": False,
+        "retain_stopped_source_container": True,
+        "preserve_all_images_and_cached_snapshots": True,
+        "requires_exact_plan_and_downtime_ack": True,
+        "trial_result_does_not_produce_production_release": True,
+    } and svc["transitions"]["failed_new_model_rollback_to_old"] is True,
+    "P5_NON_PRODUCTION_NO_ROLLBACK_TRIAL_POLICY_DRIFT")
+    _required(orca.get("trial") == {
+        "profile": "mtp0",
+        "mode": "ONE_SHOT_DEVELOPMENT_GPU_NO_ROLLBACK",
+        "start_interface": "./wizard.sh p5 trial",
+        "requires_exact_plan": True,
+        "automatic_restore_on_failure": False,
+        "preserve_source_container_and_image": True,
+        "derived_overlay_required": False,
+        "production_launch_allowed": False,
+        "source_immutable": True,
+    }, "P5_ORCAROUTER_TRIAL_RECIPE_DRIFT")
     _required(models["orcarouter"].get("source_recipe") == FILES["orcarouter_recipe"]
               and models["orcarouter"].get("ple_asset_manifest") == FILES["ple_assets"]
               and models["orcarouter"].get("ple_asset_id") == ASSET_ID
