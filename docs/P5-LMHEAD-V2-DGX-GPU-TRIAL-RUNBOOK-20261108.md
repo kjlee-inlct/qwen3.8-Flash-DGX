@@ -1,5 +1,73 @@
 # P5 Orcarouter vLLM 0.32.0 — current DGX MTP0 trial, QSA + LM-head v3
 
+## LIVE OBSERVATION: v3 running on :8000; temporary name and cleanup workflow
+
+**Operator DGX observation (2026-11-08 ~23:08 KST):** Docker
+`qwen38-orcarouter-qsa62318-lmhead-v3` **Up 24 min** with
+`0.0.0.0:8000->8000/tcp`; GET `/v1/models` returned
+`qwen3.8-flash-next-orca-uncensored-bf16`.
+This proves v3 is serving the expected model identity, but **chat inference remains
+unverified until the live bounded verify returns PASS**. The old service-manager
+status was BLOCKED because it only recognized the canonical name
+`qwen38-orcarouter` and production policy rightly left its
+`served_id` null. **The 8000 listener is live v3, not an orphan from 27B. NEVER
+kill docker-proxy or delete the running trial.**
+
+**Naming contract:** v1/v2/v3 are *disposable candidate identifiers*, not
+final services. The existing stable canonical Docker service is
+`qwen38-orcarouter` (operator-facing: **Orcarouter Flash-Next**).
+The model API ID for MTP0 is
+`qwen3.8-flash-next-orca-uncensored-bf16`.
+Version/adapter revisions belong in image tags, recipe/manifest history, not in
+the eventual canonical service container name. **Do not rename running v3 to the
+canonical name without a separately approved lifecycle transition and verified
+inference.** Canonical name currently belongs to an exited legacy failed trial;
+that is one of the explicitly cleanup-eligible targets, not a production release.
+
+**Read-only + bounded live inference without restarting Docker:**
+
+```bash
+cd ~/Workspace/llm/blazux-orcarouter
+git status --short
+git pull --ff-only origin feature/recipe-wizard-handoff
+./wizard.sh service manager status --json
+./wizard.sh p5 trial verify --json
+```
+
+With successful Docker + health + expected model ID, service manager now shows
+`LIVE_P5_TRIAL_API_VERIFIED` with
+`runtime_role=DEVELOPMENT_TRIAL`, **never**
+`LIVE_SERVICE_VERIFIED` for a canonical service. `p5 trial verify` submits a
+bounded chat against the already-running v3, without stopping/starting Docker:
+`PASS_LIVE_INFERENCE` is the real target; no production release implied.
+
+**Retiring failed containers without touching live v3:** failed v1/QSA-only/v2
+test containers ought not accumulate indefinitely. Cleanup is explicitly
+approved, NOT an unconditional delete on failure: preserve private logs first.
+This flow is distinct from unrelated 27B manifest retirement.
+
+```bash
+./wizard.sh p5 trial cleanup-plan --json \
+  | tee /tmp/p5-cleanup-plan.json
+# Review the exact target IDs/names. Do NOT approve until ready.
+# Then use the fresh plan's 64-hex plan_id:
+./wizard.sh p5 trial cleanup-execute \
+  --approve-plan <FRESH_PLAN_ID> \
+  --ack-cleanup I_APPROVE_P5_FAILED_TRIAL_CONTAINERS_ONLY --json
+```
+
+Only **exited nonzero**, exact-name allowlisted P5 containers
+`qwen38-orcarouter`, `qwen38-orcarouter-qsa62318`, and
+`qwen38-orcarouter-qsa62318-lmhead` can be removed. The Wizard verifies
+pinned Orcarouter launch command, HF read-only mount, port binding, live v3
+container ID and API model ID; logs and receipt are saved mode 0600 under
+`~/.local/state/blazux-wizard/p5-live-trial/cleanup/` before **docker
+rm only**. Docker images, checkpoints, PLE assets, existing logs and services
+remain untouched. On incomplete/foreign identity it BLOCKS; never use
+`docker rm -f` or `kill docker-proxy` to force cleanup.
+
+---
+
 ## 2026-11-08 Orcarouter v3 — actual DGX loader failure fixed at source
 
 **Confirmed live failure at 2026-11-08 13:27 UTC, v2 image `sha256:3e0afbb4...`:** 15/17 safetensors loaded, PLE BF16 mmap engaged, then the exact previous `ValueError: There is no module or parameter named 'lm_head.weight_scale'`; Docker exit=1, `OOMKilled=false`. Actual checkpoint has `lm_head.weight_scale` BF16 `[248320,1]`, `group_0` targets `lm_head`, not ignored.
