@@ -64,6 +64,7 @@ def _pressure(path: Path) -> dict:
 
 def _cpu(sysfs: Path) -> dict:
     observed = []
+    per_cpu = {}
     governors = set()
     bounds = []
     for folder in sorted((sysfs / "devices/system/cpu").glob("cpu[0-9]*/cpufreq")):
@@ -71,7 +72,9 @@ def _cpu(sysfs: Path) -> dict:
         if raw is None:
             continue
         try:
-            observed.append(round(int(raw.strip()) / 1000, 1))
+            mhz = round(int(raw.strip()) / 1000, 1)
+            observed.append(mhz)
+            per_cpu[folder.parent.name] = mhz
         except ValueError:
             continue
         gov = _read(folder / "scaling_governor")
@@ -86,7 +89,7 @@ def _cpu(sysfs: Path) -> dict:
             except ValueError:
                 pass
     return {"status": "OBSERVED" if observed else "UNSUPPORTED",
-            "count": len(observed),
+            "count": len(observed), "per_cpu_current_mhz": per_cpu,
             "current_mhz_min": min(observed) if observed else None,
             "current_mhz_max": max(observed) if observed else None,
             "current_mhz_mean": round(sum(observed) / len(observed), 1) if observed else None,
@@ -123,7 +126,9 @@ def _nvme(sysfs: Path) -> dict:
                 drives[drive.name] = {"read_ios": fields[0],
                                      "read_sectors": fields[2],
                                      "write_ios": fields[4],
-                                     "write_sectors": fields[6]}
+                                     "write_sectors": fields[6],
+                                     "read_time_ms": fields[3],
+                                     "write_time_ms": fields[7] if len(fields) > 7 else None}
         except ValueError:
             pass
     return {"status": "OBSERVED" if drives else "UNSUPPORTED",
@@ -233,8 +238,11 @@ def _docker(recipe: dict, proc: Path, sysfs: Path, runner) -> dict:
     except (ValueError, TypeError, AttributeError):
         stats = None
     smaps = _kv_bytes(_read(proc / str(pid) / "smaps_rollup", 32768))
+    proc_status = _read(proc / str(pid) / "status", 32768)
+    thread_match = re.search(r"(?m)^Threads:\\s*(\\d+)\\s*$", proc_status or "")
     return {"status": "OBSERVED", "container": identity, "docker_stats": stats,
             "cgroup_v2": _cgroup(proc, sysfs, pid),
+            "process_thread_count": int(thread_match.group(1)) if thread_match else None,
             "process_smaps_rollup_bytes": {k: smaps.get(k) for k in
                 ("Rss", "Pss", "Pss_File", "Pss_Anon", "Swap")},
             "ple_specific_resident_bytes": None,
@@ -277,6 +285,57 @@ def snapshot(*, proc: Path = PROC, sysfs: Path = SYS, runner=subprocess.run,
     doc["git_head"] = git_sha if git_sha and re.fullmatch(r"[0-9a-f]{40}", git_sha) else None
     return doc
 
+
+
+def observation_summary(samples: list[dict]) -> dict:
+    """Interval deltas; block sectors are 512-byte units, not filesystem bytes."""
+    if len(samples) < 2:
+        return {"status": "NOT_OBSERVED"}
+    try:
+        before = datetime.fromisoformat(samples[0]["timestamp_utc"])
+        after = datetime.fromisoformat(samples[-1]["timestamp_utc"])
+        seconds = (after - before).total_seconds()
+    except (ValueError, TypeError, KeyError):
+        return {"status": "UNSUPPORTED"}
+    if seconds <= 0:
+        return {"status": "UNSUPPORTED"}
+    disk_rates = {}
+    prev_disks = samples[0].get("nvme", {}).get("drives", {})
+    last_disks = samples[-1].get("nvme", {}).get("drives", {})
+    for device in sorted(prev_disks.keys() & last_disks.keys()):
+        a, b = prev_disks[device], last_disks[device]
+        delta = {key: b.get(key, 0) - a.get(key, 0)
+                 for key in ("read_ios", "read_sectors", "write_ios",
+                             "write_sectors", "read_time_ms", "write_time_ms")}
+        if any(value < 0 for value in delta.values()):
+            continue
+        disk_rates[device] = {
+            "read_bytes_per_second": round(delta["read_sectors"] * 512 / seconds),
+            "write_bytes_per_second": round(delta["write_sectors"] * 512 / seconds),
+            "avg_read_time_ms_per_io": (
+                round(delta["read_time_ms"] / delta["read_ios"], 2)
+                if delta["read_ios"] else None),
+            "avg_write_time_ms_per_io": (
+                round(delta["write_time_ms"] / delta["write_ios"], 2)
+                if delta["write_ios"] else None),
+        }
+    available = [row.get("host_memory", {}).get("MemAvailable_bytes")
+                 for row in samples]
+    available = [x for x in available if isinstance(x, int)]
+    swaps = [row.get("host_memory", {}).get("swap_used_bytes")
+             for row in samples]
+    swaps = [x for x in swaps if isinstance(x, int)]
+    psi = [row.get("pressure", {}).get("memory", {}).get("some") or {}
+           for row in samples]
+    psi_avg10 = [p.get("avg10") for p in psi
+                 if isinstance(p.get("avg10"), (float, int))]
+    return {"status": "OBSERVED_INTERVAL",
+            "duration_seconds": round(seconds, 3),
+            "min_mem_available_bytes": min(available) if available else None,
+            "max_swap_used_bytes": max(swaps) if swaps else None,
+            "max_memory_psi_some_avg10_pct": max(psi_avg10) if psi_avg10 else None,
+            "nvme_rates": disk_rates,
+            "nvme_latency_scope": "kernel cumulative per-I/O time delta; not PLE-only"}
 
 def admission(snapshot_doc: dict) -> dict:
     """Read-only candidate gate; missing thresholds never imply safe admission."""
@@ -326,6 +385,8 @@ def main(argv: list[str] | None = None) -> int:
         samples.append(snapshot())
     doc = {"stage": "p5", "action": args.action, "executed": False,
            "service_mutated": False, "snapshots": samples}
+    if args.action == "observe":
+        doc["interval_summary"] = observation_summary(samples)
     if args.action == "preflight":
         doc["admission"] = admission(samples[-1])
     if args.save:

@@ -89,6 +89,25 @@ class ResourceDiagnosticsCPU(unittest.TestCase):
             self.assertFalse(any("start" in x or "stop" in x or "update" in x
                                  for x in commands))
 
+    def test_nvme_observation_delta_has_correct_units(self):
+        a = {"timestamp_utc": "2026-11-08T00:00:00+00:00",
+             "nvme": {"drives": {"nvme0n1": {"read_ios": 2, "read_sectors": 10,
+                       "write_ios": 1, "write_sectors": 4,
+                       "read_time_ms": 10, "write_time_ms": 5}}},
+             "host_memory": {"MemAvailable_bytes": 100},
+             "pressure": {"memory": {"some": {"avg10": 3.0}}}}
+        b = {"timestamp_utc": "2026-11-08T00:00:10+00:00",
+             "nvme": {"drives": {"nvme0n1": {"read_ios": 4, "read_sectors": 30,
+                       "write_ios": 2, "write_sectors": 14,
+                       "read_time_ms": 30, "write_time_ms": 15}}},
+             "host_memory": {"MemAvailable_bytes": 90},
+             "pressure": {"memory": {"some": {"avg10": 4.0}}}}
+        summary = r.observation_summary([a, b])
+        self.assertEqual(summary["status"], "OBSERVED_INTERVAL")
+        self.assertEqual(summary["nvme_rates"]["nvme0n1"]["read_bytes_per_second"], 1024)
+        self.assertEqual(summary["nvme_rates"]["nvme0n1"]["avg_read_time_ms_per_io"], 10)
+        self.assertEqual(summary["min_mem_available_bytes"], 90)
+
     def test_wizard_resources_route_is_read_only(self):
         from unittest.mock import patch
         from wizard.main import main as wizard_main
