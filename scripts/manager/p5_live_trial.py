@@ -30,10 +30,11 @@ from scripts.manager.service_manifest import policy
 ROOT = Path(__file__).resolve().parents[2]
 STATE = Path.home() / ".local/state/blazux-wizard/p5-live-trial"
 SOURCE = "qwen38-27b"
-TARGET = "qwen38-orcarouter-qsa62318-lmhead"
+TARGET = "qwen38-orcarouter-qsa62318-lmhead-v3"
+FAILED_V2_TARGET = "qwen38-orcarouter-qsa62318-lmhead"
 FAILED_PREVIOUS_TARGET = "qwen38-orcarouter"
-IMAGE_TAG = "blazux-p5-orcarouter:qsa62318-lmhead-v032"
-ADAPTER = "qwen4exp-qsa62318-lmhead-v032-v2"
+IMAGE_TAG = "blazux-p5-orcarouter:qsa62318-lmhead-v3-v032"
+ADAPTER = "qwen4exp-qsa62318-lmhead-v032-v3"
 ALIAS = "qwen3.8-flash-next-orca-uncensored-bf16"
 ACK = "I_ACCEPT_P5_NO_ROLLBACK"
 CACHE = Path.home() / "Workspace/llm/yslab-qwen38-bf16ple-dgx-spark/hf-cache"
@@ -92,7 +93,7 @@ def _trial_recipe() -> dict:
     profile = recipe["profiles"][trial["profile"]]
     compat = recipe["compatibility_adapter"]
     if (trial["runtime_strategy"]
-        != "RECIPE_PINNED_QSA62318_LMHEAD_V2_DERIVED_IMAGE_FROM_EXISTING_VLLM032"
+        != "RECIPE_PINNED_QSA62318_LMHEAD_V3_DERIVED_IMAGE_FROM_EXISTING_VLLM032"
         or trial["require_image_build"] is not True
         or trial["allow_source_patch"] is not False
         or trial["allow_isolated_derived_image_source_backport"] is not True
@@ -105,9 +106,9 @@ def _trial_recipe() -> dict:
         or compat["gpu_qualified"] is not False
         or compat["apply_only_in_derived_image"] is not True
         or compat["preserve_original_27b_image"] is not True
-        or compat["dockerfile"] != "Dockerfile.p5.qsa62318-lmhead"
+        or compat["dockerfile"] != "Dockerfile.p5.qsa62318-lmhead-v3"
         or compat["patch_script"] != "src/p5_qsa_quant_backport_v032.py"
-        or compat["lm_head_patch_script"] != "src/p5_lm_head_quant_backport_v032.py"
+        or compat["lm_head_patch_script"] != "src/p5_lm_head_quant_backport_v032_v3.py"
         or profile["num_speculative_tokens"] != 0
         or profile["served_id"] != ALIAS
         or trial["p5_env"].get("VLLM_PLE_MMAP") != "1"
@@ -192,9 +193,11 @@ report={
   "blazux_hybrid_guard": ("fused_quant_config = _fp8_hybrid_excluded(quant_config)" in qsa
     and "and not _fp8_hybrid_separate_qsa(quant_config, prefix)" in qsa),
   "lm_head_quant_config_wired": (
-    "# blazux-p5-lmhead-v032: checkpoint-aware quantized LM head" in model
+    "# blazux-p5-lmhead-v032-v3: checkpoint-target LM head registration" in model
     and "quant_config=self.quant_config," in model
-    and 'prefix=maybe_prefix(prefix, "lm_head"),' in model),
+    and 'prefix="lm_head",' in model),
+  "lm_head_quant_prefix_exact": ('prefix="lm_head",' in model
+    and '# blazux-p5-lmhead-v032-v3:' in model),
   "lm_head_v032_linear_attrs": all(x in meta for x in (
     "self.has_bias = bias",
     "self.output_partition_sizes = [self.output_size_per_partition]",
@@ -213,7 +216,7 @@ def _scoped_image_labels(image: dict, base_id: str) -> bool:
             and labels.get("blazux.p5.state") == "SOURCE_CANDIDATE_NOT_QUALIFIED"
             and labels.get("blazux.p5.vllm") == "0.32.0"
             and labels.get("blazux.p5.adapter") == ADAPTER
-            and labels.get("blazux.p5.lmhead") == "v0.32"
+            and labels.get("blazux.p5.lmhead") == "v0.32-v3"
             and labels.get("blazux.p5.base_image") == base_id
             and labels.get("blazux.p5.production_release") == "false")
 
@@ -238,7 +241,8 @@ def _scoped_image(base_id: str) -> dict:
         or probe.get("vllm_version") != "0.32.0"
         or any(probe.get(field) is not True for field in (
             "qkv_mapping_exact", "upstream_62318_guard", "blazux_hybrid_guard",
-            "lm_head_quant_config_wired", "lm_head_v032_linear_attrs", "source_syntax_valid"))):
+            "lm_head_quant_config_wired", "lm_head_quant_prefix_exact",
+            "lm_head_v032_linear_attrs", "source_syntax_valid"))):
         raise ValueError("P5_QSA62318_UPSTREAM_FIX_NOT_CONFIRMED")
     return {"image_id": img["Id"], "base_image_id": base_id,
             "adapter": ADAPTER, "capabilities": probe}
@@ -281,7 +285,7 @@ def _prepare_scoped_image(base_id: str) -> dict:
             raise ValueError("P5_SCOPED_IMAGE_INVENTORY_UNAVAILABLE") from exc
     base = _verified_local_base_alias(base_id)
     args = ["docker", "build", "--pull=false", "--network=none",
-            "-f", "Dockerfile.p5.qsa62318-lmhead",
+            "-f", "Dockerfile.p5.qsa62318-lmhead-v3",
             "--build-arg", "P5_BASE=" + base,
             "--build-arg", "P5_BASE_IMAGE_ID=" + base_id,
             "-t", IMAGE_TAG, str(ROOT)]
@@ -593,6 +597,7 @@ def execute(approval: str | None, ack: str | None, *,
             report["adapter"] = ADAPTER
             report["previous_failed_target_preserved"] = FAILED_PREVIOUS_TARGET
             report["previous_qsa_target_preserved"] = "qwen38-orcarouter-qsa62318"
+            report["previous_v2_target_preserved"] = FAILED_V2_TARGET
             report["original_engine_patched"] = False
             report["source_already_stopped"] = not plan["details"]["source"]["running"]
             # Retain the exact existing source image and stopped 27B container.
