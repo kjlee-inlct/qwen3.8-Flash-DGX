@@ -132,7 +132,7 @@
     "derived_overlay_required": false,
     "production_launch_allowed": false,
     "source_immutable": true,
-    "runtime_strategy": "RECIPE_PINNED_QSA62318_DERIVED_IMAGE_FROM_EXISTING_VLLM032",
+    "runtime_strategy": "RECIPE_PINNED_QSA62318_LMHEAD_V2_DERIVED_IMAGE_FROM_EXISTING_VLLM032",
     "require_image_build": true,
     "allow_source_patch": false,
     "read_only_image_capability_probe": true,
