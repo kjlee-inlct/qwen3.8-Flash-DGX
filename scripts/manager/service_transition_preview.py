@@ -8,6 +8,8 @@ from __future__ import annotations
 from typing import Any
 
 from scripts.manager.service_manifest import policy
+from scripts.manager.ple_assets import asset_spec
+from scripts.manager.ple_format import transition_contract
 
 
 def preview_transition(target: str, *, service: dict[str, Any],
@@ -15,7 +17,9 @@ def preview_transition(target: str, *, service: dict[str, Any],
                        runtime_qualified: bool = False,
                        api_identity_verified: bool = False,
                        gpu_exclusivity_verified: bool = False,
-                       rollback_verified: bool = False) -> dict[str, Any]:
+                       rollback_verified: bool = False,
+                       source_profile: str | None = None,
+                       target_profile: str | None = None) -> dict[str, Any]:
     cfg = policy()
     models = cfg["models"]
     if target not in models:
@@ -24,6 +28,27 @@ def preview_transition(target: str, *, service: dict[str, Any],
     if source is not None and source not in models:
         raise ValueError("UNKNOWN_OBSERVED_MODEL")
     errors: list[str] = []
+    # A model may have no PLE, or a different independent PLE storage format.
+    # The comparison is declarative, never permission for a live in-place swap.
+    try:
+        old_id = models[source].get("ple_asset_id") if source else None
+        new_id = models[target].get("ple_asset_id")
+        old_spec = ({**asset_spec(old_id), "asset_id": old_id} if old_id else None)
+        new_spec = ({**asset_spec(new_id), "asset_id": new_id} if new_id else None)
+        ple_transition = transition_contract(
+            old_spec, new_spec, source_profile=source_profile,
+            target_profile=target_profile,
+        )
+    except (OSError, ValueError, TypeError, KeyError):
+        ple_transition = transition_contract(None, None)
+        errors.append("PLE_TRANSITION_MANIFEST_INVALID")
+    if new_id and not errors and not new_spec["format"]["loader_qualified"]:
+        errors.append("TARGET_PLE_FORMAT_LOADER_NOT_QUALIFIED")
+    if old_id and source_profile is None:
+        errors.append("SOURCE_PLE_PROFILE_UNVERIFIED")
+    if new_id and target_profile is not None and not errors:
+        if target_profile not in new_spec["profiles"]:
+            errors.append("TARGET_PLE_PROFILE_NOT_REGISTERED")
     if service.get("status") != "OBSERVED_UNQUALIFIED":
         errors.append("LIVE_SERVICE_INVENTORY_UNVERIFIED")
     if source == target:
@@ -51,6 +76,12 @@ def preview_transition(target: str, *, service: dict[str, Any],
          "condition": "source is not None"},
         {"phase": "OLD_STOPPED", "action": "verify-port-free",
          "description": "Verify :8000 released; ensure no GPU inference model remains"},
+        {"phase": "OLD_STOPPED", "action": "release-old-ple-mmap",
+         "description": "Close source model PLE mappings and release GPU allocations before target load",
+         "condition": "source PLE asset exists"},
+        {"phase": "OLD_STOPPED", "action": "validate-target-ple-loader",
+         "description": "Check target PLE dtype/scale/layout support in pinned vLLM ABI",
+         "condition": "target PLE asset exists"},
         {"phase": "NEW_STARTING", "action": "start-target",
          "description": "Start only the selected qualified recipe on host port 8000"},
         {"phase": "NEW_VERIFYING", "action": "api-verify",
@@ -75,7 +106,7 @@ def preview_transition(target: str, *, service: dict[str, Any],
         "plan_id": None, "operations_enabled": False, "runtime": "NOT_RUN",
         "source_model": source, "target_model": target,
         "api_host_port": 8000, "max_active_gpu_models": 1,
-        "steps": steps, "rollback": rollback,
+        "steps": steps, "rollback": rollback, "ple_transition": ple_transition,
         "issues": sorted(set(errors)),
         "notice": "Read-only design plan. No service stop, start, switch, GPU operation or approval is permitted.",
     }

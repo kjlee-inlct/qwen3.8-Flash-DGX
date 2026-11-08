@@ -1,6 +1,6 @@
 {
-  "schema_version": 1,
-  "title": "Pinned PLE asset registry; source integrity is independent of live GPU qualification",
+  "schema_version": 2,
+  "title": "Versioned PLE assets: format per model, source pins and independent runtime capability",
   "assets": {
     "orcarouter-bf16-ple": {
       "owner_model": "orcarouter",
@@ -39,10 +39,39 @@
         "activation": "NOT_RUN"
       },
       "verification": {
-        "method": "PINNED_INDEX_AND_SAFETENSORS_HEADER_METADATA",
+        "method": "PINNED_REFERENCE_HEADER_AUDIT",
         "sha256_whole_checkpoint": false,
         "gpu_runtime_verified": false
+      },
+      "format": {
+        "storage_dtype": "BF16",
+        "scale_mode": "NONE",
+        "scale_dtype": null,
+        "scale_block_shape": null,
+        "packing": "ELEMENT_ALIGNED",
+        "loader_qualified": false
+      },
+      "placement": {
+        "table_memory": "DISK_MMAP",
+        "offload_backend": "MODEL_SPECIFIC_SOURCE",
+        "prewarm": false,
+        "tp1_executor_requirement": "VERIFY_ON_TARGET_ENGINE",
+        "validated_on_gpu": false
       }
     }
+  },
+  "compatibility": {
+    "model_ple_dtype_independent_from_inference_dtype": true,
+    "format_change_requires_explicit_runtime_requalification": true,
+    "auto_convert_on_switch": false,
+    "auto_reuse_mmap_between_models": false,
+    "independent_inference_dtype_and_kv_cache_dtype": true
+  },
+  "transition_policy": {
+    "release_source_mmap_before_target": true,
+    "verify_gpu_allocation_release": true,
+    "stop_old_before_new": true,
+    "host_port": 8000,
+    "preserve_source_and_rollback_assets": true
   }
 }

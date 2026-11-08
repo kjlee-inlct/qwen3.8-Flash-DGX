@@ -134,6 +134,31 @@ class P5PLEManifestCPU(unittest.TestCase):
         self.assertEqual(row["ple_asset"]["runtime_mmap_status"], "NOT_RUN")
         self.assertFalse(row["active_api_identity_verified"])
 
+    def test_stopped_idle_service_can_pass_preflight_without_false_gpu_release(self):
+        with tempfile.TemporaryDirectory() as temp:
+            report = p5.read_only(
+                roots=[Path(temp)],
+                service_inspector=lambda: {
+                    "status": "OBSERVED_UNQUALIFIED",
+                    "observed_model": None,
+                    "observed_state": "NO_MANAGED_MODEL_RUNNING",
+                    "api_port_8000_listening": False,
+                    "issues": [],
+                })
+        self.assertEqual(report["stages"][3]["status"], "PASS")
+        self.assertEqual(report["stages"][3]["service_state"], "STOPPED_PORT_FREE")
+        self.assertTrue(report["stages"][3]["27b_downtime_permitted"])
+        self.assertFalse(report["production_released"])
+        self.assertFalse(report["gpu_verified"])
+
+    def test_loader_capability_profile_is_visible_but_not_qualified(self):
+        report = p5.source_plan("mtp2")
+        self.assertEqual(report["ple_loader_profile"]["runtime_version"], "0.32.0")
+        self.assertEqual(report["ple_loader_profile"]["storage_dtype"], "BF16")
+        self.assertFalse(report["ple_loader_profile"]["cuda_loader_verified"])
+        self.assertFalse(report["ple_loader_profile"]["rollback_verified"])
+        self.assertFalse(report["ple_loader_profile"]["autostart_released"])
+
     def test_unregistered_ple_ref_is_rejected(self):
         with tempfile.TemporaryDirectory() as temp:
             data = {

@@ -65,7 +65,8 @@
     "preparation_requires_separate_approval": true,
     "service_downtime_requires_separate_approval": true,
     "gpu_trial_released": false,
-    "rollback_release": false
+    "rollback_release": false,
+    "ple_loader_profile": "blazux-vllm032-orcarouter-bf16"
   },
   "profiles": {
     "mtp0": {

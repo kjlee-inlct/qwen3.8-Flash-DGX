@@ -10,7 +10,8 @@
     "ple_assets": "runtimes/ple-assets.json",
     "orcarouter_recipe": "recipes/qwen38-orcarouter.runtime.json",
     "27b_recipe": "recipes/qwen38-27b.runtime.json",
-    "yslab_compatibility": "scripts/p5_vendor/compatibility.json"
+    "yslab_compatibility": "scripts/p5_vendor/compatibility.json",
+    "ple_loader_profiles": "runtimes/ple-loader-profiles.json"
   },
   "truth_model": {
     "desired": "versioned registry, service policy, recipes and asset specifications",

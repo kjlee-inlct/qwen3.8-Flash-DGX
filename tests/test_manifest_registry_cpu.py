@@ -33,7 +33,7 @@ class ManifestRegistryCPU(unittest.TestCase):
     def test_full_bundle_consistent_declarative_only(self):
         d = registry.validate(root=self.root)
         self.assertEqual(d["status"], "PASS", d["issues"])
-        self.assertEqual(d["manifest_files_verified"], 6)
+        self.assertEqual(d["manifest_files_verified"], 7)
         self.assertEqual(d["registered_models"], ["27b", "flash-next", "orcarouter"])
         self.assertEqual(d["registered_ple_assets"], ["orcarouter-bf16-ple"])
         self.assertEqual(d["scope"], "DECLARATIVE_MANIFEST_ONLY")
@@ -44,6 +44,68 @@ class ManifestRegistryCPU(unittest.TestCase):
     def test_ple_id_drift_fails_cross_reference(self):
         self.modify("model_discovery", lambda d: d["models"]["orcarouter"].update(
             ple_asset_id="not-the-registered-asset"))
+        self.assertEqual(registry.validate(root=self.root)["status"], "FAIL")
+
+    def test_ple_loader_matrix_is_not_execution_permission(self):
+        d = registry.validate(root=self.root)
+        self.assertEqual(d["registered_ple_loader_profiles"],
+                         ["blazux-vllm032-orcarouter-bf16"])
+        self.assertEqual(d["registered_ple_formats"], {"orcarouter-bf16-ple": "BF16"})
+        self.assertEqual(d["ple_manifest_schema"], 2)
+        self.assertEqual(d["external_ple_references_count"], 2)
+        self.assertFalse(d["execution_release"])
+
+    def test_loader_profile_abuse_fails_closed(self):
+        self.modify("ple_loader_profiles", lambda d: d["profiles"]
+                    ["blazux-vllm032-orcarouter-bf16"].update(autostart_released=True))
+        self.assertEqual(registry.validate(root=self.root)["status"], "FAIL")
+
+    def test_external_profile_runtime_import_forbidden(self):
+        self.modify("ple_loader_profiles", lambda d:
+                    d["external_references"][0].update(import_as_runtime=True))
+        self.assertEqual(registry.validate(root=self.root)["status"], "FAIL")
+
+    def test_future_model_fp8_per_table_ple_can_register_without_runtime_release(self):
+        def add_service(doc):
+            doc["models"]["future"] = {
+                "checkpoint": "example/FutureFP8PLE",
+                "served_id": None, "container_name": "future-fp8",
+                "ple_asset_id": "future-fp8-ple",
+            }
+        def add_discovery(doc):
+            doc["models"]["future"] = {
+                "repo_id": "example/FutureFP8PLE",
+                "pinned_revision": "a" * 40,
+                "ple_asset_id": "future-fp8-ple",
+                "recipe_view": None,
+            }
+        def add_asset(doc):
+            asset = copy.deepcopy(doc["assets"]["orcarouter-bf16-ple"])
+            asset["owner_model"] = "future"
+            asset["source"]["repo_id"] = "example/FutureFP8PLE"
+            asset["source"]["revision"] = "a" * 40
+            asset["reference"] = None
+            asset["format"].update(storage_dtype="F8_E4M3",
+                                   scale_mode="PER_TABLE", scale_dtype="BF16")
+            asset["layout"].update(dtype="F8_E4M3",
+                                    mmap_bytes=51200245760,
+                                    weight_scale_present=True)
+            asset["profiles"] = ["mtp0"]
+            asset["verification"]["method"] = "UNQUALIFIED_ADAPTER"
+            doc["assets"]["future-fp8-ple"] = asset
+        self.modify("service_policy", add_service)
+        self.modify("model_discovery", add_discovery)
+        self.modify("ple_assets", add_asset)
+        report = registry.validate(root=self.root)
+        self.assertEqual(report["status"], "PASS", report["issues"])
+        self.assertEqual(report["registered_ple_formats"]["future-fp8-ple"],
+                         "F8_E4M3")
+        self.assertFalse(report["runtime_qualified"])
+        self.assertFalse(report["execution_release"])
+
+    def test_ple_v2_transition_policy_tamper_fails(self):
+        self.modify("ple_assets", lambda d:
+                    d["transition_policy"].update(verify_gpu_allocation_release=False))
         self.assertEqual(registry.validate(root=self.root)["status"], "FAIL")
 
     def test_ple_layout_drift_fails(self):

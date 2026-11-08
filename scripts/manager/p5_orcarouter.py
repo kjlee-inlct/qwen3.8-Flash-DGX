@@ -240,6 +240,8 @@ def source_plan(profile: str = "mtp0") -> dict:
         raise ValueError("UNKNOWN_P5_PROFILE")
     static = abi_source_audit()
     manifest_integrity = manifest_registry.validate()
+    loader_id = _recipe()["runtime"]["ple_loader_profile"]
+    loader = manifest_registry.load("ple_loader_profiles")["profiles"][loader_id]
     fingerprint = hashlib.sha256(
         (ORCA_REPO + ORCA_REV + DONOR_REV + SOURCE_COMMIT + profile).encode()
     ).hexdigest()
@@ -249,6 +251,7 @@ def source_plan(profile: str = "mtp0") -> dict:
         "source_reference": SOURCE_COMMIT, "vllm_version": "0.32.0",
         "host_api_port": 8000, "one_active_model_only": True,
         "manifest_integrity": manifest_integrity,
+        "ple_loader_profile": {"profile_id": loader_id, **loader},
         "ple_asset": {"asset_id": PLE_ID,
                       "manifest": "runtimes/ple-assets.json",
                       "expected": ple_asset_spec()["layout"],
@@ -321,20 +324,46 @@ def read_only(*, roots: list[Path] | None = None,
               service_inspector: Callable[[], dict] | None = None) -> dict:
     static = abi_source_audit()
     manifest_integrity = manifest_registry.validate()
+    loader_id = _recipe()["runtime"]["ple_loader_profile"]
+    loader = manifest_registry.load("ple_loader_profiles")["profiles"][loader_id]
     ple = audit_ple(roots=roots)
     donor = audit_donor(roots=roots)
+    idle_inspector = None
     if service_inspector is None:
         from scripts.manager.service_status import inspect_live_status
+        from scripts.manager.service_manifest import inspect_service
         service_inspector = inspect_live_status
+        idle_inspector = inspect_service
     try:
         live = service_inspector()
-        safe = (live.get("status") == "LIVE_SERVICE_VERIFIED"
-                and live.get("observed_model") == "27b"
-                and live.get("expected_served_id") == "qwen3.8-27b"
-                and live.get("host_port") == 8000 and live.get("issues") == [])
-        svc = _gate("preserve_live_27b", PASS if safe else BLOCKED,
-                    *([] if safe else ["CURRENT_27B_EXCLUSIVITY_NOT_VERIFIED"]),
-                    observed_model=live.get("observed_model") if safe else None)
+        if (idle_inspector is not None
+            and live.get("status") != "LIVE_SERVICE_VERIFIED"
+            and live.get("observed_model") is None):
+            # No active API is normal on an idle development DGX. Do not
+            # mistake a missing API for proof that all GPUs are free.
+            raw_idle = idle_inspector()
+            if (raw_idle.get("status") == "OBSERVED_UNQUALIFIED"
+                and raw_idle.get("observed_model") is None
+                and raw_idle.get("observed_state") == "NO_MANAGED_MODEL_RUNNING"
+                and raw_idle.get("api_port_8000_listening") is False
+                and raw_idle.get("issues") == []):
+                live = raw_idle
+        existing_27b = (live.get("status") == "LIVE_SERVICE_VERIFIED"
+                        and live.get("observed_model") == "27b"
+                        and live.get("expected_served_id") == "qwen3.8-27b"
+                        and live.get("host_port") == 8000
+                        and live.get("issues") == [])
+        stopped = (live.get("status") == "OBSERVED_UNQUALIFIED"
+                   and live.get("observed_state") == "NO_MANAGED_MODEL_RUNNING"
+                   and live.get("api_port_8000_listening") is False
+                   and live.get("issues") == [])
+        safe = existing_27b or stopped
+        svc = _gate("service_preflight", PASS if safe else BLOCKED,
+                    *([] if safe else ["SINGLE_MODEL_PORT_8000_NOT_VERIFIED"]),
+                    observed_model=live.get("observed_model") if existing_27b else None,
+                    27b_downtime_permitted=True,
+                    service_state=("27B_RUNNING" if existing_27b else
+                                   "STOPPED_PORT_FREE" if stopped else "UNKNOWN"))
     except (OSError, ValueError, RuntimeError, TypeError, KeyError):
         svc = _gate("preserve_live_27b", INCONCLUSIVE, "LIVE_STATUS_UNAVAILABLE")
     gates = [static, ple, donor, svc, _gate("mtp_overlay", NOT_RUN),
@@ -345,6 +374,7 @@ def read_only(*, roots: list[Path] | None = None,
             "scope": "DGX_READ_ONLY", "status": status, "stages": gates,
             "manifest_integrity": manifest_integrity,
             "ple_asset": ple,
+            "ple_loader_profile": {"profile_id": loader_id, **loader},
             "issues": sorted(set([i for g in gates for i in g["issues"]] +
                                  manifest_integrity["issues"])),
             "executed": False, "approval_accepted": False,
@@ -368,6 +398,7 @@ def stage_action(action: str, *, profile: str = "mtp0",
             "source_audit": plan["stages"][0],
             "manifest_integrity": plan["manifest_integrity"],
             "ple_asset": ple,
+            "ple_loader_profile": plan["ple_loader_profile"],
             "recipe_path": "recipes/qwen38-orcarouter.runtime.json",
             "checkpoint": ORCA_REPO, "revision": ORCA_REV,
             "served_id": _recipe()["profiles"][profile]["served_id"],

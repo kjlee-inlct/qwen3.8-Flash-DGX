@@ -19,6 +19,7 @@ FILES = {
     "service_policy": "runtimes/service-policy.json",
     "model_discovery": "runtimes/model-discovery.json",
     "ple_assets": "runtimes/ple-assets.json",
+    "ple_loader_profiles": "runtimes/ple-loader-profiles.json",
     "orcarouter_recipe": "recipes/qwen38-orcarouter.runtime.json",
     "27b_recipe": "recipes/qwen38-27b.runtime.json",
     "yslab_compatibility": "scripts/p5_vendor/compatibility.json",
@@ -50,7 +51,8 @@ def _reject_constant(_value: str) -> None:
     raise ManifestContractError("MANIFEST_NONFINITE_NUMBER")
 
 
-def read_json(path: Path, *, max_bytes: int = MAX_BYTES) -> dict[str, Any]:
+def read_json(path: Path, *, max_bytes: int = MAX_BYTES,
+              schema_versions: tuple[int, ...] = (1,)) -> dict[str, Any]:
     """Bounded strict JSON; reject symlinks, duplicates, NaN, BOM, large input."""
     path = Path(path)
     try:
@@ -64,7 +66,9 @@ def read_json(path: Path, *, max_bytes: int = MAX_BYTES) -> dict[str, Any]:
                             parse_constant=_reject_constant)
     except (OSError, UnicodeError, json.JSONDecodeError) as exc:
         raise ManifestContractError("MANIFEST_JSON_INVALID") from exc
-    if not isinstance(result, dict) or result.get("schema_version") != 1:
+    if (not isinstance(result, dict)
+        or type(result.get("schema_version")) is not int
+        or result["schema_version"] not in schema_versions):
         raise ManifestContractError("MANIFEST_SCHEMA_VERSION")
     return result
 
@@ -84,7 +88,8 @@ def load(kind: str, *, root: Path = ROOT) -> dict[str, Any]:
         raise ManifestContractError("UNKNOWN_MANIFEST_KIND")
     registered = registry(root=root)
     rel = registered["entries"][kind]
-    return read_json(root / rel)
+    return read_json(root / rel,
+                     schema_versions=(2,) if kind == "ple_assets" else (1,))
 
 
 def _required(condition: bool, code: str) -> None:
@@ -96,6 +101,7 @@ def _validate_bundle(parts: dict[str, dict[str, Any]], *, root: Path = ROOT) -> 
     svc = parts["service_policy"]
     discovery = parts["model_discovery"]
     ple = parts["ple_assets"]
+    loaders = parts["ple_loader_profiles"]
     orca = parts["orcarouter_recipe"]
     nvidia = parts["27b_recipe"]
     compat = parts["yslab_compatibility"]
@@ -108,7 +114,7 @@ def _validate_bundle(parts: dict[str, dict[str, Any]], *, root: Path = ROOT) -> 
     models = svc.get("models", {})
     found = discovery.get("models", {})
     _required(isinstance(models, dict) and isinstance(found, dict)
-              and set(models) == {"flash-next", "27b", "orcarouter"}
+              and {"flash-next", "27b", "orcarouter"}.issubset(set(models))
               and set(found) == set(models), "MODEL_REGISTRATION_DRIFT")
     _required(discovery.get("ple_asset_manifest") == FILES["ple_assets"]
               and isinstance(discovery.get("cache_roots"), list)
@@ -152,9 +158,44 @@ def _validate_bundle(parts: dict[str, dict[str, Any]], *, root: Path = ROOT) -> 
               and found["27b"].get("pinned_revision") == nvidia.get("model", {}).get("revision")
               and nvidia.get("runtime", {}).get("port") == 8000,
               "CANONICAL_27B_REFERENCE_DRIFT")
+    from scripts.manager.ple_format import validate_asset
     assets = ple.get("assets", {})
-    _required(isinstance(assets, dict) and set(assets) == {ASSET_ID},
+    _required(ple.get("schema_version") == 2
+              and isinstance(assets, dict) and ASSET_ID in assets,
               "PLE_REGISTRY_INVALID")
+    _required(ple.get("transition_policy") == {
+        "release_source_mmap_before_target": True,
+        "verify_gpu_allocation_release": True,
+        "stop_old_before_new": True,
+        "host_port": 8000,
+        "preserve_source_and_rollback_assets": True,
+    } and ple.get("compatibility", {}).get("auto_convert_on_switch") is False
+      and ple.get("compatibility", {}).get("auto_reuse_mmap_between_models") is False
+      and ple.get("compatibility", {}).get(
+          "format_change_requires_explicit_runtime_requalification") is True
+      and ple.get("compatibility", {}).get(
+          "model_ple_dtype_independent_from_inference_dtype") is True
+      and ple.get("compatibility", {}).get(
+          "independent_inference_dtype_and_kv_cache_dtype") is True,
+      "PLE_TRANSITION_POLICY_INVALID")
+    for asset_id, spec in assets.items():
+        try:
+            validate_asset(asset_id, spec, registered_models=set(models))
+        except (TypeError, ValueError, KeyError) as exc:
+            raise ManifestContractError("PLE_ASSET_FORMAT_INVALID") from exc
+    # Any model may reference an explicitly registered format; the PLE on-disk
+    # dtype and inference/KV dtype are separate. Never infer a PLE from a model.
+    for key, desc in models.items():
+        asset_id = desc.get("ple_asset_id")
+        discovered_id = found[key].get("ple_asset_id")
+        _required(asset_id == discovered_id, "PLE_MODEL_DISCOVERY_BINDING_DRIFT")
+        if asset_id is not None:
+            _required(asset_id in assets, "PLE_MODEL_ASSET_NOT_REGISTERED")
+            owned = assets[asset_id]
+            _required(owned["owner_model"] == key
+                      and owned["source"]["repo_id"] == found[key]["repo_id"]
+                      and owned["source"]["revision"] == found[key]["pinned_revision"],
+                      "PLE_MODEL_SOURCE_PIN_DRIFT")
     entry = assets[ASSET_ID]
     _required(entry.get("owner_model") == "orcarouter"
               and entry.get("source", {}).get("repo_id") == ORCA
@@ -163,11 +204,20 @@ def _validate_bundle(parts: dict[str, dict[str, Any]], *, root: Path = ROOT) -> 
               and entry.get("reference", {}).get("target") == "orca-uncensored"
               and entry.get("reference", {}).get("mode") == "direct_bf16"
               and entry.get("layout") == orca["model"].get("expected_ple")
-              and entry.get("profiles") == ["mtp0", "mtp2"]
-              and entry.get("lifecycle", {}).get("runtime_qualified") is False
-              and entry.get("lifecycle", {}).get("source_checkpoint_immutable") is True
-              and entry.get("lifecycle", {}).get("delete_requires_separate_approval") is True,
-              "PLE_ASSET_CONTRACT_DRIFT")
+              and entry.get("format") == {
+                  "storage_dtype": "BF16", "scale_mode": "NONE",
+                  "scale_dtype": None, "scale_block_shape": None,
+                  "packing": "ELEMENT_ALIGNED", "loader_qualified": False,
+              }
+              and entry.get("profiles") == ["mtp0", "mtp2"],
+              "PLE_ORCAROUTER_PINNED_CONTRACT_DRIFT")
+    _required(entry.get("placement") == {
+        "table_memory": "DISK_MMAP",
+        "offload_backend": "MODEL_SPECIFIC_SOURCE",
+        "prewarm": False,
+        "tp1_executor_requirement": "VERIFY_ON_TARGET_ENGINE",
+        "validated_on_gpu": False,
+    }, "PLE_ORCAROUTER_PLACEMENT_DRIFT")
     layout = entry["layout"]
     _required(layout.get("dtype") == "BF16"
               and layout.get("tensor_count") == layout.get("split_parts") == 128
@@ -175,7 +225,50 @@ def _validate_bundle(parts: dict[str, dict[str, Any]], *, root: Path = ROOT) -> 
               and layout.get("width") == 160
               and layout.get("mmap_bytes") == 102400491520
               and layout.get("weight_scale_present") is False,
-              "PLE_LAYOUT_DRIFT")
+              "PLE_ORCAROUTER_LAYOUT_DRIFT")
+    # Source asset and loader capability are different types of declarations.
+    # A separate engine/FP8 reference must never automatically become runnable.
+    profile_id = "blazux-vllm032-orcarouter-bf16"
+    matrix = loaders.get("profiles", {})
+    _required(loaders.get("registry_kind") == "PLE_LOADER_CAPABILITIES"
+              and isinstance(matrix, dict)
+              and profile_id in matrix
+              and orca.get("runtime", {}).get("ple_loader_profile") == profile_id,
+              "PLE_LOADER_PROFILE_REFERENCE_DRIFT")
+    adapter = matrix[profile_id]
+    _required(adapter.get("owner_model") == "orcarouter"
+              and adapter.get("ple_asset_id") == ASSET_ID
+              and adapter.get("engine") == "vllm"
+              and adapter.get("runtime_version") == "0.32.0"
+              and adapter.get("hardware") == "NVIDIA_GB10_SM121A"
+              and adapter.get("architecture") == "linux/arm64"
+              and adapter.get("storage_dtype") == entry["format"]["storage_dtype"]
+              and adapter.get("scale_mode") == entry["format"]["scale_mode"]
+              and adapter.get("table_memory") == entry["placement"]["table_memory"]
+              and adapter.get("mtp_profile_candidates") == ["mtp0", "mtp2"]
+              and adapter.get("container_image_digest") is None
+              and adapter.get("source_adapter_state") == "SOURCE_ONLY_UNQUALIFIED"
+              and all(adapter.get(name) is False for name in (
+                  "cuda_loader_verified", "tp1_offload_worker_verified",
+                  "mmap_gpu_verified", "api_model_identity_verified",
+                  "tool_calls_verified", "benchmark_verified",
+                  "rollback_verified", "autostart_released"))
+              and adapter.get("explicit_gpu_trial_requires_new_guarded_plan") is True,
+              "PLE_LOADER_UNQUALIFIED_POLICY_DRIFT")
+    refs = loaders.get("external_references", [])
+    _required(isinstance(refs, list) and len(refs) >= 2
+              and all(ref.get("verified_in_blazux_032") is False
+                      and ref.get("import_as_runtime") is False for ref in refs),
+              "PLE_EXTERNAL_REFERENCE_MUST_REMAIN_NON_EXECUTABLE")
+    rules = loaders.get("policy", {})
+    _required(rules.get("port") == 8000
+              and rules.get("max_active_gpu_models") == 1
+              and rules.get("model_body_quantization_does_not_define_ple_dtype") is True
+              and rules.get("mtp_donor_dtype_is_separate") is True
+              and rules.get("never_reuse_ple_mmap_across_model_transitions") is True
+              and rules.get("require_fresh_runtime_qualified_image_and_rollback") is True
+              and rules.get("do_not_copy_external_runtime_flags_without_abi_audit") is True,
+              "PLE_LOADER_POLICY_INVALID")
     _required(orca.get("mtp_donor", {}).get("repo_id") == DONOR
               and orca.get("mtp_donor", {}).get("revision") == DONOR_REV
               and orca.get("mtp_donor", {}).get("tensor_count") == 31
@@ -243,6 +336,15 @@ def validate(*, root: Path = ROOT) -> dict[str, Any]:
         "manifest_files_verified": len(documents),
         "registered_models": sorted(documents.get("service_policy", {}).get("models", {})),
         "registered_ple_assets": sorted(documents.get("ple_assets", {}).get("assets", {})),
+        "registered_ple_loader_profiles": sorted(
+            documents.get("ple_loader_profiles", {}).get("profiles", {})),
+        "external_ple_references_count": len(
+            documents.get("ple_loader_profiles", {}).get("external_references", [])),
+        "registered_ple_formats": {
+            name: spec.get("format", {}).get("storage_dtype")
+            for name, spec in documents.get("ple_assets", {}).get("assets", {}).items()
+        },
+        "ple_manifest_schema": documents.get("ple_assets", {}).get("schema_version"),
         "runtime_manifest_gaps": ["FLASH_NEXT_CANONICAL_RECIPE_NOT_REGISTERED",
                                   "ORCAROUTER_RUNTIME_IMAGE_UNQUALIFIED"],
         "execution_release": False,
