@@ -239,7 +239,7 @@ def _docker(recipe: dict, proc: Path, sysfs: Path, runner) -> dict:
         stats = None
     smaps = _kv_bytes(_read(proc / str(pid) / "smaps_rollup", 32768))
     proc_status = _read(proc / str(pid) / "status", 32768)
-    thread_match = re.search(r"(?m)^Threads:\\s*(\\d+)\\s*$", proc_status or "")
+    thread_match = re.search(r"(?m)^Threads:\s*(\d+)\s*$", proc_status or "")
     return {"status": "OBSERVED", "container": identity, "docker_stats": stats,
             "cgroup_v2": _cgroup(proc, sysfs, pid),
             "process_thread_count": int(thread_match.group(1)) if thread_match else None,
@@ -304,9 +304,12 @@ def observation_summary(samples: list[dict]) -> dict:
     last_disks = samples[-1].get("nvme", {}).get("drives", {})
     for device in sorted(prev_disks.keys() & last_disks.keys()):
         a, b = prev_disks[device], last_disks[device]
-        delta = {key: b.get(key, 0) - a.get(key, 0)
-                 for key in ("read_ios", "read_sectors", "write_ios",
-                             "write_sectors", "read_time_ms", "write_time_ms")}
+        keys = ("read_ios", "read_sectors", "write_ios",
+                "write_sectors", "read_time_ms", "write_time_ms")
+        if not all(isinstance(a.get(k), int) and isinstance(b.get(k), int)
+                   for k in keys):
+            continue
+        delta = {key: b[key] - a[key] for key in keys}
         if any(value < 0 for value in delta.values()):
             continue
         disk_rates[device] = {

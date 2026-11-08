@@ -1,5 +1,9 @@
 ## CURRENT P5 DOCUMENT SUPERSESSION — 2026-11-08 (v3 live PASS, safe resource work next)
 
+
+**NEW SOURCE-ONLY RESOURCE DIAGNOSTICS — 2026-11-08:** `./wizard.sh operations resources snapshot --json`, `observe --samples 3 --interval 5 --json`, `preflight --json` implemented with CPU/Fake-DGX CI; declared `OBSERVE_ONLY` P5 recipe policy. No DGX measurements obtained in this source session, no live service changes or resource limits applied. Preflight is NOT wired to launch, returns `BLOCKED_UNCALIBRATED` without approved threshold. Optional `--save` creates private 0600 JSON evidence. See [P5 adoption notes](../docs/P5-ORCAROUTER-BF16PLE-VLLM032-ADOPTION-20261108.md), keep trial v3 and port 8000 untouched.
+
+
 Read [complete document audit](../docs/HANDOFF-DOCUMENT-AUDIT-FULL-P5-20261108.md) and [active P5 runbook](../docs/P5-LMHEAD-V2-DGX-GPU-TRIAL-RUNBOOK-20261108.md), as well as [latest CURRENT-STATE](CURRENT-STATE.md) and [EVIDENCE-LEDGER](EVIDENCE-LEDGER.md). All pre-v3 procedures below are historical, not the current run instructions.
 
 **Latest actual operator evidence:** adapter `qwen4exp-qsa62318-lmhead-v032-v3` fixes `lm_head.weight_scale`; `./wizard.sh p5 trial verify --json` returned **`PASS_LIVE_INFERENCE`** with `READY`. `./wizard.sh service manager status --json` returned **`LIVE_P5_TRIAL_API_VERIFIED`**, model ID `qwen3.8-flash-next-orca-uncensored-bf16`, v3 trial container `qwen38-orcarouter-qsa62318-lmhead-v3` running on :8000. Operator-approved failed-trial cleanup **completed PASS**: exited old candidates `qwen38-orcarouter`, `qwen38-orcarouter-qsa62318`, `qwen38-orcarouter-qsa62318-lmhead` deleted after logging to `~/.local/state/blazux-wizard/p5-live-trial/cleanup/`. Do **not** repeat deletion or stop running v3. Old images/checkpoints/caches preserved. Actual CPU/GPU memory pressure and CPU clocks have **not** been measured; test service is not production released.

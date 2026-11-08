@@ -1,5 +1,9 @@
 ## CURRENT P5 DOCUMENT SUPERSESSION — 2026-11-08 (Orcarouter v3 MTP0 live inference PASS)
 
+
+**NEW SOURCE-ONLY RESOURCE DIAGNOSTICS — 2026-11-08:** `./wizard.sh operations resources snapshot --json`, `observe --samples 3 --interval 5 --json`, `preflight --json` implemented with CPU/Fake-DGX CI; declared `OBSERVE_ONLY` P5 recipe policy. No DGX measurements obtained in this source session, no live service changes or resource limits applied. Preflight is NOT wired to launch, returns `BLOCKED_UNCALIBRATED` without approved threshold. Optional `--save` creates private 0600 JSON evidence. See [P5 adoption notes](../docs/P5-ORCAROUTER-BF16PLE-VLLM032-ADOPTION-20261108.md), keep trial v3 and port 8000 untouched.
+
+
 **This section supersedes older v2-only instructions below, which remain historical.** Read [full 170-document inventory and supersession audit](../docs/HANDOFF-DOCUMENT-AUDIT-FULL-P5-20261108.md) and [active P5 live runbook](../docs/P5-LMHEAD-V2-DGX-GPU-TRIAL-RUNBOOK-20261108.md). The model is `orcarouter/Qwen3.8-Flash-Next-Uncensored-NVFP4` (revision `3a3b63161c0745390e5270179af42e46efc70799`), Blazux **vLLM 0.32.0**, no SGLang, single active model, port **8000**. The exact v3 adapter is `qwen4exp-qsa62318-lmhead-v032-v3`, resolving the QSA #62318 / quantized `lm_head.weight_scale` loading failure via checkpoint-target prefix `lm_head`.
 
 **LATEST ACTUAL DGX EVIDENCE, 2026-11-08 ~23:30 KST (operator attached transcript):**

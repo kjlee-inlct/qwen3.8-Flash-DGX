@@ -1,5 +1,9 @@
 ## CURRENT P5 DOCUMENT SUPERSESSION — 2026-11-08 (actual v3 inference PASS; resource protection next)
 
+
+**NEW SOURCE-ONLY RESOURCE DIAGNOSTICS — 2026-11-08:** `./wizard.sh operations resources snapshot --json`, `observe --samples 3 --interval 5 --json`, `preflight --json` implemented with CPU/Fake-DGX CI; declared `OBSERVE_ONLY` P5 recipe policy. No DGX measurements obtained in this source session, no live service changes or resource limits applied. Preflight is NOT wired to launch, returns `BLOCKED_UNCALIBRATED` without approved threshold. Optional `--save` creates private 0600 JSON evidence. See [P5 adoption notes](../docs/P5-ORCAROUTER-BF16PLE-VLLM032-ADOPTION-20261108.md), keep trial v3 and port 8000 untouched.
+
+
 [Latest evidence](EVIDENCE-LEDGER.md) · [Current state](CURRENT-STATE.md) · [Next actions](NEXT-ACTIONS.md) · [Full document audit](../docs/HANDOFF-DOCUMENT-AUDIT-FULL-P5-20261108.md) · [P5 live runbook](../docs/P5-LMHEAD-V2-DGX-GPU-TRIAL-RUNBOOK-20261108.md). Older starters and v2 failure statements below are historical and must NOT override this section. Adapter `qwen4exp-qsa62318-lmhead-v032-v3` fixes `lm_head.weight_scale`.
 
 ### NEW CONVERSATION STARTER — copy this section; verify latest HEAD first
