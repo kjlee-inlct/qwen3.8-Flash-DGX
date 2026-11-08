@@ -36,6 +36,7 @@ def image_doc():
                 "blazux.p5.state": "SOURCE_CANDIDATE_NOT_QUALIFIED",
                 "blazux.p5.vllm": "0.32.0",
                 "blazux.p5.adapter": live.ADAPTER,
+                "blazux.p5.lmhead": "v0.32",
                 "blazux.p5.base_image": SOURCE_IMAGE,
                 "blazux.p5.production_release": "false",
             }}}
@@ -44,7 +45,9 @@ def image_doc():
 def compat():
     return {"vllm_version": "0.32.0", "source_syntax_valid": True,
             "qkv_mapping_exact": True, "upstream_62318_guard": True,
-            "blazux_hybrid_guard": True}
+            "blazux_hybrid_guard": True,
+            "lm_head_quant_config_wired": True,
+            "lm_head_v032_linear_attrs": True}
 
 
 def plan(running=False):
@@ -55,12 +58,12 @@ def plan(running=False):
 
 class P5QSA62318Trial(unittest.TestCase):
     def test_recipe_version_pin_and_target_isolation(self):
-        self.assertEqual(live.TARGET, "qwen38-orcarouter-qsa62318")
+        self.assertEqual(live.TARGET, "qwen38-orcarouter-qsa62318-lmhead")
         self.assertEqual(live.FAILED_PREVIOUS_TARGET, "qwen38-orcarouter")
-        self.assertEqual(live.IMAGE_TAG, "blazux-p5-orcarouter:qsa62318-v032")
+        self.assertEqual(live.IMAGE_TAG, "blazux-p5-orcarouter:qsa62318-lmhead-v032")
         self.assertEqual(live.ALIAS, "qwen3.8-flash-next-orca-uncensored-bf16")
         self.assertEqual(live.ACK, "I_ACCEPT_P5_NO_ROLLBACK")
-        self.assertEqual(live.ADAPTER, "qwen4exp-qsa-62318-v032-v1")
+        self.assertEqual(live.ADAPTER, "qwen4exp-qsa62318-lmhead-v032-v2")
 
     def test_recipe_binds_exact_upstream_fix_not_global_patch(self):
         recipe = live._trial_recipe()
@@ -177,6 +180,18 @@ class P5QSA62318Trial(unittest.TestCase):
             with self.assertRaisesRegex(ValueError,
                                         "P5_QSA62318_UPSTREAM_FIX_NOT_CONFIRMED"):
                 live._scoped_image(SOURCE_IMAGE)
+
+    def test_candidate_probe_requires_quantized_lm_head_metadata(self):
+        for key in ("lm_head_quant_config_wired", "lm_head_v032_linear_attrs"):
+            broken={**compat(), key: False}
+            with self.subTest(key=key), patch.object(
+                live, "docker_json", return_value=image_doc()
+            ), patch.object(
+                live, "command", return_value=completed([], stdout=json.dumps(broken))
+            ):
+                with self.assertRaisesRegex(ValueError,
+                                            "P5_QSA62318_UPSTREAM_FIX_NOT_CONFIRMED"):
+                    live._scoped_image(SOURCE_IMAGE)
 
     def test_candidate_probe_fails_when_fix_is_missing(self):
         failing={**compat(),"upstream_62318_guard":False}
