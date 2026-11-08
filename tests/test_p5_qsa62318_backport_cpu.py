@@ -7,11 +7,11 @@ import unittest
 from unittest.mock import patch
 from src import p5_qsa_quant_backport_v032 as abi
 
-MODEL = '''class Qwen4ExpForCausalLM:
+MODEL = '''class Qwen4ExpForCausalLM(object):
     packed_modules_mapping = {
         "qkv_proj": ["q_proj", "k_proj", "v_proj", "indexer.index_qk_proj"],
     }
-class Qwen4ExpForConditionalGeneration:
+class Qwen4ExpForConditionalGeneration(object):
     packed_modules_mapping = {
         "qkv_proj": Qwen4ExpForCausalLM.packed_modules_mapping["qkv_proj"],
     }
