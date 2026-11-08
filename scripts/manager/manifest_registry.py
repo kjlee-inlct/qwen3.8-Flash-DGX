@@ -156,7 +156,29 @@ def _validate_bundle(parts: dict[str, dict[str, Any]], *, root: Path = ROOT) -> 
         "derived_overlay_required": False,
         "production_launch_allowed": False,
         "source_immutable": True,
-    }, "P5_ORCAROUTER_TRIAL_RECIPE_DRIFT")
+        "runtime_strategy": "RECIPE_FIRST_EXISTING_VLLM032_IMAGE",
+        "require_image_build": False,
+        "allow_source_patch": False,
+        "read_only_image_capability_probe": True,
+        "image_source": "CURRENT_VERIFIED_27B_IMAGE_ID",
+        "on_incompatible_loader": "STOP_AND_CAPTURE_DGX_ERROR_NOT_AUTO_PATCH",
+        "p5_env": {
+            "HF_HOME": "/hf",
+            "HF_HUB_OFFLINE": "1",
+            "VLLM_PLE_MMAP": "1",
+            "VLLM_PLE_MMAP_WORKERS": "16",
+            "VLLM_PLE_MMAP_PREWARM": "0",
+        },
+    } and orca.get("runtime", {}).get("source_patch_required") ==
+          "NONE_FOR_P5_MTP0_TRIAL_EXISTING_BLAZUX_IMAGE"
+      and orca["runtime"].get("dtype") == "bfloat16"
+      and orca["runtime"].get("load_format") == "safetensors"
+      and orca.get("profiles", {}).get("mtp0", {}).get("num_speculative_tokens") == 0
+      and orca["profiles"]["mtp0"].get("enforce_eager") is True
+      and orca["profiles"]["mtp0"].get("enable_native_tools") is True
+      and orca["profiles"]["mtp0"].get("tool_call_parser") == "qwen3_coder"
+      and orca["profiles"]["mtp0"].get("reasoning_parser") == "qwen3",
+      "P5_ORCAROUTER_RECIPE_FIRST_TRIAL_DRIFT")
     _required(models["orcarouter"].get("source_recipe") == FILES["orcarouter_recipe"]
               and models["orcarouter"].get("ple_asset_manifest") == FILES["ple_assets"]
               and models["orcarouter"].get("ple_asset_id") == ASSET_ID
@@ -272,7 +294,9 @@ def _validate_bundle(parts: dict[str, dict[str, Any]], *, root: Path = ROOT) -> 
               and adapter.get("table_memory") == entry["placement"]["table_memory"]
               and adapter.get("mtp_profile_candidates") == ["mtp0", "mtp2"]
               and adapter.get("container_image_digest") is None
-              and adapter.get("source_adapter_state") == "SOURCE_ONLY_UNQUALIFIED"
+              and adapter.get("source_adapter_state") == "RECIPE_FIRST_EXISTING_IMAGE_UNVERIFIED"
+              and adapter.get("runtime_strategy") == "EXISTING_BLAZUX_IMAGE_NO_NEW_PATCH"
+              and adapter.get("cpu_image_abi_audit_required") is True
               and all(adapter.get(name) is False for name in (
                   "cuda_loader_verified", "tp1_offload_worker_verified",
                   "mmap_gpu_verified", "api_model_identity_verified",

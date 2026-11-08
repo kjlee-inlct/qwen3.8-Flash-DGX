@@ -1,309 +1,316 @@
-"""P5 real-GPU trial controller CPU/Fake-DGX gates: no automatic restore."""
+"""P5 MTP0 recipe-first live trial: CPU/Fake-DGX tests, no source patch/build."""
 from __future__ import annotations
+
 import contextlib
 import io
 import json
 from pathlib import Path
+import subprocess
 import tempfile
 import unittest
 from unittest.mock import patch
-import subprocess
 
 from scripts.manager import p5_live_trial as live
 from wizard.main import main as wizard
 
 
+SOURCE_IMAGE = "sha256:" + "9" * 64
+TARGET_CID = "a" * 64
+
+
+def completed(args, rc=0, stdout="", stderr=""):
+    return subprocess.CompletedProcess(args, rc, stdout, stderr)
+
+
 def mock_plan():
     return {"status": "READY_TO_APPROVE", "plan_id": "b" * 64, "issues": [],
-            "details": {"source": {"container_id": "a" * 64,
-                                   "image_id": "sha256:" + "a" * 64},
-                        "candidate_image_id": "sha256:" + "c" * 64}}
+            "details": {"source": {"container_id": TARGET_CID,
+                                   "image_id": SOURCE_IMAGE},
+                        "runtime_image_id": SOURCE_IMAGE}}
 
 
-class P5LiveTrialCPU(unittest.TestCase):
-    def test_pinned_identity_mtp0_port_and_ack(self):
+def mock_existing_image():
+    return {"Id": SOURCE_IMAGE, "Os": "linux", "Architecture": "arm64",
+            "Config": {"Labels": {"qwen38.base": "v0.32"}}}
+
+
+def mock_capabilities():
+    return {"vllm_version": "0.32.0", "ple_mmap_hook": True,
+            "bf16_ple_table": True, "ple_custom_op": True,
+            "source_syntax_valid": True}
+
+
+class P5RecipeFirstCPU(unittest.TestCase):
+    def test_identity_and_development_ack(self):
         self.assertEqual(live.ORCA_REV,
                          "3a3b63161c0745390e5270179af42e46efc70799")
-        self.assertEqual(live.ALIAS,
-                         "qwen3.8-flash-next-orca-uncensored-bf16")
-        self.assertEqual(live.TARGET, "qwen38-orcarouter")
+        self.assertEqual(live.ALIAS, "qwen3.8-flash-next-orca-uncensored-bf16")
         self.assertEqual(live.ACK, "I_ACCEPT_P5_NO_ROLLBACK")
-        self.assertEqual(live.IMAGE_TAG, "blazux-p5-orcarouter:vllm032-mtp0")
+        self.assertFalse(hasattr(live, "IMAGE_TAG"))
 
-    def test_preapproval_never_stops_or_builds(self):
-        with patch.object(live, "command", side_effect=AssertionError("should not execute")):
+    def test_recipe_is_primary_run_spec_no_build_no_patch(self):
+        recipe = live._trial_recipe()
+        self.assertEqual(recipe["vllm_version"], "0.32.0")
+        self.assertEqual(recipe["trial"]["runtime_strategy"],
+                         "RECIPE_FIRST_EXISTING_VLLM032_IMAGE")
+        self.assertFalse(recipe["trial"]["require_image_build"])
+        self.assertFalse(recipe["trial"]["allow_source_patch"])
+        self.assertEqual(recipe["model"]["expected_ple"]["dtype"], "BF16")
+        self.assertEqual(recipe["profiles"]["mtp0"]["num_speculative_tokens"], 0)
+
+    def test_recipe_driven_argv_preserves_runtime_policy(self):
+        args = live._args(SOURCE_IMAGE)
+        self.assertEqual(args[:3], ["docker", "run", "-d"])
+        self.assertIn(SOURCE_IMAGE, args)
+        self.assertIn("--gpus", args)
+        self.assertIn("all", args)
+        self.assertEqual(args[args.index("-p") + 1], "8000:8000")
+        self.assertEqual(args[args.index("--max-model-len") + 1], "8192")
+        self.assertEqual(args[args.index("--max-num-seqs") + 1], "1")
+        self.assertEqual(args[args.index("--gpu-memory-utilization") + 1], "0.7")
+        self.assertIn("VLLM_PLE_MMAP=1", args)
+        self.assertIn("VLLM_PLE_MMAP_PREWARM=0", args)
+        self.assertIn("HF_HUB_OFFLINE=1", args)
+        self.assertIn("--enforce-eager", args)
+        self.assertIn("--enable-auto-tool-choice", args)
+        self.assertIn("qwen3_coder", args)
+        self.assertIn("qwen3", args)
+        self.assertIn(live.ALIAS, args)
+        self.assertNotIn("--speculative-config", args)
+        self.assertNotIn("VLLM_P5_ORCAROUTER=1", args)
+        self.assertFalse(any(a in args for a in (
+            "docker build", "P5_EXPLICIT_IMAGE_BUILD=1", "docker tag")))
+
+    def test_derived_source_model_snapshot_pinned(self):
+        args = live._args(SOURCE_IMAGE)
+        at = args.index(SOURCE_IMAGE)
+        self.assertEqual(args[at + 1],
+             "/hf/hub/models--orcarouter--Qwen3.8-Flash-Next-Uncensored-NVFP4/snapshots/"
+             + live.ORCA_REV)
+        self.assertEqual(args[args.index("-v") + 1], str(live.CACHE) + ":/hf:ro")
+
+    def test_wrong_image_digest_is_rejected(self):
+        with self.assertRaises(ValueError):
+            live._args("alpine:latest")
+
+    def test_image_cpu_probe_reads_existing_image_not_gpu(self):
+        calls = []
+        def run(args, timeout=30):
+            calls.append(args)
+            return completed(args, stdout=json.dumps(mock_capabilities()))
+        with patch.object(live, "docker_json", return_value=mock_existing_image()), \
+             patch.object(live, "command", side_effect=run):
+            result = live._inspect_existing_image(SOURCE_IMAGE)
+        self.assertEqual(result["vllm_version"], "0.32.0")
+        self.assertEqual(calls[0][:6],
+            ["docker", "run", "--rm", "--network=none", "--entrypoint", "python3"])
+        self.assertEqual(calls[0][6], SOURCE_IMAGE)
+        self.assertNotIn("--gpus", calls[0])
+        self.assertNotIn("--pull", calls[0])
+        self.assertNotIn("--volume", calls[0])
+
+    def test_missing_bf16_mmap_capability_blocks(self):
+        broken = {**mock_capabilities(), "bf16_ple_table": False}
+        with patch.object(live, "docker_json", return_value=mock_existing_image()), \
+             patch.object(live, "command", return_value=completed(
+                 [], stdout=json.dumps(broken))):
+            with self.assertRaisesRegex(ValueError,
+                                        "EXISTING_IMAGE_BF16_PLE_MMAP_UNAVAILABLE"):
+                live._inspect_existing_image(SOURCE_IMAGE)
+
+    def test_wrong_image_id_arch_or_base_label_blocks(self):
+        for key, value in [
+            ("Id", "sha256:" + "a"*64), ("Architecture", "amd64"),
+            ("Os", "windows")]:
+            wrong = mock_existing_image()
+            wrong[key] = value
+            with self.subTest(key=key), \
+                 patch.object(live, "docker_json", return_value=wrong), \
+                 patch.object(live, "command", side_effect=AssertionError("must not run")):
+                with self.assertRaises(ValueError):
+                    live._inspect_existing_image(SOURCE_IMAGE)
+        wrong = mock_existing_image()
+        wrong["Config"]["Labels"]["qwen38.base"] = "v0.31"
+        with patch.object(live, "docker_json", return_value=wrong), \
+             patch.object(live, "command", side_effect=AssertionError("no run")):
+            with self.assertRaises(ValueError):
+                live._inspect_existing_image(SOURCE_IMAGE)
+
+    def test_probing_failure_does_not_promote_gpu(self):
+        with patch.object(live, "docker_json", return_value=mock_existing_image()), \
+             patch.object(live, "command", return_value=completed([], rc=1)):
+            with self.assertRaisesRegex(ValueError, "EXISTING_IMAGE_CPU_ABI_PROBE_FAILED"):
+                live._inspect_existing_image(SOURCE_IMAGE)
+
+    def test_prepare_is_read_only_no_build_or_tag(self):
+        source = {"image_id": SOURCE_IMAGE}
+        with patch.object(live, "_metadata_gate",
+                          return_value=([], {"metadata_verified": True})), \
+             patch.object(live, "_source", return_value=source), \
+             patch.object(live, "_inspect_existing_image",
+                          return_value=mock_capabilities()), \
+             patch.object(live, "command", side_effect=AssertionError("no docker mutation")):
+            result = live.prepare()
+        self.assertEqual(result["status"], "PASS")
+        self.assertEqual(result["image_id"], SOURCE_IMAGE)
+        self.assertFalse(result["executed"])
+        self.assertFalse(result["image_built"])
+        self.assertFalse(result["source_patched"])
+        self.assertFalse(result["gpu_verified"])
+        self.assertEqual(result["recipe_id"], "qwen38-orcarouter-bf16ple-p5")
+
+    def test_prepare_fails_closed_if_required_image_feature_absent(self):
+        with patch.object(live, "_metadata_gate",
+                          return_value=([], {"metadata_verified": True})), \
+             patch.object(live, "_source",
+                          return_value={"image_id": SOURCE_IMAGE}), \
+             patch.object(live, "_inspect_existing_image",
+                          side_effect=ValueError("EXISTING_IMAGE_BF16_PLE_MMAP_UNAVAILABLE")):
+            result = live.prepare()
+        self.assertEqual(result["status"], "BLOCKED")
+        self.assertFalse(result["executed"])
+        self.assertEqual(result["issues"],
+                         ["EXISTING_IMAGE_BF16_PLE_MMAP_UNAVAILABLE"])
+
+    def test_plan_binds_unmodified_current_27b_image(self):
+        with patch.object(live, "_metadata_gate",
+                          return_value=([], {"metadata_verified": True})), \
+             patch.object(live, "_source", return_value={
+                 "container_id": TARGET_CID, "image_id": SOURCE_IMAGE}), \
+             patch.object(live, "_inspect_existing_image",
+                          return_value=mock_capabilities()), \
+             patch.object(live, "_target_absent", return_value=None), \
+             patch.object(live, "_gpu_collisions", return_value=[]), \
+             patch.object(live, "_port_open", return_value=True), \
+             patch.object(live, "_git_head", return_value="a"*40):
+            doc = live._plan_data()
+        self.assertEqual(doc["status"], "READY_TO_APPROVE")
+        self.assertEqual(doc["details"]["runtime_image_id"], SOURCE_IMAGE)
+        self.assertEqual(doc["details"]["strategy"],
+                         "RECIPE_FIRST_EXISTING_VLLM032_IMAGE")
+        self.assertIsNotNone(doc["plan_id"])
+        self.assertFalse(doc["image_built"])
+        self.assertFalse(doc["source_patched"])
+        self.assertFalse(doc["executed"])
+
+    def test_plan_cannot_approve_gpu_when_abi_missing(self):
+        with patch.object(live, "_metadata_gate",
+                          return_value=([], {"metadata_verified": True})), \
+             patch.object(live, "_source", return_value={
+                 "container_id": TARGET_CID, "image_id": SOURCE_IMAGE}), \
+             patch.object(live, "_inspect_existing_image",
+                          side_effect=ValueError("EXISTING_IMAGE_CPU_ABI_PROBE_FAILED")), \
+             patch.object(live, "_git_head", return_value="a"*40):
+            doc = live._plan_data()
+        self.assertEqual(doc["status"], "BLOCKED")
+        self.assertIsNone(doc["plan_id"])
+
+    def test_preapproval_never_stops_docker(self):
+        with patch.object(live, "command", side_effect=AssertionError("unexpected")):
             report = live.execute(None, live.ACK)
         self.assertEqual(report["status"], "BLOCKED")
         self.assertFalse(report["executed"])
-        self.assertFalse(report["source_stopped"])
 
-    def test_wrong_token_does_not_mutate_docker(self):
-        with patch.object(live, "command", side_effect=AssertionError("docker mutation")):
+    def test_wrong_ack_cannot_dispatch(self):
+        with patch.object(live, "command", side_effect=AssertionError("unexpected")):
             report = live.execute("b" * 64, "wrong")
         self.assertEqual(report["status"], "BLOCKED")
 
-    def test_docker_run_command_offline_pinned_and_no_mtp(self):
-        cmd = live._args("sha256:" + "a" * 64)
-        self.assertIn("VLLM_PLE_MMAP=1", cmd)
-        self.assertIn("VLLM_P5_ORCAROUTER=1", cmd)
-        self.assertIn("HF_HUB_OFFLINE=1", cmd)
-        self.assertIn("safetensors", cmd)
-        self.assertIn("--enforce-eager", cmd)
-        self.assertIn("--enable-auto-tool-choice", cmd)
-        self.assertIn(live.ALIAS, cmd)
-        self.assertEqual(cmd[cmd.index("-p") + 1], "8000:8000")
-        self.assertNotIn("--speculative-config", cmd)
-        self.assertNotIn("--auto-function-choice", cmd)
-        self.assertEqual(cmd[cmd.index("--restart") + 1], "no")
-
-    def test_scoped_source_is_27b_stopped_then_target_and_not_restored(self):
+    def test_scoped_source_stopped_target_from_recipe_no_restore(self):
         calls = []
-        def fake_run(args, timeout=30):
+        def run(args, timeout=30):
             calls.append(args)
             if args[:2] == ["docker", "stop"]:
-                return subprocess.CompletedProcess(args, 0, "qwen38-27b\n", "")
+                return completed(args, stdout="qwen38-27b\n")
             if args[:2] == ["docker", "run"]:
-                return subprocess.CompletedProcess(args, 1, "", "GPU allocation failed")
-            raise AssertionError(f"unexpected shell command: {args}")
+                return completed(args, rc=1, stderr="GPU trial failure")
+            raise AssertionError(args)
         with tempfile.TemporaryDirectory() as temp:
             with patch.object(live, "STATE", Path(temp)), \
                  patch.object(live, "_private_state", return_value=None), \
-                 patch.object(live, "_save", return_value="/tmp/test-fake.json"), \
+                 patch.object(live, "_save", return_value="/tmp/test.json"), \
                  patch.object(live, "_plan_data", return_value=mock_plan()), \
                  patch.object(live, "_port_open", return_value=False), \
                  patch.object(live, "_gpu_collisions", return_value=[]), \
                  patch.object(live, "_unmanaged_gpu_pids", return_value=[]), \
-                 patch.object(live, "command", side_effect=fake_run):
-                result = live.execute("b" * 64, live.ACK)
+                 patch.object(live, "command", side_effect=run):
+                result = live.execute("b"*64, live.ACK)
         self.assertEqual(result["status"], "FAIL_NO_ROLLBACK")
         self.assertTrue(result["source_stopped"])
         self.assertTrue(result["executed"])
         self.assertFalse(result["gpu_verified"])
-        self.assertTrue(result["automatic_restore"] is False)
-        self.assertEqual([a[1] for a in calls], ["stop", "run"])
-        self.assertNotIn("start", [a[1] for a in calls])
-        self.assertNotIn("rm", [a[1] for a in calls])
+        self.assertEqual([args[1] for args in calls], ["stop", "run"])
+        self.assertEqual(result["target_image_id"], SOURCE_IMAGE)
+        self.assertNotIn("start", [args[1] for args in calls])
+        self.assertNotIn("rm", [args[1] for args in calls])
 
-    def test_gpu_process_survives_stop_no_target_start_and_no_restore(self):
+    def test_gpu_process_left_after_source_stop_blocks_launch(self):
         calls = []
-        def fake_run(args, timeout=30):
+        def run(args, timeout=30):
             calls.append(args)
-            return subprocess.CompletedProcess(args, 0, "qwen38-27b\n", "")
+            return completed(args, stdout="qwen38-27b\n")
         with tempfile.TemporaryDirectory() as temp:
             with patch.object(live, "STATE", Path(temp)), \
                  patch.object(live, "_private_state", return_value=None), \
-                 patch.object(live, "_save", return_value="/tmp/test-fake.json"), \
+                 patch.object(live, "_save", return_value="/tmp/test.json"), \
                  patch.object(live, "_plan_data", return_value=mock_plan()), \
                  patch.object(live, "_port_open", return_value=False), \
                  patch.object(live, "_unmanaged_gpu_pids", return_value=["1234"]), \
                  patch.object(live.time, "sleep", return_value=None), \
-                 patch.object(live, "command", side_effect=fake_run):
-                result = live.execute("b" * 64, live.ACK)
+                 patch.object(live, "command", side_effect=run):
+                result = live.execute("b"*64, live.ACK)
         self.assertEqual(result["status"], "FAIL_NO_ROLLBACK")
         self.assertEqual(result["issues"], ["GPU_COMPUTE_PROCESS_STILL_RUNNING"])
-        self.assertTrue(result["source_stopped"])
-        self.assertEqual([a[1] for a in calls], ["stop"])
+        self.assertEqual([args[1] for args in calls], ["stop"])
 
-    def test_stopped_27b_port_unknown_does_not_start_target(self):
+    def test_port_still_occupied_never_launches_second_model(self):
         calls = []
-        def fake_run(args, timeout=30):
+        def run(args, timeout=30):
             calls.append(args)
-            return subprocess.CompletedProcess(args, 0, "qwen38-27b\n", "")
+            return completed(args, stdout="qwen38-27b\n")
         with tempfile.TemporaryDirectory() as temp:
             with patch.object(live, "STATE", Path(temp)), \
                  patch.object(live, "_private_state", return_value=None), \
-                 patch.object(live, "_save", return_value="/tmp/test-fake.json"), \
+                 patch.object(live, "_save", return_value="/tmp/test.json"), \
                  patch.object(live, "_plan_data", return_value=mock_plan()), \
                  patch.object(live, "_port_open", return_value=True), \
                  patch.object(live.time, "sleep", return_value=None), \
-                 patch.object(live, "command", side_effect=fake_run):
-                result = live.execute("b" * 64, live.ACK)
+                 patch.object(live, "command", side_effect=run):
+                result = live.execute("b"*64, live.ACK)
         self.assertEqual(result["status"], "FAIL_NO_ROLLBACK")
         self.assertEqual(result["issues"], ["PORT_8000_STILL_OCCUPIED"])
-        self.assertEqual(len(calls), 1)
-        self.assertEqual(calls[0][:2], ["docker", "stop"])
+        self.assertEqual([args[1] for args in calls], ["stop"])
 
-    def test_stale_or_changed_plan_aborts_before_docker_stop(self):
+    def test_changed_plan_no_stop(self):
         with tempfile.TemporaryDirectory() as temp:
             with patch.object(live, "STATE", Path(temp)), \
                  patch.object(live, "_private_state", return_value=None), \
                  patch.object(live, "_plan_data", return_value=mock_plan()), \
-                 patch.object(live, "command", side_effect=AssertionError("no stop")):
-                result = live.execute("c" * 64, live.ACK)
-        self.assertEqual(result["status"], "BLOCKED")
-        self.assertFalse(result["executed"])
-        self.assertFalse(result["source_stopped"])
+                 patch.object(live, "command", side_effect=AssertionError("should not execute")):
+                report = live.execute("c"*64, live.ACK)
+        self.assertEqual(report["status"], "BLOCKED")
+        self.assertFalse(report["executed"])
 
-    def test_docker_candidate_image_label_rejects_wrong_arch_or_untagged(self):
-        doc = {"Architecture": "arm64", "Os": "linux", "Config": {
-            "Labels": {"blazux.p5.vllm": "0.32.0",
-                       "blazux.p5.state": "SOURCE_CANDIDATE_NOT_QUALIFIED"}}}
-        self.assertTrue(live._candidate_label(doc))
-        doc["Architecture"] = "amd64"
-        self.assertFalse(live._candidate_label(doc))
-        doc["Architecture"] = "arm64"
-        doc["Config"]["Labels"]["blazux.p5.vllm"] = "0.31.0"
-        self.assertFalse(live._candidate_label(doc))
-
-    def test_wizard_p5_trial_router_is_new_scoped_executable_path(self):
-        result = {"status": "READY_TO_APPROVE", "executed": False, "plan_id": "a"*64}
+    def test_wizard_routes_recipe_only_plan(self):
+        result = {"status": "READY_TO_APPROVE", "executed": False, "plan_id": "b"*64}
         with patch.object(live, "_plan_data", return_value=result), \
-             contextlib.redirect_stdout(io.StringIO()) as stdout:
+             contextlib.redirect_stdout(io.StringIO()) as output:
             rc = wizard(["p5", "trial", "plan", "--json"])
         self.assertEqual(rc, 0)
-        doc = json.loads(stdout.getvalue())
-        self.assertEqual(doc["status"], "READY_TO_APPROVE")
-        self.assertFalse(doc["executed"])
+        self.assertEqual(json.loads(output.getvalue())["status"], "READY_TO_APPROVE")
 
-    def test_wizard_prepare_dry_run_cannot_build_image(self):
-        with patch.object(live, "prepare",
-                          side_effect=AssertionError("dry run must not build")):
-            with contextlib.redirect_stdout(io.StringIO()) as output:
-                rc = wizard(["p5", "trial", "prepare", "--dry-run", "--json"])
+    def test_wizard_prepare_dry_run_still_rejects_dispatch(self):
+        with patch.object(live, "prepare", side_effect=AssertionError("never called")), \
+             contextlib.redirect_stdout(io.StringIO()) as output:
+            rc = wizard(["p5", "trial", "prepare", "--dry-run", "--json"])
         self.assertEqual(rc, 3)
         self.assertEqual(json.loads(output.getvalue())["status"], "BLOCKED")
 
-    def test_existing_local_base_alias_must_match_exact_image_id(self):
-        src_id = "sha256:" + "9" * 64
-        alias = live._local_base_ref(src_id)
-        self.assertEqual(alias, "blazux-p5-source:v032-" + "9" * 64)
-        with patch.object(live, "command", return_value=subprocess.CompletedProcess(
-                 [], 0, "sha256:" + "8" * 64 + "\n", "")) as run:
-            with self.assertRaisesRegex(ValueError, "LOCAL_BASE_IMAGE_ALIAS_COLLISION"):
-                live._ensure_local_base_tag(src_id)
-        self.assertEqual(run.call_count, 1)
-
-    def test_missing_base_alias_is_tagged_locally_from_exact_image_id(self):
-        src_id = "sha256:" + "9" * 64
-        alias = live._local_base_ref(src_id)
-        calls = []
-        def run(argv, timeout=30):
-            calls.append(argv)
-            if argv[:4] == ["docker", "image", "inspect", "--format"]:
-                return subprocess.CompletedProcess(argv, 1, "", "No such image")
-            if argv[:2] == ["docker", "tag"]:
-                return subprocess.CompletedProcess(argv, 0, "", "")
-            raise AssertionError(argv)
-        with patch.object(live, "command", side_effect=run), \
-             patch.object(live, "docker_json",
-                          return_value={"Id": src_id}) as inspect:
-            self.assertEqual(live._ensure_local_base_tag(src_id), alias)
-        self.assertEqual(calls[1], ["docker", "tag", src_id, alias])
-        self.assertFalse(any(args[:2] in (["docker", "stop"], ["docker", "rm"],
-                                          ["docker", "rmi"]) for args in calls))
-        inspect.assert_called_once_with(alias, image=True)
-
-    def test_preexisting_correct_base_alias_is_read_only(self):
-        src_id = "sha256:" + "9" * 64
-        with patch.object(live, "command", return_value=subprocess.CompletedProcess(
-                 [], 0, src_id + "\n", "")) as run, \
-             patch.object(live, "docker_json", return_value={"Id": src_id}):
-            self.assertEqual(live._ensure_local_base_tag(src_id),
-                             live._local_base_ref(src_id))
-        self.assertEqual(run.call_count, 1)
-
-    def test_base_alias_inspect_failure_other_than_not_found_blocks_tag(self):
-        with patch.object(live, "command", return_value=subprocess.CompletedProcess(
-                 [], 125, "", "docker daemon unavailable")) as run:
-            with self.assertRaisesRegex(ValueError, "LOCAL_BASE_IMAGE_ALIAS_INSPECT_FAILED"):
-                live._ensure_local_base_tag("sha256:" + "9" * 64)
-        self.assertEqual(run.call_count, 1)
-
-    def test_prepare_build_uses_local_tag_separate_from_source_image_id(self):
-        src_id = "sha256:" + "9" * 64
-        candidate_id = "sha256:" + "a" * 64
-        base_tag = live._local_base_ref(src_id)
-        candidate = {
-            "Id": candidate_id, "Architecture": "arm64", "Os": "linux",
-            "Config": {"Labels": {
-                "blazux.p5.vllm": "0.32.0",
-                "blazux.p5.state": "SOURCE_CANDIDATE_NOT_QUALIFIED",
-                "blazux.p5.base_image": src_id,
-            }},
-        }
-        def inspect(name, *, image=False):
-            if name == src_id:
-                return {"Architecture": "arm64", "Id": src_id}
-            if name == live.IMAGE_TAG:
-                if state["built"]:
-                    return candidate
-                raise ValueError("DOCKER_INSPECT_FAILED")
-            raise AssertionError(name)
-        state = {"built": False}
-        calls = []
-        def run(argv, timeout=30):
-            calls.append(argv)
-            self.assertNotIn(["docker", "stop"], [argv[:2]])
-            self.assertNotIn(["docker", "rm"], [argv[:2]])
-            self.assertNotIn(["docker", "rmi"], [argv[:2]])
-            self.assertEqual(argv[:4],
-                             ["docker", "build", "--pull=false", "--network=none"])
-            self.assertIn("P5_QUALIFIED_BASE_IMAGE=" + base_tag, argv)
-            self.assertIn("P5_QUALIFIED_BASE_IMAGE_ID=" + src_id, argv)
-            self.assertNotIn("P5_QUALIFIED_BASE_IMAGE=" + src_id, argv)
-            state["built"] = True
-            return subprocess.CompletedProcess(argv, 0, "Successfully built", "")
-        with patch.object(live, "_metadata_gate",
-                          return_value=([], {"metadata_verified": True})), \
-             patch.object(live, "_source",
-                          return_value={"image_id": src_id}), \
-             patch.object(live, "docker_json", side_effect=inspect), \
-             patch.object(live, "_ensure_local_base_tag", return_value=base_tag), \
-             patch.object(live, "command", side_effect=run):
-            result = live.prepare()
-        self.assertEqual(result["status"], "PASS")
-        self.assertTrue(result["executed"])
-        self.assertEqual(result["source_image_id"], src_id)
-        self.assertEqual(result["image_id"], candidate_id)
-        self.assertEqual(len(calls), 1)
-
-    def test_builded_candidate_with_wrong_source_provenance_is_rejected(self):
-        src_id = "sha256:" + "9" * 64
-        wrong_id = "sha256:" + "8" * 64
-        candidate = {
-            "Id": "sha256:" + "a" * 64, "Architecture": "arm64", "Os": "linux",
-            "Config": {"Labels": {
-                "blazux.p5.vllm": "0.32.0",
-                "blazux.p5.state": "SOURCE_CANDIDATE_NOT_QUALIFIED",
-                "blazux.p5.base_image": wrong_id,
-            }},
-        }
-        state = {"built": False}
-        def inspect(name, *, image=False):
-            if name == src_id:
-                return {"Architecture": "arm64", "Id": src_id}
-            if name == live.IMAGE_TAG:
-                if state["built"]:
-                    return candidate
-                raise ValueError("DOCKER_INSPECT_FAILED")
-            raise AssertionError(name)
-        def run(argv, timeout=30):
-            state["built"] = True
-            return subprocess.CompletedProcess(argv, 0, "", "")
-        with patch.object(live, "_metadata_gate",
-                          return_value=([], {"metadata_verified": True})), \
-             patch.object(live, "_source",
-                          return_value={"image_id": src_id}), \
-             patch.object(live, "docker_json", side_effect=inspect), \
-             patch.object(live, "_ensure_local_base_tag",
-                          return_value=live._local_base_ref(src_id)), \
-             patch.object(live, "command", side_effect=run):
-            result = live.prepare()
-        self.assertEqual(result["status"], "BLOCKED")
-        self.assertIn("BUILT_IMAGE_IDENTITY_INVALID", result["issues"])
-
-    def test_p5_dockerfile_requires_local_tag_and_separate_immutable_id_label(self):
-        content = Path("Dockerfile.p5.candidate").read_text(encoding="utf-8")
-        self.assertIn("FROM ${P5_QUALIFIED_BASE_IMAGE}", content)
-        self.assertIn('blazux.p5.base_image="${P5_QUALIFIED_BASE_IMAGE_ID}"', content)
-        self.assertIn("blazux-p5-source:explicit-local-override-required", content)
-        self.assertNotIn('blazux.p5.base_image="${P5_QUALIFIED_BASE_IMAGE}"', content)
-
-    def test_old_wizard_p5_gpu_trial_stays_separate_and_blocked(self):
+    def test_legacy_p5_gpu_trial_remains_blocked(self):
         from scripts.manager.p5_orcarouter import source_plan
-        result = source_plan("mtp0")
-        self.assertFalse(result["operations_enabled"])
-        self.assertIsNone(result["plan_id"])
+        old = source_plan("mtp0")
+        self.assertFalse(old["operations_enabled"])
+        self.assertIsNone(old["plan_id"])
 
 
 if __name__ == "__main__":

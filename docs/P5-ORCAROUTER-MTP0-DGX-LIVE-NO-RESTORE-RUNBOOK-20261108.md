@@ -1,93 +1,81 @@
-## 2026-11-08 P5 DGX failed image-build observation and correction
+# P5 Orcarouter — Recipe-first MTP0 GPU trial (2026-11-08)
 
-**Actual DGX operator log** (`20261108-030535`) after pulling HEAD `1367a86`: `manifest validate --json` PASS, PLE BF16 metadata true. `./wizard.sh p5 trial prepare --json` failed **BEFORE any GPU execution or 27B stop**: BuildKit parsed `FROM sha256:9479fc92...` as `docker.io/library/sha256:<...>` and tried an unauthorized registry lookup. `prepare.status=BLOCKED, P5_CANDIDATE_IMAGE_BUILD_FAILED`. Subsequently `plan.status=BLOCKED`, `candidate_image_id=null`, `issues=["DOCKER_INSPECT_FAILED"]`, `plan_id=null`. The user command substitution raised AssertionError; a separately submitted `execute` without a valid plan was correctly blocked (`EXACT_PLAN_AND_NO_ROLLBACK_ACK_REQUIRED`), `executed=false`, `source_stopped=false`, `target_started=false`. Real DGX `service manager status` continued to show healthy `qwen38-27b` at :8000 and `/v1/models` returned only `qwen3.8-27b`. No Orcarouter container exists.
+## Decision
 
-**Fix:** Local Docker image ID `sha256:<64>` is **not** an acceptable standalone Dockerfile `FROM` repository reference; automatically derive an immutable-source-ID-specific local tag `blazux-p5-source:v032-<64hex>` using `docker tag` only if absent, never overwrite an alias pointing to any other image, verify its inspected image ID equals original. Build from the verified local tag with `docker build --pull=false --network=none`, pass a *separate* original full immutable image ID `P5_QUALIFIED_BASE_IMAGE_ID` to the image provenance label `blazux.p5.base_image`, and validate that label after build and again at plan. No GPU, cache, container stop/restart, image removal or remote pull needed in `prepare`. Add CPU/Fake-DGX tests for alias creation, alias collision, daemon failure, build arguments and negative provenance. Corrected DGX trial still **NOT_RUN** until operator retries.
+P5 Orcarouter is a **manifest-led model and recipe** on the existing single DGX Spark/GB10 **Blazux vLLM 0.32.0** engine. Do not automatically patch upstream or Blazux `model.py` / `mtp.py` to accommodate a model. Run the pinned MTP0 model from its registered recipe and collect real GPU loader evidence. Only an observed, specific runtime incompatibility may justify proposing a separately versioned adapter later.
 
-[Details and runbook](../docs/P5-ORCAROUTER-MTP0-DGX-LIVE-NO-RESTORE-RUNBOOK-20261108.md). **Next operator commands:** pull latest `feature/recipe-wizard-handoff`, run manifest validate; run `./wizard.sh p5 trial prepare --json` and `./wizard.sh p5 trial plan --json`. A failed plan must **never** be used in `execute`; avoid chaining a failed shell `PLAN_ID=$(...)` followed by an independently executing test. Only proceed with actual GPU if plan `READY_TO_APPROVE` and approval token is valid, using previously granted *development* downtime and no-restore acknowledgment.
+This change supersedes the earlier *P5-specific candidate image build* approach. The latest actual DGX log on 2026-11-08 demonstrated that `Dockerfile.p5.candidate` advanced past the local-image reference and PLE hook but failed during source patching: `MTP loader return: expected one vLLM0.32 anchor, got 2`. This is a **patch implementation failure**, not evidence the Orcarouter model cannot be served by existing vLLM 0.32, and not evidence that the patch is needed at MTP0. **Neither 27B nor the GPU were stopped/started**; the plan was BLOCKED with no approval ID.
 
----
+The P5 candidate Dockerfile and legacy source patch script are preserved for reference, **but are not in the active MTP0 `prepare`/`plan`/`execute` path**. Never run the retired Dockerfile as part of this trial.
 
-## Additional executable safety guards (source update)
+## Immutable recipe
 
-- The candidate image's Docker label `blazux.p5.base_image` must equal the precise live 27B source **image digest** recorded in the approved plan. Merely having a P5-looking tag is insufficient.
-- After stopping 27B and releasing port 8000, **GPU compute-process inventory** must be empty via `nvidia-smi --query-compute-apps=pid --format=csv,noheader`; an unknown or unsupported result blocks the target start and leaves 27B stopped. This prevents starting a second GPU model while stale/non-Docker CUDA processes are running.
-- `./wizard.sh p5 trial status` reports API identity as an observation rather than marking a fresh independent GPU qualification. The execution receipt is the bounded live inference evidence.
-- Failure reports `FAIL_NO_ROLLBACK` and a private local receipt; no automatic 27B restart. Keep all images, cache and container logs for diagnosis.
+- `recipes/qwen38-orcarouter.runtime.json` is authoritative for model repo and pinned revision, served model identity, BF16 PLE reference, MTP0 versus MTP2, context, concurrency, GPU memory settings, KV dtype, native tool/reasoning parsers, environment, and explicit experimental no-restore policy.
+- `runtimes/ple-assets.json` schema 2 independently describes the actual BF16 table (128 tensors, width 160, 320001536 total rows, no scale, 102400491520 mmap bytes). Future FP8/FP16/other PLE formats use their own validated manifests rather than inheriting BF16 behavior.
+- `runtimes/ple-loader-profiles.json` remains **unqualified** on real GPU until the experiment demonstrates an actual load and inference. Source metadata PASS does not prove CUDA, mmap, TP1 or tools qualification.
+- `runtimes/service-policy.json` retains `ONE_ACTIVE_MODEL_ONLY`, port 8000, stop-old-before-start-new. Only the separately declared P5 MTP0 **development trial** has the user-requested no-auto-restore exception.
 
----
+## Actual P5 CLI behavior
 
-# P5 — Real DGX Orcarouter MTP0 one-shot GPU trial (NO automatic restore), 2026-11-08
+`./wizard.sh p5 trial prepare --json` (**read-only preflight**)
+: Validates pinned manifests and BF16 PLE metadata; confirms live 27B container's full image ID, OS and arm64, verifies the Blazux vLLM 0.32 image provenance, and runs a **GPU-free, network-isolated, ephemeral CPU container** reading its installed vLLM version, BF16 PLE mmap implementation, Qwen4Exp hook and Python source syntax. No new Docker image is built or tagged, no vLLM file is changed, and 27B remains running. A successful capability check does **not** establish Orcarouter model loading support.
 
-## Scope and authorization
+`./wizard.sh p5 trial plan --json` (**read-only plan**)
+: Re-evaluates source, CPU ABI, other active GPU containers, port and exact pinned recipe; binds original 27B container ID and the **same existing Blazux image ID** as the MTP0 runtime image into an expiring approval hash. Plan includes `image_built:false`, `source_patched:false`. Do not execute if plan is BLOCKED or `plan_id:null`.
 
-Operator explicitly confirms this is an idle **development** use of DGX Spark. Downtime of the existing 27B serving on port 8000 is permitted and **failure does not require 27B restoration**. A failed target is left as-is for investigation; the original 27B container is left **stopped, not deleted**, and no automatic rollback, auto-restart, cache deletion, image removal or P3/P6/P8 action occurs. This exception is limited to this P5 MTP0 *trial* and does not change the default service transition rollback policy. Successful MTP0 GPU trial is not production release.
+`./wizard.sh p5 trial execute --approve-plan <SHA64> --ack-downtime I_ACCEPT_P5_NO_ROLLBACK --json` (**real GPU**)
+: Revalidates exact plan, stops `qwen38-27b` without removing it, checks 8000 free and no remaining GPU compute processes, starts `qwen38-orcarouter` using the existing Blazux image **by immutable ID**, read-only pinned Orcarouter snapshot, recipe-derived BF16 mmap env and MTP0 configuration, waits for exact `/v1/models` alias and a bounded chat completion. Success keeps the Orcarouter trial running. Failure leaves 27B stopped, **does not restore**, preserves original images, checkpoint, donor, cache, target container and logs, and records a private receipt. This is not production promotion.
 
-Current known DGX log from operator: HEAD `30577b1`, 7-document manifest PASS; Orcarouter pinned PLE BF16 (128 tensors, 320001536 rows, width160) source metadata PASS; pinned donor MTP BF16 31 exact tensors and three SHA-verified shards PASS; P5 Fake-DGX 57/57 PASS; existing 27B active `qwen38-27b`, served `qwen3.8-27b` on 8000, image `sha256:9479fc92a9244fcf137afb36ed778e07495e29663a81db193736fcaa1f15e137`. **None** of these results is an actual P5 GPU success. The live state must be re-observed before use.
+`./wizard.sh p5 trial status --json` (**read-only observation**)
+: Inspects target container and possible API ID. Status alone does not confer real GPU qualification.
 
-## New execution path
-
-`./wizard.sh p5 trial` is a separately scoped temporary development entry, distinct from `./wizard.sh p5 start`, the conventional recipe release, and historical P3. The executable module is `scripts/manager/p5_live_trial.py`. It supports **MTP0 only**; MTP2 requires a verified derived overlay and a different plan.
-
-1. `prepare` performs pinned manifest/PLE metadata checks and builds `Dockerfile.p5.candidate` using the **current running 27B Docker image by immutable ID** as base. It preserves existing 27B service during the image build. The P5 candidate ensures the Blazux BF16-capable PLE mmap hook exists and applies isolated vLLM 0.32 source patches; any missing architecture/patch anchor fails the build. The candidate image remains experimental and is not reused from YSLAB's unrelated vLLM dev snapshot.
-2. `plan` confirms the current **27B container** image ID, full container ID, real API model identity, model cache and BF16 PLE header, the new candidate image label/digest, exclusive running GPU containers, absence of any existing `qwen38-orcarouter` target, and ownership of :8000. Plan SHA256 binds identities and expires at the next 15-minute boundary. No Docker mutation occurs.
-3. `execute` requires matching `--approve-plan` plus exact `--ack-downtime I_ACCEPT_P5_NO_ROLLBACK`. It rechecks the plan and source immediately; then stops only the exact verified 27B service, verifies :8000 free and no other GPU Docker container, starts **one** `qwen38-orcarouter` with PLE mmap from the pinned *read-only* cache and `VLLM_P5_ORCAROUTER=1`, and waits for exact `/v1/models` model ID and a bounded chat completion. The first trial uses `--enforce-eager` to avoid unqualified PIECEWISE graph capture, conservative 8192 context, one sequence, GPU 0.70, MTP0, BF16 KV, automatic tool parser enabled. Graph and MTP2 optimization will be evaluated later.
-4. On success, report `PASS_GPU_TRIAL` and keep the Orcarouter service active on 8000. This means one bounded chat passed, **not** full tools, MTP2, vision, benchmark, or production acceptance.
-5. On failure, report `FAIL_NO_ROLLBACK`. **27B remains stopped**. The failed P5 Docker container, local image, checkpoint, donor, recipes, and logs are retained. A private append-only result file is written under `~/.local/state/blazux-wizard/p5-live-trial/`. Never automatically start the old container, remove the new one, or clear the cache.
-
-## Exact operator commands
-
-Run on the **real DGX**, in the local checkout, not on the GitHub runner:
+### Recommended commands on DGX
 
 ```bash
 cd ~/Workspace/llm/blazux-orcarouter
-git status --short
 git pull --ff-only origin feature/recipe-wizard-handoff
 ./wizard.sh manifest validate --json
-./wizard.sh p5 trial prepare --json
+
+./wizard.sh p5 trial prepare --json | tee /tmp/p5-mtp0-prepare.json
 ./wizard.sh p5 trial plan --json | tee /tmp/p5-mtp0-gpu-trial-plan.json
 ```
 
-Stop and inspect the plan. Only when `status=READY_TO_APPROVE`, `issues=[]`, source container `qwen38-27b` is actually the running model and the target digest is pinned:
+Before any GPU operation, independently confirm `prepare.status=="PASS"`, `prepare.image_built==false`, `plan.status=="READY_TO_APPROVE"`, `plan.issues==[]`, `plan.details.runtime_image_id==plan.details.source.image_id`, `plan.details.strategy=="RECIPE_FIRST_EXISTING_VLLM032_IMAGE"`, `plan.plan_id` is a 64-digit lowercase SHA and the current 27B is healthy. **No P5-specific build should occur.** The CPU preflight executes an ephemeral CPU Docker container with `--rm` but never uses GPU or changes the image.
 
 ```bash
+bash <<'BASH'
+set -euo pipefail
 PLAN_ID=$(python3 - <<'PY'
 import json, re
-d=json.load(open('/tmp/p5-mtp0-gpu-trial-plan.json'))
-assert d['status']=='READY_TO_APPROVE' and not d['issues'], d
-assert d['operation']=='P5_MTP0_STOP_27B_START_ORCAROUTER_NO_ROLLBACK'
-assert re.fullmatch(r'[0-9a-f]{64}',d['plan_id'])
-print(d['plan_id'])
+prep=json.load(open("/tmp/p5-mtp0-prepare.json"))
+p=json.load(open("/tmp/p5-mtp0-gpu-trial-plan.json"))
+assert prep["status"]=="PASS", prep
+assert prep["image_built"] is False and prep["source_patched"] is False
+assert p["status"]=="READY_TO_APPROVE" and p["issues"]==[], p
+assert p["details"]["strategy"]=="RECIPE_FIRST_EXISTING_VLLM032_IMAGE"
+assert p["details"]["runtime_image_id"]==p["details"]["source"]["image_id"]
+assert re.fullmatch(r"[0-9a-f]{64}", p["plan_id"])
+print(p["plan_id"])
 PY
 )
 ./wizard.sh p5 trial execute \
   --approve-plan "$PLAN_ID" \
-  --ack-downtime I_ACCEPT_P5_NO_ROLLBACK --json
-./wizard.sh p5 trial status --json
-./wizard.sh service manager status --json
+  --ack-downtime I_ACCEPT_P5_NO_ROLLBACK \
+  --json | tee /tmp/p5-mtp0-gpu-result.json
+BASH
 ```
 
-If the terminal reports `FAIL_NO_ROLLBACK`:
+If the result is `FAIL_NO_ROLLBACK`, do not restart 27B automatically. Capture:
 
 ```bash
+./wizard.sh p5 trial status --json
 docker ps -a --filter name=qwen38-orcarouter
-docker logs --tail 180 qwen38-orcarouter
-docker ps --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}'
+docker logs --tail 250 qwen38-orcarouter
 ls -lah ~/.local/state/blazux-wizard/p5-live-trial/
 ```
 
-No reboot, auto restore or removal implied. Do not run the `--execute` command again using a stale plan, and do not manually start a second GPU model on :8000.
+## Pass criteria and next iterations
 
-## First acceptance gates
+The first GPU trial only proves a pinned MTP0 start, BF16 PLE mmap and one bounded API chat. **Tool-calling, vision, extended context, throughput, memory behavior and MTP2** need separate tests and evidence. Native MTP2 overlay and 31 BF16 donor tensors are not deployed by MTP0.
 
-- Build image is arm64 vLLM **0.32.0**, original source patch anchor audit PASS, BF16 PLE mmap hook present.
-- Pinned snapshot remains immutable with correct source metadata (no fabricated full checkpoint SHA proof).
-- Exactly one model active; `qwen38-27b` stopped before `qwen38-orcarouter` starts.
-- Runtime logs confirm actual PLE mmap rather than allocating the entire 95GiB table in GPU/unified memory, without hangs at TP=1.
-- API model identity exactly `qwen3.8-flash-next-orca-uncensored-bf16`; bounded Chat Completion PASS.
-- Then separately test tool parser/native tool call, streaming, reasoning, short context benchmark and longer context; *later* MTP2 derivative overlay from pinned 31 BF16 tensors, with separate qualification.
-- If GPU trial fails, mark actual cause and reproduce with a new bounded plan; never forge `runtime_qualified` from registry metadata.
-
-## Further work
-
-This new execution path is **experimental, opt-in and no-rollback** by explicit user instruction, not a generic switch engine. The normal service manifest's `failed_new_model_rollback_to_old=true` default still applies to future production switches. User approval for downtime does not prove a GPU load was run; only real DGX output can establish that.
+If load fails due to a real quantized LM head or compressed-tensors incompatibility, capture full error signature before building any code adapter. A future adapter must be a separate versioned, opt-in engine compatibility plugin, never a silent rewrite to the canonical vLLM 0.32 image and never an unexplained global patch introduced by the model recipe.

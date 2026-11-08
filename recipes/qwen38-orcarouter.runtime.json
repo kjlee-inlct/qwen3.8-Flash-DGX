@@ -61,12 +61,14 @@
     "container_name": "qwen38-orcarouter",
     "hf_cache_read_only": true,
     "enable_tools": true,
-    "source_patch_required": "vllm032_ABI_GUARDED_UNQUALIFIED",
+    "source_patch_required": "NONE_FOR_P5_MTP0_TRIAL_EXISTING_BLAZUX_IMAGE",
     "preparation_requires_separate_approval": true,
     "service_downtime_requires_separate_approval": true,
     "gpu_trial_released": false,
     "rollback_release": false,
-    "ple_loader_profile": "blazux-vllm032-orcarouter-bf16"
+    "ple_loader_profile": "blazux-vllm032-orcarouter-bf16",
+    "dtype": "bfloat16",
+    "load_format": "safetensors"
   },
   "profiles": {
     "mtp0": {
@@ -83,7 +85,11 @@
         "vllm::ple_mmap_lookup_ids"
       ],
       "checkpoint_view": "PINNED_SOURCE_SNAPSHOT",
-      "qualification": "NOT_RUN"
+      "qualification": "NOT_RUN",
+      "enforce_eager": true,
+      "enable_native_tools": true,
+      "tool_call_parser": "qwen3_coder",
+      "reasoning_parser": "qwen3"
     },
     "mtp2": {
       "served_id": "qwen3.8-flash-next-orca-uncensored-bf16-mtp",
@@ -125,6 +131,19 @@
     "preserve_source_container_and_image": true,
     "derived_overlay_required": false,
     "production_launch_allowed": false,
-    "source_immutable": true
+    "source_immutable": true,
+    "runtime_strategy": "RECIPE_FIRST_EXISTING_VLLM032_IMAGE",
+    "require_image_build": false,
+    "allow_source_patch": false,
+    "read_only_image_capability_probe": true,
+    "image_source": "CURRENT_VERIFIED_27B_IMAGE_ID",
+    "on_incompatible_loader": "STOP_AND_CAPTURE_DGX_ERROR_NOT_AUTO_PATCH",
+    "p5_env": {
+      "HF_HOME": "/hf",
+      "HF_HUB_OFFLINE": "1",
+      "VLLM_PLE_MMAP": "1",
+      "VLLM_PLE_MMAP_WORKERS": "16",
+      "VLLM_PLE_MMAP_PREWARM": "0"
+    }
   }
 }

@@ -1,3 +1,15 @@
+## 2026-11-08 P5 MTP0 strategy correction: recipe-first, no vLLM 0.32 patch build
+
+After the actual DGX `./wizard.sh p5 trial prepare` failed with `MTP loader return: expected one vLLM0.32 anchor, got 2` during **P5-specific image source patching**, user explicitly redirected P5 toward **recipe-managed model/runtime configuration**, not upstream source patches. This is accepted.
+
+P5 MTP0 now uses `recipes/qwen38-orcarouter.runtime.json` as the single source for pinned checkpoint, actual BF16 PLE, served ID, `dtype=bfloat16`, context/seqs/memory, MTP depth 0, KV cache, read-only cache, PLE mmap environment, native-tool profile and experiment policy. `./wizard.sh p5 trial prepare` performs only read-only manifest/P5 header checks and a short **GPU-free CPU probe** in the currently running 27B Blazux vLLM 0.32 image, checking engine version, source PLE mmap hook, BF16 and source syntax. It **never builds or tags a Docker image or modifies model.py/mtp.py**. `plan` binds that same immutable verified image ID and asserts a valid SHA plan; `execute` stops the old 27B only with explicit approval and launches Orcarouter MTP0 from existing Blazux image with **no automatic rollback on failure**, preserving all image/cache sources. Historical P5 `Dockerfile.p5.candidate` and `src/p5_patch_qwen4exp_v032.py` remain archived source candidates **NOT called** by the trial. No MTP2 MTP donor overlay is used. Experimental qualification remains **NOT_RUN**, even if the CPU image preflight passes.
+
+The previous real DGX run at HEAD `0071cb2` failed at Docker build step 6 due to patch anchor duplication; `plan` stayed BLOCKED and 27B was never stopped. The new recipe-first code has **not yet been executed on real DGX**. First re-run `./wizard.sh p5 trial prepare --json` and `./wizard.sh p5 trial plan --json` on the updated branch; **do not attempt live execute on a BLOCKED plan**. Any actual Orcarouter model-load error (e.g. quantized lm_head) must be logged and specifically diagnosed before introducing a separate, versioned, opt-in adapter.
+
+Updated runbook: `docs/P5-ORCAROUTER-MTP0-DGX-LIVE-NO-RESTORE-RUNBOOK-20261108.md`.
+
+---
+
 ## 2026-11-08 P5 DGX failed image-build observation and correction
 
 **Actual DGX operator log** (`20261108-030535`) after pulling HEAD `1367a86`: `manifest validate --json` PASS, PLE BF16 metadata true. `./wizard.sh p5 trial prepare --json` failed **BEFORE any GPU execution or 27B stop**: BuildKit parsed `FROM sha256:9479fc92...` as `docker.io/library/sha256:<...>` and tried an unauthorized registry lookup. `prepare.status=BLOCKED, P5_CANDIDATE_IMAGE_BUILD_FAILED`. Subsequently `plan.status=BLOCKED`, `candidate_image_id=null`, `issues=["DOCKER_INSPECT_FAILED"]`, `plan_id=null`. The user command substitution raised AssertionError; a separately submitted `execute` without a valid plan was correctly blocked (`EXACT_PLAN_AND_NO_ROLLBACK_ACK_REQUIRED`), `executed=false`, `source_stopped=false`, `target_started=false`. Real DGX `service manager status` continued to show healthy `qwen38-27b` at :8000 and `/v1/models` returned only `qwen3.8-27b`. No Orcarouter container exists.

@@ -1,3 +1,15 @@
+## 2026-11-08 P5 MTP0 strategy correction: recipe-first, no vLLM 0.32 patch build
+
+After the actual DGX `./wizard.sh p5 trial prepare` failed with `MTP loader return: expected one vLLM0.32 anchor, got 2` during **P5-specific image source patching**, user explicitly redirected P5 toward **recipe-managed model/runtime configuration**, not upstream source patches. This is accepted.
+
+P5 MTP0 now uses `recipes/qwen38-orcarouter.runtime.json` as the single source for pinned checkpoint, actual BF16 PLE, served ID, `dtype=bfloat16`, context/seqs/memory, MTP depth 0, KV cache, read-only cache, PLE mmap environment, native-tool profile and experiment policy. `./wizard.sh p5 trial prepare` performs only read-only manifest/P5 header checks and a short **GPU-free CPU probe** in the currently running 27B Blazux vLLM 0.32 image, checking engine version, source PLE mmap hook, BF16 and source syntax. It **never builds or tags a Docker image or modifies model.py/mtp.py**. `plan` binds that same immutable verified image ID and asserts a valid SHA plan; `execute` stops the old 27B only with explicit approval and launches Orcarouter MTP0 from existing Blazux image with **no automatic rollback on failure**, preserving all image/cache sources. Historical P5 `Dockerfile.p5.candidate` and `src/p5_patch_qwen4exp_v032.py` remain archived source candidates **NOT called** by the trial. No MTP2 MTP donor overlay is used. Experimental qualification remains **NOT_RUN**, even if the CPU image preflight passes.
+
+The previous real DGX run at HEAD `0071cb2` failed at Docker build step 6 due to patch anchor duplication; `plan` stayed BLOCKED and 27B was never stopped. The new recipe-first code has **not yet been executed on real DGX**. First re-run `./wizard.sh p5 trial prepare --json` and `./wizard.sh p5 trial plan --json` on the updated branch; **do not attempt live execute on a BLOCKED plan**. Any actual Orcarouter model-load error (e.g. quantized lm_head) must be logged and specifically diagnosed before introducing a separate, versioned, opt-in adapter.
+
+Updated runbook: `docs/P5-ORCAROUTER-MTP0-DGX-LIVE-NO-RESTORE-RUNBOOK-20261108.md`.
+
+---
+
 ## 2026-11-08 P5 GPU trial: explicitly no auto restoration
 
 User granted **development DGX 27B service downtime and GPU operation** and explicitly requested **no rollback if the Orcarouter test fails**. New `./wizard.sh p5 trial` command uses `prepare` for isolated vLLM0.32 source-patched image build while 27B runs, `plan` for short-lived SHA256 pinned exact source+target/API/PLE/GPU gate, `execute` (requires matching ID and `I_ACCEPT_P5_NO_ROLLBACK`), and `status`. Execution stops 27B and loads Orcarouter MTP0 on :8000 without restoring on failure, preserves source container/image/HF caches, retains target and logs and writes private append-only report. MTP2, full tool-call pass, benchmark and production status remain unverified.
