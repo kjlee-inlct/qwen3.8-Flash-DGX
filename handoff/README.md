@@ -1,3 +1,15 @@
+## CURRENT P5 DOCUMENT SUPERSESSION — 2026-11-09 00:55 KST (v3 MTP0 + P6/P8 source)
+
+**Actual operator DGX record, not a new session runtime test:** Orcarouter `qwen38-orcarouter-qsa62318-lmhead-v3` on :8000, API `qwen3.8-flash-next-orca-uncensored-bf16`; `LIVE_P5_TRIAL_API_VERIFIED` and `PASS_LIVE_INFERENCE` (READY). Adapter `qwen4exp-qsa62318-lmhead-v032-v3` resolves `lm_head.weight_scale`. Still `DEVELOPMENT_TRIAL`, not production. Failed-candidate cleanup is already complete; no repeat.
+
+**Latest 00:54–00:55 KST idle telemetry:** total RAM 121.63 GiB; MemAvailable 30.18 GiB; host SwapUsed 1.31 GiB, Orcarouter cgroup Swap 0; Docker MemUsage 7.157 GiB vs cgroup memory.current 25.54 GiB, peak 37.02 GiB, inactive_file 18.38 GiB, anon 4.58 GiB; memory PSI avg10 0, OOM/OOMKill 0, no interval swap I/O, major faults or file refaults; host busy ~0.18% over 45 seconds, performance governor, 10 cores at 2808 MHz plus 10 at 3900 MHz, system up to ~34.7 C, GPU ~33 C. The Docker/cgroup difference largely matches inactive file cache; neither memory leak nor PLE resident bytes is established. This is **idle-only** evidence; loaded performance/stability remains unqualified. Old 00:43 observation retained below. Resource policy remains `OBSERVE_ONLY` with disabled startup gate; `BLOCKED_UNCALIBRATED` is expected. Do not apply YSLAB 100 GiB startup threshold, CPU cap or cgroup limits.
+
+**Source update:** P6 read-only Orcarouter↔27B checks, both-direction in-memory Fake-DGX switch and P8 synthetic fault matrix (`21aa6c9`), plus same-container-ID cgroup interval fault/OOM safeguards (`5acf0b1`); both GitHub push/PR CI SUCCESS. Actual P5 MTP2, Tools, Vision, benchmarks, canonical lifecycle, P6 live switch, P7 Proxy/Gateway, P8 real fault/restore and release remain unqualified. Keep live v3, models, caches, images, OpenWebUI/Portainer; vLLM 0.32.0, no SGLang, one active model and port 8000. No unauthorized Docker/GPU mutation or PR merge.
+
+[Current technical record](../docs/P5-ORCAROUTER-BF16PLE-VLLM032-ADOPTION-20261108.md) · [Full documentation audit](../docs/HANDOFF-DOCUMENT-AUDIT-FULL-P5-20261108.md)
+
+---
+
 ## CURRENT P5 DOCUMENT SUPERSESSION — 2026-11-08 (v3 live PASS, safe resource work next)
 
 **LATEST DGX RESOURCE EVIDENCE (2026-11-09 00:43 KST, operator log):** v3 running, 30.18 GiB MemAvailable / 121.63 GiB total, swap used 1.31 GiB, memory PSI avg10=0; Docker 7.157 GiB versus cgroup 25.54 GiB (cache split NOT YET MEASURED), peak 37.02 GiB, cgroup OOM=0. GPU memory N/A is expected on GB10 UMA. 13-second idle observation only, NOT loaded stability acceptance; preflight BLOCKED_UNCALIBRATED is expected. **Do not apply memory cap or 100 GiB admission gate.** New source-only cgroup memory.stat/Swap churn diagnostics must receive fresh DGX read-only evidence. [P5 technical record](../docs/P5-ORCAROUTER-BF16PLE-VLLM032-ADOPTION-20261108.md).
