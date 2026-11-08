@@ -89,6 +89,14 @@ class ResourceDiagnosticsCPU(unittest.TestCase):
             self.assertFalse(any("start" in x or "stop" in x or "update" in x
                                  for x in commands))
 
+    def test_wizard_resources_route_is_read_only(self):
+        from unittest.mock import patch
+        from wizard.main import main as wizard_main
+        with patch("scripts.manager.resource_diagnostics.main", return_value=0) as mock_main:
+            rc = wizard_main(["operations", "resources", "snapshot", "--json"])
+        self.assertEqual(rc, 0)
+        mock_main.assert_called_once_with(["snapshot", "--json"])
+
     def test_admission_never_claims_launch_authority(self):
         doc = {"recipe_resource_policy": {"min_mem_available_gib_for_start": 100},
                "host_memory": {"MemAvailable_bytes": 110 * r.GIB}}

@@ -331,7 +331,10 @@ def main(argv: list[str] | None = None) -> int:
     if args.save:
         doc["evidence_file"] = _save_private(doc)
     print(json.dumps(doc, indent=2, ensure_ascii=False, sort_keys=True))
-    return 0 if all(x["status"] != "BLOCKED" for x in samples) else 3
+    good = all(x["status"] != "BLOCKED" for x in samples)
+    if args.action == "preflight" and doc["admission"]["status"] != "CAPACITY_CHECK_PASS_NOT_LAUNCH_APPROVAL":
+        good = False
+    return 0 if good else 3
 
 
 if __name__ == "__main__":

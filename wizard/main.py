@@ -224,7 +224,8 @@ def main(argv: list[str] | None = None) -> int:
                            and args[1] in ("flash-next", "27b", "orcarouter")
                            and args[2] in ("lifecycle", "recipe-diff"))
         if not lifecycle_route and not (len(args) >= 2 and args[:2] in
-                                       (["model", "choose"], ["model", "list"])):
+                                       (["model", "choose"], ["model", "list"],
+                                        ["operations", "resources"])):
             args = _resolve_stage(args)
     except ValueError as exc:
         print(json.dumps({"status": "BLOCKED", "error": str(exc)}))
