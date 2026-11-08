@@ -239,7 +239,7 @@ class P5QSA62318Trial(unittest.TestCase):
                 state["done"]=True
                 self.assertIn("--pull=false",argv)
                 self.assertIn("--network=none",argv)
-                self.assertIn("Dockerfile.p5.qsa62318",argv)
+                self.assertIn("Dockerfile.p5.qsa62318-lmhead",argv)
                 self.assertIn("P5_BASE_IMAGE_ID="+SOURCE_IMAGE,argv)
                 return completed(argv)
             raise AssertionError(argv)
