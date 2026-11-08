@@ -156,7 +156,7 @@ def _validate_bundle(parts: dict[str, dict[str, Any]], *, root: Path = ROOT) -> 
         "derived_overlay_required": False,
         "production_launch_allowed": False,
         "source_immutable": True,
-        "runtime_strategy": "RECIPE_PINNED_QSA62318_LMHEAD_V2_DERIVED_IMAGE_FROM_EXISTING_VLLM032",
+        "runtime_strategy": "RECIPE_PINNED_QSA62318_LMHEAD_V3_DERIVED_IMAGE_FROM_EXISTING_VLLM032",
         "require_image_build": True,
         "allow_source_patch": False,
         "read_only_image_capability_probe": True,
@@ -167,21 +167,21 @@ def _validate_bundle(parts: dict[str, dict[str, Any]], *, root: Path = ROOT) -> 
             "VLLM_PLE_MMAP": "1", "VLLM_PLE_MMAP_WORKERS": "16",
             "VLLM_PLE_MMAP_PREWARM": "0",
         },
-        "container_name": "qwen38-orcarouter-qsa62318-lmhead",
-        "adapter": "qwen4exp-qsa62318-lmhead-v032-v2",
-        "image_tag": "blazux-p5-orcarouter:qsa62318-lmhead-v032",
+        "container_name": "qwen38-orcarouter-qsa62318-lmhead-v3",
+        "adapter": "qwen4exp-qsa62318-lmhead-v032-v3",
+        "image_tag": "blazux-p5-orcarouter:qsa62318-lmhead-v3-v032",
         "allow_isolated_derived_image_source_backport": True,
         "preserve_previous_failed_trial_container": True,
         "allow_idle_source_after_failed_p5": True,
     } and orca.get("compatibility_adapter") == {
-        "id": "qwen4exp-qsa62318-lmhead-v032-v2",
+        "id": "qwen4exp-qsa62318-lmhead-v032-v3",
         "scope": "P5_ORCAROUTER_MTP0_ONLY",
         "upstream_issue": "https://github.com/vllm-project/vllm/issues/62308",
         "upstream_pr": "https://github.com/vllm-project/vllm/pull/62318",
         "upstream_commit": "fe833b1",
-        "dockerfile": "Dockerfile.p5.qsa62318-lmhead",
+        "dockerfile": "Dockerfile.p5.qsa62318-lmhead-v3",
         "patch_script": "src/p5_qsa_quant_backport_v032.py",
-        "lm_head_patch_script": "src/p5_lm_head_quant_backport_v032.py",
+        "lm_head_patch_script": "src/p5_lm_head_quant_backport_v032_v3.py",
         "allowed_vllm_version": "0.32.0",
         "apply_only_in_derived_image": True,
         "preserve_original_27b_image": True,
@@ -314,9 +314,9 @@ def _validate_bundle(parts: dict[str, dict[str, Any]], *, root: Path = ROOT) -> 
               and adapter.get("mtp_profile_candidates") == ["mtp0", "mtp2"]
               and adapter.get("container_image_digest") is None
               and adapter.get("source_adapter_state") ==
-                  "SCOPED_QSA62318_LMHEAD_V2_IMAGE_CANDIDATE_UNQUALIFIED"
+                  "SCOPED_QSA62318_LMHEAD_V3_IMAGE_CANDIDATE_UNQUALIFIED"
               and adapter.get("runtime_strategy") ==
-                  "RECIPE_PINNED_QSA62318_LMHEAD_V2_DERIVED_IMAGE_FROM_EXISTING_VLLM032"
+                  "RECIPE_PINNED_QSA62318_LMHEAD_V3_DERIVED_IMAGE_FROM_EXISTING_VLLM032"
               and adapter.get("compatibility_adapter_id") ==
                   orca["compatibility_adapter"]["id"]
               and adapter.get("original_engine_image_patched") is False
