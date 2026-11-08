@@ -361,7 +361,7 @@ def read_only(*, roots: list[Path] | None = None,
         svc = _gate("service_preflight", PASS if safe else BLOCKED,
                     *([] if safe else ["SINGLE_MODEL_PORT_8000_NOT_VERIFIED"]),
                     observed_model=live.get("observed_model") if existing_27b else None,
-                    27b_downtime_permitted=True,
+                    downtime_27b_permitted=True,
                     service_state=("27B_RUNNING" if existing_27b else
                                    "STOPPED_PORT_FREE" if stopped else "UNKNOWN"))
     except (OSError, ValueError, RuntimeError, TypeError, KeyError):

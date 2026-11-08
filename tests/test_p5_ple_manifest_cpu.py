@@ -147,7 +147,7 @@ class P5PLEManifestCPU(unittest.TestCase):
                 })
         self.assertEqual(report["stages"][3]["status"], "PASS")
         self.assertEqual(report["stages"][3]["service_state"], "STOPPED_PORT_FREE")
-        self.assertTrue(report["stages"][3]["27b_downtime_permitted"])
+        self.assertTrue(report["stages"][3]["downtime_27b_permitted"])
         self.assertFalse(report["production_released"])
         self.assertFalse(report["gpu_verified"])
 
