@@ -234,9 +234,9 @@ def main(argv: list[str] | None = None) -> int:
             return interactive()
         args = ["list"]
     if len(args) >= 2 and args[:2] == ["p5", "trial"]:
-        if dry_run and "execute" in args[2:]:
+        if dry_run and any(action in ("prepare", "execute") for action in args[2:]):
             print(json.dumps({"status": "BLOCKED",
-                              "issues": ["P5_TRIAL_DRY_RUN_EXECUTION_CONFLICT"]}))
+                              "issues": ["P5_TRIAL_DRY_RUN_MUTATION_BLOCKED"]}))
             return 3
         from scripts.manager.p5_live_trial import main as p5_live_main
         return p5_live_main(args[2:] + (["--json"] if as_json else []))

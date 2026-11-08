@@ -155,6 +155,14 @@ class P5LiveTrialCPU(unittest.TestCase):
         self.assertEqual(doc["status"], "READY_TO_APPROVE")
         self.assertFalse(doc["executed"])
 
+    def test_wizard_prepare_dry_run_cannot_build_image(self):
+        with patch.object(live, "prepare",
+                          side_effect=AssertionError("dry run must not build")):
+            with contextlib.redirect_stdout(io.StringIO()) as output:
+                rc = wizard(["p5", "trial", "prepare", "--dry-run", "--json"])
+        self.assertEqual(rc, 3)
+        self.assertEqual(json.loads(output.getvalue())["status"], "BLOCKED")
+
     def test_old_wizard_p5_gpu_trial_stays_separate_and_blocked(self):
         from scripts.manager.p5_orcarouter import source_plan
         result = source_plan("mtp0")
