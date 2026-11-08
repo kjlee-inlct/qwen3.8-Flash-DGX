@@ -61,7 +61,7 @@
     "container_name": "qwen38-orcarouter",
     "hf_cache_read_only": true,
     "enable_tools": true,
-    "source_patch_required": "SCOPED_UPSTREAM_62318_QSA_BACKPORT_ONLY_ISOLATED_IMAGE",
+    "source_patch_required": "SCOPED_QSA62318_AND_LM_HEAD_QUANT_BACKPORT_ISOLATED_IMAGE",
     "preparation_requires_separate_approval": true,
     "service_downtime_requires_separate_approval": true,
     "gpu_trial_released": false,
@@ -145,26 +145,27 @@
       "VLLM_PLE_MMAP_WORKERS": "16",
       "VLLM_PLE_MMAP_PREWARM": "0"
     },
-    "container_name": "qwen38-orcarouter-qsa62318",
-    "adapter": "qwen4exp-qsa-62318-v032-v1",
-    "image_tag": "blazux-p5-orcarouter:qsa62318-v032",
+    "container_name": "qwen38-orcarouter-qsa62318-lmhead",
+    "adapter": "qwen4exp-qsa62318-lmhead-v032-v2",
+    "image_tag": "blazux-p5-orcarouter:qsa62318-lmhead-v032",
     "allow_isolated_derived_image_source_backport": true,
     "preserve_previous_failed_trial_container": true,
     "allow_idle_source_after_failed_p5": true
   },
   "compatibility_adapter": {
-    "id": "qwen4exp-qsa-62318-v032-v1",
+    "id": "qwen4exp-qsa62318-lmhead-v032-v2",
     "scope": "P5_ORCAROUTER_MTP0_ONLY",
     "upstream_issue": "https://github.com/vllm-project/vllm/issues/62308",
     "upstream_pr": "https://github.com/vllm-project/vllm/pull/62318",
     "upstream_commit": "fe833b1",
-    "dockerfile": "Dockerfile.p5.qsa62318",
+    "dockerfile": "Dockerfile.p5.qsa62318-lmhead",
     "patch_script": "src/p5_qsa_quant_backport_v032.py",
     "allowed_vllm_version": "0.32.0",
     "apply_only_in_derived_image": true,
     "preserve_original_27b_image": true,
     "launch_profile": "mtp0",
     "gpu_qualified": false,
-    "adapter_qualified": false
+    "adapter_qualified": false,
+    "lm_head_patch_script": "src/p5_lm_head_quant_backport_v032.py"
   }
 }
