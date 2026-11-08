@@ -122,7 +122,7 @@ class ResourceDiagnosticsCPU(unittest.TestCase):
     def test_host_cpu_utilization_from_cumulative_proc_ticks(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            (root / "stat").write_text("cpu 100 0 100 700 100 0 0 0\\n")
+            (root / "stat").write_text("cpu 100 0 100 700 100 0 0 0\n")
             out = r._cpu_usage_counters(root)
             self.assertEqual(out["total_ticks"], 1000)
             self.assertEqual(out["idle_ticks"], 800)
