@@ -43,7 +43,8 @@ def image_doc():
 
 def compat():
     return {"vllm_version": "0.32.0", "source_syntax_valid": True,
-            "qkv_mapping_exact": True, "upstream_62318_guard": True}
+            "qkv_mapping_exact": True, "upstream_62318_guard": True,
+            "blazux_hybrid_guard": True}
 
 
 def plan(running=False):
@@ -167,6 +168,15 @@ class P5QSA62318Trial(unittest.TestCase):
         self.assertEqual(observed[0][6],ADAPTER_IMAGE)
         self.assertNotIn("--gpus",observed[0])
         self.assertNotIn("tag",observed[0])
+
+    def test_candidate_probe_fails_if_original_blazux_hybrid_guard_lost(self):
+        broken={**compat(),"blazux_hybrid_guard":False}
+        with patch.object(live,"docker_json",return_value=image_doc()), \
+             patch.object(live,"command",return_value=completed(
+                 [],stdout=json.dumps(broken))):
+            with self.assertRaisesRegex(ValueError,
+                                        "P5_QSA62318_UPSTREAM_FIX_NOT_CONFIRMED"):
+                live._scoped_image(SOURCE_IMAGE)
 
     def test_candidate_probe_fails_when_fix_is_missing(self):
         failing={**compat(),"upstream_62318_guard":False}

@@ -185,6 +185,8 @@ report={
   "upstream_62318_guard": ("# blazux-p5-qsa62318:" in qsa and
     "projection_method is type(self.indexer.index_qk_proj.quant_method)" in qsa and
     "fused_quant_config," in qsa),
+  "blazux_hybrid_guard": ("fused_quant_config = _fp8_hybrid_excluded(quant_config)" in qsa
+    and "and not _fp8_hybrid_separate_qsa(quant_config, prefix)" in qsa),
   "source_syntax_valid":True,
 }
 print(json.dumps(report, sort_keys=True))
@@ -222,7 +224,7 @@ def _scoped_image(base_id: str) -> dict:
     if (not isinstance(probe, dict)
         or probe.get("vllm_version") != "0.32.0"
         or any(probe.get(field) is not True for field in (
-            "qkv_mapping_exact", "upstream_62318_guard", "source_syntax_valid"))):
+            "qkv_mapping_exact", "upstream_62318_guard", "blazux_hybrid_guard", "source_syntax_valid"))):
         raise ValueError("P5_QSA62318_UPSTREAM_FIX_NOT_CONFIRMED")
     return {"image_id": img["Id"], "base_image_id": base_id,
             "adapter": ADAPTER, "capabilities": probe}
