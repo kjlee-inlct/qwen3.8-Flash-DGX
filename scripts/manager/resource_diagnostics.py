@@ -41,6 +41,25 @@ def _kv_bytes(raw: str | None) -> dict[str, int]:
     return values
 
 
+
+def _flat_counts(raw: str | None) -> dict[str, int]:
+    """Read space-delimited kernel counters without inventing absent entries."""
+    result = {}
+    for line in (raw or "").splitlines():
+        match = re.fullmatch(r"([a-zA-Z0-9_]+)\s+(\d+)\s*", line)
+        if match:
+            result[match[1]] = int(match[2])
+    return result
+
+
+def _vmstat(proc: Path) -> dict:
+    """Host-wide cumulative page/swap counters, not evidence of live swap churn."""
+    fields = _flat_counts(_read(proc / "vmstat"))
+    names = ("pswpin", "pswpout", "pgmajfault")
+    return {"status": "OBSERVED_CUMULATIVE" if any(k in fields for k in names)
+            else "UNSUPPORTED",
+            "counters": {k: fields.get(k) for k in names}}
+
 def _pressure(path: Path) -> dict:
     raw = _read(path)
     if raw is None:
@@ -205,6 +224,30 @@ def _cgroup(proc: Path, sysfs: Path, pid: int) -> dict:
                 "memory.high", "cpu.max"):
         raw_value = _read(folder / key)
         values[key] = raw_value.strip() if raw_value is not None else None
+    # memory.current includes file cache; Docker CLI subtracts inactive_file
+    # from cgroup v2 to display its "MEM USAGE" field.
+    memstat_raw = _read(folder / "memory.stat")
+    memstat = _flat_counts(memstat_raw)
+    bytes_fields = ("anon", "file", "kernel", "shmem", "file_mapped",
+                    "active_file", "inactive_file", "slab")
+    counter_fields = ("pgfault", "pgmajfault", "workingset_refault_file")
+    values["memory_stat_bytes"] = (
+        {k: memstat.get(k) for k in bytes_fields} if memstat_raw is not None
+        else None)
+    values["memory_stat_counters"] = (
+        {k: memstat.get(k) for k in counter_fields} if memstat_raw is not None
+        else None)
+    try:
+        current = int(values["memory.current"])
+        inactive = memstat["inactive_file"]
+        values["docker_cli_derived_usage_bytes"] = (
+            current - inactive if 0 <= inactive <= current else None)
+    except (ValueError, TypeError, KeyError):
+        values["docker_cli_derived_usage_bytes"] = None
+    for key in ("memory.swap.current", "memory.swap.max"):
+        value = _read(folder / key)
+        values[key] = value.strip() if value is not None else None
+    values["memory_pressure"] = _pressure(folder / "memory.pressure")
     events = _read(folder / "memory.events")
     values["memory.events"] = {
         k: int(v) for k, v in re.findall(r"(?m)^([a-z_]+)\s+(\d+)$", events or "")
@@ -254,12 +297,14 @@ def _docker(recipe: dict, proc: Path, sysfs: Path, runner) -> dict:
             stats = None
     except (ValueError, TypeError, AttributeError):
         stats = None
-    smaps = _kv_bytes(_read(proc / str(pid) / "smaps_rollup", 32768))
+    smaps_raw = _read(proc / str(pid) / "smaps_rollup", 32768)
+    smaps = _kv_bytes(smaps_raw)
     proc_status = _read(proc / str(pid) / "status", 32768)
     thread_match = re.search(r"(?m)^Threads:\s*(\d+)\s*$", proc_status or "")
     return {"status": "OBSERVED", "container": identity, "docker_stats": stats,
             "cgroup_v2": _cgroup(proc, sysfs, pid),
             "process_thread_count": int(thread_match.group(1)) if thread_match else None,
+            "process_smaps_rollup_status": "OBSERVED" if smaps else "NOT_OBSERVED",
             "process_smaps_rollup_bytes": {k: smaps.get(k) for k in
                 ("Rss", "Pss", "Pss_File", "Pss_Anon", "Swap")},
             "ple_specific_resident_bytes": None,
@@ -292,6 +337,7 @@ def snapshot(*, proc: Path = PROC, sysfs: Path = SYS, runner=subprocess.run,
            "pressure": {kind: _pressure(proc / "pressure" / kind)
                         for kind in ("memory", "cpu", "io")},
            "cpu_frequency": _cpu(sysfs), "cpu_usage_counters": _cpu_usage_counters(proc),
+           "vmstat": _vmstat(proc),
            "thermal": _thermal(sysfs),
            "nvme": _nvme(sysfs), "gpu": _gpu(runner),
            "docker": _docker(recipe, proc, sysfs, runner),
@@ -358,9 +404,30 @@ def observation_summary(samples: list[dict]) -> dict:
         idle_delta = last_cpu["idle_ticks"] - first_cpu["idle_ticks"]
         if total_delta > 0 and 0 <= idle_delta <= total_delta:
             cpu_busy_pct = round(100 * (total_delta - idle_delta) / total_delta, 2)
+    first_vm = samples[0].get("vmstat", {}).get("counters") or {}
+    last_vm = samples[-1].get("vmstat", {}).get("counters") or {}
+    swap_page_rates = {}
+    for key in ("pswpin", "pswpout", "pgmajfault"):
+        old, new = first_vm.get(key), last_vm.get(key)
+        swap_page_rates[key + "_per_second"] = (
+            round((new - old) / seconds, 3)
+            if isinstance(old, int) and isinstance(new, int) and new >= old
+            else None)
+    first_cgroup = (samples[0].get("docker", {}).get("cgroup_v2", {})
+                    .get("metrics", {}).get("memory_stat_counters") or {})
+    last_cgroup = (samples[-1].get("docker", {}).get("cgroup_v2", {})
+                   .get("metrics", {}).get("memory_stat_counters") or {})
+    cgroup_fault_deltas = {}
+    for key in ("pgmajfault", "workingset_refault_file"):
+        old, new = first_cgroup.get(key), last_cgroup.get(key)
+        cgroup_fault_deltas[key + "_delta"] = (
+            new - old if isinstance(old, int) and isinstance(new, int)
+            and new >= old else None)
     return {"status": "OBSERVED_INTERVAL",
             "duration_seconds": round(seconds, 3),
             "host_cpu_busy_percent": cpu_busy_pct,
+            "host_vmstat_rates": swap_page_rates,
+            "cgroup_fault_deltas": cgroup_fault_deltas,
             "min_mem_available_bytes": min(available) if available else None,
             "max_swap_used_bytes": max(swaps) if swaps else None,
             "max_memory_psi_some_avg10_pct": max(psi_avg10) if psi_avg10 else None,

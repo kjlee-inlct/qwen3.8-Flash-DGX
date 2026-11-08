@@ -127,6 +127,43 @@ class ResourceDiagnosticsCPU(unittest.TestCase):
             self.assertEqual(out["total_ticks"], 1000)
             self.assertEqual(out["idle_ticks"], 800)
 
+    def test_cgroup_stat_explains_docker_cli_cache_subtraction(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "proc/42").mkdir(parents=True)
+            (root / "proc/42/cgroup").write_text("0::/container\n")
+            folder = root / "sys/fs/cgroup/container"
+            folder.mkdir(parents=True)
+            (folder / "memory.current").write_text("1000000000\n")
+            (folder / "memory.stat").write_text(
+                "anon 150000000\nfile 850000000\ninactive_file 700000000\n"
+                "file_mapped 300000000\npgmajfault 17\nworkingset_refault_file 10\n")
+            (folder / "memory.swap.current").write_text("4096\n")
+            result = r._cgroup(root / "proc", root / "sys", 42)
+            metrics = result["metrics"]
+            self.assertEqual(metrics["docker_cli_derived_usage_bytes"], 300000000)
+            self.assertEqual(metrics["memory_stat_bytes"]["file_mapped"], 300000000)
+            self.assertEqual(metrics["memory_stat_counters"]["pgmajfault"], 17)
+            self.assertEqual(metrics["memory.swap.current"], "4096")
+            self.assertFalse((folder / "memory.max").exists())
+
+    def test_vmstat_swap_activity_is_rate_not_accumulated_usage(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "vmstat").write_text("pswpin 100\npswpout 30\npgmajfault 900\n")
+            observed = r._vmstat(root)
+            self.assertEqual(observed["counters"]["pswpin"], 100)
+            before = {"timestamp_utc": "2026-11-08T00:00:00+00:00",
+                      "vmstat": {"counters": {"pswpin": 100, "pswpout": 30,
+                                             "pgmajfault": 900}}}
+            after = {"timestamp_utc": "2026-11-08T00:00:10+00:00",
+                     "vmstat": {"counters": {"pswpin": 130, "pswpout": 30,
+                                            "pgmajfault": 905}}}
+            interval = r.observation_summary([before, after])
+            self.assertEqual(interval["host_vmstat_rates"]["pswpin_per_second"], 3.0)
+            self.assertEqual(interval["host_vmstat_rates"]["pswpout_per_second"], 0.0)
+            self.assertIsNone(interval["cgroup_fault_deltas"]["pgmajfault_delta"])
+
     def test_wizard_resources_route_is_read_only(self):
         from unittest.mock import patch
         from wizard.main import main as wizard_main
