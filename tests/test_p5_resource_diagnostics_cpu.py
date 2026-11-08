@@ -108,6 +108,25 @@ class ResourceDiagnosticsCPU(unittest.TestCase):
         self.assertEqual(summary["nvme_rates"]["nvme0n1"]["avg_read_time_ms_per_io"], 10)
         self.assertEqual(summary["min_mem_available_bytes"], 90)
 
+    def test_advisory_warnings_never_change_cpu_or_memory_limits(self):
+        snapshot = {"recipe_resource_policy": {
+            "max_memory_psi_some_avg10_pct_warn": 5.0,
+            "max_swap_used_gib_warn": 2.0},
+            "pressure": {"memory": {"some": {"avg10": 10.0}}},
+            "host_memory": {"swap_used_bytes": 3 * r.GIB}}
+        result = r.evaluate_warnings(snapshot)
+        self.assertEqual(result["status"], "WARNING")
+        self.assertEqual(len(result["issues"]), 2)
+        self.assertFalse(result["resource_limits_changed"])
+
+    def test_host_cpu_utilization_from_cumulative_proc_ticks(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "stat").write_text("cpu 100 0 100 700 100 0 0 0\\n")
+            out = r._cpu_usage_counters(root)
+            self.assertEqual(out["total_ticks"], 1000)
+            self.assertEqual(out["idle_ticks"], 800)
+
     def test_wizard_resources_route_is_read_only(self):
         from unittest.mock import patch
         from wizard.main import main as wizard_main

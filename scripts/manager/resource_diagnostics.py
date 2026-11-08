@@ -145,6 +145,23 @@ def _command(args: list[str], runner=subprocess.run) -> str | None:
         return None
 
 
+
+def _cpu_usage_counters(proc: Path) -> dict:
+    """Linux cumulative /proc/stat ticks; rate requires a timed pair."""
+    raw = _read(proc / "stat")
+    line = next((x for x in (raw or "").splitlines() if x.startswith("cpu ")), None)
+    if not line:
+        return {"status": "UNSUPPORTED"}
+    try:
+        fields = [int(x) for x in line.split()[1:]]
+    except ValueError:
+        return {"status": "UNSUPPORTED"}
+    if len(fields) < 5:
+        return {"status": "UNSUPPORTED"}
+    idle = fields[3] + (fields[4] if len(fields) > 4 else 0)
+    return {"status": "OBSERVED_CUMULATIVE", "total_ticks": sum(fields[:8]),
+            "idle_ticks": idle}
+
 def _gpu(runner) -> dict:
     columns = ["memory.used", "memory.total", "temperature.gpu",
                "power.draw", "utilization.gpu"]
@@ -274,7 +291,8 @@ def snapshot(*, proc: Path = PROC, sysfs: Path = SYS, runner=subprocess.run,
            "host_memory": memory,
            "pressure": {kind: _pressure(proc / "pressure" / kind)
                         for kind in ("memory", "cpu", "io")},
-           "cpu_frequency": _cpu(sysfs), "thermal": _thermal(sysfs),
+           "cpu_frequency": _cpu(sysfs), "cpu_usage_counters": _cpu_usage_counters(proc),
+           "thermal": _thermal(sysfs),
            "nvme": _nvme(sysfs), "gpu": _gpu(runner),
            "docker": _docker(recipe, proc, sysfs, runner),
            "unsupported_notes": ["GPU memory on GB10 shares physical memory; do not add GPU and host memory totals.",
@@ -332,13 +350,51 @@ def observation_summary(samples: list[dict]) -> dict:
            for row in samples]
     psi_avg10 = [p.get("avg10") for p in psi
                  if isinstance(p.get("avg10"), (float, int))]
+    first_cpu = samples[0].get("cpu_usage_counters", {})
+    last_cpu = samples[-1].get("cpu_usage_counters", {})
+    cpu_busy_pct = None
+    if first_cpu.get("status") == last_cpu.get("status") == "OBSERVED_CUMULATIVE":
+        total_delta = last_cpu["total_ticks"] - first_cpu["total_ticks"]
+        idle_delta = last_cpu["idle_ticks"] - first_cpu["idle_ticks"]
+        if total_delta > 0 and 0 <= idle_delta <= total_delta:
+            cpu_busy_pct = round(100 * (total_delta - idle_delta) / total_delta, 2)
     return {"status": "OBSERVED_INTERVAL",
             "duration_seconds": round(seconds, 3),
+            "host_cpu_busy_percent": cpu_busy_pct,
             "min_mem_available_bytes": min(available) if available else None,
             "max_swap_used_bytes": max(swaps) if swaps else None,
             "max_memory_psi_some_avg10_pct": max(psi_avg10) if psi_avg10 else None,
             "nvme_rates": disk_rates,
             "nvme_latency_scope": "kernel cumulative per-I/O time delta; not PLE-only"}
+
+
+def evaluate_warnings(last: dict) -> dict:
+    """Advisory comparisons only, no actuator and no fabricated thresholds."""
+    policy = last.get("recipe_resource_policy") or {}
+    thresholds = {
+        "max_memory_psi_some_avg10_pct_warn": (
+            (last.get("pressure", {}).get("memory", {}).get("some") or {}).get("avg10")),
+        "max_swap_used_gib_warn": (
+            last.get("host_memory", {}).get("swap_used_bytes") / GIB
+            if isinstance(last.get("host_memory", {}).get("swap_used_bytes"), int)
+            else None),
+    }
+    issues, uncalibrated, unobserved = [], [], []
+    for name, actual in thresholds.items():
+        threshold = policy.get(name)
+        if not isinstance(threshold, (int, float)) or threshold < 0:
+            uncalibrated.append(name)
+        elif not isinstance(actual, (int, float)):
+            unobserved.append(name)
+        elif actual > threshold:
+            issues.append(name.upper() + "_EXCEEDED")
+    return {"status": ("WARNING" if issues else
+                       "UNOBSERVED" if unobserved else
+                       "UNCALIBRATED" if uncalibrated else
+                       "WITHIN_CONFIGURED_ADVISORY_LIMITS"),
+            "issues": issues, "uncalibrated": uncalibrated,
+            "unobserved": unobserved, "mode": "ADVISORY_ONLY",
+            "resource_limits_changed": False}
 
 def admission(snapshot_doc: dict) -> dict:
     """Read-only candidate gate; missing thresholds never imply safe admission."""
@@ -388,6 +444,7 @@ def main(argv: list[str] | None = None) -> int:
         samples.append(snapshot())
     doc = {"stage": "p5", "action": args.action, "executed": False,
            "service_mutated": False, "snapshots": samples}
+    doc["warnings"] = evaluate_warnings(samples[-1])
     if args.action == "observe":
         doc["interval_summary"] = observation_summary(samples)
     if args.action == "preflight":
