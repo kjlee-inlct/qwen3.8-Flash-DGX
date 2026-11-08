@@ -129,5 +129,29 @@ class ServiceStatusCPU(unittest.TestCase):
         f.assert_called_once()
 
 
+    def test_current_p5_orcarouter_is_verified_as_trial_not_production(self):
+        m = good_manifest()
+        m["observed_model"] = "orcarouter"
+        m["p5_trial_active"] = True
+        m["p5_trial_candidate_name"] = "qwen38-orcarouter-qsa62318-lmhead-v3"
+        m["managed_containers"][0].update(
+            model="orcarouter", container_name=m["p5_trial_candidate_name"],
+            p5_development_trial=True,
+            served_id="qwen3.8-flash-next-orca-uncensored-bf16")
+        def probe(**kwargs):
+            return {**good_health(), "observed_model": "orcarouter",
+                    "expected_model_id": "qwen3.8-flash-next-orca-uncensored-bf16",
+                    "model_ids": ["qwen3.8-flash-next-orca-uncensored-bf16"]}
+        result = self.status(m, probe)
+        self.assertEqual(result["status"], "LIVE_P5_TRIAL_API_VERIFIED")
+        self.assertEqual(result["runtime_role"], "DEVELOPMENT_TRIAL")
+        self.assertTrue(result["p5_development_trial"])
+        self.assertFalse(result["production_released"])
+        self.assertFalse(result["operations_enabled"])
+        with patch("wizard.menus.operations.service.inspect_live_status",
+                   return_value=result), contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(router.main(["service", "manager", "status", "--json"]), 0)
+
+
 if __name__ == "__main__":
     unittest.main()
