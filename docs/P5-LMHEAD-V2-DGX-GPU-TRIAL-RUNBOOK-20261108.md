@@ -1,3 +1,9 @@
+## CURRENT P5 DOCUMENT SUPERSESSION — 2026-11-09 actual v3 MTP0 overrides historical v2 runbook
+
+The original v2 `qwen4exp-qsa62318-lmhead-v032-v2` failure involving `lm_head.weight_scale` is preserved below as a historical trial. Operator logs at 2026-11-09 00:55 KST show v3 `qwen4exp-qsa62318-lmhead-v032-v3` `PASS_LIVE_INFERENCE` MTP0 on :8000 as `DEVELOPMENT_TRIAL`, not canonical or production. Idle resource data and scope of P6 source-only/Fake-DGX tests are current in [P5 technical record](P5-ORCAROUTER-BF16PLE-VLLM032-ADOPTION-20261108.md) and [full document audit](HANDOFF-DOCUMENT-AUDIT-FULL-P5-20261108.md). Do not rerun an old v2 execute command, stop v3 or claim production switch/rollback qualification.
+
+---
+
 # P5 Orcarouter vLLM 0.32.0 — current DGX MTP0 trial, QSA + LM-head v3
 
 ## AUTHORITATIVE CURRENT P5 OPERATIONAL STATE — 2026-11-08 ~23:30 KST

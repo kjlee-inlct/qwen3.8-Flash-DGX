@@ -1,3 +1,11 @@
+## 2026-11-09 latest P5–P8 incremental document/path audit
+
+**GitHub source snapshot at `5acf0b11f753615b6fba69c3d754b56d6289f325`:** recursive tree 524 entries, 482 blobs, `truncated=false`; 170 document-like files under the frozen extension/LICENSE selection. Historical enumerated 169 document paths and this audit file remain present; 2 added files since prior baseline are Python source/test (`scripts/manager/p6_p8_fakedgx.py` and `tests/test_p6_p8_fakedgx_cpu.py`), not additional documentation paths. This recheck establishes paths and selected links, not a deep content review of every document. The frozen 169-item inventory and all old approval/failure receipts are preserved below.
+
+**Superseding evidence (operator at 2026-11-09 00:55 KST):** Orcarouter v3 MTP0 text `PASS_LIVE_INFERENCE`, service `LIVE_P5_TRIAL_API_VERIFIED`, trial only. Host MemAvailable 30.18 GiB, swap used 1.31 GiB (Orcarouter cgroup 0), Docker 7.157 GiB vs cgroup current 25.54 GiB with inactive_file 18.38 GiB, PSI 0 and OOM 0 in idle measurement. Earlier 00:43 KST and P5 v2 records remain historical. P6 source Fake-DGX + P8 synthetic matrix (`21aa6c9`) and cgroup identity-safe delta (`5acf0b1`) have Push/PR CI SUCCESS; no new real DGX execution or P6/P8 release. [P5 technical](P5-ORCAROUTER-BF16PLE-VLLM032-ADOPTION-20261108.md) · [P8 acceptance](P8-FAULT-RECOVERY-FINAL-OPERATIONS-ACCEPTANCE-PLAN-20261107.md).
+
+---
+
 # Full GitHub document inventory and P5 state-consistency audit — 2026-11-08
 
 ## Incremental full-tree/document completeness recheck — 2026-11-08 P5 v3 live inference

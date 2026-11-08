@@ -1,3 +1,9 @@
+## 2026-11-09 P8 source/Fake-DGX readiness only — no live recovery or release
+
+At source commit `21aa6c9`, `scripts/manager/p6_p8_fakedgx.py` provides an *in-memory* two-direction Orcarouter↔27B model-switch state machine with synthetic target-start, target-API and source-restore failure cases. `./wizard.sh operations recovery-acceptance fault-matrix --fake-dgx --json` can exercise those 8 simulated cases. GitHub CPU/Fake-DGX CI passed; the fake adapter does **not** use the production switch executor, Docker, GPU, localhost API or actual Journal persistence. It is not evidence of working automatic rollback, real DGX fault injection, outage acceptance, or `production_released=true`. Actual P8-R1/R2/R3 and P8-A/B/C/D live acceptance remain held for separate operator approval and verified evidence. The P6 non-authorizing live preflight cannot approve a switch, even if its current Docker/API identity appears consistent. [P5 technical](P5-ORCAROUTER-BF16PLE-VLLM032-ADOPTION-20261108.md) · [Full audit](HANDOFF-DOCUMENT-AUDIT-FULL-P5-20261108.md).
+
+---
+
 ## 2026-11-08 — Actual P3 source-handoff evidence and P4-A-only capacity observation
 
 P3-E host assets actual read-only PASS within **metadata/index/shard presence** scope: pinned FP8-hybrid view, index 31,907,813 bytes/299,845 entries, 11 shards size sum 129,771,270,410 apparent bytes, template/meta hashes; never full cryptographic shard integrity or fresh reinstall. P3-F actual local 7-suite 168/168 CPU PASS with production gate off; 27B API current 8/8 PASS. This completes P3's **source/CPU handoff** prerequisites to P8, not P8 runtime signoff.
