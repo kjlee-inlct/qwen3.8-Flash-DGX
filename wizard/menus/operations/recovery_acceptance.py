@@ -22,4 +22,8 @@ SPEC = Stage(
 
 def run(argv, *, as_json=False, dry_run=False):
     """The common source-only adapter always denies execution."""
+    args = list(argv)
+    if args == ["fault-matrix", "--fake-dgx"]:
+        from scripts.manager.p6_p8_fakedgx import main
+        return main(["fault-matrix"] + (["--json"] if as_json else []))
     return run_stage(SPEC, argv, as_json=as_json, dry_run=dry_run)
