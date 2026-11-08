@@ -18,7 +18,7 @@
         "mtp2"
       ],
       "container_image_digest": null,
-      "source_adapter_state": "RECIPE_FIRST_EXISTING_IMAGE_UNVERIFIED",
+      "source_adapter_state": "SCOPED_UPSTREAM_QSA62318_IMAGE_CANDIDATE_UNQUALIFIED",
       "cuda_loader_verified": false,
       "tp1_offload_worker_verified": false,
       "mmap_gpu_verified": false,
@@ -28,8 +28,11 @@
       "rollback_verified": false,
       "autostart_released": false,
       "explicit_gpu_trial_requires_new_guarded_plan": true,
-      "runtime_strategy": "EXISTING_BLAZUX_IMAGE_NO_NEW_PATCH",
-      "cpu_image_abi_audit_required": true
+      "runtime_strategy": "RECIPE_PINNED_QSA62318_DERIVED_IMAGE_FROM_EXISTING_VLLM032",
+      "cpu_image_abi_audit_required": true,
+      "compatibility_adapter_id": "qwen4exp-qsa-62318-v032-v1",
+      "original_engine_image_patched": false,
+      "qsa_upstream_fix": "vllm-project/vllm#62318"
     }
   },
   "external_references": [

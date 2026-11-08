@@ -312,8 +312,14 @@ def _validate_bundle(parts: dict[str, dict[str, Any]], *, root: Path = ROOT) -> 
               and adapter.get("table_memory") == entry["placement"]["table_memory"]
               and adapter.get("mtp_profile_candidates") == ["mtp0", "mtp2"]
               and adapter.get("container_image_digest") is None
-              and adapter.get("source_adapter_state") == "RECIPE_FIRST_EXISTING_IMAGE_UNVERIFIED"
-              and adapter.get("runtime_strategy") == "EXISTING_BLAZUX_IMAGE_NO_NEW_PATCH"
+              and adapter.get("source_adapter_state") ==
+                  "SCOPED_UPSTREAM_QSA62318_IMAGE_CANDIDATE_UNQUALIFIED"
+              and adapter.get("runtime_strategy") ==
+                  "RECIPE_PINNED_QSA62318_DERIVED_IMAGE_FROM_EXISTING_VLLM032"
+              and adapter.get("compatibility_adapter_id") ==
+                  orca["compatibility_adapter"]["id"]
+              and adapter.get("original_engine_image_patched") is False
+              and adapter.get("qsa_upstream_fix") == "vllm-project/vllm#62318"
               and adapter.get("cpu_image_abi_audit_required") is True
               and all(adapter.get(name) is False for name in (
                   "cuda_loader_verified", "tp1_offload_worker_verified",
