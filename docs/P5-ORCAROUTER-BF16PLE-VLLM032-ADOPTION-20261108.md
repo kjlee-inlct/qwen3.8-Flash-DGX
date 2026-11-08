@@ -1,5 +1,7 @@
 ## 2026-11-09 current P5 v2 supersession — historical adapter now replaced by v3 runtime observation
 
+[Current P5 audit](HANDOFF-DOCUMENT-AUDIT-FULL-P5-20261108.md) · [Active P5 technical record](P5-ORCAROUTER-BF16PLE-VLLM032-ADOPTION-20261108.md)
+
 Historical `qwen4exp-qsa62318-lmhead-v032-v2` and its failed GPU trial remain unchanged below; the **latest actual operator DGX observation** is v3 adapter `qwen4exp-qsa62318-lmhead-v032-v3` with corrected `lm_head.weight_scale`, container `qwen38-orcarouter-qsa62318-lmhead-v3`, :8000 API `qwen3.8-flash-next-orca-uncensored-bf16`, `LIVE_P5_TRIAL_API_VERIFIED` and MTP0 text `PASS_LIVE_INFERENCE` (READY). Only `DEVELOPMENT_TRIAL`; do not promote canonical `qwen38-orcarouter` without a separately approved lifecycle.
 
 **2026-11-09 00:54–00:55 KST resource evidence (idle-only):** MemAvailable 30.18 GiB/121.63 GiB total, host swap 1.31 GiB, Orcarouter swap 0 GiB; Docker usage 7.157 GiB versus cgroup memory.current 25.54 GiB and peak 37.02 GiB, inactive_file 18.38 GiB, anon 4.58 GiB; memory PSI avg10 0, OOM/OOMKill 0, swap I/O, major fault and file-refault deltas 0; CPU busy ~0.18% over 45s, performance governor, CPU split 2808/3900 MHz, system ~34.7 C/GPU ~33 C. Inactive file cache largely accounts for memory reporting differences, NOT proof of PLE RSS/memory leak. P5 recipe remains OBSERVE_ONLY, startup gate disabled and BLOCKED_UNCALIBRATED expected. No arbitrary YSLAB 100 GiB, CPU governor, clock or hard memory limit.
