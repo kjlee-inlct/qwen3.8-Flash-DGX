@@ -216,6 +216,21 @@ class P5RecipeFirstCPU(unittest.TestCase):
             report = live.execute("b" * 64, "wrong")
         self.assertEqual(report["status"], "BLOCKED")
 
+    def test_malformed_recipe_launch_blocks_before_27b_stop(self):
+        with tempfile.TemporaryDirectory() as temp:
+            with patch.object(live, "STATE", Path(temp)), \
+                 patch.object(live, "_private_state", return_value=None), \
+                 patch.object(live, "_plan_data", return_value=mock_plan()), \
+                 patch.object(live, "_args",
+                              side_effect=ValueError("P5_RUNTIME_RECIPE_CHANGED")), \
+                 patch.object(live, "command",
+                              side_effect=AssertionError("never stop 27B on recipe failure")):
+                report = live.execute("b"*64, live.ACK)
+        self.assertEqual(report["status"], "BLOCKED")
+        self.assertFalse(report["source_stopped"])
+        self.assertFalse(report["executed"])
+        self.assertIn("P5_TRIAL_EXCEPTION:ValueError", report["issues"])
+
     def test_scoped_source_stopped_target_from_recipe_no_restore(self):
         calls = []
         def run(args, timeout=30):

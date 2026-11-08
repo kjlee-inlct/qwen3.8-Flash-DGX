@@ -409,6 +409,9 @@ def execute(approval: str | None, ack: str | None, *,
             if plan["status"] != "READY_TO_APPROVE" or approval != plan["plan_id"]:
                 report["issues"] = ["PLAN_CHANGED_OR_EXPIRED", *plan["issues"]]
                 return report
+            # Render and validate the exact recipe-derived launch argv BEFORE
+            # stopping 27B: a broken recipe must not cause avoidable downtime.
+            launch_argv = _args(plan["details"]["runtime_image_id"])
             report["source"] = plan["details"]["source"]
             report["target_image_id"] = plan["details"]["runtime_image_id"]
             # Existing 27B remains as a stopped container and exact image.
@@ -444,7 +447,7 @@ def execute(approval: str | None, ack: str | None, *,
                 report["status"] = "FAIL_NO_ROLLBACK"
                 report["issues"] = ["OTHER_GPU_CONTAINER_APPEARED"]
                 return report
-            proc = command(_args(plan["details"]["candidate_image_id"]), timeout=120)
+            proc = command(launch_argv, timeout=120)
             if proc.returncode:
                 report["status"] = "FAIL_NO_ROLLBACK"
                 report["issues"] = ["ORCAROUTER_DOCKER_RUN_FAILED"]
