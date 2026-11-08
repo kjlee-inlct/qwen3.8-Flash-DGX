@@ -2,6 +2,14 @@
 
 **2026-11-08 current superseding instructions.** Earlier sections of `docs/P5-ORCAROUTER-MTP0-DGX-LIVE-NO-RESTORE-RUNBOOK-20261108.md` that refer to the QSA-only adapter/container are historical. Use **this** runbook for the next P5 experiment; never reuse an old plan ID.
 
+## Actual DGX preflight observation — 2026-11-08
+
+**Operator measurement on source HEAD `596a6839`:** manifest PASS; pinned quant metadata PASS; LM-head **not ignored**, matches **`group_0`**, weight **F8_E4M3 [248320,2560]** in shard 17/17, scale **BF16 [248320,1]** in shard 16/17. These are verified **metadata only**; runtime weight registration and GPU readiness remain false/unverified. Simple `ignore`/target-missing hypotheses do not explain this checkpoint.
+
+**Blocking local result:** `cpu_tests.count=117`, `exit_code=1`, `status=BLOCKED`, preflight issue `P5_PREFLIGHT_CPU_TESTS_FAILED`. The old preflight did not expose failing IDs; exact cause is not known from the provided JSON. Never call those 117 locally executed tests PASS. GitHub CI on the previous HEAD did pass the CPU tests separately.
+
+**New safe diagnostic:** the one-shot JSON now provides `cpu_tests.failing_test_ids`, `cpu_tests.reported_failure_counts`, and `cpu_tests.exception_types` on CPU failure, never raw unbounded stderr. After fast-forward, re-run the **same read-only preflight** below, inspect those fields and fix the identified test before image preparation. This does **not** authorize GPU execution or turn v2 adapter into a qualified loader.
+
 ## New read-only checkpoint gate — 2026-11-08
 
 **Run this before `p5 trial prepare`.** The checkpoint was not independently readable from this GitHub session (gated HF source); the latest GPU failure must not be promoted to PASS based on external model cards.
