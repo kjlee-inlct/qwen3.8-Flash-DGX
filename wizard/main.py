@@ -15,6 +15,14 @@ USAGE = """Blazux Wizard (vLLM 0.32 only)
   ./wizard.sh model flash-next status --json
   ./wizard.sh model 27b recipe-diff --json  normalized desired/observed read-only diff\n  ./wizard.sh model 27b recipe-diff --cache-source /host/hf-cache --json  compare observed bind path\n  ./wizard.sh model 27b lifecycle restart --plan --json  read-only recreate decision\n  ./wizard.sh model 27b lifecycle remove --plan --json  scoped removal preview (no execute)\n  ./wizard.sh model 27b plan --for-action prepare --json
   ./wizard.sh model orcarouter-flash-next status --json
+  ./wizard.sh model orcarouter-flash-next doctor --json
+  ./wizard.sh model orcarouter-flash-next recipe --profile mtp0 --json
+  ./wizard.sh p5 doctor --read-only --json  source/PLE/donor and live 27B audit
+  bash scripts/temporary/p5-one-shot-acceptance.sh --plan --json
+  bash scripts/temporary/p5-one-shot-acceptance.sh --cpu-only --json
+  bash scripts/temporary/p5-one-shot-acceptance.sh --read-only --json
+  bash scripts/temporary/p5-one-shot-acceptance.sh --gpu-trial --json  BLOCKED, separate approval
+
   ./wizard.sh switch flash-next-27b plan --for-action switch \
     --from-model flash-next --to-model 27b --json
   ./wizard.sh operations recovery-acceptance status --json  P8 fault/recovery/final signoff (source-only)\n  ./wizard.sh storage flash-next status --json
@@ -59,6 +67,7 @@ def catalog() -> dict:
                     "SOURCE_DOWNLOAD_GUARDED_RUNTIME_BLOCKED" if stage_id == "p2"
                     else "LIVE_READ_ONLY_GUARDED_MUTATIONS" if stage_id == "svc"
                     else "P4_A_READ_ONLY_INVENTORY_ONLY" if stage_id == "p4"
+                    else "P5_SOURCE_ADAPTER_GPU_RELEASE_GATED" if stage_id == "p5"
                     else "INTERFACE_ONLY"
                 ),
                 "runtime": "NOT_RUN", "interface": "status/plan",

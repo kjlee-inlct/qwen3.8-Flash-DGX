@@ -49,6 +49,8 @@ on:
       - 'tests/test_flash_host_assets_cpu.py'
       - 'tests/test_p4_a_inventory_cpu.py'
       - 'tests/test_p4_bc_dry_run_cpu.py'
+      - 'tests/test_p5_*_cpu.py'
+      - 'scripts/p5_vendor/**'
       - 'tests/test_p2_27b_benchmark_cpu.py'
       - 'tests/test_p3_roundtrip_cpu.py'
       - 'tests/test_p3_persistent_cpu.py'
@@ -125,6 +127,8 @@ jobs:
           python -m unittest discover -s tests -p 'test_flash_host_assets_cpu.py' -v
           python -m unittest discover -s tests -p 'test_p4_a_inventory_cpu.py' -v
           bash scripts/temporary/p4-bc-dry-run.sh --fixture-only
+          bash scripts/temporary/p5-one-shot-acceptance.sh --cpu-only --json
+          python -m unittest discover -s tests -p 'test_p5_*_cpu.py' -v
           python -m scripts.manager.p3_dg_acceptance --plan
           python -m scripts.manager.p3_dg_acceptance --cpu-only
           python -m unittest discover -s tests -p 'test_installed_models_cpu.py' -v
@@ -152,7 +156,7 @@ jobs:
           python -m wizard p2 status --json
           python -m wizard model 27b status --inspect-cache --json
           python -m unittest discover -s tests -p 'test_serve_split_cpu.py' -v
-          bash -n scripts/temporary/operational-switch-acceptance.sh scripts/temporary/operational-27b-curl-smoke.sh scripts/temporary/p3-d-g-acceptance.sh scripts/temporary/p4-bc-dry-run.sh
+          bash -n scripts/temporary/operational-switch-acceptance.sh scripts/temporary/operational-27b-curl-smoke.sh scripts/temporary/p3-d-g-acceptance.sh scripts/temporary/p4-bc-dry-run.sh scripts/temporary/p5-one-shot-acceptance.sh
           bash -n scripts/temporary/p1-post-b-audit.sh flash scripts/serve.sh scripts/serve_flash-next.sh scripts/serve_27b.sh wizard/00-doctor.sh wizard/10-plan.sh wizard/p1.sh wizard.sh scripts/temporary/p1-post-download.sh scripts/temporary/p1-pre-a-readiness.sh scripts/temporary/p3-stage-a-operator.sh scripts/temporary/p3-stage-b-inspect.sh scripts/temporary/p3-stage-b-operator.sh scripts/temporary/p3-stage-c-operator.sh scripts/temporary/verify-published-benchmarks.sh
       - name: Confirm 27B candidate is not launchable
         run: |

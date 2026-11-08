@@ -39,11 +39,18 @@
       }
     },
     "orcarouter": {
-      "checkpoint": null,
+      "checkpoint": "orcarouter/Qwen3.8-Flash-Next-Uncensored-NVFP4",
       "served_id": null,
       "container_name": "qwen38-orcarouter",
       "qualification": "NOT_VERIFIED",
-      "comment": "Desired registry placeholder only; no Orcarouter service start is authorized."
+      "comment": "P5 source recipe/ABI audits are opt-in and non-executable; no managed Orcarouter service start or live identity verification is released.",
+      "pinned_revision": "3a3b63161c0745390e5270179af42e46efc70799",
+      "source_recipe": "recipes/qwen38-orcarouter.runtime.json",
+      "reference_implementation": "YSLAB-ai/Qwen3.8-Flash-Next-NVFP4-BF16PLE-DGX-Spark@9492b78c6bc04638587b42f2ffeb0680b0fcb3ef",
+      "proposed_served_ids": {
+        "mtp0": "qwen3.8-flash-next-orca-uncensored-bf16",
+        "mtp2": "qwen3.8-flash-next-orca-uncensored-bf16-mtp"
+      }
     }
   },
   "transitions": {
