@@ -15,6 +15,46 @@ import sys
 from scripts.manager import manifest_registry
 from scripts.manager.p5_lm_head_checkpoint_audit import inspect
 
+ROOT = Path(__file__).resolve().parents[2]
+
+
+def _cpu_failure_diagnostics(stderr: str) -> dict:
+    """Extract bounded unittest identifiers, never raw logs/paths/prompts."""
+    failing = []
+    seen = set()
+    # unittest emits FAIL/ERROR sections even when progress output is noisy.
+    for line in stderr.splitlines():
+        match = re.match(
+            r"^(?:FAIL|ERROR): (test_[A-Za-z0-9_]+) "
+            r"\(([A-Za-z0-9_.]+)\)", line
+        )
+        if match:
+            test_id = f"{match.group(2)}.{match.group(1)}"
+            if test_id not in seen:
+                seen.add(test_id)
+                failing.append(test_id)
+    failure_summary = re.search(
+        r"(?m)^FAILED \(([^\r\n]{0,150})\)\s*$", stderr
+    )
+    counts = {}
+    if failure_summary:
+        for field, count in re.findall(
+            r"(failures|errors|skipped|expected failures|unexpected successes)=(\d+)",
+            failure_summary.group(1)
+        ):
+            counts[field.replace(" ", "_")] = int(count)
+    exception_types = sorted(set(re.findall(
+        r"(?m)^([A-Za-z_][A-Za-z_0-9]{0,80}(?:Error|Exception)):",
+        stderr
+    )))
+    return {
+        "failing_test_ids": failing[:20],
+        "reported_failure_counts": counts,
+        "exception_types": exception_types[:12],
+        "diagnostics_truncated": len(failing) > 20 or len(exception_types) > 12,
+        "raw_test_log_included": False,
+    }
+
 
 def evaluate(snapshot: Path, cache: Path, *, with_tests: bool = True) -> dict:
     issues = []
@@ -36,7 +76,7 @@ def evaluate(snapshot: Path, cache: Path, *, with_tests: bool = True) -> dict:
                    "tests", "-p", "test_p5_*_cpu.py", "-v"]
             result = subprocess.run(cmd, stdout=subprocess.PIPE,
                                     stderr=subprocess.PIPE, text=True,
-                                    check=False, timeout=900)
+                                    check=False, timeout=900, cwd=ROOT)
             summary = re.findall(r"Ran (\d+) tests?", result.stderr[-5000:])
             cpu = {
                 "status": "PASS" if result.returncode == 0 and summary else "BLOCKED",
@@ -45,6 +85,7 @@ def evaluate(snapshot: Path, cache: Path, *, with_tests: bool = True) -> dict:
                 "executed_on_dgx_gpu": False,
             }
             if cpu["status"] != "PASS":
+                cpu.update(_cpu_failure_diagnostics(result.stderr))
                 issues.append("P5_PREFLIGHT_CPU_TESTS_FAILED")
         except (OSError, ValueError, subprocess.TimeoutExpired):
             issues.append("P5_PREFLIGHT_CPU_TESTS_EXECUTION_FAILED")
