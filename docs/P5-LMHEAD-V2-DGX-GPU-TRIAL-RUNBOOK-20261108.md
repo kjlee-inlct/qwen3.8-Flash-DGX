@@ -1,5 +1,38 @@
 # P5 Orcarouter vLLM 0.32.0 — current DGX MTP0 trial, QSA + LM-head v3
 
+## AUTHORITATIVE CURRENT P5 OPERATIONAL STATE — 2026-11-08 ~23:30 KST
+
+This section supersedes the previous *v2 failure/v3 planned run* instructions further below. Its filename remains historical; follow the latest facts, not a prior failed plan.
+
+**Actual operator DGX evidence:** `./wizard.sh service manager status --json` returned **`LIVE_P5_TRIAL_API_VERIFIED`**, `issues=[]`, `runtime_role=DEVELOPMENT_TRIAL`, `production_released=false`. Current v3 container `qwen38-orcarouter-qsa62318-lmhead-v3` is running and owns port 8000, image `sha256:088d8b7171d2fb1a54120727334c445991096e5ee4e684c5598d672d872d79d4`, container ID `9c49950015a845357e90fabe74946565d41069362c083fe7982f54caa2b3beac`; API ID `qwen3.8-flash-next-orca-uncensored-bf16`. **`./wizard.sh p5 trial verify --json` returned `PASS_LIVE_INFERENCE`**, chat content `READY`, no service mutation. **`p5 trial cleanup-execute` returned `PASS`**, removed exactly old exited(1) test containers `qwen38-orcarouter`, `qwen38-orcarouter-qsa62318`, `qwen38-orcarouter-qsa62318-lmhead`, with private archived Docker logs under `~/.local/state/blazux-wizard/p5-live-trial/cleanup/`. **Do not re-run cleanup.** Keep running v3 intact. No canonical production promotion or MTP2/tools/vision/benchmark qualification has occurred.
+
+**NEW P5 PRIORITY: resource measurement and protection.** The 95.37 GiB BF16 PLE is file-backed via mmap; that mapping size is **not equivalent** to current resident RAM usage. Operator has **not** supplied a detailed RAM/Swap/PSI/CPU/GPU measurement of active v3. YSLAB pinned public reference `YSLAB-ai/Qwen3.8-Flash-Next-NVFP4-BF16PLE-DGX-Spark@9492b78c6bc04638587b42f2ffeb0680b0fcb3ef` `src/recipe/runtime.py` implements a prelaunch `MemAvailable` gate of 100 GiB, runtime GPU memory utilization 0.80, 32 PLE mmap workers, no PLE prewarm. Its `benchmarks/stability.py` records `MemAvailable` and swap used. No automatic CPU frequency cap, cgroup hard-limit or PSI safety controller identified in inspected source. Current Blazux 0.32 MTP0 uses 0.70 GPU utilization, 16 workers, 8192 context, one max sequence; YSLAB figures/benchmarks are external **not Blazux measurements**.
+
+**First next-session operator task: non-mutating DGX capacity snapshot, then recipe-owned protection proposal.** Suggested command (safe for active service; no sudo or Docker mutation):
+
+```bash
+cd ~/Workspace/llm/blazux-orcarouter
+git status --short
+git pull --ff-only origin feature/recipe-wizard-handoff
+./wizard.sh service manager status --json
+./wizard.sh p5 trial status --json
+free -h
+cat /proc/pressure/memory
+cat /proc/pressure/cpu
+awk '/^(MemTotal|MemAvailable|MemFree|Cached|SReclaimable|SwapTotal|SwapFree|Dirty|Writeback):/ { print }' /proc/meminfo
+docker stats --no-stream qwen38-orcarouter-qsa62318-lmhead-v3
+docker inspect qwen38-orcarouter-qsa62318-lmhead-v3 --format '{{json .HostConfig}}'
+nvidia-smi
+for f in /sys/devices/system/cpu/cpu*/cpufreq/scaling_cur_freq; do
+  test -r "$f" && printf '%s %s\n' "$f" "$(cat "$f")"
+done
+```
+
+No `docker stop`, `docker rm`, `kill docker-proxy`, `cpupower frequency-set`, cgroup hard memory limit, kernel sysctl or system CPU governor changes on the running v3 without a *separate explicit operator plan/approval*. Design warning thresholds vs soft startup gate vs explicit resource caps separately; measure pressure first, preserve :8000 uptime and ONE_ACTIVE_MODEL_ONLY, vLLM 0.32.0, no SGLang. Stable later canonical service name is `qwen38-orcarouter` (Orcarouter Flash-Next); version suffixes remain disposable trial candidates. P8 final fault/recovery work remains deferred; PR #1 draft, no merge.
+
+---
+
+
 ## LIVE OBSERVATION: v3 running on :8000; temporary name and cleanup workflow
 
 **Operator DGX observation (2026-11-08 ~23:08 KST):** Docker
