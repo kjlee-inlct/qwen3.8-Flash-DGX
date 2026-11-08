@@ -167,20 +167,21 @@ def _validate_bundle(parts: dict[str, dict[str, Any]], *, root: Path = ROOT) -> 
             "VLLM_PLE_MMAP": "1", "VLLM_PLE_MMAP_WORKERS": "16",
             "VLLM_PLE_MMAP_PREWARM": "0",
         },
-        "container_name": "qwen38-orcarouter-qsa62318",
-        "adapter": "qwen4exp-qsa-62318-v032-v1",
-        "image_tag": "blazux-p5-orcarouter:qsa62318-v032",
+        "container_name": "qwen38-orcarouter-qsa62318-lmhead",
+        "adapter": "qwen4exp-qsa62318-lmhead-v032-v2",
+        "image_tag": "blazux-p5-orcarouter:qsa62318-lmhead-v032",
         "allow_isolated_derived_image_source_backport": True,
         "preserve_previous_failed_trial_container": True,
         "allow_idle_source_after_failed_p5": True,
     } and orca.get("compatibility_adapter") == {
-        "id": "qwen4exp-qsa-62318-v032-v1",
+        "id": "qwen4exp-qsa62318-lmhead-v032-v2",
         "scope": "P5_ORCAROUTER_MTP0_ONLY",
         "upstream_issue": "https://github.com/vllm-project/vllm/issues/62308",
         "upstream_pr": "https://github.com/vllm-project/vllm/pull/62318",
         "upstream_commit": "fe833b1",
-        "dockerfile": "Dockerfile.p5.qsa62318",
+        "dockerfile": "Dockerfile.p5.qsa62318-lmhead",
         "patch_script": "src/p5_qsa_quant_backport_v032.py",
+        "lm_head_patch_script": "src/p5_lm_head_quant_backport_v032.py",
         "allowed_vllm_version": "0.32.0",
         "apply_only_in_derived_image": True,
         "preserve_original_27b_image": True,
@@ -188,7 +189,7 @@ def _validate_bundle(parts: dict[str, dict[str, Any]], *, root: Path = ROOT) -> 
         "gpu_qualified": False,
         "adapter_qualified": False,
     } and orca.get("runtime", {}).get("source_patch_required") ==
-          "SCOPED_UPSTREAM_62318_QSA_BACKPORT_ONLY_ISOLATED_IMAGE"
+          "SCOPED_QSA62318_AND_LM_HEAD_QUANT_BACKPORT_ISOLATED_IMAGE"
       and orca["runtime"].get("dtype") == "bfloat16"
       and orca["runtime"].get("load_format") == "safetensors"
       and orca.get("profiles", {}).get("mtp0", {}).get("num_speculative_tokens") == 0
