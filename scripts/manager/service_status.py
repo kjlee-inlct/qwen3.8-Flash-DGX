@@ -34,8 +34,11 @@ def inspect_live_status(
     active = selected[0] if len(selected) == 1 else None
     policies = policy()
     model_info = policies.get("models", {}).get(observed or "", {})
-    expected_id = model_info.get("served_id")
-    expected_container = model_info.get("container_name")
+    is_p5_trial = active is not None and active.get("p5_development_trial") is True
+    expected_id = (active.get("served_id") if is_p5_trial
+                   else model_info.get("served_id"))
+    expected_container = (manifest.get("p5_trial_candidate_name") if is_p5_trial
+                          else model_info.get("container_name"))
 
     checks = {
         "manifest_live_observation_valid": manifest.get("status") == "OBSERVED_UNQUALIFIED",
@@ -86,7 +89,11 @@ def inspect_live_status(
     return {
         "schema_version": 1, "stage": "svc", "action": "status",
         "scope": "DGX_READ_ONLY_MANIFEST_AND_API",
-        "status": "LIVE_SERVICE_VERIFIED" if ok else "BLOCKED",
+        "status": ("LIVE_P5_TRIAL_API_VERIFIED" if is_p5_trial
+                   else "LIVE_SERVICE_VERIFIED") if ok else "BLOCKED",
+        "p5_development_trial": is_p5_trial,
+        "production_released": False if is_p5_trial else None,
+        "runtime_role": "DEVELOPMENT_TRIAL" if is_p5_trial else "CANONICAL",
         "observed_model": observed, "expected_served_id": expected_id,
         "active_container": (
             {"name": active.get("container_name"),
@@ -104,7 +111,8 @@ def inspect_live_status(
         "port_process_ownership_verified": False,
         "previous_trial_provenance_verified": False,
         "notice": (
-            "Fresh manifest-led Docker and API identity check; not GPU process "
+            "Fresh manifest-led Docker and API identity check; P5 trials are " 
+            "never automatically promoted or production-qualified; not GPU process "
             "exclusivity, performance qualification, or proof of a past trial's "
             "rollback history. No Docker or API mutation.")
     }
