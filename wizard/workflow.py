@@ -24,7 +24,7 @@ MODEL_ACTIONS: dict[str, tuple[str, ...]] = {
 REQUIRES_SEPARATE_APPROVAL = frozenset((
     "download", "prepare", "start", "switch", "rollback",
 ))
-STAGES = ("P1", "P2", "P3", "P4", "P5", "P6", "P7")
+STAGES = ("P1", "P2", "P3", "P4", "P5", "P6", "P7", "P8")
 
 
 def action_capability(model: str, action: str, selected: dict) -> dict[str, Any]:
@@ -103,9 +103,10 @@ def model_workflow(model: str, *, selection: dict | None = None) -> dict[str, An
         "P2": "DOWNLOAD_IMPLEMENTED_RUNTIME_BLOCKED" if selected_model == "27b" else "NOT_APPLICABLE",
         "P3": "SOURCE_PREVIEW_ONLY",
         "P4": "SOURCE_PLAN_ONLY",
-        "P5": "SOURCE_ADAPTER_UNQUALIFIED" if selected_model == "orcarouter" else "NOT_APPLICABLE",
-        "P6": "SOURCE_PREVIEW_ONLY",
-        "P7": "SOURCE_PLAN_ONLY",
+        "P5": "MODEL_AGNOSTIC_RESOURCE_SOURCE_READY_RUNTIME_BENCHMARK_NOT_ACCEPTED",
+        "P6": "MODEL_AGNOSTIC_PREFLIGHT_FAKE_DGX_ONLY",
+        "P7": "MODEL_AGNOSTIC_UX_AND_EVIDENCE_CONTRACT_ONLY",
+        "P8": "MODEL_AGNOSTIC_FAKE_DGX_ONLY_REAL_RECOVERY_NOT_RUN",
     }
     return {
         "schema_version": 1, "interface": "UNIFIED_MODEL_WORKFLOW",

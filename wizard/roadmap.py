@@ -109,10 +109,10 @@ def readiness_report(*, service: dict[str, Any] | None = None,
         "P3": ("ONE_OFF_A_B_C_RECEIPTS_PRESENT_G_LIVE_RECEIPTS_NOT_AUDITED_HERE"
                if p3_pass else "LOCAL_P3_RECEIPTS_UNAVAILABLE_G_LIVE_NOT_AUDITED_HERE"),
         "P4": "P4_A_REAL_DGX_PASS_P4_BC_DRY_RUN_SOURCE_ONLY_P5_P8_DELETE_GATED",
-        "P5": "ORCAROUTER_ADAPTER_UNQUALIFIED",
-        "P6": "SWITCH_EXECUTOR_NOT_QUALIFIED",
-        "P7": "SERVICE_PROXY_GATEWAY_INTEGRATION_NOT_QUALIFIED",
-        "P8": "FAULT_RECOVERY_AND_FINAL_OPERATIONS_NOT_RUN",
+        "P5": "GENERIC_RESOURCES_SOURCE_READY_LOADED_BENCHMARK_NOT_ACCEPTED",
+        "P6": "GENERIC_SWITCH_PREFLIGHT_FAKE_DGX_READY_REAL_EXECUTOR_NOT_QUALIFIED",
+        "P7": "GENERIC_UX_EVIDENCE_SOURCE_READY_PROXY_GATEWAY_NOT_QUALIFIED",
+        "P8": "GENERIC_FAKE_DGX_READY_REAL_FAULT_RECOVERY_AND_FINAL_OPERATIONS_NOT_RUN",
     }
     evidence = {
         "P1": {"verify": model_history.get("flash_verify", {"status": "UNAVAILABLE"}),
@@ -130,7 +130,7 @@ def readiness_report(*, service: dict[str, Any] | None = None,
     }
     milestones = [
         {"stage": stage, "title": title, "state": scopes[stage],
-         "source_implemented": stage in ("P1", "P2", "P3", "P4"),
+         "source_implemented": stage in ("P1", "P2", "P3", "P4", "P5", "P6", "P7", "P8"),
          "source_interface_present": True,
          "cpu_ci": "CHECK_GITHUB_ACTIONS_SEPARATELY",
          "historical_backend_evidence": evidence.get(stage, {"status": "UNVERIFIED"}),

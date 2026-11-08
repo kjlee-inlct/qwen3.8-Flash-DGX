@@ -48,9 +48,9 @@ class RoadmapCPU(unittest.TestCase):
         self.assertFalse(report["release_ready"])
         self.assertEqual(report["milestones"][7]["stage"], "P8")
         self.assertEqual(report["milestones"][7]["state"],
-                         "FAULT_RECOVERY_AND_FINAL_OPERATIONS_NOT_RUN")
+                         "GENERIC_FAKE_DGX_READY_REAL_FAULT_RECOVERY_AND_FINAL_OPERATIONS_NOT_RUN")
         self.assertFalse(report["milestones"][7]["runtime_pass_claimed"])
-        self.assertFalse(report["milestones"][7]["source_implemented"])
+        self.assertTrue(report["milestones"][7]["source_implemented"])
         self.assertFalse(report["milestones"][7]["interactive_wizard_ux_acceptance"]
                          == "PASS")
         self.assertFalse(report["ordinary_switch_production_released"])

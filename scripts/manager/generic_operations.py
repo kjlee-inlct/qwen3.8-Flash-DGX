@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 from pathlib import Path
 import re
 from typing import Any
@@ -32,6 +33,7 @@ def model_catalog(config: dict | None = None) -> dict:
         raise ValueError("EMPTY_OR_INVALID_MODEL_REGISTRY")
     models = {}
     containers = set()
+    served_ids = set()
     for name, entry in sorted(entries.items()):
         if not isinstance(name, str) or not _NAME.fullmatch(name):
             raise ValueError("INVALID_MODEL_KEY")
@@ -54,7 +56,10 @@ def model_catalog(config: dict | None = None) -> dict:
             raise ValueError("INCOMPLETE_MODEL_IDENTITY:" + name)
         if container in containers:
             raise ValueError("DUPLICATE_CANONICAL_CONTAINER")
+        if served in served_ids:
+            raise ValueError("DUPLICATE_API_SERVED_ID")
         containers.add(container)
+        served_ids.add(served)
         models[name] = {
             "checkpoint": checkpoint, "container": container,
             "served_id": served, "served_id_provisional": provisional,
@@ -220,7 +225,12 @@ def fault_matrix(*, config: dict | None = None) -> dict:
 
 def resource_review(model: str, telemetry: dict | None, benchmark: dict | None,
                     *, config: dict | None = None) -> dict:
-    """P5 generic correlation: report missing evidence, not guessed limits."""
+    """P5 source-level observation/benchmark correlation, no performance PASS.
+
+    Recompute interval counters from actual sample data instead of accepting
+    untrusted summary flags. This catches changed container identity, unknown
+    model provenance, stale or forged rate numbers and invalid float metrics.
+    """
     cat = model_catalog(config)
     if model not in cat["models"]:
         raise ValueError("UNREGISTERED_MODEL")
@@ -229,13 +239,27 @@ def resource_review(model: str, telemetry: dict | None, benchmark: dict | None,
     issues = []
     if doc.get("model") != model:
         issues.append("RESOURCE_MODEL_IDENTITY_NOT_BOUND")
-    interval = doc.get("interval_summary") or {}
-    if interval.get("status") != "OBSERVED_INTERVAL":
+    raw_samples = doc.get("snapshots")
+    from scripts.manager.resource_diagnostics import observation_summary
+    if not isinstance(raw_samples, list) or len(raw_samples) < 2:
+        computed = {"status": "NOT_OBSERVED"}
+        issues.append("RESOURCE_SAMPLES_MISSING")
+    elif not all(isinstance(row, dict) for row in raw_samples):
+        computed = {"status": "UNSUPPORTED"}
+        issues.append("RESOURCE_SAMPLES_INVALID")
+    else:
+        computed = observation_summary(raw_samples)
+        if any(row.get("model") != model for row in raw_samples):
+            issues.append("RESOURCE_SAMPLE_MODEL_IDENTITY_MISMATCH")
+    supplied = doc.get("interval_summary") or {}
+    if computed.get("status") != "OBSERVED_INTERVAL":
         issues.append("RESOURCE_INTERVAL_MISSING")
-    if interval.get("cgroup_container_identity_continuous") is not True:
+    elif supplied != computed:
+        issues.append("RESOURCE_INTERVAL_SUMMARY_NOT_REPRODUCIBLE")
+    if computed.get("cgroup_container_identity_continuous") is not True:
         issues.append("RESOURCE_CONTAINER_IDENTITY_NOT_CONTINUOUS")
-    events = interval.get("cgroup_memory_event_deltas") or {}
-    if any(events.get(k) is None for k in ("oom_delta", "oom_kill_delta")):
+    events = computed.get("cgroup_memory_event_deltas") or {}
+    if any(not isinstance(events.get(k), int) for k in ("oom_delta", "oom_kill_delta")):
         issues.append("OOM_DELTAS_UNOBSERVED")
     elif events["oom_delta"] or events["oom_kill_delta"]:
         issues.append("OOM_EVENTS_OBSERVED")
@@ -243,21 +267,21 @@ def resource_review(model: str, telemetry: dict | None, benchmark: dict | None,
         issues.append("BENCHMARK_MODEL_IDENTITY_NOT_BOUND")
     ttft = bench.get("ttft_seconds")
     tps = bench.get("tokens_per_second")
-    if not isinstance(ttft, (float, int)) or isinstance(ttft, bool) or ttft < 0:
+    if (not isinstance(ttft, (int, float)) or isinstance(ttft, bool)
+            or not math.isfinite(ttft) or ttft < 0):
         issues.append("BENCHMARK_TTFT_NOT_OBSERVED")
-    if not isinstance(tps, (float, int)) or isinstance(tps, bool) or tps <= 0:
+    if (not isinstance(tps, (int, float)) or isinstance(tps, bool)
+            or not math.isfinite(tps) or tps <= 0):
         issues.append("BENCHMARK_THROUGHPUT_NOT_OBSERVED")
-    if not isinstance(doc.get("snapshots"), list) or len(doc["snapshots"]) < 2:
-        issues.append("RESOURCE_SAMPLES_MISSING")
     return {
         "schema_version": 1, "stage": "p5",
         "status": "SOURCE_METRICS_PRESENT_NOT_LIVE_ACCEPTANCE" if not issues else "INCOMPLETE_EVIDENCE",
         "scope": "MODEL_AGNOSTIC_OBSERVATION_CORRELATION",
-        "model": model, "interval_summary": interval,
+        "model": model, "interval_summary": computed,
         "benchmark_metrics": {"ttft_seconds": ttft, "tokens_per_second": tps},
         "issues": sorted(set(issues)), "executed": False,
         "production_released": False, "limits_changed": False,
-        "note": "Untrusted numbers alone do not authenticate a live benchmark or calibrate resource thresholds.",
+        "note": "Metrics have no authentication or live workload acceptance. Thresholds require calibration.",
     }
 
 

@@ -68,6 +68,8 @@ def catalog() -> dict:
                     else "LIVE_READ_ONLY_GUARDED_MUTATIONS" if stage_id == "svc"
                     else "P4_A_READ_ONLY_INVENTORY_ONLY" if stage_id == "p4"
                     else "P5_SOURCE_ADAPTER_GPU_RELEASE_GATED" if stage_id == "p5"
+                    else "GENERIC_COMMON_SOURCE_ONLY_NO_LIVE_EXECUTOR"
+                         if stage_id in ("p6", "p7", "p8")
                     else "INTERFACE_ONLY"
                 ),
                 "runtime": "NOT_RUN", "interface": "status/plan",

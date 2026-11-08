@@ -82,22 +82,36 @@ class GenericOperationsCPU(unittest.TestCase):
         base = g.resource_review("27b", {}, {})
         self.assertIn("RESOURCE_MODEL_IDENTITY_NOT_BOUND", base["issues"])
         self.assertEqual(base["status"], "INCOMPLETE_EVIDENCE")
+        first = {
+            "model": "27b", "timestamp_utc": "2026-11-09T00:00:00+00:00",
+            "docker": {"container": {"id": "a" * 64},
+                       "cgroup_v2": {"metrics": {
+                           "memory.events": {"oom": 0, "oom_kill": 0}}}}}
+        last = {
+            "model": "27b", "timestamp_utc": "2026-11-09T00:00:10+00:00",
+            "docker": {"container": {"id": "a" * 64},
+                       "cgroup_v2": {"metrics": {
+                           "memory.events": {"oom": 0, "oom_kill": 0}}}}}
+        from scripts.manager.resource_diagnostics import observation_summary
         telemetry = {
-            "model": "27b",
-            "snapshots": [{}, {}],
-            "interval_summary": {
-                "status": "OBSERVED_INTERVAL",
-                "cgroup_container_identity_continuous": True,
-                "cgroup_memory_event_deltas": {"oom_delta": 0, "oom_kill_delta": 0},
-            }}
-        result = g.resource_review(
-            "27b", telemetry,
-            {"model": "27b", "ttft_seconds": 0.25, "tokens_per_second": 11.2})
+            "model": "27b", "snapshots": [first, last],
+            "interval_summary": observation_summary([first, last])}
+        benchmark = {"model": "27b", "ttft_seconds": 0.25,
+                     "tokens_per_second": 11.2}
+        result = g.resource_review("27b", telemetry, benchmark)
         self.assertEqual(result["status"], "SOURCE_METRICS_PRESENT_NOT_LIVE_ACCEPTANCE")
         self.assertFalse(result["production_released"])
-        telemetry["interval_summary"]["cgroup_memory_event_deltas"]["oom_delta"] = 1
+        last["docker"]["container"]["id"] = "b" * 64
+        self.assertIn("RESOURCE_CONTAINER_IDENTITY_NOT_CONTINUOUS",
+                      g.resource_review("27b", telemetry, benchmark)["issues"])
+        last["docker"]["container"]["id"] = "a" * 64
+        last["docker"]["cgroup_v2"]["metrics"]["memory.events"]["oom"] = 1
         self.assertIn("OOM_EVENTS_OBSERVED",
-                      g.resource_review("27b", telemetry, {}).get("issues"))
+                      g.resource_review("27b", telemetry, benchmark)["issues"])
+        last["docker"]["cgroup_v2"]["metrics"]["memory.events"]["oom"] = 0
+        benchmark["tokens_per_second"] = float("nan")
+        self.assertIn("BENCHMARK_THROUGHPUT_NOT_OBSERVED",
+                      g.resource_review("27b", telemetry, benchmark)["issues"])
 
     def test_integration_requires_four_model_bound_components(self):
         doc = g.integration_review("flash-next", {})
