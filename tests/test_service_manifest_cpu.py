@@ -111,5 +111,35 @@ class ServiceManifestCPU(unittest.TestCase):
         self.assertEqual(doc["observed_model"], "flash-next")
 
 
+    def test_active_p5_trial_is_observed_but_not_promoted(self):
+        original = dict(self.inv["containers"][0])
+        original["name"] = "qwen38-orcarouter"
+        original["status"] = "Exited (1)"
+        original["ports"] = ""
+        active = {**original,
+            "name": "qwen38-orcarouter-qsa62318-lmhead-v3",
+            "status": "Up 24 minutes",
+            "ports": "0.0.0.0:8000->8000/tcp, [::]:8000->8000/tcp",
+        }
+        doc = manifest_from_observation({**self.inv, "containers": [original, active]})
+        self.assertEqual(doc["status"], "OBSERVED_UNQUALIFIED")
+        self.assertEqual(doc["observed_model"], "orcarouter")
+        self.assertTrue(doc["p5_trial_active"])
+        running = [v for v in doc["managed_containers"]
+                   if v["status"].startswith("Up")]
+        self.assertEqual(len(running), 1)
+        self.assertTrue(running[0]["p5_development_trial"])
+        self.assertEqual(running[0]["served_id"],
+                         "qwen3.8-flash-next-orca-uncensored-bf16")
+        self.assertFalse(doc["operations_enabled"])
+
+    def test_unregistered_orcarouter_name_does_not_claim_running_trial(self):
+        unknown = {**self.inv["containers"][0],
+                   "name": "qwen38-orcarouter-something-else"}
+        doc = manifest_from_observation({**self.inv, "containers": [unknown]})
+        self.assertIsNone(doc["observed_model"])
+        self.assertFalse(doc["p5_trial_active"])
+
+
 if __name__ == "__main__":
     unittest.main()
