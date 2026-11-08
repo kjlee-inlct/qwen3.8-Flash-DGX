@@ -413,6 +413,13 @@ def observation_summary(samples: list[dict]) -> dict:
             round((new - old) / seconds, 3)
             if isinstance(old, int) and isinstance(new, int) and new >= old
             else None)
+    # Counters from a different Docker instance/PID are not comparable.
+    # Missing identity is NOT proof of continuity, even if the name matches.
+    containers = [(row.get("docker") or {}).get("container") or {}
+                  for row in samples]
+    ids = [c.get("id") if isinstance(c, dict) else None for c in containers]
+    identity_observed = all(isinstance(x, str) and len(x) >= 12 for x in ids)
+    identity_continuous = identity_observed and len(set(ids)) == 1
     first_cgroup = (samples[0].get("docker", {}).get("cgroup_v2", {})
                     .get("metrics", {}).get("memory_stat_counters") or {})
     last_cgroup = (samples[-1].get("docker", {}).get("cgroup_v2", {})
@@ -421,13 +428,30 @@ def observation_summary(samples: list[dict]) -> dict:
     for key in ("pgmajfault", "workingset_refault_file"):
         old, new = first_cgroup.get(key), last_cgroup.get(key)
         cgroup_fault_deltas[key + "_delta"] = (
-            new - old if isinstance(old, int) and isinstance(new, int)
+            new - old if identity_continuous
+            and isinstance(old, int) and isinstance(new, int)
             and new >= old else None)
+    first_events = (samples[0].get("docker", {}).get("cgroup_v2", {})
+                    .get("metrics", {}).get("memory.events") or {})
+    last_events = (samples[-1].get("docker", {}).get("cgroup_v2", {})
+                   .get("metrics", {}).get("memory.events") or {})
+    memory_event_deltas = {}
+    for key in ("low", "high", "max", "oom", "oom_kill"):
+        before_count, after_count = first_events.get(key), last_events.get(key)
+        memory_event_deltas[key + "_delta"] = (
+            after_count - before_count if identity_continuous
+            and isinstance(before_count, int) and isinstance(after_count, int)
+            and after_count >= before_count else None)
     return {"status": "OBSERVED_INTERVAL",
             "duration_seconds": round(seconds, 3),
             "host_cpu_busy_percent": cpu_busy_pct,
             "host_vmstat_rates": swap_page_rates,
             "cgroup_fault_deltas": cgroup_fault_deltas,
+            "cgroup_memory_event_deltas": memory_event_deltas,
+            "cgroup_container_identity_continuous": (
+                identity_continuous if identity_observed else None),
+            "cgroup_identity_discontinuity_detected": (
+                identity_observed and not identity_continuous),
             "min_mem_available_bytes": min(available) if available else None,
             "max_swap_used_bytes": max(swaps) if swaps else None,
             "max_memory_psi_some_avg10_pct": max(psi_avg10) if psi_avg10 else None,

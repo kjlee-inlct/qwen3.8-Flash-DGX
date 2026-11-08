@@ -182,5 +182,40 @@ class ResourceDiagnosticsCPU(unittest.TestCase):
         self.assertEqual(r.admission(doc)["status"], "BLOCKED_CAPACITY")
 
 
+    def test_cgroup_interval_requires_same_observed_docker_identity(self):
+        def row(timestamp, cid, major, oom):
+            return {"timestamp_utc": timestamp,
+                    "docker": {"container": {"id": cid},
+                               "cgroup_v2": {"metrics": {
+                                   "memory_stat_counters": {
+                                       "pgmajfault": major,
+                                       "workingset_refault_file": major + 2},
+                                   "memory.events": {"oom": oom, "oom_kill": 0}}}}}
+        a = row("2026-11-09T00:00:00+00:00", "a" * 64, 10, 0)
+        b = row("2026-11-09T00:00:10+00:00", "a" * 64, 13, 1)
+        report = r.observation_summary([a, b])
+        self.assertTrue(report["cgroup_container_identity_continuous"])
+        self.assertEqual(report["cgroup_fault_deltas"]["pgmajfault_delta"], 3)
+        self.assertEqual(report["cgroup_memory_event_deltas"]["oom_delta"], 1)
+        b["docker"]["container"]["id"] = "b" * 64
+        report = r.observation_summary([a, b])
+        self.assertFalse(report["cgroup_container_identity_continuous"])
+        self.assertTrue(report["cgroup_identity_discontinuity_detected"])
+        self.assertIsNone(report["cgroup_fault_deltas"]["pgmajfault_delta"])
+        self.assertIsNone(report["cgroup_memory_event_deltas"]["oom_delta"])
+
+    def test_missing_container_identity_does_not_claim_valid_fault_deltas(self):
+        a = {"timestamp_utc": "2026-11-09T00:00:00+00:00",
+             "docker": {"cgroup_v2": {"metrics": {
+                 "memory_stat_counters": {"pgmajfault": 20}}}}}
+        b = {"timestamp_utc": "2026-11-09T00:00:10+00:00",
+             "docker": {"cgroup_v2": {"metrics": {
+                 "memory_stat_counters": {"pgmajfault": 25}}}}}
+        report = r.observation_summary([a, b])
+        self.assertIsNone(report["cgroup_container_identity_continuous"])
+        self.assertIsNone(report["cgroup_fault_deltas"]["pgmajfault_delta"])
+
+
+
 if __name__ == "__main__":
     unittest.main()
