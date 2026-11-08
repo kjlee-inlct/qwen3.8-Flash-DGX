@@ -9,6 +9,7 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 AUDIT = "docs/HANDOFF-DOCUMENT-AUDIT-FULL-P5-20261108.md"
+NEW_COMMON = "docs/P5-P8-MODEL-AGNOSTIC-OPERATIONS-20261109.md"
 RUNBOOK = "docs/P5-LMHEAD-V2-DGX-GPU-TRIAL-RUNBOOK-20261108.md"
 MARKER = "CURRENT P5 DOCUMENT SUPERSESSION"
 SECONDARY = "current P5 v2 supersession"
@@ -64,7 +65,7 @@ class P5HandoffFullDocumentCPU(unittest.TestCase):
                             or p.name in ("LICENSE", "NOTICE"))
             and ".git" not in p.parts
         }
-        self.assertEqual(current - set(original), {AUDIT})
+        self.assertEqual(current - set(original), {AUDIT, NEW_COMMON})
         self.assertEqual(set(original) - current, set())
 
     def test_primary_and_secondary_docs_have_current_override(self):

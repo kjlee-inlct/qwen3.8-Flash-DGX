@@ -1,3 +1,9 @@
+## 2026-11-09 문서 인벤토리 증분 감사
+
+Frozen 169-item 원본 목록과 감사 보고서 자체는 유지한다. 2026-11-09 신규 범용 문서 한 개: docs/P5-P8-MODEL-AGNOSTIC-OPERATIONS-20261109.md. 현재 문서 유사 파일 총계는 기존 170개에서 **171개**. [현재 인수인계](../handoff/CURRENT-STATE.md) 및 [범용 운영 명세](P5-P8-MODEL-AGNOSTIC-OPERATIONS-20261109.md)를 참조한다.
+
+---
+
 ## 2026-11-09 latest P5–P8 incremental document/path audit
 
 **GitHub source snapshot at `5acf0b11f753615b6fba69c3d754b56d6289f325`:** recursive tree 524 entries, 482 blobs, `truncated=false`; 170 document-like files under the frozen extension/LICENSE selection. Historical enumerated 169 document paths and this audit file remain present; 2 added files since prior baseline are Python source/test (`scripts/manager/p6_p8_fakedgx.py` and `tests/test_p6_p8_fakedgx_cpu.py`), not additional documentation paths. This recheck establishes paths and selected links, not a deep content review of every document. The frozen 169-item inventory and all old approval/failure receipts are preserved below.
