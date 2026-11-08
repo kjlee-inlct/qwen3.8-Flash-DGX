@@ -147,11 +147,20 @@ def selection_plan(model: str, *, service: dict[str, Any] | None = None,
             runtime_qualified=False, api_identity_verified=False,
             gpu_exclusivity_verified=False, rollback_verified=False,
         )
+    ple_registration = None
+    if selected == "orcarouter":
+        from scripts.manager.ple_assets import catalog
+        try:
+            ple_registration = catalog()["assets"][0]
+        except (OSError, ValueError, KeyError, TypeError):
+            ple_registration = {"asset_id": "orcarouter-bf16-ple",
+                                "registered": False, "runtime_qualified": False}
     return {
         "schema_version": 1,
         "interface": "MODEL_SELECTION_PLAN",
         "selected_model": selected, "title": spec["title"],
         "source_stage": spec["stage"],
+        "ple_registration": ple_registration,
         "observed_model": observed, "api_host_port": API_PORT,
         "status": state, "next_action": next_action,
         "download_state": ("IN_PROGRESS" if download_running else
@@ -182,6 +191,11 @@ def render_plan(doc: dict) -> None:
     print("  Service: " + (doc["observed_model"] or "unknown / no managed model"))
     print("  Port:    :" + str(doc["api_host_port"]))
     print("  State:   " + doc["status"])
+    ple = doc.get("ple_registration")
+    if ple:
+        print("  PLE:     " + ple["asset_id"] + " / " +
+              ("REGISTERED" if ple.get("registered") else "MANIFEST_BLOCKED") +
+              " / GPU runtime NOT_VERIFIED")
     for item in doc["steps"]:
         print("  - " + item["action"] + ": " + item["state"]
               + " — " + item["reason"])

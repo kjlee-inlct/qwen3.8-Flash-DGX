@@ -1,3 +1,9 @@
+## 2026-11-08 — P5 manifest management update
+
+First source commit `a17b361`, [CI #42433160630 SUCCESS](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42433160630). Canonical shared Wizard manifest registry and first-class PLE asset management implemented, with model-discovery/service-policy/Orcarouter recipe references and read-only status/validate. Follow-up model-selector UX/docs commit requires CI separately. Original operator DGX log at `8f8ad0c` showed PLE 128 BF16 PASS, donor 31 BF16/3 SHA PASS, live 27B API PASS, but does NOT validate the new code. Next: run `./wizard.sh manifest validate --json`, `./wizard.sh model list --installed --json`, `./wizard.sh p5 status --json`, `./wizard.sh p5 doctor --read-only --json` safely on DGX, then qualify isolated vLLM0.32 adapter only after asset/maintenance approvals. Reference `docs/WIZARD-MANIFEST-REGISTRY-AND-PLE-ASSETS-20261108.md`. No production GPU release, rollback trial, P3/P4/P6/P8 action or Draft PR merge.
+
+---
+
 ## 2026-11-08 — P5 source implementation and acceptance update (not GPU released)
 
 P5 source was committed to the existing feature branch and Draft PR #1 as [33adec1](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/commit/33adec182e97a8eac0d5584bdf73f1448bdd84f2), with [GitHub Actions 42429745463](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42429745463) **SUCCESS** including the new 20/20 CPU/Fake-DGX tests and `--cpu-only --json` PASS. Additional detailed per-case JSON and profile inspection enhancements require independent follow-up CI.

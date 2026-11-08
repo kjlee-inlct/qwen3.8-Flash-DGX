@@ -1,3 +1,11 @@
+## 2026-11-08 — NEXT after manifest registry CPU PASS
+
+After clean DGX fast-forward to the latest branch HEAD, **read-only** run `./wizard.sh manifest validate --json`, `./wizard.sh model list --installed --json`, `./wizard.sh select orcarouter --json`, `./wizard.sh p5 status --json`, `./wizard.sh p5 doctor --read-only --json`, and `./wizard.sh service manager status --json`. Verify manifest graph integrity and actual pinned BF16 PLE 128/128 independently from the 31/31 BF16 MTP donor and live 27B API on :8000. Keep metadata PASS vs mmap GPU NOT_RUN. Source commit `a17b361` [CI #42433160630 PASS](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42433160630) (996 executed CPU test cases over 44 invocations, duplicates included); confirm follow-up selector/docs CI separately.
+
+Before any overlay generation obtain separate asset-write approval; before any GPU trial/27B stop require a separately qualified vLLM 0.32 ARM64 image, exact rollback/expiry/TTY consent. The P5 GPU trial remains blocked. Preserve all source caches, P3 historical tests, P4 deletion dry-run policy, P6 separate switching, P8 final fault/recovery and unmerged Draft PR #1. Reference `docs/WIZARD-MANIFEST-REGISTRY-AND-PLE-ASSETS-20261108.md`.
+
+---
+
 ## 2026-11-08 — P5 vLLM 0.32 opt-in ABI candidate (source only, not built)
 
 After first source CI PASS, compared actual upstream `vllm-project/vllm@v0.32.0` Qwen4Exp Python sources. `vllm/models/qwen4_exp/nvidia/model.py` blob `2fb056bde43cfa5b0d9f0e15545e4ca3a2782c98`, `mtp.py` blob `32e95faa0dc882150a3b7dd9809641651fb2ff4e`, and `vocab_parallel_embedding.py` blob `92e65c839dbf40fa3b983e57e2364eb7cbf52654`. Official v0.32 model.py and mtp.py each have precisely one candidate ParallelLMHead prefix anchor; MTP draft config and load-weights return anchors each appear once. Importantly v0.32 `CompressedTensorsConfig.ignore` exists independently of `ignored_layers`/`exclude_modules` and the upstream draft converter does not explicitly remap `ignore`.

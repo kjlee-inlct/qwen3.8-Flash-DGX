@@ -1,3 +1,9 @@
+## 2026-11-08 — Latest manifest integration continuation
+
+The Wizard now has a common manifest registry (`runtimes/manifest-registry.json` + `scripts/manager/manifest_registry.py`), first-class Orcarouter BF16 PLE source asset (`runtimes/ple-assets.json` + `scripts/manager/ple_assets.py`), cross-referenced recipe/service/discovery and read-only Wizard status/validation. Source commit `a17b361` [CI #42433160630 SUCCESS](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42433160630); 996 executed CPU cases across 44 invocations (duplicates included). A model-first selector/docs commit follows; check latest HEAD, PR #1, CI and `docs/WIZARD-MANIFEST-REGISTRY-AND-PLE-ASSETS-20261108.md` first. On actual DGX run **only read-only** `./wizard.sh manifest validate --json`, `./wizard.sh model list --installed --json`, `./wizard.sh p5 status --json`, `./wizard.sh p5 doctor --read-only --json` and service manager status. Previous operator log from `8f8ad0c` showed 128 BF16 PLE PASS, donor 31 BF16/3 SHA PASS, 27B live on 8000, but new registry not yet checked on DGX. No GPU trial, overlay writes, 27B disruption, P3 replay/P4 deletion/P6 or P8 runtime tests/PR merge without separate approval.
+
+---
+
 ## 2026-11-08 — P5 vLLM 0.32 source patch candidate; image not built
 
 Verified the official `vllm-project/vllm@v0.32.0` Qwen4Exp `model.py` and `mtp.py` static anchors (one occurrence each). v0.32 `CompressedTensorsConfig.ignore` is separate from `ignored_layers` and `exclude_modules`, requiring a scoped remap for donor MTP BF16 bypass.

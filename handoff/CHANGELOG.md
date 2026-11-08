@@ -1,3 +1,11 @@
+## 2026-11-08 — Shared Wizard manifest refactor and first-class BF16 PLE registry
+
+`a17b361`: canonical `runtimes/manifest-registry.json`, `runtimes/ple-assets.json`, shared strict loader and cross-reference validator `scripts/manager/manifest_registry.py`, read-only metadata-backed PLE controller `scripts/manager/ple_assets.py`, registration links in service/discovery/Orcarouter recipe, Wizard manifest status/validate command, model list, P5 status/doctor and service status integration. Added 14+ dedicated manifest-registry tests and 11 PLE asset integration tests, plus existing P1–P4 regression. [CI #42433160630 SUCCESS](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42433160630), 996 executed CPU cases over 44 invocations (repeats included). Follow-up model-first selector display and documentation require their own CI.
+
+Operator-provided DGX pre-refactor log: pinned PLE headers 128/128 PASS, RadixArk MTP 31 BF16/3 pinned hash PASS, active 27B :8000 LIVE_SERVICE_VERIFIED; no fresh on-DGX validation of new registry or GPU run. P5 runtime and benchmark remain NOT_RUN/NOT_RELEASED. No model/cache/image/container mutation, no Draft PR merge.
+
+---
+
 ## 2026-11-08 — P5 vLLM 0.32 opt-in ABI candidate (source only, not built)
 
 After first source CI PASS, compared actual upstream `vllm-project/vllm@v0.32.0` Qwen4Exp Python sources. `vllm/models/qwen4_exp/nvidia/model.py` blob `2fb056bde43cfa5b0d9f0e15545e4ca3a2782c98`, `mtp.py` blob `32e95faa0dc882150a3b7dd9809641651fb2ff4e`, and `vocab_parallel_embedding.py` blob `92e65c839dbf40fa3b983e57e2364eb7cbf52654`. Official v0.32 model.py and mtp.py each have precisely one candidate ParallelLMHead prefix anchor; MTP draft config and load-weights return anchors each appear once. Importantly v0.32 `CompressedTensorsConfig.ignore` exists independently of `ignored_layers`/`exclude_modules` and the upstream draft converter does not explicitly remap `ignore`.

@@ -146,6 +146,17 @@ class P5PLEManifestCPU(unittest.TestCase):
                 installed_models(manifest=data, home=Path(temp),
                                  environment={}, service_inspector=lambda: {})
         
+    def test_model_first_selection_exposes_registered_ple_without_runtime_pass(self):
+        from wizard.quickstart import selection_plan
+        plan = selection_plan("orcarouter", service={
+            "status": "OBSERVED_UNQUALIFIED", "observed_model": None,
+            "download_running": False, "issues": [],
+        })
+        self.assertEqual(plan["ple_registration"]["asset_id"], ple_assets.ASSET_ID)
+        self.assertTrue(plan["ple_registration"]["registered"])
+        self.assertFalse(plan["ple_registration"]["runtime_qualified"])
+        self.assertFalse(plan["operations_enabled"])
+
     def test_plan_declares_asset_but_no_live_verification(self):
         doc = p5.source_plan()
         self.assertEqual(doc["ple_asset"]["asset_id"], ple_assets.ASSET_ID)

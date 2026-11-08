@@ -1,3 +1,13 @@
+## 2026-11-08 — Wizard shared manifest registry / Orcarouter BF16 PLE asset (READ-ONLY)
+
+Implemented `runtimes/manifest-registry.json` and shared `scripts/manager/manifest_registry.py`: schema-1 strict bounded JSON, duplicate/nonfinite/symlink rejection, cross-checks for service-policy, model-discovery, canonical 27B recipe, unqualified Orcarouter recipe, pinned YSLAB compatibility and new `runtimes/ple-assets.json` PLE asset. PLE ID `orcarouter-bf16-ple` is referenced consistently in P5 recipe, service policy, model discovery. Common `scripts/manager/ple_assets.py` validates pinned 128 BF16 table headers, 320001536 rows and width160; its metadata PASS is **not** mmap/GPU PASS.
+
+Wizard `manifest status|validate --json`, `model list --installed --json`, `p5 status/doctor --json`, `service manager status --json` and model-first selector expose manifest/PLE registration and independent observed state. No hidden asset movement, image build, start/stop, deletion or model switch. Initial code commit [a17b3618](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/commit/a17b3618fab98aa5b849359d464c0d7698fae4a0) passed [CI #42433160630](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42433160630): 996 executed CPU test cases across 44 invocations (duplicates included). Follow-up model-selector/docs requires CI separately.
+
+2026-11-08 operator-provided DGX `8f8ad0c` evidence: 27B `LIVE_SERVICE_VERIFIED` at :8000, Orcarouter PLE 128 BF16 tensors PASS, MTP donor 31 tensors and three pinned SHA256 PASS; the **new registry code was not run on DGX**. Actual Orcarouter runtime/MTP2/API/benchmark/restore NOT_RUN, release false. Preserve 27B, all HF caches and receipts, :8000/ONE_ACTIVE_MODEL_ONLY, OpenWebUI/Portainer. No P3 replay, P4 deletion, P6 transition, P8 fault/recovery or Draft PR merge. Architecture and commands: `docs/WIZARD-MANIFEST-REGISTRY-AND-PLE-ASSETS-20261108.md`.
+
+---
+
 ## 2026-11-08 — P5 vLLM 0.32 opt-in ABI candidate (source only, not built)
 
 After first source CI PASS, compared actual upstream `vllm-project/vllm@v0.32.0` Qwen4Exp Python sources. `vllm/models/qwen4_exp/nvidia/model.py` blob `2fb056bde43cfa5b0d9f0e15545e4ca3a2782c98`, `mtp.py` blob `32e95faa0dc882150a3b7dd9809641651fb2ff4e`, and `vocab_parallel_embedding.py` blob `92e65c839dbf40fa3b983e57e2364eb7cbf52654`. Official v0.32 model.py and mtp.py each have precisely one candidate ParallelLMHead prefix anchor; MTP draft config and load-weights return anchors each appear once. Importantly v0.32 `CompressedTensorsConfig.ignore` exists independently of `ignored_layers`/`exclude_modules` and the upstream draft converter does not explicitly remap `ignore`.
