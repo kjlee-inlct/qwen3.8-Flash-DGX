@@ -10,6 +10,16 @@
 
 ---
 
+
+## 2026-11-08 — P5 pinned LM-head checkpoint preflight (NEW SOURCE, NOT GPU QUALIFIED)
+
+- In addition to the current v2 QSA + LM-head adapter, `scripts/manager/p5_lm_head_checkpoint_audit.py` now audits the **actual local pinned HF snapshot** read-only: `config.json` quantization groups/ignore, safetensors index keys, and bounded `lm_head.weight` / `lm_head.weight_scale` headers (shape/dtype/shard). This source work does not confirm any current DGX observation; the exact gated Orcarouter snapshot could not be read through GitHub/public-web access in this session.
+- **Root mechanism verified in upstream vLLM 0.32:** `ParallelLMHead` gets its quant method via `resolve_quant_method`; compressed-tensors checks `ignore` before selecting matching targets/schemes, and handles `ParallelLMHead` separately from `LinearBase`. Adding `quant_config=self.quant_config` alone does not guarantee `weight_scale` registration. If a scale exists but head is ignored or no explicit head FP8 target matches, the audit blocks; checkpoint/config is never silently rewritten.
+- `scripts/manager/p5_live_trial.py` now requires a clean pinned LM-head metadata audit inside `prepare` and `plan`. `scripts/manager/p5_checkpoint_preflight.py` provides a no-Docker, no-GPU, no-network one-shot report containing manifest + checkpoint + all P5 CPU regressions. Operator-safe call after clean fast-forward: `python3 -m scripts.manager.p5_checkpoint_preflight --json`. `PASS_SOURCE_ONLY` is **not** GPU qualification. `BLOCKED` forbids preparation/planning pending source investigation.
+- Added CPU/Fake-DGX regressions for FP8 group matching, ignore-scale conflict, missing scale, header/path limits, and judge safety. Latest CI must be inspected separately; original GPU evidence remains `FAIL_NO_ROLLBACK` at old QSA-only HEAD, v2 GPU build/inference **NOT VERIFIED**, `gpu_verified=false`. BF16 PLE GPU mmap, MTP0, MTP2, Tools, Vision, Bench and release are **NOT QUALIFIED**.
+- Full technical sequence in [the current v2 Runbook](../docs/P5-LMHEAD-V2-DGX-GPU-TRIAL-RUNBOOK-20261108.md), with [the exhaustive historical document audit](../docs/HANDOFF-DOCUMENT-AUDIT-FULL-P5-20261108.md). Preserve vLLM 0.32.0, port 8000, ONE_ACTIVE_MODEL_ONLY, all historical receipts/failed containers/cache, PR #1 Draft/unmerged. No unapproved DGX GPU execution, Docker mutation, P3/P4/P6/P8 work or production release.
+
+
 ## 2026-11-08 — P5 real DGX one-shot MTP0 trial (no restore)
 
 Operator permitted stopping development 27B and specifically waived automatic 27B restoration if Orcarouter fails. Newly implemented `./wizard.sh p5 trial prepare|plan|execute|status` with built, isolated Blazux vLLM 0.32 candidate, BF16 PLE mmap, immutable base image/source pins, :8000 and one active GPU model, explicit exact plan approval `I_ACCEPT_P5_NO_ROLLBACK`, preserved HF caches/images/old stopped container and private evidence. Execution re-checks actual 27B served ID, source/candidate image digests, :8000 release and NVIDIA compute process inventory. The default production service transition rollback remains unchanged. MTP2, Native Tools and benchmark still require separate GPU qualification.
