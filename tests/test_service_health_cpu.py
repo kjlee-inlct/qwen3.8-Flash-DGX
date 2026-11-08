@@ -102,5 +102,32 @@ class HealthCPU(unittest.TestCase):
         opener.assert_not_called()
 
 
+    def test_recognized_p5_trial_queries_health_without_prod_promotion(self):
+        service = {**self.service,
+            "observed_model": "orcarouter",
+            "p5_trial_active": True,
+            "p5_trial_candidate_name": "qwen38-orcarouter-qsa62318-lmhead-v3",
+            "managed_containers": [{
+                "model": "orcarouter",
+                "container_name": "qwen38-orcarouter-qsa62318-lmhead-v3",
+                "p5_development_trial": True,
+                "served_id": "qwen3.8-flash-next-orca-uncensored-bf16",
+                "status": "Up 24 minutes",
+            }],
+        }
+        def opener(request, *, timeout):
+            self.calls.append(request.full_url)
+            if request.full_url.endswith("/health"):
+                return Response()
+            return Response(json.dumps({"data": [
+                {"id": "qwen3.8-flash-next-orca-uncensored-bf16"},
+            ]}).encode())
+        response = inspect_api_health(service=service, opener=opener)
+        self.assertEqual(response["status"], "API_IDENTITY_CONFIRMED")
+        self.assertTrue(response["p5_development_trial"])
+        self.assertEqual(len(self.calls), 2)
+        self.assertFalse(response["gpu_exclusivity_verified"])
+
+
 if __name__ == "__main__":
     unittest.main()
