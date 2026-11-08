@@ -1,3 +1,15 @@
+## CURRENT P5 DOCUMENT SUPERSESSION — 2026-11-09 00:55 KST (v3 real PASS, P6/P8 source)
+
+Latest **operator-observed** P5 Orcarouter container `qwen38-orcarouter-qsa62318-lmhead-v3`, API `qwen3.8-flash-next-orca-uncensored-bf16`, port 8000, service `LIVE_P5_TRIAL_API_VERIFIED`, MTP0 chat `PASS_LIVE_INFERENCE` (READY). Adapter `qwen4exp-qsa62318-lmhead-v032-v3` corrected `lm_head.weight_scale`, but runtime remains `DEVELOPMENT_TRIAL` / not production. Preserve v3, previous failed-container cleanup history and all HF/checkpoint/images.
+
+Latest 00:54–00:55 KST idle-only evidence: host MemTotal 121.63 GiB, MemAvailable 30.18 GiB, SwapUsed 1.31 GiB (Orcarouter cgroup swap 0); Docker memory 7.157 GiB vs cgroup current 25.54 GiB, peak 37.02 GiB, inactive_file 18.38 GiB, anon 4.58 GiB; PSI memory avg10 0, OOM/OOMKill 0, zero observed page/swap/refault churn; CPU busy ~0.18% for 45s at governor performance, 10 CPUs 2808 MHz / 10 CPUs 3900 MHz; temperatures up to ~34.7 C system, ~33 C GPU. Inactive cache accounts for much of Docker/cgroup gap, NOT proof of leak or PLE residency. Earlier 00:43 KST data are historical below. Startup policy is OBSERVE_ONLY, no active gate, BLOCKED_UNCALIBRATED is expected; never copy YSLAB 100 GiB or apply CPU/cgroup restrictions without approval.
+
+GitHub source `21aa6c9` implements P6 non-authorizing live preflight, two-direction synthetic switch and P8 Fake-DGX fault matrix; `5acf0b1` requires same Docker identity for cgroup OOM/fault deltas. Push/PR CI for both source commits succeeded. Actual DGX P5 Tools/Vision/MTP2/benchmark/canonical promotion, P6 switch, P7 Proxy/Gateway and P8 fault/restore/release are NOT accepted. Fixed vLLM 0.32.0, no SGLang, ONE_ACTIVE_MODEL_ONLY, :8000; no authorized service mutation and PR #1 remains Draft/Unmerged.
+
+[Full document audit](../docs/HANDOFF-DOCUMENT-AUDIT-FULL-P5-20261108.md) · [P5 resource and engine details](../docs/P5-ORCAROUTER-BF16PLE-VLLM032-ADOPTION-20261108.md)
+
+---
+
 ## CURRENT P5 DOCUMENT SUPERSESSION — 2026-11-08 (v3 live PASS, safe resource work next)
 
 **LATEST DGX RESOURCE EVIDENCE (2026-11-09 00:43 KST, operator log):** v3 running, 30.18 GiB MemAvailable / 121.63 GiB total, swap used 1.31 GiB, memory PSI avg10=0; Docker 7.157 GiB versus cgroup 25.54 GiB (cache split NOT YET MEASURED), peak 37.02 GiB, cgroup OOM=0. GPU memory N/A is expected on GB10 UMA. 13-second idle observation only, NOT loaded stability acceptance; preflight BLOCKED_UNCALIBRATED is expected. **Do not apply memory cap or 100 GiB admission gate.** New source-only cgroup memory.stat/Swap churn diagnostics must receive fresh DGX read-only evidence. [P5 technical record](../docs/P5-ORCAROUTER-BF16PLE-VLLM032-ADOPTION-20261108.md).

@@ -1,3 +1,15 @@
+## CURRENT P5 DOCUMENT SUPERSESSION — 2026-11-09 00:55 KST (v3 real PASS, P6/P8 source)
+
+Latest **operator-observed** P5 Orcarouter container `qwen38-orcarouter-qsa62318-lmhead-v3`, API `qwen3.8-flash-next-orca-uncensored-bf16`, port 8000, service `LIVE_P5_TRIAL_API_VERIFIED`, MTP0 chat `PASS_LIVE_INFERENCE` (READY). Adapter `qwen4exp-qsa62318-lmhead-v032-v3` corrected `lm_head.weight_scale`, but runtime remains `DEVELOPMENT_TRIAL` / not production. Preserve v3, previous failed-container cleanup history and all HF/checkpoint/images.
+
+Latest 00:54–00:55 KST idle-only evidence: host MemTotal 121.63 GiB, MemAvailable 30.18 GiB, SwapUsed 1.31 GiB (Orcarouter cgroup swap 0); Docker memory 7.157 GiB vs cgroup current 25.54 GiB, peak 37.02 GiB, inactive_file 18.38 GiB, anon 4.58 GiB; PSI memory avg10 0, OOM/OOMKill 0, zero observed page/swap/refault churn; CPU busy ~0.18% for 45s at governor performance, 10 CPUs 2808 MHz / 10 CPUs 3900 MHz; temperatures up to ~34.7 C system, ~33 C GPU. Inactive cache accounts for much of Docker/cgroup gap, NOT proof of leak or PLE residency. Earlier 00:43 KST data are historical below. Startup policy is OBSERVE_ONLY, no active gate, BLOCKED_UNCALIBRATED is expected; never copy YSLAB 100 GiB or apply CPU/cgroup restrictions without approval.
+
+GitHub source `21aa6c9` implements P6 non-authorizing live preflight, two-direction synthetic switch and P8 Fake-DGX fault matrix; `5acf0b1` requires same Docker identity for cgroup OOM/fault deltas. Push/PR CI for both source commits succeeded. Actual DGX P5 Tools/Vision/MTP2/benchmark/canonical promotion, P6 switch, P7 Proxy/Gateway and P8 fault/restore/release are NOT accepted. Fixed vLLM 0.32.0, no SGLang, ONE_ACTIVE_MODEL_ONLY, :8000; no authorized service mutation and PR #1 remains Draft/Unmerged.
+
+[Full document audit](HANDOFF-DOCUMENT-AUDIT-FULL-P5-20261108.md) · [P5 resource and engine details](P5-ORCAROUTER-BF16PLE-VLLM032-ADOPTION-20261108.md)
+
+---
+
 ## CURRENT P5 DOCUMENT SUPERSESSION — 2026-11-08 (QSA #62318 + LM-head v2)
 
 **Read these before following historical commands:** [complete 168-item initial document review (169 including the new v2 runbook; audit file added afterward)](../docs/HANDOFF-DOCUMENT-AUDIT-FULL-P5-20261108.md) and [current P5 v2 DGX Runbook](../docs/P5-LMHEAD-V2-DGX-GPU-TRIAL-RUNBOOK-20261108.md). (For links from `docs/`, the authoritative paths are `docs/HANDOFF-DOCUMENT-AUDIT-FULL-P5-20261108.md` and `docs/P5-LMHEAD-V2-DGX-GPU-TRIAL-RUNBOOK-20261108.md`.) These supersede old QSA-only trial commands, old P4/P5 starter prompts and earlier claims that P5 was never attempted.
