@@ -17,7 +17,7 @@ USAGE = """Blazux Wizard (vLLM 0.32 only)
   ./wizard.sh model orcarouter-flash-next status --json
   ./wizard.sh model orcarouter-flash-next doctor --json
   ./wizard.sh model orcarouter-flash-next recipe --profile mtp0 --json
-  ./wizard.sh p5 doctor --read-only --json  source/PLE/donor and live 27B audit\n  ./wizard.sh p5 trial prepare --json    build isolated vLLM0.32 P5 candidate (27B stays up)\n  ./wizard.sh p5 trial plan --json       exact no-rollback MTP0 GPU plan\n  ./wizard.sh p5 trial execute --approve-plan SHA64 --ack-downtime I_ACCEPT_P5_NO_ROLLBACK --json
+  ./wizard.sh p5 doctor --read-only --json  source/PLE/donor and live 27B audit\n  ./wizard.sh p5 trial prepare --json    build isolated vLLM0.32 P5 candidate (27B stays up)\n  ./wizard.sh p5 trial plan --json       exact no-rollback MTP0 GPU plan\n  ./wizard.sh p5 trial execute --approve-plan SHA64 --ack-downtime I_ACCEPT_P5_NO_ROLLBACK --json\n  ./wizard.sh p5 trial verify --json     chat inference against already running Orcarouter v3\n  ./wizard.sh p5 trial cleanup-plan --json   only exited failed P5 containers, never live v3\n  ./wizard.sh p5 trial cleanup-execute --approve-plan SHA64 --ack-cleanup I_APPROVE_P5_FAILED_TRIAL_CONTAINERS_ONLY --json
   bash scripts/temporary/p5-one-shot-acceptance.sh --plan --json
   bash scripts/temporary/p5-one-shot-acceptance.sh --cpu-only --json
   bash scripts/temporary/p5-one-shot-acceptance.sh --read-only --json
