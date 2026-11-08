@@ -1,3 +1,11 @@
+## 2026-11-08 — P5 SOURCE implementation and CPU/Fake-DGX acceptance
+
+The P5 source batch was committed as [33adec1](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/commit/33adec182e97a8eac0d5584bdf73f1448bdd84f2); [GitHub Actions 42429745463](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42429745463) **SUCCESS**, including 20/20 P5 CPU tests and integrated one-shot `--cpu-only --json` PASS. It implements the pinned P5 candidate recipe, imported licensed YSLAB metadata/immutable-overlay source tools, direct BF16 PLE and three-donor/31 BF16 MTP audits, separate MTP0/MTP2 candidate profiles, Wizard stage and safety gates, `scripts/temporary/p5-one-shot-acceptance.sh`. A subsequent source enhancement adds detailed per-case CPU JSON and profile preview and must pass its own CI.
+
+**Not runtime-qualified:** actual Blazux vLLM 0.32 CUDA/quantized-lm-head/compressed-tensors/MTP loader ABI, on-DGX PLE and donor audits, overlay generation, GPU model loading, native Tools, streaming, benchmarks, strict numerical parity and 27B restoration are **NOT_RUN**. Vendor overlay *code* included but no CLI execution/asset write approved. The recipe has `launch_allowed=false`, `register_as_runtime_recipe=false`, unknown runtime image ID. `--gpu-trial` always BLOCKED, no execution approval generated. Preserve existing 27B at :8000, single-model service, HF caches, other images, WebUI, Portainer; do not replay P3, delete P4 assets, start P6/P8 or merge Draft PR #1. Actual DGX is not connected to this session. Read-only runbook: `docs/P5-SOURCE-ACCEPTANCE-AND-DGX-READONLY-RUNBOOK-20261108.md`.
+
+---
+
 ## 2026-11-08 — NEXT SESSION P5: Orcarouter BF16PLE → Blazux vLLM 0.32 integration (handoff only)
 
 **P5 implementation starts in the NEXT conversation, not this one.** User confirmed YSLAB-ai `Qwen3.8-Flash-Next-NVFP4-BF16PLE-DGX-Spark` as the technical BF16PLE/MTP reference, but actual service/recipes/Wizard must use Blazux **vLLM 0.32**, :8000 and `ONE_ACTIVE_MODEL_ONLY`. Aim for one batch of source/recipe/Wizard/CPU-Fake-DGX/one-shot auto-judge implementation; exact operator approval is still required for GPU trial, service downtime or cache writes/deletion.

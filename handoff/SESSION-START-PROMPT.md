@@ -1,3 +1,9 @@
+## 2026-11-08 — Updated P5 continuation: implementation/CPU passed, runtime unqualified
+
+Existing feature branch and Draft PR #1: first source P5 commit `33adec1` and [Actions 42429745463 SUCCESS](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42429745463). Pinned YSLAB metadata/safetensors/BF16PLE/31-donor-tensor overlay source was imported (not deployed), unqualified P5 recipe + Wizard + one-shot and 20 new CPU tests were committed. Further detailed per-case reporting is in a follow-up commit requiring CI. **Do NOT repeat P5 source implementation from zero.** Review current branch HEAD and docs, and run actual DGX **read-only** command `bash scripts/temporary/p5-one-shot-acceptance.sh --read-only --json` after safe fast-forward, along with `--plan` and `--cpu-only`. Report observed pinned caches/donor integrity, current 27B status, exact DGX checkout and actual vLLM0.32 ABI. Any MTP overlay file creation requires its own asset-write consent; independent GPU trial and 27B stop require new exact TTY maintenance approval and a proven rollback. Current `--gpu-trial` returns BLOCKED by design. No P4 delete/P3 replay/P6/P8 trial/PR merge. Full runbook: `docs/P5-SOURCE-ACCEPTANCE-AND-DGX-READONLY-RUNBOOK-20261108.md`.
+
+---
+
 ## 2026-11-08 — New conversation START HERE: P5 Orcarouter BF16PLE Blazux vLLM 0.32
 
 The full current, standalone P5 next-conversation prompt is **`handoff/START-NEXT-P5-20261108.md`**. Source implementation contract: **`docs/P5-ORCAROUTER-BF16PLE-VLLM032-ADOPTION-20261108.md`**; complete existing-document audit: **`docs/HANDOFF-DOCUMENT-AUDIT-P5-20261108.md`**.

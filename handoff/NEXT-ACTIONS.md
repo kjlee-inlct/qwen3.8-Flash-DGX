@@ -1,3 +1,11 @@
+## 2026-11-08 — NEXT: P5 DGX read-only source qualification, then separately approved runtime work
+
+Source commit `33adec1` [Actions 42429745463 PASS](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42429745463). P5 Wizard, pinned source recipe and one-shot are implemented but **not released for actual GPU**. After a clean fast-forward on DGX, inspect `git rev-parse HEAD` and `./wizard.sh service manager status --json`; execute only `bash scripts/temporary/p5-one-shot-acceptance.sh --plan --json`, `--cpu-only --json`, and **`--read-only --json`**. The final mode reads local pinned caches and verifies SHA256 of up to three large donor shards without altering assets, so schedule its disk I/O appropriately.
+
+Then independently inspect Blazux vLLM 0.32 ARM64 loader ABI, checkpoint compressed-tensors/quantized lm_head, MTP 31/31 guard, PIECEWISE graph splitting and CUDA kernels. Before invoking vendor MTP-overlay view builder, obtain separate asset-write approval. GPU trial (first MTP0, then MTP2) needs fresh exact TTY downtime consent, approved 27B restoration sequence and benchmark/test plan; the current `--gpu-trial` is deliberately BLOCKED. Preserve the strict `1e-4` logprob gate, :8000, ONE_ACTIVE_MODEL_ONLY, 27B, all HF assets. P3 historical tests, P4 deletion, P6 switch and P8 fault/recovery are not to be repeated or initiated. Draft PR #1 remains unmerged.
+
+---
+
 ## 2026-11-08 — Next conversation: P5 implementation + one-shot automatic adjudication
 
 User explicitly selected P5 next: integrate **YSLAB Orcarouter BF16PLE / MTP** reference on **Blazux vLLM 0.32** (NOT YSLAB's vLLM 0.1.dev image or standalone port 18300). Work in existing `feature/recipe-wizard-handoff`, Draft PR #1, review parallel design branch but do not merge it blindly. New mandatory starter: `handoff/START-NEXT-P5-20261108.md`; full implementation contract `docs/P5-ORCAROUTER-BF16PLE-VLLM032-ADOPTION-20261108.md`; audit `docs/HANDOFF-DOCUMENT-AUDIT-P5-20261108.md`.

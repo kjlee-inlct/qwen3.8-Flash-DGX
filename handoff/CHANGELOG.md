@@ -1,3 +1,11 @@
+## 2026-11-08 — P5 Orcarouter BF16PLE source-only integration and CI
+
+- Source commit [33adec1](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/commit/33adec182e97a8eac0d5584bdf73f1448bdd84f2) introduces pinned unqualified Orcarouter recipe, licensed YSLAB audit/overlay source in `scripts/p5_vendor`, PLE/MTP donor verification, MTP0/MTP2 candidate profiles, Wizard P5 source commands, one-shot `--plan`/`--cpu-only`/`--read-only`/`--gpu-trial` (blocked), and 20 CPU tests. [GitHub Actions 42429745463](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42429745463) SUCCESS; new 20/20 P5 CPU and one-shot CPU PASS.
+- Follow-up improvement: detailed per-test-case JSON and source profile preview for Wizard, subject to new CI recheck.
+- **No on-DGX observation this session**, no GPU loader/MTP0/MTP2 API/bench, no derived overlay write, no 27B interruption. Runtime release remains false, P6/P8 NOT_RUN, P4 cleanup not approved, Draft PR #1 unmerged. See `docs/P5-SOURCE-ACCEPTANCE-AND-DGX-READONLY-RUNBOOK-20261108.md`.
+
+---
+
 ## 2026-11-08 — Prepare next P5 implementation conversation (documentation only)
 
 Verified GitHub branch `feature/recipe-wizard-handoff` pre-audit HEAD `ac88693196a8b2b5efc95f091dc88531d6951037`, Draft PR #1 Open/Unmerged and Actions SUCCESS. Confirmed core 34/34 historical handoff/design/manifest files plus 7/7 P4 evidence/source assets exist. Inspected external YSLAB BF16PLE code at `9492b78c6bc04638587b42f2ffeb0680b0fcb3ef` and historical parallel Orcarouter adapter design branch. Created P5 design (`docs/P5-ORCAROUTER-BF16PLE-VLLM032-ADOPTION-20261108.md`), P5 document audit (`docs/HANDOFF-DOCUMENT-AUDIT-P5-20261108.md`) and full next-session prompt (`handoff/START-NEXT-P5-20261108.md`); primary handoff pointers and D-068 updated. No P5 code/GPU operation/deletion, no PR merge. Planned P5 runtime recipe and one-shot acceptance script remain to be implemented next session.

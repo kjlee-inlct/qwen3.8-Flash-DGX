@@ -1,3 +1,13 @@
+## 2026-11-08 — P5 SOURCE/CPU evidence only, no DGX GPU
+
+**Source commit** [33adec1](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/commit/33adec182e97a8eac0d5584bdf73f1448bdd84f2), existing feature branch and Draft PR #1. Verified [Actions 42429745463](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42429745463) `completed/success` on GitHub x64 Python 3.12, P5 new **20/20 CPU/Fake-DGX** tests and one-shot `--cpu-only --json` **PASS**; existing workflow regression commands all succeeded. No direct DGX terminal used here. A further per-case JSON refinement requires its own CI result.
+
+**Code evidence:** `scripts/p5_vendor` contains YSLAB pinned source auditors/overlay builder at `9492b78c6bc04638587b42f2ffeb0680b0fcb3ef`, with Apache LICENSE/NOTICE; `recipes/qwen38-orcarouter.runtime.json`, `scripts/manager/p5_orcarouter.py`, `scripts/temporary/p5-one-shot-acceptance.sh`, P5 Wizard, 20 regression cases. PLE 128 BF16 tensor audit, 320001536 rows, width160; donor 3 pinned shards with 31 BF16 names and full SHA checks if local cache present. Source-only static Blazux BF16 mmap hook PASS is not vLLM0.32 runtime ABI verification. Vendor overlay constructor is present but never executed or approved to write assets.
+
+**Truth table:** P5 CPU PASS; P5 DGX read-only **NOT_RUN**; pinned donor bytes actual DGX audit **NOT_RUN**; derived MTP overlay **NOT_RUN**; Blazux GPU MTP0/MTP2 and chat/tools/bench **NOT_RUN**; rollback **NOT_RUN**; production release **false**. Historically observed 27B active on :8000 and P4 read-only pass were NOT remeasured. No Docker/HF/service mutations, P3 replay, P4 deletes, P6/P8, or merge.
+
+---
+
 ## 2026-11-08 — P5 preparation evidence (source/document audit only)
 
 GitHub pre-document HEAD `ac88693196a8b2b5efc95f091dc88531d6951037`, PR #1 Draft/Open/Unmerged; source CI [42405103774](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42405103774) SUCCESS (historical 902/902 CPU/Fake-DGX, 41 groups). Git tree nontruncated 467 entries: legacy mandatory documents **34/34 present** and recent P4 source/evidence **7/7 present**. Newly written `docs/HANDOFF-DOCUMENT-AUDIT-P5-20261108.md` details this bounded audit.

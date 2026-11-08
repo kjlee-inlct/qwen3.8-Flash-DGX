@@ -271,13 +271,25 @@ def cpu_only() -> dict:
                 cwd=ROOT, capture_output=True, text=True, timeout=240,
                 env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"},
             )
-            success = run.returncode == 0 and "OK" in run.stderr
+            cases = []
+            for line in run.stderr.splitlines():
+                match = re.fullmatch(
+                    r"(test_[A-Za-z0-9_]+) \(test_p5_[^)]+\) \.\.\. (ok|FAIL|ERROR)",
+                    line.strip(),
+                )
+                if match:
+                    cases.append({"case": match.group(1),
+                                  "status": PASS if match.group(2) == "ok" else FAIL})
+            summary = next((line.strip() for line in reversed(run.stderr.splitlines())
+                            if line.startswith("Ran ")), None)
+            expected = re.fullmatch(r"Ran ([0-9]+) tests? in [0-9.]+s", summary or "")
+            success = (run.returncode == 0 and "OK" in run.stderr
+                       and expected is not None and int(expected.group(1)) == len(cases)
+                       and bool(cases) and all(case["status"] == PASS for case in cases))
             result = _gate("cpu_fake_dgx", PASS if success else FAIL,
                            *([] if success else ["P5_CPU_TESTS_FAILED"]),
-                           exit_code=run.returncode,
-                           test_summary=next((line.strip() for line in
-                                             reversed(run.stderr.splitlines())
-                                             if line.startswith("Ran ")), None))
+                           exit_code=run.returncode, test_summary=summary,
+                           test_cases=cases)
         except (OSError, subprocess.TimeoutExpired):
             result = _gate("cpu_fake_dgx", INCONCLUSIVE, "P5_CPU_RUNNER_UNAVAILABLE")
     return {
@@ -337,6 +349,8 @@ def stage_action(action: str, *, profile: str = "mtp0",
             "recipe_path": "recipes/qwen38-orcarouter.runtime.json",
             "checkpoint": ORCA_REPO, "revision": ORCA_REV,
             "served_id": _recipe()["profiles"][profile]["served_id"],
+            "profile_preview": _recipe()["profiles"][profile],
+            "overlay_fingerprint_not_approval": plan["stages"][3]["overlay_fingerprint"],
             "api_port": 8000, "issues": sorted(set(issues)),
             "plan_id": None, "executed": False,
             "operations_enabled": False, "approval_accepted": False,

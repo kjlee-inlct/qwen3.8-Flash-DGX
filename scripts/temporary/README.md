@@ -1,3 +1,13 @@
+## 2026-11-08 — P5 source implementation and acceptance update (not GPU released)
+
+P5 source was committed to the existing feature branch and Draft PR #1 as [33adec1](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/commit/33adec182e97a8eac0d5584bdf73f1448bdd84f2), with [GitHub Actions 42429745463](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42429745463) **SUCCESS** including the new 20/20 CPU/Fake-DGX tests and `--cpu-only --json` PASS. Additional detailed per-case JSON and profile inspection enhancements require independent follow-up CI.
+
+Implemented source: `recipes/qwen38-orcarouter.runtime.json` (pinned, **unqualified**, launch forbidden), imported YSLAB safetensors/manifest/BF16 PLE audit and immutable MTP overlay code under `scripts/p5_vendor`, donor 3-shard SHA256 / 31 BF16 name audit when local files exist, distinct MTP0/MTP2 candidate recipes, Wizard `p5` and `model orcarouter-flash-next` routes, `scripts/temporary/p5-one-shot-acceptance.sh`. The vendor overlay builder is **not** executable via CLI and no HF asset changes were authorized. Prior Blazux BF16 PLE source markers pass static inspection only; compressed-tensors and MTP2 runtime ABI/quantized lm_head/CUDA graph compatibility in actual vLLM 0.32 remain unqualified.
+
+No DGX command/active-state reread or GPU/API/benchmark/rollback was performed in this session. All live P5 stages are NOT_RUN, `--gpu-trial` permanently BLOCKED until a separate operator approval and verified image/rollback implementation. Preserve 27B and :8000/ONE_ACTIVE_MODEL_ONLY, other models/caches, P3 historical receipts, no P4 deletion/P6 switch/P8 tests or Draft PR merge. New source/runbook: `docs/P5-SOURCE-ACCEPTANCE-AND-DGX-READONLY-RUNBOOK-20261108.md`.
+
+---
+
 ## 2026-11-07 — P3-C ACTUAL PASS; C wrapper is historical acceptance tooling
 
 사용자 실제 DGX에서 `bash scripts/temporary/p3-stage-c-operator.sh --execute`로 최종 Flash→NVIDIA 27B를 승인·완료했고, 결과는 `P3_C_PASS_FINAL_27B_ACTIVE`, `post_switch_status=LIVE_SERVICE_VERIFIED`, `post_switch_observed_model=27b`, canonical `stage-c.json`로 확인됐다. 그 아래 문서의 'C execution pending' 안내는 이전 시점의 기록이다. **현재 27B :8000 ACTIVE를 보존하고, stage-a/b/c 일회성 검증을 다시 실행하지 않는다.** 대화형 메인 Wizard의 일반 반복 전환 UX는 아직 미완성이고 새 별도 기능으로 개발/CPU 검증한다. 새 대화 시작: [SESSION-START-PROMPT](../../handoff/SESSION-START-PROMPT.md); [P1–P7 Acceptance](../../docs/P1-P7-WIZARD-ACCEPTANCE-STATUS-20261107.md).
