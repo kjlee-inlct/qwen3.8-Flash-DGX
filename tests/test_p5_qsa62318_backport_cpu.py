@@ -31,6 +31,11 @@ QSA = '''class Qwen4ExpQSAAttention(object):
 '''
 
 class UpstreamQSA62318CPU(unittest.TestCase):
+    def test_p5_adapter_full_manifest_contract(self):
+        from scripts.manager import manifest_registry as registry
+        parts = {kind: registry.load(kind) for kind in registry.FILES}
+        registry._validate_bundle(parts)
+
     def test_correct_unchanged_vllm032_version_contract(self):
         self.assertEqual(abi.VERSION, "0.32.0")
         self.assertEqual(abi.ADAPTER, "qwen4exp-qsa-62318-v032-v1")
