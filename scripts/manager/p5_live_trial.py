@@ -89,6 +89,39 @@ def _candidate_label(img: dict) -> bool:
             and labels.get("blazux.p5.vllm") == "0.32.0"
             and labels.get("blazux.p5.state") == "SOURCE_CANDIDATE_NOT_QUALIFIED")
 
+
+def _local_base_ref(image_id: str) -> str:
+    """Deterministic local *tag*, not an invalid FROM sha256:<image-id> ref."""
+    if not isinstance(image_id, str) or not DIGEST.fullmatch(image_id):
+        raise ValueError("SOURCE_IMAGE_ID_INVALID")
+    return "blazux-p5-source:v032-" + image_id.removeprefix("sha256:")
+
+
+def _ensure_local_base_tag(image_id: str) -> str:
+    """Alias the exact installed image for BuildKit; never pull/overwrite.
+
+    BuildKit's FROM cannot treat a standalone Docker image ID as a repository
+    name; it can resolve an existing local tag. The image ID stays the strict
+    provenance label and is verified immediately before and after tagging.
+    """
+    alias = _local_base_ref(image_id)
+    inspected = command(["docker", "image", "inspect", "--format", "{{.Id}}", alias])
+    if inspected.returncode == 0:
+        if inspected.stdout.strip() != image_id:
+            raise ValueError("LOCAL_BASE_IMAGE_ALIAS_COLLISION")
+    elif inspected.returncode == 1:
+        # Only an explicitly missing local alias may be created.
+        # A failed Docker daemon or malformed inventory must not be overwritten.
+        tagged = command(["docker", "tag", image_id, alias])
+        if tagged.returncode != 0:
+            raise ValueError("LOCAL_BASE_IMAGE_TAG_FAILED")
+    else:
+        raise ValueError("LOCAL_BASE_IMAGE_ALIAS_INSPECT_FAILED")
+    if docker_json(alias, image=True).get("Id") != image_id:
+        raise ValueError("LOCAL_BASE_IMAGE_ALIAS_IDENTITY_MISMATCH")
+    return alias
+
+
 def _source_snapshot() -> bool:
     if SNAPSHOT.is_symlink() or not SNAPSHOT.is_dir():
         return False
@@ -245,8 +278,16 @@ def prepare() -> dict:
                 "executed": False}
     except ValueError:
         pass
-    args = ["docker", "build", "--pull=false", "-f", "Dockerfile.p5.candidate",
-            "--build-arg", "P5_QUALIFIED_BASE_IMAGE=" + source["image_id"],
+    try:
+        local_base = _ensure_local_base_tag(source["image_id"])
+    except (OSError, ValueError, RuntimeError, subprocess.TimeoutExpired) as exc:
+        return {"status": "BLOCKED", "action": "prepare",
+                "issues": [str(exc)[:100]], "executed": False,
+                "gpu_verified": False}
+    args = ["docker", "build", "--pull=false", "--network=none",
+            "-f", "Dockerfile.p5.candidate",
+            "--build-arg", "P5_QUALIFIED_BASE_IMAGE=" + local_base,
+            "--build-arg", "P5_QUALIFIED_BASE_IMAGE_ID=" + source["image_id"],
             "-t", IMAGE_TAG, str(ROOT)]
     built = command(args, timeout=45 * 60)
     if built.returncode:
@@ -255,9 +296,12 @@ def prepare() -> dict:
                 "build_log_tail": (built.stdout + built.stderr)[-6000:],
                 "executed": True, "gpu_verified": False}
     img = docker_json(IMAGE_TAG, image=True)
-    if not _candidate_label(img) or not DIGEST.fullmatch(img.get("Id", "")):
+    image_labels = (img.get("Config") or {}).get("Labels") or {}
+    if (not _candidate_label(img)
+        or not DIGEST.fullmatch(str(img.get("Id", "")))
+        or image_labels.get("blazux.p5.base_image") != source["image_id"]):
         return {"status": "BLOCKED", "issues": ["BUILT_IMAGE_IDENTITY_INVALID"],
-                "executed": True}
+                "executed": True, "gpu_verified": False}
     return {"status": "PASS", "action": "prepare", "image_id": img["Id"],
             "source_image_id": source["image_id"],
             "executed": True, "gpu_verified": False,

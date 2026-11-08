@@ -1,11 +1,15 @@
 # P5 candidate only — NOT a production image; no implicit build authorization.
 # Pass a separately qualified immutable Blazux vLLM 0.32 image ref as build arg.
 # Candidate image build does not stop the 27B service; execution uses an exact P5 plan.
-ARG P5_QUALIFIED_BASE_IMAGE
+# Must be overridden with a locally-tagged, image-ID-bound Docker alias.
+# A standalone sha256:<local-image-id> is NOT a valid FROM repository reference.
+ARG P5_QUALIFIED_BASE_IMAGE=blazux-p5-source:explicit-local-override-required
 FROM ${P5_QUALIFIED_BASE_IMAGE}
+ARG P5_QUALIFIED_BASE_IMAGE_ID
+RUN test -n "${P5_QUALIFIED_BASE_IMAGE_ID}" && test "${P5_QUALIFIED_BASE_IMAGE_ID}" != "UNSET"
 LABEL blazux.p5.state="SOURCE_CANDIDATE_NOT_QUALIFIED" \
       blazux.p5.vllm="0.32.0" \
-      blazux.p5.base_image="${P5_QUALIFIED_BASE_IMAGE}" \
+      blazux.p5.base_image="${P5_QUALIFIED_BASE_IMAGE_ID}" \
       blazux.p5.service_execution_allowed="false"
 ARG SP=/usr/local/lib/python3.12/dist-packages
 ARG PLE=${SP}/vllm/models/qwen4_exp/nvidia/ngram_embedding.py

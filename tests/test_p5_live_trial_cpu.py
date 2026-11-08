@@ -163,6 +163,142 @@ class P5LiveTrialCPU(unittest.TestCase):
         self.assertEqual(rc, 3)
         self.assertEqual(json.loads(output.getvalue())["status"], "BLOCKED")
 
+    def test_existing_local_base_alias_must_match_exact_image_id(self):
+        src_id = "sha256:" + "9" * 64
+        alias = live._local_base_ref(src_id)
+        self.assertEqual(alias, "blazux-p5-source:v032-" + "9" * 64)
+        with patch.object(live, "command", return_value=subprocess.CompletedProcess(
+                 [], 0, "sha256:" + "8" * 64 + "\n", "")) as run:
+            with self.assertRaisesRegex(ValueError, "LOCAL_BASE_IMAGE_ALIAS_COLLISION"):
+                live._ensure_local_base_tag(src_id)
+        self.assertEqual(run.call_count, 1)
+
+    def test_missing_base_alias_is_tagged_locally_from_exact_image_id(self):
+        src_id = "sha256:" + "9" * 64
+        alias = live._local_base_ref(src_id)
+        calls = []
+        def run(argv, timeout=30):
+            calls.append(argv)
+            if argv[:4] == ["docker", "image", "inspect", "--format"]:
+                return subprocess.CompletedProcess(argv, 1, "", "No such image")
+            if argv[:2] == ["docker", "tag"]:
+                return subprocess.CompletedProcess(argv, 0, "", "")
+            raise AssertionError(argv)
+        with patch.object(live, "command", side_effect=run), \
+             patch.object(live, "docker_json",
+                          return_value={"Id": src_id}) as inspect:
+            self.assertEqual(live._ensure_local_base_tag(src_id), alias)
+        self.assertEqual(calls[1], ["docker", "tag", src_id, alias])
+        self.assertNotIn("stop", str(calls))
+        self.assertNotIn("rm", str(calls))
+        inspect.assert_called_once_with(alias, image=True)
+
+    def test_preexisting_correct_base_alias_is_read_only(self):
+        src_id = "sha256:" + "9" * 64
+        with patch.object(live, "command", return_value=subprocess.CompletedProcess(
+                 [], 0, src_id + "\n", "")) as run, \
+             patch.object(live, "docker_json", return_value={"Id": src_id}):
+            self.assertEqual(live._ensure_local_base_tag(src_id),
+                             live._local_base_ref(src_id))
+        self.assertEqual(run.call_count, 1)
+
+    def test_base_alias_inspect_failure_other_than_not_found_blocks_tag(self):
+        with patch.object(live, "command", return_value=subprocess.CompletedProcess(
+                 [], 125, "", "docker daemon unavailable")) as run:
+            with self.assertRaisesRegex(ValueError, "LOCAL_BASE_IMAGE_ALIAS_INSPECT_FAILED"):
+                live._ensure_local_base_tag("sha256:" + "9" * 64)
+        self.assertEqual(run.call_count, 1)
+
+    def test_prepare_build_uses_local_tag_separate_from_source_image_id(self):
+        src_id = "sha256:" + "9" * 64
+        candidate_id = "sha256:" + "a" * 64
+        base_tag = live._local_base_ref(src_id)
+        candidate = {
+            "Id": candidate_id, "Architecture": "arm64", "Os": "linux",
+            "Config": {"Labels": {
+                "blazux.p5.vllm": "0.32.0",
+                "blazux.p5.state": "SOURCE_CANDIDATE_NOT_QUALIFIED",
+                "blazux.p5.base_image": src_id,
+            }},
+        }
+        def inspect(name, *, image=False):
+            if name == src_id:
+                return {"Architecture": "arm64", "Id": src_id}
+            if name == live.IMAGE_TAG:
+                if state["built"]:
+                    return candidate
+                raise ValueError("DOCKER_INSPECT_FAILED")
+            raise AssertionError(name)
+        state = {"built": False}
+        calls = []
+        def run(argv, timeout=30):
+            calls.append(argv)
+            self.assertNotIn(["docker", "stop"], [argv[:2]])
+            self.assertNotIn(["docker", "rm"], [argv[:2]])
+            self.assertNotIn(["docker", "rmi"], [argv[:2]])
+            self.assertEqual(argv[:4],
+                             ["docker", "build", "--pull=false", "--network=none"])
+            self.assertIn("P5_QUALIFIED_BASE_IMAGE=" + base_tag, argv)
+            self.assertIn("P5_QUALIFIED_BASE_IMAGE_ID=" + src_id, argv)
+            self.assertNotIn("P5_QUALIFIED_BASE_IMAGE=" + src_id, argv)
+            state["built"] = True
+            return subprocess.CompletedProcess(argv, 0, "Successfully built", "")
+        with patch.object(live, "_metadata_gate",
+                          return_value=([], {"metadata_verified": True})), \
+             patch.object(live, "_source",
+                          return_value={"image_id": src_id}), \
+             patch.object(live, "docker_json", side_effect=inspect), \
+             patch.object(live, "_ensure_local_base_tag", return_value=base_tag), \
+             patch.object(live, "command", side_effect=run):
+            result = live.prepare()
+        self.assertEqual(result["status"], "PASS")
+        self.assertTrue(result["executed"])
+        self.assertEqual(result["source_image_id"], src_id)
+        self.assertEqual(result["image_id"], candidate_id)
+        self.assertEqual(len(calls), 1)
+
+    def test_builded_candidate_with_wrong_source_provenance_is_rejected(self):
+        src_id = "sha256:" + "9" * 64
+        wrong_id = "sha256:" + "8" * 64
+        candidate = {
+            "Id": "sha256:" + "a" * 64, "Architecture": "arm64", "Os": "linux",
+            "Config": {"Labels": {
+                "blazux.p5.vllm": "0.32.0",
+                "blazux.p5.state": "SOURCE_CANDIDATE_NOT_QUALIFIED",
+                "blazux.p5.base_image": wrong_id,
+            }},
+        }
+        state = {"built": False}
+        def inspect(name, *, image=False):
+            if name == src_id:
+                return {"Architecture": "arm64", "Id": src_id}
+            if name == live.IMAGE_TAG:
+                if state["built"]:
+                    return candidate
+                raise ValueError("DOCKER_INSPECT_FAILED")
+            raise AssertionError(name)
+        def run(argv, timeout=30):
+            state["built"] = True
+            return subprocess.CompletedProcess(argv, 0, "", "")
+        with patch.object(live, "_metadata_gate",
+                          return_value=([], {"metadata_verified": True})), \
+             patch.object(live, "_source",
+                          return_value={"image_id": src_id}), \
+             patch.object(live, "docker_json", side_effect=inspect), \
+             patch.object(live, "_ensure_local_base_tag",
+                          return_value=live._local_base_ref(src_id)), \
+             patch.object(live, "command", side_effect=run):
+            result = live.prepare()
+        self.assertEqual(result["status"], "BLOCKED")
+        self.assertIn("BUILT_IMAGE_IDENTITY_INVALID", result["issues"])
+
+    def test_p5_dockerfile_requires_local_tag_and_separate_immutable_id_label(self):
+        content = Path("Dockerfile.p5.candidate").read_text(encoding="utf-8")
+        self.assertIn("FROM ${P5_QUALIFIED_BASE_IMAGE}", content)
+        self.assertIn('blazux.p5.base_image="${P5_QUALIFIED_BASE_IMAGE_ID}"', content)
+        self.assertIn("blazux-p5-source:explicit-local-override-required", content)
+        self.assertNotIn('blazux.p5.base_image="${P5_QUALIFIED_BASE_IMAGE}"', content)
+
     def test_old_wizard_p5_gpu_trial_stays_separate_and_blocked(self):
         from scripts.manager.p5_orcarouter import source_plan
         result = source_plan("mtp0")
