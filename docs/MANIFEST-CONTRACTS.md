@@ -1,3 +1,17 @@
+## 2026-11-09 current P5 v2 supersession — historical adapter now replaced by v3 runtime observation
+
+Historical `qwen4exp-qsa62318-lmhead-v032-v2` and its failed GPU trial remain unchanged below; the **latest actual operator DGX observation** is v3 adapter `qwen4exp-qsa62318-lmhead-v032-v3` with corrected `lm_head.weight_scale`, container `qwen38-orcarouter-qsa62318-lmhead-v3`, :8000 API `qwen3.8-flash-next-orca-uncensored-bf16`, `LIVE_P5_TRIAL_API_VERIFIED` and MTP0 text `PASS_LIVE_INFERENCE` (READY). Only `DEVELOPMENT_TRIAL`; do not promote canonical `qwen38-orcarouter` without a separately approved lifecycle.
+
+**2026-11-09 00:54–00:55 KST resource evidence (idle-only):** MemAvailable 30.18 GiB/121.63 GiB total, host swap 1.31 GiB, Orcarouter swap 0 GiB; Docker usage 7.157 GiB versus cgroup memory.current 25.54 GiB and peak 37.02 GiB, inactive_file 18.38 GiB, anon 4.58 GiB; memory PSI avg10 0, OOM/OOMKill 0, swap I/O, major fault and file-refault deltas 0; CPU busy ~0.18% over 45s, performance governor, CPU split 2808/3900 MHz, system ~34.7 C/GPU ~33 C. Inactive file cache largely accounts for memory reporting differences, NOT proof of PLE RSS/memory leak. P5 recipe remains OBSERVE_ONLY, startup gate disabled and BLOCKED_UNCALIBRATED expected. No arbitrary YSLAB 100 GiB, CPU governor, clock or hard memory limit.
+
+**Current acceptance:** P5 MTP0 text/API and idle telemetry observed; P5 Tools, Vision, MTP2, under-load benchmarks, long stability and canonical promotion NOT_QUALIFIED. P6 read-only Orcarouter↔27B preflight and source-only two-way in-memory Fake-DGX matrix implemented at `21aa6c9`; P5 same-container cgroup fault/oom deltas implemented at `5acf0b1`, both Push/PR CI SUCCESS. Actual P6 switching remains NOT_RUN. P7 Wizard source route present; Proxy/Gateway/OpenWebUI integration acceptance still NOT_RUN. P8 Fake-DGX faults are NOT real automatic recovery; real injection/signoff NOT_RUN/NOT_RELEASED. Preserve vLLM 0.32.0, no SGLang, ONE_ACTIVE_MODEL_ONLY and port 8000; no service mutation, no PR merge.
+
+**Wizard read-only / simulation routes:** `./wizard.sh switch orcarouter-27b preflight --to-model 27b --json`, `./wizard.sh switch orcarouter-27b simulate --from-model orcarouter --to-model 27b --json`, `./wizard.sh operations recovery-acceptance fault-matrix --fake-dgx --json`. None can perform a real switch or release.
+
+[Full documentation audit](HANDOFF-DOCUMENT-AUDIT-FULL-P5-20261108.md) · [P5 technical record](P5-ORCAROUTER-BF16PLE-VLLM032-ADOPTION-20261108.md)
+
+---
+
 ## 2026-11-08 current P5 v2 supersession (document-wide audit)
 
 The complete [document inventory and consistency audit](HANDOFF-DOCUMENT-AUDIT-FULL-P5-20261108.md) and [current **P5 QSA+LM-head v2** DGX trial runbook](P5-LMHEAD-V2-DGX-GPU-TRIAL-RUNBOOK-20261108.md) supersede earlier P5 source-only / GPU NOT_RUN descriptions and older QSA-only commands. Latest actual DGX **QSA-only** trial failed after 15/17 safetensors shards with missing `lm_head.weight_scale`; the candidate v2 source/CPU CI passed but **v2 GPU load is not proven**. Current v2 adapter is `qwen4exp-qsa62318-lmhead-v032-v2` and its **new** target is `qwen38-orcarouter-qsa62318-lmhead`. Actual current :8000 service state remains unobserved since that failed trial. Previous 27B and failed candidate images/containers are preserved. Never copy the earlier QSA-only `execute` commands without revalidation. vLLM=0.32.0, one active model, :8000; P6/P8 live operations and PR #1 merge remain out of scope. Older sections below remain historical.
