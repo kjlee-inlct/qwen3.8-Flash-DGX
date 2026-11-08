@@ -1,4 +1,4 @@
-"""One-shot, read-only P5 checkpoint + manifest + CPU regression verdict.
+"""Read-only P5 transition readiness (manifest + pinned LM-head metadata).
 
 Does not invoke Docker, vLLM, GPU, network, or any Wizard execution route.
 Status is SOURCE_ONLY even on success; never implies GPU qualification.
@@ -111,13 +111,16 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--snapshot", type=Path)
     parser.add_argument("--cache-root", type=Path)
-    parser.add_argument("--skip-tests", action="store_true",
-                        help="Use for metadata-only diagnostics")
+    options = parser.add_mutually_exclusive_group()
+    options.add_argument("--with-tests", action="store_true",
+                         help="Opt in to full P5 CPU regression suite; default does not run tests")
+    options.add_argument("--skip-tests", action="store_true",
+                         help="Legacy alias for default metadata-only readiness")
     parser.add_argument("--json", action="store_true")
     args = parser.parse_args(argv)
     from scripts.manager.p5_live_trial import CACHE, SNAPSHOT
     result = evaluate(args.snapshot or SNAPSHOT, args.cache_root or CACHE,
-                      with_tests=not args.skip_tests)
+                      with_tests=args.with_tests)
     print(json.dumps(result, indent=2 if args.json else None, sort_keys=True))
     return 0 if result["status"] == "PASS_SOURCE_ONLY" else 3
 
