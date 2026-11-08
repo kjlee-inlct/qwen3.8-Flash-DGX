@@ -712,11 +712,53 @@ def status() -> dict:
         value["issues"] = ["TARGET_CONTAINER_NOT_OBSERVED"]
     return value
 
+
+def verify_live() -> dict:
+    """Bounded chat against the already-running P5 v3, never start/stop Docker."""
+    result = {"schema_version": 1, "stage": "p5",
+              "action": "live-inference-verify", "status": "BLOCKED",
+              "executed": False, "service_mutated": False,
+              "inference_verified": False, "production_released": False,
+              "gpu_exclusivity_verified": False, "issues": []}
+    try:
+        from scripts.manager.p5_trial_cleanup import _read_live
+        active = _read_live()
+        sample = api("/v1/chat/completions", payload={
+            "model": ALIAS,
+            "messages": [{"role": "user", "content": "Reply with the word READY."}],
+            "temperature": 0, "max_tokens": 128, "stream": False,
+        }, timeout=120)
+        choices = sample.get("choices")
+        if not isinstance(choices, list) or len(choices) < 1:
+            result["issues"].append("P5_LIVE_CHAT_COMPLETION_EMPTY")
+            return result
+        first = choices[0]
+        if not isinstance(first, dict) or not isinstance(first.get("message"), dict):
+            result["issues"].append("P5_LIVE_CHAT_MESSAGE_INVALID")
+            return result
+        message = first["message"]
+        reply = message.get("content")
+        if not isinstance(reply, str) or not reply.strip():
+            result["issues"].append("P5_LIVE_CHAT_NO_TEXT")
+            return result
+        result.update(status="PASS_LIVE_INFERENCE",
+                      inference_verified=True,
+                      observed_model_id=ALIAS,
+                      active_container=active["name"],
+                      active_container_id=active["container_id"],
+                      reply_excerpt=reply[:128],
+                      issues=[])
+    except (OSError, RuntimeError, ValueError, KeyError, TypeError,
+            subprocess.TimeoutExpired) as exc:
+        result["issues"] = ["P5_LIVE_INFERENCE_FAILED_" + type(exc).__name__]
+    return result
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("action", choices=(
         "prepare", "plan", "execute", "status",
-        "cleanup-plan", "cleanup-execute"))
+        "cleanup-plan", "cleanup-execute", "verify"))
     parser.add_argument("--approve-plan")
     parser.add_argument("--ack-downtime")
     parser.add_argument("--ack-cleanup")
@@ -737,6 +779,11 @@ def main(argv: list[str] | None = None) -> int:
                 args.approve_plan, args.ack_cleanup)
     elif args.ack_cleanup:
         result = {"status": "BLOCKED", "issues": ["CLEANUP_ACK_ONLY_FOR_CLEANUP_EXECUTE"]}
+    elif args.action == "verify":
+        if args.approve_plan or args.ack_downtime:
+            result = {"status": "BLOCKED", "issues": ["VERIFY_DOES_NOT_ACCEPT_APPROVAL"]}
+        else:
+            result = verify_live()
     elif args.action == "execute":
         result = execute(args.approve_plan, args.ack_downtime)
     elif args.approve_plan or args.ack_downtime:
@@ -749,7 +796,7 @@ def main(argv: list[str] | None = None) -> int:
         result = status()
     print(json.dumps(result, ensure_ascii=False, sort_keys=True,
                      indent=2 if args.json else None))
-    return 0 if result.get("status") in ("PASS", "READY_TO_APPROVE", "PASS_GPU_TRIAL", "RUNNING", "NOTHING_TO_CLEAN") else 3
+    return 0 if result.get("status") in ("PASS", "READY_TO_APPROVE", "PASS_GPU_TRIAL", "RUNNING", "NOTHING_TO_CLEAN", "PASS_LIVE_INFERENCE") else 3
 
 if __name__ == "__main__":
     raise SystemExit(main())
