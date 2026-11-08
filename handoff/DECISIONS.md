@@ -1,3 +1,13 @@
+## 2026-11-08 P5 GPU trial: explicitly no auto restoration
+
+User granted **development DGX 27B service downtime and GPU operation** and explicitly requested **no rollback if the Orcarouter test fails**. New `./wizard.sh p5 trial` command uses `prepare` for isolated vLLM0.32 source-patched image build while 27B runs, `plan` for short-lived SHA256 pinned exact source+target/API/PLE/GPU gate, `execute` (requires matching ID and `I_ACCEPT_P5_NO_ROLLBACK`), and `status`. Execution stops 27B and loads Orcarouter MTP0 on :8000 without restoring on failure, preserves source container/image/HF caches, retains target and logs and writes private append-only report. MTP2, full tool-call pass, benchmark and production status remain unverified.
+
+[Runbook](../docs/P5-ORCAROUTER-MTP0-DGX-LIVE-NO-RESTORE-RUNBOOK-20261108.md) · [P5 implementation CI SUCCESS #42438845913](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42438845913) (67 P5 CPU/Fake-DGX PASS). The current conversation's DGX pasted output shows PLE BF16 metadata PASS, donor MTP SHA PASS and 27B live at :8000, but **the real DGX has NOT run the new trial code**. No command execution can be inferred from GitHub CI.
+
+Next: Pull latest branch on DGX; validate manifest; `./wizard.sh p5 trial prepare --json`, `./wizard.sh p5 trial plan --json`; execute the exact planned test on DGX and collect logs. No implicit production switch authorization, no auto restart, no cache/image deletion, no P3/P4/P8 operations, no PR merge.
+
+---
+
 ## 2026-11-08 — Latest P5 PLE v2 / GPU-permitted development DGX
 
 Source HEAD `d395368` [CI #42436269922 SUCCESS](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42436269922). The Wizard's **seven-document** shared registry now includes `runtimes/ple-assets.json` schema v2 and `runtimes/ple-loader-profiles.json`. The PLE asset format is **independent** of model-body quantization, MTP donor and KV cache. BF16 remains pinned for Orcarouter, while FP8/F16/F32 and other explicitly modeled encodings can be registered as *unqualified* future assets. Source loader 0.32.0 GB10 remains NOT_RUN; no GPU release. The model switch preview requires no hot reuse of PLE mmap, independent PLE loader/scale/TP1 worker checks, GPU allocation and port 8000 release, preserved old assets and exact rollback.

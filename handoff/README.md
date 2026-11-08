@@ -1,3 +1,11 @@
+## 2026-11-08 — P5 real DGX one-shot MTP0 trial (no restore)
+
+Operator permitted stopping development 27B and specifically waived automatic 27B restoration if Orcarouter fails. Newly implemented `./wizard.sh p5 trial prepare|plan|execute|status` with built, isolated Blazux vLLM 0.32 candidate, BF16 PLE mmap, immutable base image/source pins, :8000 and one active GPU model, explicit exact plan approval `I_ACCEPT_P5_NO_ROLLBACK`, preserved HF caches/images/old stopped container and private evidence. Execution re-checks actual 27B served ID, source/candidate image digests, :8000 release and NVIDIA compute process inventory. The default production service transition rollback remains unchanged. MTP2, Native Tools and benchmark still require separate GPU qualification.
+
+**Real DGX P5 not yet executed by this GitHub session.** User's latest DGX log: new PLE schema+manifests PASS, Orcarouter PLE BF16 metadata PASS, donor 31 BF16 SHA PASS, 57 CPU tests PASS; 27B still serving. The new GPU trial code first had 67 P5 CI CPU tests PASS; the latest extra source/image/GPU guard CI must be checked after commit. Runbook: `docs/P5-ORCAROUTER-MTP0-DGX-LIVE-NO-RESTORE-RUNBOOK-20261108.md`. No auto restoration, source deletion, P3 replay, P4 prune, P6 switch, P8 faults, or PR merge.
+
+---
+
 ## P5 follow-up 2026-11-08: PLE schema v2 and cross-engine reference discipline
 
 The operator allows development DGX service downtime and GPU experiments. Shared Wizard `runtimes/ple-assets.json` now schema v2 (model-specific dtype/scale/placement; Orcarouter pinned BF16 unchanged), `runtimes/ple-loader-profiles.json` is in the common registry as seventh manifest, and `scripts/manager/ple_format.py` plus transition preview require independent source mapping/GPU release and rollback during switches. External DGX references dolf3131 (pinned 45e3d477) and NVIDIA October FP4-Local forum provide **research only**; no alternative container/image adopted, and Blazux vLLM0.32 remains mandatory.

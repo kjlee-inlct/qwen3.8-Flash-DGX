@@ -72,6 +72,7 @@ class P5LiveTrialCPU(unittest.TestCase):
                  patch.object(live, "_plan_data", return_value=mock_plan()), \
                  patch.object(live, "_port_open", return_value=False), \
                  patch.object(live, "_gpu_collisions", return_value=[]), \
+                 patch.object(live, "_unmanaged_gpu_pids", return_value=[]), \
                  patch.object(live, "command", side_effect=fake_run):
                 result = live.execute("b" * 64, live.ACK)
         self.assertEqual(result["status"], "FAIL_NO_ROLLBACK")
@@ -82,6 +83,26 @@ class P5LiveTrialCPU(unittest.TestCase):
         self.assertEqual([a[1] for a in calls], ["stop", "run"])
         self.assertNotIn("start", [a[1] for a in calls])
         self.assertNotIn("rm", [a[1] for a in calls])
+
+    def test_gpu_process_survives_stop_no_target_start_and_no_restore(self):
+        calls = []
+        def fake_run(args, timeout=30):
+            calls.append(args)
+            return subprocess.CompletedProcess(args, 0, "qwen38-27b\n", "")
+        with tempfile.TemporaryDirectory() as temp:
+            with patch.object(live, "STATE", Path(temp)), \
+                 patch.object(live, "_private_state", return_value=None), \
+                 patch.object(live, "_save", return_value="/tmp/test-fake.json"), \
+                 patch.object(live, "_plan_data", return_value=mock_plan()), \
+                 patch.object(live, "_port_open", return_value=False), \
+                 patch.object(live, "_unmanaged_gpu_pids", return_value=["1234"]), \
+                 patch.object(live.time, "sleep", return_value=None), \
+                 patch.object(live, "command", side_effect=fake_run):
+                result = live.execute("b" * 64, live.ACK)
+        self.assertEqual(result["status"], "FAIL_NO_ROLLBACK")
+        self.assertEqual(result["issues"], ["GPU_COMPUTE_PROCESS_STILL_RUNNING"])
+        self.assertTrue(result["source_stopped"])
+        self.assertEqual([a[1] for a in calls], ["stop"])
 
     def test_stopped_27b_port_unknown_does_not_start_target(self):
         calls = []

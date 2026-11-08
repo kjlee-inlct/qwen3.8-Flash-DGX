@@ -5,6 +5,7 @@ ARG P5_QUALIFIED_BASE_IMAGE
 FROM ${P5_QUALIFIED_BASE_IMAGE}
 LABEL blazux.p5.state="SOURCE_CANDIDATE_NOT_QUALIFIED" \
       blazux.p5.vllm="0.32.0" \
+      blazux.p5.base_image="${P5_QUALIFIED_BASE_IMAGE}" \
       blazux.p5.service_execution_allowed="false"
 ARG SP=/usr/local/lib/python3.12/dist-packages
 ARG PLE=${SP}/vllm/models/qwen4_exp/nvidia/ngram_embedding.py

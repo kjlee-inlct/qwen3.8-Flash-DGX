@@ -1,3 +1,13 @@
+## 2026-11-08 P5 GPU trial: explicitly no auto restoration
+
+User granted **development DGX 27B service downtime and GPU operation** and explicitly requested **no rollback if the Orcarouter test fails**. New `./wizard.sh p5 trial` command uses `prepare` for isolated vLLM0.32 source-patched image build while 27B runs, `plan` for short-lived SHA256 pinned exact source+target/API/PLE/GPU gate, `execute` (requires matching ID and `I_ACCEPT_P5_NO_ROLLBACK`), and `status`. Execution stops 27B and loads Orcarouter MTP0 on :8000 without restoring on failure, preserves source container/image/HF caches, retains target and logs and writes private append-only report. MTP2, full tool-call pass, benchmark and production status remain unverified.
+
+[Runbook](../docs/P5-ORCAROUTER-MTP0-DGX-LIVE-NO-RESTORE-RUNBOOK-20261108.md) · [P5 implementation CI SUCCESS #42438845913](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42438845913) (67 P5 CPU/Fake-DGX PASS). The current conversation's DGX pasted output shows PLE BF16 metadata PASS, donor MTP SHA PASS and 27B live at :8000, but **the real DGX has NOT run the new trial code**. No command execution can be inferred from GitHub CI.
+
+Next: Pull latest branch on DGX; validate manifest; `./wizard.sh p5 trial prepare --json`, `./wizard.sh p5 trial plan --json`; execute the exact planned test on DGX and collect logs. No implicit production switch authorization, no auto restart, no cache/image deletion, no P3/P4/P8 operations, no PR merge.
+
+---
+
 ## 2026-11-08 P5 source-only update: format-generic PLE, external DGX Spark evidence
 
 Current code HEAD `d395368`; [CI #42436269922 SUCCESS](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42436269922). PLE asset manifest schema v2; seven-document shared registry adds separate loader/ABI capability profile (Blazux vLLM0.32 GB10 remains NOT_QUALIFIED). BF16 Orcarouter remains pinned, but model-dependent FP8 and other formats, per-table BF16 scalar scales, independent memory placement and MTP controls are represented. Switching preview requires old PLE mmap and GPU release, :8000 free, image/loader ABI requalification, PLE format compatibility and rollback. See `docs/P5-PLE-FORMAT-AND-DGX-SPARK-REFERENCE-ADOPTION-20261108.md` and external [dolf3131 pinned 45e3d477](https://github.com/dolf3131/dgx-spark-llm-serving/tree/45e3d47771577dabab0998e9013e85dd0915ae4f), [NVIDIA DGX Spark forum](https://forums.developer.nvidia.com/t/nvidia-official-qwen3-8-flash-next-checkpoint-for-single-dgx-spark/385994). External B12X images, unmerged patches and floating tags are NOT compatible substitutes for vLLM0.32 without validation.

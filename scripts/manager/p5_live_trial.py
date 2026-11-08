@@ -114,6 +114,20 @@ def _gpu_collisions() -> list[str]:
             conflicts.append(name)
     return conflicts
 
+def _unmanaged_gpu_pids() -> list[str]:
+    """NVML compute-process inventory; fail closed if unsupported on this host."""
+    p = command(["nvidia-smi", "--query-compute-apps=pid",
+                 "--format=csv,noheader"], timeout=12)
+    if p.returncode:
+        raise ValueError("GPU_NVML_PROCESS_INVENTORY_UNAVAILABLE")
+    rows = [line.strip() for line in p.stdout.splitlines()
+            if line.strip() and line.strip() not in (
+                "No running processes found", "N/A", "[N/A]")]
+    if any(not row.isdecimal() for row in rows):
+        raise ValueError("GPU_NVML_PROCESS_LIST_UNTRUSTED")
+    return rows
+
+
 def _metadata_gate() -> tuple[list[str], dict]:
     issues = []
     registry = manifest_registry.validate()
@@ -178,6 +192,9 @@ def _plan_data() -> dict:
         target = docker_json(IMAGE_TAG, image=True)
         if not _candidate_label(target):
             issues.append("P5_ISOLATED_IMAGE_NOT_QUALIFIED_FOR_TRIAL")
+        target_labels = (target.get("Config") or {}).get("Labels") or {}
+        if target_labels.get("blazux.p5.base_image") != src["image_id"]:
+            issues.append("P5_CANDIDATE_BASE_IMAGE_SOURCE_DRIFT")
         if not DIGEST.fullmatch(str(target.get("Id"))):
             issues.append("P5_IMAGE_DIGEST_UNVERIFIED")
         else:
@@ -218,7 +235,9 @@ def prepare() -> dict:
         return {"status": "BLOCKED", "issues": ["BASE_IMAGE_NOT_ARM64"], "executed": False}
     try:
         existing = docker_json(IMAGE_TAG, image=True)
-        if _candidate_label(existing):
+        existing_labels = (existing.get("Config") or {}).get("Labels") or {}
+        if (_candidate_label(existing)
+            and existing_labels.get("blazux.p5.base_image") == source["image_id"]):
             return {"status": "PASS", "action": "prepare", "image_id": existing["Id"],
                     "already_prepared": True, "executed": False,
                     "gpu_verified": False}
@@ -333,8 +352,16 @@ def execute(approval: str | None, ack: str | None, *,
                 report["status"] = "FAIL_NO_ROLLBACK"
                 report["issues"] = ["PORT_8000_STILL_OCCUPIED"]
                 return report
-            # Verify no competing GPU containers; stopped source may leave a
-            # process outside Docker — a dedicated GPU telemetry audit follows.
+            # Docker-external GPU processes also block; no second model may
+            # be started while the old CUDA runtime has not fully exited.
+            for _ in range(30):
+                if not _unmanaged_gpu_pids():
+                    break
+                time.sleep(1)
+            if _unmanaged_gpu_pids():
+                report["status"] = "FAIL_NO_ROLLBACK"
+                report["issues"] = ["GPU_COMPUTE_PROCESS_STILL_RUNNING"]
+                return report
             conflicts = _gpu_collisions()
             if conflicts:
                 report["status"] = "FAIL_NO_ROLLBACK"
@@ -402,7 +429,8 @@ def status() -> dict:
                      container_status=target.get("State", {}).get("Status"))
         try:
             value["observed_model_ids"] = api_ids()
-            value["gpu_verified"] = value["observed_model_ids"] == [ALIAS]
+            value["api_identity_observed"] = value["observed_model_ids"] == [ALIAS]
+            value["gpu_verified"] = False  # API identity alone is not GPU qualification
         except (OSError, RuntimeError, ValueError, KeyError):
             value["observed_model_ids"] = None
     except (OSError, RuntimeError, ValueError, KeyError):
