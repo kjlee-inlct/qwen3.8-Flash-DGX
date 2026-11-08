@@ -1,6 +1,6 @@
 # Full GitHub document inventory and P5 state-consistency audit — 2026-11-08
 
-**Scope and method:** recursive Git tree `1494a714ef1034d69471d2e16df0ad491b6695fb` on branch `feature/recipe-wizard-handoff`, `truncated=false`. The pre-audit tree has 466 files and **161 document-like items**: 84 Markdown/other markup (read in six complete 15-file segments), 77 JSON/YAML/TXT/test-evidence/CI inputs (read in six segments). Each item's contents were fetched from its Git blob and inspected for subject, provenance and current-versus-historical status. Programmatic enumeration is a completeness claim for these extensions, **not** proof of deep semantic correctness of every historical log entry. No DGX/network service state was changed by the audit. No document is treated as live GPU evidence.
+**Scope and method:** recursive Git tree `1494a714ef1034d69471d2e16df0ad491b6695fb` on branch `feature/recipe-wizard-handoff`, `truncated=false`. The **initial** tree at `9e7cd1b9cb18` contained 466 files and **161 document-like items**, all reviewed: 84 Markdown/markup and 77 JSON/YAML/TXT/CI/evidence (six segments each). After adding the new v2 Runbook, the enumeration snapshot at `1494a714ef10` contains **467 files and 162 document-like items** (85 Markdown, including that newly authored Runbook, plus the same 77 structured/text artifacts). This audit file was itself created after that snapshot. Each item's contents were fetched from its Git blob and inspected for subject, provenance and current-versus-historical status. Programmatic enumeration is a completeness claim for these extensions, **not** proof of deep semantic correctness of every historical log entry. No DGX/network service state was changed by the audit. No document is treated as live GPU evidence.
 
 ## Audit conclusion and documents that had been missed
 
@@ -24,7 +24,7 @@
 
 The paths below are exhaustive for the stated document-like extensions at the pre-audit tree. Counts include raw test evidence fixtures so no file is silently excluded; this is not a claim that log fixtures constitute procedural documentation.
 
-### Markdown / markup (84)
+### Markdown / markup (85, including the newly added v2 Runbook)
 
 - `README.md`
 - `benchmarks/published/README.md`
