@@ -10,6 +10,11 @@
 
 ---
 
+## 2026-11-08 — Operator priority: Orcarouter live start
+
+User objective is to **run `orcarouter/Qwen3.8-Flash-Next-Uncensored-NVFP4` on DGX (vLLM 0.32.0, port 8000)**, NOT to continue validating document-inventory checks. Actual DGX `a7e2ed7` checkpoint metadata PASS (LM-head FP8+BF16 scale, `group_0`, not ignored); 119 local CPU tests had exactly one **documentation inventory equality** AssertionError, unrelated to model startup, while matching GitHub CI tests passed. Source change `44093c2`: one-shot P5 preflight now defaults to manifest/checkpoint only; full CPU tests only `--with-tests`. Direct next action: clean `git pull --ff-only`, run `./wizard.sh p5 trial prepare --json` to build the isolated derived vLLM 0.32 image, then `./wizard.sh p5 trial plan --json`; operator inspects current source :8000 and fresh plan and explicitly approves `./wizard.sh p5 trial execute --approve-plan <FRESH_PLAN_ID> --ack-downtime I_ACCEPT_P5_NO_ROLLBACK --json`. Target `PASS_GPU_TRIAL` is actual Orcarouter /v1/models + chat reply, not CI. No automatic restoration; preserve assets and previous failed containers; no unapproved GPU execution. Updated runbook `docs/P5-LMHEAD-V2-DGX-GPU-TRIAL-RUNBOOK-20261108.md` has direct steps. Keep PR #1 Draft/Unmerged.
+
+
 ## 2026-11-08 — REAL DGX pinned LM-head metadata PASS; P5 CPU suite BLOCKED (117 executed, exit 1)
 
 Operator fast-forwarded to `596a6839cd34117f234fd28d80c0412857994326` and ran the non-mutating `python3 -m scripts.manager.p5_checkpoint_preflight --json`. **Real pinned checkpoint metadata PASS**: `ignore_lm_head=false`, explicit matched quant group `group_0`; `lm_head.weight` F8_E4M3 shape `[248320,2560]` in `model-00017-of-00017.safetensors`; `lm_head.weight_scale` BF16 shape `[248320,1]` in `model-00016-of-00017.safetensors`. Manifest PASS; checkpoint issues empty. This rules against simple LM-head ignore/no-quant-target hypotheses **for this snapshot**; does NOT prove engine quant-method resolution, actual registered parameter or GPU correctness (`weight_registration_verified=false`, `gpu_verified=false`).
