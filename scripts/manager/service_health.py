@@ -57,6 +57,22 @@ def inspect_api_health(*, service: dict[str, Any] | None = None,
     selected = service.get("observed_model")
     config = policy()
     expected_id = config.get("models", {}).get(selected or "", {}).get("served_id")
+    # P5 temporary name/ID is declared by the pinned recipe, not the
+    # production service policy. Report trial health WITHOUT promotion.
+    if selected == "orcarouter" and service.get("p5_trial_active") is True:
+        running = [
+            item for item in service.get("managed_containers", [])
+            if isinstance(item, dict)
+            and item.get("p5_development_trial") is True
+            and str(item.get("status", "")).startswith("Up")
+        ]
+        if len(running) == 1 and (
+            running[0].get("container_name") == service.get("p5_trial_candidate_name")
+            and running[0].get("served_id") ==
+                config["models"]["orcarouter"]["proposed_served_ids"]["mtp0"]
+        ):
+            expected_id = running[0]["served_id"]
+            result["p5_development_trial"] = True
     if not isinstance(expected_id, str) or not expected_id:
         result["issues"].append("EXPECTED_SERVED_ID_UNQUALIFIED")
         return result
