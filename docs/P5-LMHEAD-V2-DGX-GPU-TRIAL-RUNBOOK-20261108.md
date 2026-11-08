@@ -2,6 +2,26 @@
 
 **2026-11-08 current superseding instructions.** Earlier sections of `docs/P5-ORCAROUTER-MTP0-DGX-LIVE-NO-RESTORE-RUNBOOK-20261108.md` that refer to the QSA-only adapter/container are historical. Use **this** runbook for the next P5 experiment; never reuse an old plan ID.
 
+## New read-only checkpoint gate — 2026-11-08
+
+**Run this before `p5 trial prepare`.** The checkpoint was not independently readable from this GitHub session (gated HF source); the latest GPU failure must not be promoted to PASS based on external model cards.
+
+```bash
+cd ~/Workspace/llm/blazux-orcarouter
+git status --short
+git pull --ff-only origin feature/recipe-wizard-handoff
+git rev-parse HEAD
+
+python3 -m scripts.manager.p5_checkpoint_preflight --json \
+  | tee /tmp/p5-lmhead-checkpoint-preflight.json
+```
+
+This single CPU-only, no-Docker/no-GPU/no-network judge runs manifest validation, the pinned `config.json` and `model.safetensors.index.json` audit, bounded safetensors **header-only** reads for `lm_head.weight` and `lm_head.weight_scale`, and `test_p5_*_cpu.py` regressions. It does **not** read weight payloads or change a cache. It returns `PASS_SOURCE_ONLY` only when its checks pass; even this means **no GPU registration, MTP0 inference or PLE mmap qualification**. `BLOCKED` (exit 3) forbids image preparation and approval planning.
+
+The `p5 trial prepare` and `p5 trial plan` metadata gate now invokes the same pinned head audit; plan/execute cannot bypass it. Specifically, a checkpoint containing a FP8 scale but listing LM-head in `quantization_config.ignore`, lacking an explicit head-target FP8 group, or having inconsistent indexed safetensors headers is **BLOCKED**. Generic `Linear` targets alone do not establish matching for `ParallelLMHead` in vLLM 0.32. The audit is intentionally fail-closed and may require further engine ABI work even on a metadata PASS. Do **not** edit or rewrite checkpoint weights/config to force a pass.
+
+If this tool returns a blocking code, share the redacted JSON fields `checkpoint.lm_head`, `checkpoint.issues` and `cpu_tests` for source analysis. No approval or GPU run should be attempted until the mismatch is resolved in a new isolated, versioned adapter.
+
 ## Evidence boundary and latest observed failure
 
 - **Actual operator-provided DGX, checkout `247d31de79da9fda3b2dcea41d7c96141d5a766b`**: QSA #62318 derived image built and MTP0 GPU trial launched. The initial QKV/indexer quantization exception no longer blocked constructor creation; safetensors shard progress reached 15/17 before a *new* `ValueError: There is no module or parameter named 'lm_head.weight_scale' in Qwen4ExpForCausalLM`. Available LM-head params: only `lm_head.weight`. Trial receipt: `~/.local/state/blazux-wizard/p5-live-trial/trial-20261108T054106528164Z.json`, `FAIL_NO_ROLLBACK`, `gpu_verified=false`, `ORCAROUTER_CONTAINER_EXITED`. This confirms **neither GPU load nor inference success**, and does not prove BF16 PLE mmap activation.
