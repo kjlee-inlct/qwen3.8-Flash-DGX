@@ -302,7 +302,8 @@ def cpu_only() -> dict:
             result = _gate("cpu_fake_dgx", PASS if success else FAIL,
                            *([] if success else ["P5_CPU_TESTS_FAILED"]),
                            exit_code=run.returncode, test_summary=summary,
-                           test_cases=cases)
+                           test_cases=cases,
+                           failure_details=run.stderr[-5000:] if not success else None)
         except (OSError, subprocess.TimeoutExpired):
             result = _gate("cpu_fake_dgx", INCONCLUSIVE, "P5_CPU_RUNNER_UNAVAILABLE")
     return {
