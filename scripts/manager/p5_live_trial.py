@@ -1,6 +1,6 @@
 """P5 one-shot *development* DGX GPU trial: MTP0 only; NO automatic rollback.
 
-prepare: inspect existing Blazux vLLM0.32 runtime image; never build/patch.
+prepare: build isolated recipe-scoped upstream QSA #62318 backport candidate image.
 plan: strictly read-only, exact pinned image/source/service state + hash approval.
 execute: with exact plan + downtime ack, stop 27B then start Orcarouter on :8000.
 Failure leaves original STOPPED, with target retained for logs. No image/cache deletion.
@@ -29,7 +29,10 @@ from scripts.manager.service_manifest import policy
 ROOT = Path(__file__).resolve().parents[2]
 STATE = Path.home() / ".local/state/blazux-wizard/p5-live-trial"
 SOURCE = "qwen38-27b"
-TARGET = "qwen38-orcarouter"
+TARGET = "qwen38-orcarouter-qsa62318"
+FAILED_PREVIOUS_TARGET = "qwen38-orcarouter"
+IMAGE_TAG = "blazux-p5-orcarouter:qsa62318-v032"
+ADAPTER = "qwen4exp-qsa-62318-v032-v1"
 ALIAS = "qwen3.8-flash-next-orca-uncensored-bf16"
 ACK = "I_ACCEPT_P5_NO_ROLLBACK"
 CACHE = Path.home() / "Workspace/llm/yslab-qwen38-bf16ple-dgx-spark/hf-cache"
@@ -82,28 +85,38 @@ def _port_open() -> bool:
         s.close()
 
 def _trial_recipe() -> dict:
-    """Single committed, strictly validated model/PLE/runtime recipe."""
+    """Single committed, strictly validated pinned MTP0 recipe+scoped adapter."""
     recipe = manifest_registry.load("orcarouter_recipe")
     trial = recipe["trial"]
     profile = recipe["profiles"][trial["profile"]]
-    if (trial["runtime_strategy"] != "RECIPE_FIRST_EXISTING_VLLM032_IMAGE"
-        or trial["require_image_build"] is not False
+    compat = recipe["compatibility_adapter"]
+    if (trial["runtime_strategy"]
+        != "RECIPE_PINNED_QSA62318_DERIVED_IMAGE_FROM_EXISTING_VLLM032"
+        or trial["require_image_build"] is not True
         or trial["allow_source_patch"] is not False
-        or trial["image_source"] != "CURRENT_VERIFIED_27B_IMAGE_ID"
+        or trial["allow_isolated_derived_image_source_backport"] is not True
+        or trial["image_source"] != "VERIFIED_STOPPED_OR_RUNNING_27B_IMAGE_ID"
+        or trial["container_name"] != TARGET
+        or trial["image_tag"] != IMAGE_TAG
+        or trial["adapter"] != ADAPTER
         or trial["profile"] != "mtp0"
+        or compat["id"] != ADAPTER
+        or compat["gpu_qualified"] is not False
+        or compat["apply_only_in_derived_image"] is not True
+        or compat["preserve_original_27b_image"] is not True
+        or compat["dockerfile"] != "Dockerfile.p5.qsa62318"
+        or compat["patch_script"] != "src/p5_qsa_quant_backport_v032.py"
         or profile["num_speculative_tokens"] != 0
         or profile["served_id"] != ALIAS
         or trial["p5_env"].get("VLLM_PLE_MMAP") != "1"
         or recipe["model"]["repo_id"] != ORCA_REPO
         or recipe["model"]["revision"] != ORCA_REV):
-        raise ValueError("RECIPE_FIRST_MTP0_CONTRACT_CHANGED")
+        raise ValueError("P5_SCOPED_QSA62318_RECIPE_CONTRACT_CHANGED")
     return recipe
 
 
-# No P5 image build or vLLM 0.32 source patches in the MTP0 trial.
-# The existing, observed 27B Blazux image must already provide the BF16 PLE
-# mmap hook. This bounded CPU-only probe checks for the capability without
-# importing models or asking Docker for any GPU access.
+# Canonical 27B Blazux image is never patched; a derived recipe-scoped adapter
+# backports upstream QSA fix #62318. This probe is CPU-only and no GPU access.
 _SOURCE_IMAGE_ABI_PROBE = r'''
 import ast, importlib.metadata, json, pathlib
 base=pathlib.Path("/usr/local/lib/python3.12/dist-packages")
@@ -155,6 +168,112 @@ def _inspect_existing_image(image_id: str) -> dict:
                 "source_syntax_valid"))):
         raise ValueError("EXISTING_IMAGE_BF16_PLE_MMAP_UNAVAILABLE")
     return report
+
+
+
+_DERIVED_QSA_ABI_PROBE = r'''
+import ast, importlib.metadata, json, pathlib
+base=pathlib.Path("/usr/local/lib/python3.12/dist-packages/vllm/models/qwen4_exp/nvidia")
+model=(base/"model.py").read_text()
+qsa=(base/"qsa.py").read_text()
+ast.parse(model)
+ast.parse(qsa)
+report={
+  "vllm_version":importlib.metadata.version("vllm"),
+  "qkv_mapping_exact": ('"qkv_proj": ["q_proj", "k_proj", "v_proj"],' in model
+    and '"qkv_proj": ["q_proj", "k_proj", "v_proj", "indexer.index_qk_proj"],' not in model),
+  "upstream_62318_guard": ("# blazux-p5-qsa62318:" in qsa and
+    "projection_method is type(self.indexer.index_qk_proj.quant_method)" in qsa and
+    "fused_quant_config," in qsa),
+  "source_syntax_valid":True,
+}
+print(json.dumps(report, sort_keys=True))
+'''
+
+
+def _scoped_image_labels(image: dict, base_id: str) -> bool:
+    labels = (image.get("Config") or {}).get("Labels") or {}
+    return (image.get("Architecture") in ("arm64", "aarch64")
+            and image.get("Os") == "linux"
+            and labels.get("qwen38.base") == "v0.32"
+            and labels.get("blazux.p5.state") == "SOURCE_CANDIDATE_NOT_QUALIFIED"
+            and labels.get("blazux.p5.vllm") == "0.32.0"
+            and labels.get("blazux.p5.adapter") == ADAPTER
+            and labels.get("blazux.p5.base_image") == base_id
+            and labels.get("blazux.p5.production_release") == "false")
+
+
+def _scoped_image(base_id: str) -> dict:
+    if not DIGEST.fullmatch(base_id):
+        raise ValueError("P5_BASE_IMAGE_ID_INVALID")
+    img = docker_json(IMAGE_TAG, image=True)
+    if (not DIGEST.fullmatch(str(img.get("Id")))
+        or not _scoped_image_labels(img, base_id)):
+        raise ValueError("P5_SCOPED_IMAGE_LABEL_OR_BASE_DRIFT")
+    argv = ["docker", "run", "--rm", "--network=none", "--entrypoint",
+            "python3", img["Id"], "-c", _DERIVED_QSA_ABI_PROBE]
+    proc = command(argv, timeout=120)
+    if proc.returncode != 0 or not 0 < len(proc.stdout) < 4096:
+        raise ValueError("P5_SCOPED_IMAGE_CPU_ABI_PROBE_FAILED")
+    try:
+        probe = json.loads(proc.stdout)
+    except json.JSONDecodeError as exc:
+        raise ValueError("P5_SCOPED_IMAGE_CPU_ABI_REPORT_INVALID") from exc
+    if (not isinstance(probe, dict)
+        or probe.get("vllm_version") != "0.32.0"
+        or any(probe.get(field) is not True for field in (
+            "qkv_mapping_exact", "upstream_62318_guard", "source_syntax_valid"))):
+        raise ValueError("P5_QSA62318_UPSTREAM_FIX_NOT_CONFIRMED")
+    return {"image_id": img["Id"], "base_image_id": base_id,
+            "adapter": ADAPTER, "capabilities": probe}
+
+
+def _local_base_alias(base_id: str) -> str:
+    if not DIGEST.fullmatch(base_id):
+        raise ValueError("P5_BASE_IMAGE_ID_INVALID")
+    return "blazux-p5-source:v032-" + base_id[7:]
+
+
+def _verified_local_base_alias(base_id: str) -> str:
+    """Strict local-only alias for FROM, never pull/overwrite an existing tag."""
+    name = _local_base_alias(base_id)
+    p = command(["docker", "image", "inspect", "--format", "{{.Id}}", name])
+    if p.returncode == 0:
+        if p.stdout.strip() != base_id:
+            raise ValueError("P5_BASE_ALIAS_COLLISION")
+    elif p.returncode == 1:
+        tagged = command(["docker", "tag", base_id, name])
+        if tagged.returncode:
+            raise ValueError("P5_BASE_LOCAL_TAG_FAILED")
+    else:
+        raise ValueError("P5_BASE_ALIAS_INSPECTION_UNAVAILABLE")
+    if docker_json(name, image=True).get("Id") != base_id:
+        raise ValueError("P5_BASE_ALIAS_IDENTITY_DRIFT")
+    return name
+
+
+def _prepare_scoped_image(base_id: str) -> dict:
+    """One isolated, offline image build of *official* QSA fix, not source rewrite."""
+    try:
+        return {**_scoped_image(base_id), "image_built": False}
+    except ValueError as exc:
+        # A bad existing tag must be retained and blocked, not overwritten.
+        p = command(["docker", "image", "inspect", IMAGE_TAG])
+        if p.returncode == 0:
+            raise ValueError("P5_EXISTING_SCOPED_IMAGE_INVALID") from exc
+        if p.returncode != 1:
+            raise ValueError("P5_SCOPED_IMAGE_INVENTORY_UNAVAILABLE") from exc
+    base = _verified_local_base_alias(base_id)
+    args = ["docker", "build", "--pull=false", "--network=none",
+            "-f", "Dockerfile.p5.qsa62318",
+            "--build-arg", "P5_BASE=" + base,
+            "--build-arg", "P5_BASE_IMAGE_ID=" + base_id,
+            "-t", IMAGE_TAG, str(ROOT)]
+    built = command(args, timeout=45*60)
+    if built.returncode:
+        raise ValueError("P5_SCOPED_QSA_IMAGE_BUILD_FAILED:" +
+                         (built.stdout + built.stderr)[-3400:])
+    return {**_scoped_image(base_id), "image_built": True}
 
 
 def _source_snapshot() -> bool:
@@ -226,20 +345,33 @@ def _git_head() -> str:
     return r.stdout.strip()
 
 def _source() -> dict:
+    """Accept original 27B either serving or *already stopped* by failed P5."""
     doc = docker_json(SOURCE)
-    image = doc.get("Image")
+    img = doc.get("Image")
+    state = doc.get("State") or {}
     if (not isinstance(doc.get("Id"), str)
         or not re.fullmatch(r"[0-9a-f]{64}", doc["Id"])
-        or not isinstance(image, str) or not DIGEST.fullmatch(image)
-        or not (doc.get("State") or {}).get("Running")
+        or not isinstance(img, str) or not DIGEST.fullmatch(img)
         or doc.get("Name") != "/" + SOURCE):
-        raise ValueError("EXPECTED_27B_SOURCE_NOT_RUNNING")
+        raise ValueError("P5_ORIGINAL_27B_IDENTITY_INVALID")
     ports = ((doc.get("HostConfig") or {}).get("PortBindings") or {}).get("8000/tcp")
     if not isinstance(ports, list) or not any(x.get("HostPort") == "8000" for x in ports):
         raise ValueError("SOURCE_8000_PORT_UNVERIFIED")
-    if api_ids() != ["qwen3.8-27b"]:
-        raise ValueError("SOURCE_API_MODEL_ID_MISMATCH")
-    return {"container_id": doc["Id"], "image_id": image}
+    if state.get("Running") is True and state.get("Status") == "running":
+        if api_ids() != ["qwen3.8-27b"] or not _port_open():
+            raise ValueError("SOURCE_API_MODEL_ID_MISMATCH")
+        stage = "RUNNING_27B"
+    elif (state.get("Running") is False and state.get("Status") == "exited"
+          and state.get("ExitCode") == 0):
+        # No silent 27B restart. Keep failed P5 old container and its logs.
+        if _port_open():
+            raise ValueError("IDLE_SOURCE_PORT_8000_OCCUPIED")
+        stage = "IDLE_27B_STOPPED_AFTER_P5"
+    else:
+        raise ValueError("P5_27B_SOURCE_STATE_UNVERIFIED")
+    return {"container_id": doc["Id"], "image_id": img, "state": stage,
+            "running": stage == "RUNNING_27B"}
+
 
 def _target_absent() -> None:
     p = command(["docker", "container", "inspect", TARGET])
@@ -249,68 +381,80 @@ def _target_absent() -> None:
         raise ValueError("TARGET_NAME_INVENTORY_UNVERIFIED")
 
 def prepare() -> dict:
-    """Recipe-first, no build/tag/source patch; only a CPU-only image probe."""
-    result = {"schema_version": 1, "stage": "p5", "action": "prepare",
+    """Offline isolated #62318 adapter build; 27B and old failed trial retained."""
+    report = {"schema_version": 1, "stage": "p5", "action": "prepare",
               "status": "BLOCKED", "executed": False, "image_built": False,
-              "source_patched": False, "gpu_verified": False, "issues": []}
+              "original_engine_patched": False, "gpu_verified": False,
+              "adapter": ADAPTER, "issues": []}
     issues, ple = _metadata_gate()
-    result["issues"] = issues
     if issues or not ple.get("metadata_verified"):
-        return result
+        report["issues"] = issues or ["PINNED_PLE_METADATA_UNVERIFIED"]
+        return report
     try:
         recipe = _trial_recipe()
         source = _source()
-        capabilities = _inspect_existing_image(source["image_id"])
-        result.update(status="PASS", issues=[],
-                      image_id=source["image_id"],
-                      image_source="EXISTING_VERIFIED_27B_IMAGE",
+        base = _inspect_existing_image(source["image_id"])
+        built = _prepare_scoped_image(source["image_id"])
+        report.update(status="PASS", issues=[], image_id=built["image_id"],
+                      base_image_id=source["image_id"],
+                      image_built=built["image_built"],
+                      executed=built["image_built"], source=source,
                       recipe_id=recipe["recipe_id"],
                       profile=recipe["trial"]["profile"],
-                      capabilities=capabilities)
+                      capabilities=base,
+                      adapter_capabilities=built["capabilities"])
     except (OSError, RuntimeError, ValueError, KeyError, TypeError,
             subprocess.TimeoutExpired) as exc:
-        result["issues"] = [str(exc)[:120]]
-    return result
+        report["issues"] = [str(exc)[-3600:]]
+    return report
 
 
 def _plan_data() -> dict:
     issues, ple = _metadata_gate()
     details = {"source": None, "runtime_image_id": None, "git_head": None,
                "pinned_revision": ORCA_REV, "cache": str(CACHE), "profile": "mtp0",
-               "served_id": ALIAS, "port": 8000,
-               "strategy": "RECIPE_FIRST_EXISTING_VLLM032_IMAGE"}
+               "served_id": ALIAS, "port": 8000, "adapter": ADAPTER,
+               "strategy": "RECIPE_PINNED_QSA62318_DERIVED_IMAGE"}
     capabilities = None
     try:
         details["git_head"] = _git_head()
         recipe = _trial_recipe()
-        src = _source()
-        details["source"] = src
-        capabilities = _inspect_existing_image(src["image_id"])
-        details["runtime_image_id"] = src["image_id"]
+        source = _source()
+        details["source"] = source
+        original = _inspect_existing_image(source["image_id"])
+        candidate = _scoped_image(source["image_id"])
+        details["runtime_image_id"] = candidate["image_id"]
         details["recipe_id"] = recipe["recipe_id"]
+        capabilities = {"source": original, "adapter": candidate["capabilities"]}
         _target_absent()
         collisions = _gpu_collisions()
         if collisions:
             issues.append("OTHER_GPU_CONTAINERS_RUNNING")
-        if not _port_open():
-            issues.append("SOURCE_PORT_DISAPPEARED")
+        if source["running"] and not _port_open():
+            issues.append("SOURCE_8000_PORT_DISAPPEARED")
+        if not source["running"]:
+            if _port_open():
+                issues.append("IDLE_SOURCE_8000_PORT_OCCUPIED")
+            if _unmanaged_gpu_pids():
+                issues.append("IDLE_SOURCE_GPU_PROCESS_OCCUPIED")
     except (OSError, RuntimeError, ValueError, KeyError, TypeError,
             subprocess.TimeoutExpired) as exc:
-        issues.append(str(exc)[:120])
+        issues.append(str(exc)[:180])
     issues = sorted(set(issues))
     expiry = (int(time.time()) // 900 + 1) * 900
     identity = {**details, "expires_at": expiry,
-                "operation": "P5_MTP0_STOP_27B_START_ORCAROUTER_NO_ROLLBACK"}
+                "operation": "P5_MTP0_QSA62318_ORCAROUTER_NO_ROLLBACK"}
     approval = hashlib.sha256(json.dumps(identity, sort_keys=True).encode()).hexdigest()
     return {"schema_version": 1, "stage": "p5", "action": "gpu-trial-plan",
             "status": "READY_TO_APPROVE" if not issues else "BLOCKED",
             "issues": issues, "plan_id": approval if not issues else None,
             "expires_at_epoch_seconds": expiry,
-            "operation": identity["operation"],
-            "details": details, "image_capabilities": capabilities,
+            "operation": identity["operation"], "details": details,
+            "image_capabilities": capabilities,
             "ple_metadata_verified": ple.get("metadata_verified") is True,
             "automatic_restore": False, "preserve_source_images_and_cache": True,
-            "image_built": False, "source_patched": False,
+            "original_engine_patched": False,
+            "adapter_backport_in_derived_image": True,
             "executed": False, "gpu_verified": False, "production_released": False}
 
 
@@ -324,7 +468,8 @@ def _args(image: str) -> list[str]:
     model = recipe["model"]
     runtime = recipe["runtime"]
     if (runtime["host_port"] != 8000
-        or runtime["container_name"] != TARGET
+        or trial["container_name"] != TARGET
+        or runtime["container_name"] != FAILED_PREVIOUS_TARGET
         or model["repo_id"] != ORCA_REPO
         or model["revision"] != ORCA_REV
         or model["expected_ple"]["dtype"] != "BF16"
@@ -333,7 +478,7 @@ def _args(image: str) -> list[str]:
         or model["quantization"] != "compressed-tensors"):
         raise ValueError("P5_RUNTIME_RECIPE_CHANGED")
     args = [
-        "docker", "run", "-d", "--name", runtime["container_name"],
+        "docker", "run", "-d", "--name", trial["container_name"],
         "--restart", "no", "--gpus", "all", "--ipc=host", "--shm-size", "16g",
         "--label", "blazux.p5.trial=mtp0-no-rollback",
         "-p", f"{runtime['host_port']}:8000",
@@ -414,14 +559,27 @@ def execute(approval: str | None, ack: str | None, *,
             launch_argv = _args(plan["details"]["runtime_image_id"])
             report["source"] = plan["details"]["source"]
             report["target_image_id"] = plan["details"]["runtime_image_id"]
-            # Existing 27B remains as a stopped container and exact image.
-            stopped = command(["docker", "stop", "--time", "45", SOURCE], timeout=75)
-            if stopped.returncode:
-                report["status"] = "FAIL_NO_ROLLBACK"
-                report["issues"] = ["SOURCE_STOP_FAILED"]
-                report["docker_stderr_tail"] = stopped.stderr[-1000:]
+            report["adapter"] = ADAPTER
+            report["previous_failed_target_preserved"] = FAILED_PREVIOUS_TARGET
+            report["original_engine_patched"] = False
+            report["source_already_stopped"] = not plan["details"]["source"]["running"]
+            # Retain the exact existing source image and stopped 27B container.
+            if plan["details"]["source"]["running"]:
+                stopped = command(["docker", "stop", "--time", "45", SOURCE], timeout=75)
                 report["executed"] = True
-                return report
+                if stopped.returncode:
+                    report["status"] = "FAIL_NO_ROLLBACK"
+                    report["issues"] = ["SOURCE_STOP_FAILED"]
+                    report["docker_stderr_tail"] = stopped.stderr[-1000:]
+                    return report
+            else:
+                # No restart/stop needed after the previous P5 failure.
+                # Recheck current state without altering Docker.
+                observed = docker_json(SOURCE)
+                if ((observed.get("State") or {}).get("Running") is not False
+                    or observed.get("Image") != plan["details"]["source"]["image_id"]):
+                    report["issues"] = ["IDLE_SOURCE_STATE_CHANGED"]
+                    return report
             report["source_stopped"] = True
             report["executed"] = True
             for _ in range(50):

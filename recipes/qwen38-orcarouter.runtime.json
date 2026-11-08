@@ -61,7 +61,7 @@
     "container_name": "qwen38-orcarouter",
     "hf_cache_read_only": true,
     "enable_tools": true,
-    "source_patch_required": "NONE_FOR_P5_MTP0_TRIAL_EXISTING_BLAZUX_IMAGE",
+    "source_patch_required": "SCOPED_UPSTREAM_62318_QSA_BACKPORT_ONLY_ISOLATED_IMAGE",
     "preparation_requires_separate_approval": true,
     "service_downtime_requires_separate_approval": true,
     "gpu_trial_released": false,
@@ -132,18 +132,39 @@
     "derived_overlay_required": false,
     "production_launch_allowed": false,
     "source_immutable": true,
-    "runtime_strategy": "RECIPE_FIRST_EXISTING_VLLM032_IMAGE",
-    "require_image_build": false,
+    "runtime_strategy": "RECIPE_PINNED_QSA62318_DERIVED_IMAGE_FROM_EXISTING_VLLM032",
+    "require_image_build": true,
     "allow_source_patch": false,
     "read_only_image_capability_probe": true,
-    "image_source": "CURRENT_VERIFIED_27B_IMAGE_ID",
-    "on_incompatible_loader": "STOP_AND_CAPTURE_DGX_ERROR_NOT_AUTO_PATCH",
+    "image_source": "VERIFIED_STOPPED_OR_RUNNING_27B_IMAGE_ID",
+    "on_incompatible_loader": "FAIL_NO_ROLLBACK_PRESERVE_LOG_AND_CHECKPOINT",
     "p5_env": {
       "HF_HOME": "/hf",
       "HF_HUB_OFFLINE": "1",
       "VLLM_PLE_MMAP": "1",
       "VLLM_PLE_MMAP_WORKERS": "16",
       "VLLM_PLE_MMAP_PREWARM": "0"
-    }
+    },
+    "container_name": "qwen38-orcarouter-qsa62318",
+    "adapter": "qwen4exp-qsa-62318-v032-v1",
+    "image_tag": "blazux-p5-orcarouter:qsa62318-v032",
+    "allow_isolated_derived_image_source_backport": true,
+    "preserve_previous_failed_trial_container": true,
+    "allow_idle_source_after_failed_p5": true
+  },
+  "compatibility_adapter": {
+    "id": "qwen4exp-qsa-62318-v032-v1",
+    "scope": "P5_ORCAROUTER_MTP0_ONLY",
+    "upstream_issue": "https://github.com/vllm-project/vllm/issues/62308",
+    "upstream_pr": "https://github.com/vllm-project/vllm/pull/62318",
+    "upstream_commit": "fe833b1",
+    "dockerfile": "Dockerfile.p5.qsa62318",
+    "patch_script": "src/p5_qsa_quant_backport_v032.py",
+    "allowed_vllm_version": "0.32.0",
+    "apply_only_in_derived_image": true,
+    "preserve_original_27b_image": true,
+    "launch_profile": "mtp0",
+    "gpu_qualified": false,
+    "adapter_qualified": false
   }
 }

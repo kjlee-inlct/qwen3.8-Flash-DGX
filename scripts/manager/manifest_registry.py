@@ -156,29 +156,49 @@ def _validate_bundle(parts: dict[str, dict[str, Any]], *, root: Path = ROOT) -> 
         "derived_overlay_required": False,
         "production_launch_allowed": False,
         "source_immutable": True,
-        "runtime_strategy": "RECIPE_FIRST_EXISTING_VLLM032_IMAGE",
-        "require_image_build": False,
+        "runtime_strategy": "RECIPE_PINNED_QSA62318_DERIVED_IMAGE_FROM_EXISTING_VLLM032",
+        "require_image_build": True,
         "allow_source_patch": False,
         "read_only_image_capability_probe": True,
-        "image_source": "CURRENT_VERIFIED_27B_IMAGE_ID",
-        "on_incompatible_loader": "STOP_AND_CAPTURE_DGX_ERROR_NOT_AUTO_PATCH",
+        "image_source": "VERIFIED_STOPPED_OR_RUNNING_27B_IMAGE_ID",
+        "on_incompatible_loader": "FAIL_NO_ROLLBACK_PRESERVE_LOG_AND_CHECKPOINT",
         "p5_env": {
-            "HF_HOME": "/hf",
-            "HF_HUB_OFFLINE": "1",
-            "VLLM_PLE_MMAP": "1",
-            "VLLM_PLE_MMAP_WORKERS": "16",
+            "HF_HOME": "/hf", "HF_HUB_OFFLINE": "1",
+            "VLLM_PLE_MMAP": "1", "VLLM_PLE_MMAP_WORKERS": "16",
             "VLLM_PLE_MMAP_PREWARM": "0",
         },
+        "container_name": "qwen38-orcarouter-qsa62318",
+        "adapter": "qwen4exp-qsa-62318-v032-v1",
+        "image_tag": "blazux-p5-orcarouter:qsa62318-v032",
+        "allow_isolated_derived_image_source_backport": True,
+        "preserve_previous_failed_trial_container": True,
+        "allow_idle_source_after_failed_p5": True,
+    } and orca.get("compatibility_adapter") == {
+        "id": "qwen4exp-qsa-62318-v032-v1",
+        "scope": "P5_ORCAROUTER_MTP0_ONLY",
+        "upstream_issue": "https://github.com/vllm-project/vllm/issues/62308",
+        "upstream_pr": "https://github.com/vllm-project/vllm/pull/62318",
+        "upstream_commit": "fe833b1",
+        "dockerfile": "Dockerfile.p5.qsa62318",
+        "patch_script": "src/p5_qsa_quant_backport_v032.py",
+        "allowed_vllm_version": "0.32.0",
+        "apply_only_in_derived_image": True,
+        "preserve_original_27b_image": True,
+        "launch_profile": "mtp0",
+        "gpu_qualified": False,
+        "adapter_qualified": False,
     } and orca.get("runtime", {}).get("source_patch_required") ==
-          "NONE_FOR_P5_MTP0_TRIAL_EXISTING_BLAZUX_IMAGE"
+          "SCOPED_UPSTREAM_62318_QSA_BACKPORT_ONLY_ISOLATED_IMAGE"
       and orca["runtime"].get("dtype") == "bfloat16"
       and orca["runtime"].get("load_format") == "safetensors"
       and orca.get("profiles", {}).get("mtp0", {}).get("num_speculative_tokens") == 0
       and orca["profiles"]["mtp0"].get("enforce_eager") is True
       and orca["profiles"]["mtp0"].get("enable_native_tools") is True
       and orca["profiles"]["mtp0"].get("tool_call_parser") == "qwen3_coder"
-      and orca["profiles"]["mtp0"].get("reasoning_parser") == "qwen3",
-      "P5_ORCAROUTER_RECIPE_FIRST_TRIAL_DRIFT")
+      and orca["profiles"]["mtp0"].get("reasoning_parser") == "qwen3"
+      and (root / "Dockerfile.p5.qsa62318").is_file()
+      and (root / "src/p5_qsa_quant_backport_v032.py").is_file(),
+      "P5_SCOPED_QSA62318_RECIPE_ADAPTER_DRIFT")
     _required(models["orcarouter"].get("source_recipe") == FILES["orcarouter_recipe"]
               and models["orcarouter"].get("ple_asset_manifest") == FILES["ple_assets"]
               and models["orcarouter"].get("ple_asset_id") == ASSET_ID
