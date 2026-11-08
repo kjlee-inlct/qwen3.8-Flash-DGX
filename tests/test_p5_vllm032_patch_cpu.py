@@ -8,7 +8,7 @@ from src import p5_patch_qwen4exp_v032 as abi
 from scripts.p5_vendor.mtp import MTP_TENSOR_NAMES
 
 MODEL = '''import torch
-class Qwen4ExpForCausalLM:
+class Qwen4ExpForCausalLM(nn.Module):
     def __init__(self, config, prefix):
         self.quant_config = vllm_config.quant_config
         self.lm_head = ParallelLMHead(
