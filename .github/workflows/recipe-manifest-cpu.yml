@@ -55,6 +55,7 @@ on:
       - 'tests/test_p4_bc_dry_run_cpu.py'
       - 'tests/test_p6_p8_fakedgx_cpu.py'
       - 'tests/test_generic_operations_cpu.py'
+      - 'tests/test_generic_console_cpu.py'
       - 'tests/test_p5_*_cpu.py'
       - 'scripts/p5_vendor/**'
       - 'tests/test_p2_27b_benchmark_cpu.py'
@@ -142,6 +143,7 @@ jobs:
           python -m unittest discover -s tests -p 'test_p5_*_cpu.py' -v
           python -m unittest discover -s tests -p 'test_p6_p8_fakedgx_cpu.py' -v
           python -m unittest discover -s tests -p 'test_generic_operations_cpu.py' -v
+          python -m unittest discover -s tests -p 'test_generic_console_cpu.py' -v
           python -m wizard operations generic catalog --json
           python -m wizard operations generic fault-matrix --json
           python -m scripts.manager.p3_dg_acceptance --plan

@@ -211,6 +211,67 @@ def _lifecycle_review(model: str) -> None:
         print("  This is a review only. No service, Docker or cache changes.")
 
 
+def _generic_qualification_menu(model: str) -> None:
+    """P5-P8 shared read-only review for any registered service model.
+
+    No execution/approval capability is exposed here. The original P1/P2
+    download/trial operators remain separate guarded implementations.
+    """
+    from scripts.manager.generic_operations import (
+        model_catalog, preflight, fault_matrix, integration_review)
+    catalog = model_catalog()
+    if model not in catalog["models"]:
+        print("Model is not registered. No diagnostics executed.")
+        return
+    actions = ("resource", "switch", "faults", "integration")
+    while True:
+        print("\nP5–P8 common model qualification (0 back)")
+        print("  1. P5 bounded read-only resource snapshot")
+        print("  2. P6 read-only switch preflight")
+        print("  3. P8 all-model Fake-DGX failure matrix")
+        print("  4. P7 component evidence requirements")
+        picked = _choice(_input("Review (0 back): "), list(actions))
+        if picked is None:
+            return
+        if not picked:
+            print("Unknown option; nothing executed.")
+            continue
+        if picked == "resource":
+            from scripts.manager.resource_diagnostics import snapshot, admission
+            report = snapshot(model=model)
+            gate = admission(report)
+            print("  Resource state: " + report["status"])
+            print("  Candidate capacity (not launch approval): " + gate["status"])
+            print("  PLE mapping and loaded benchmark remain separately unverified.")
+        elif picked == "switch":
+            targets = [name for name in catalog["models"] if name != model]
+            for i, target in enumerate(targets, 1):
+                print(f"  {i}. {target}")
+            chosen = _choice(_input("Target (0 back): "), targets)
+            if chosen is None:
+                continue
+            if not chosen:
+                print("Unknown target; nothing executed.")
+                continue
+            report = preflight(model, chosen)
+            print("  Preflight: " + report["status"])
+            for issue in report["issues"]:
+                print("   - " + issue)
+            print("  No real switch was authorized.")
+        elif picked == "faults":
+            report = fault_matrix()
+            print("  Fake-DGX status: " + report["status"] +
+                  " | pairs: " + str(report["pair_count"]) +
+                  " | cases: " + str(report["test_count"]))
+            print("  Synthetic states are not live recovery evidence.")
+        else:
+            report = integration_review(model, {})
+            print("  P7 evidence: " + report["status"])
+            for issue in report["issues"]:
+                print("   - " + issue)
+            print("  Service/proxy/gateway/storage are not inferred healthy.")
+
+
 def _model_screen(model: str) -> None:
     while True:
         doc = model_workflow(model)
@@ -222,6 +283,7 @@ def _model_screen(model: str) -> None:
         print("  5. Review ordinary model switch (read only)")
         print("  6. Guided operating switch (release gated)")
         print("  7. Recipe diff / container lifecycle review (read only)")
+        print("  8. P5–P8 common model qualification (read only / Fake-DGX)")
         print("  0. Back")
         selected = _input("Choice (0 back): ")
         if selected in (None, "0"):
@@ -255,6 +317,8 @@ def _model_screen(model: str) -> None:
             _switch_guided(model)
         elif selected == "7":
             _lifecycle_review(model)
+        elif selected == "8":
+            _generic_qualification_menu(model)
         else:
             print("Unknown option; nothing executed.")
 
@@ -280,31 +344,49 @@ def _model_selector() -> None:
 
 
 def _switch_selector() -> None:
-    """Direct model-first operating switch navigation from the main screen."""
+    """All registered target models; legacy guided executor only for qualified pair.
+
+    New/unqualified models are shown but have read-only preflight, not a
+    fabricated general-purpose Docker switch/rollback executor.
+    """
     from scripts.manager.service_status import inspect_live_status
+    from scripts.manager.generic_operations import model_catalog, preflight
+    catalog = model_catalog()
+    models = catalog["models"]
+    legacy_order = [x for x in ("flash-next", "27b") if x in models]
+    targets = legacy_order + [x for x in models if x not in legacy_order]
     try:
         status = inspect_live_status()
-        current = (status.get("observed_model")
-                   if status.get("status") == "LIVE_SERVICE_VERIFIED"
-                   else "unknown")
+        current = status.get("observed_model") if status.get("status") in (
+            "LIVE_SERVICE_VERIFIED", "LIVE_P5_TRIAL_API_VERIFIED") else "unknown"
     except (OSError, RuntimeError, ValueError, TypeError):
         current = "unknown"
-    print("\nSwitch active model — existing preserved containers only")
+    print("\nSwitch active model — model registry, :8000/v1")
     print("  Current API model: " + str(current))
-    print("  Port stays :8000/v1; one GPU model at a time")
-    print("  1. NVIDIA Flash-Next")
-    print("  2. NVIDIA 27B")
+    print("  One GPU model at a time; inspect is not execution approval")
+    for i, target in enumerate(targets, 1):
+        print(f"  {i}. {target}")
     print("  0. Cancel")
-    selected = _choice(_input("Target model (0 cancel): "), ["flash-next", "27b"])
+    selected = _choice(_input("Target model (0 cancel): "), targets)
     if selected is None:
         return
-    if selected not in ("flash-next", "27b"):
+    if selected not in models:
         print("Unknown model; nothing executed.")
         return
     if current == selected:
         print("Requested model already active. No switch needed.")
         return
-    _switch_guided(selected)
+    if current not in models:
+        print("BLOCKED: current API model identity is unverified.")
+        return
+    if current in ("flash-next", "27b") and selected in ("flash-next", "27b"):
+        _switch_guided(selected)
+        return
+    report = preflight(current, selected, live=status)
+    print("Model-agnostic preflight: " + report["status"])
+    for issue in report["issues"]:
+        print("  - " + issue)
+    print("No real switch was authorized.")
 
 
 def _service_menu() -> None:
