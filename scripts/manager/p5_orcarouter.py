@@ -19,6 +19,10 @@ import subprocess
 import sys
 from typing import Callable
 
+from scripts.manager import manifest_registry
+from scripts.manager.ple_assets import (ASSET_ID as PLE_ID, asset_spec as ple_asset_spec,
+                                        configured_roots as ple_cache_roots,
+                                        inspect_ple_asset)
 from scripts.p5_vendor.audit import audit_checkpoint
 from scripts.p5_vendor.manifest import load_manifest
 from scripts.p5_vendor.mtp import MTP_TENSOR_NAMES, MTP_QUANTIZATION_IGNORE, mtp_overlay_fingerprint
@@ -50,7 +54,7 @@ def _recipe() -> dict:
     raw = RECIPE_PATH.read_bytes()
     if len(raw) > 32_768:
         raise ValueError("P5_RECIPE_TOO_LARGE")
-    data = strict_json_loads(raw)
+    data = manifest_registry.read_json(RECIPE_PATH, max_bytes=32_768)
     if not isinstance(data, dict):
         raise ValueError("P5_RECIPE_INVALID")
     source = data.get("model", {})
@@ -67,6 +71,7 @@ def _recipe() -> dict:
         and source.get("repo_id") == ORCA_REPO
         and source.get("revision") == ORCA_REV
         and source.get("quantization") == "compressed-tensors"
+        and source.get("ple_asset_id") == PLE_ID
         and donor.get("repo_id") == DONOR_REPO
         and donor.get("revision") == DONOR_REV
         and donor.get("tensor_count") == 31
@@ -103,6 +108,10 @@ def _recipe() -> dict:
     if [(s.filename, s.size, s.sha256) for s in overlay.mtp_source.shards] != [
             (s["filename"], s["size"], s["sha256"]) for s in donor.get("shards", [])]:
         raise ValueError("P5_DONOR_HASH_MANIFEST_MISMATCH")
+    # PLE is an independently registered asset: no divergent inline geometry.
+    ple_entry = ple_asset_spec(source["ple_asset_id"])
+    if source.get("expected_ple") != ple_entry["layout"]:
+        raise ValueError("P5_PLE_RECIPE_MANIFEST_DRIFT")
     return data
 
 
@@ -151,14 +160,7 @@ def _repo_snapshot(cache_root: Path, repo_id: str, revision: str) -> Path:
 
 
 def _cache_roots() -> list[Path]:
-    home = Path.home()
-    candidates = [home / ".cache/huggingface",
-                  home / "Workspace/llm/yslab-qwen38-bf16ple-dgx-spark/hf-cache"]
-    for key in ("HF_CACHE", "HF_HOME"):
-        value = os.environ.get(key, "")
-        if value.startswith("/") and "\x00" not in value:
-            candidates.insert(0, Path(value))
-    return list(dict.fromkeys(p.expanduser() for p in candidates))
+    return ple_cache_roots()
 
 
 def _audited_snapshot(repo_id: str, revision: str, roots: list[Path]) -> tuple[Path | None, Path | None]:
@@ -170,23 +172,8 @@ def _audited_snapshot(repo_id: str, revision: str, roots: list[Path]) -> tuple[P
 
 
 def audit_ple(*, roots: list[Path] | None = None) -> dict:
-    try:
-        manifest = load_manifest(VENDOR / "compatibility.json")
-        target = manifest.target("orca-uncensored")
-        roots = _cache_roots() if roots is None else roots
-        snapshot, root = _audited_snapshot(ORCA_REPO, ORCA_REV, roots)
-        if snapshot is None or root is None:
-            return _gate("bf16_direct_ple", BLOCKED, "PINNED_ORCAROUTER_SNAPSHOT_NOT_PRESENT",
-                         tensor_count=None, rows=None)
-        result = audit_checkpoint(snapshot, target, (root / "hub",))
-        if result.ple_tensor_count != 128 or result.ple_rows != 320001536 or result.ple_dtype != "BF16":
-            raise ValueError("PLE_LAYOUT_MISMATCH")
-        return _gate("bf16_direct_ple", PASS, tensor_count=128,
-                     rows=320001536, width=160, dtype="BF16",
-                     checkpoint_sha_verified=False, gpu_verified=False)
-    except (OSError, ValueError, TypeError, KeyError, RecursionError):
-        return _gate("bf16_direct_ple", BLOCKED, "PLE_CHECKPOINT_METADATA_AUDIT_FAILED",
-                     checkpoint_sha_verified=False, gpu_verified=False)
+    """Canonical manifest-led pinned PLE metadata audit (not GPU activation)."""
+    return inspect_ple_asset(asset_id=PLE_ID, roots=roots)
 
 
 def audit_donor(*, roots: list[Path] | None = None) -> dict:
@@ -252,6 +239,7 @@ def source_plan(profile: str = "mtp0") -> dict:
     if profile not in ("mtp0", "mtp2"):
         raise ValueError("UNKNOWN_P5_PROFILE")
     static = abi_source_audit()
+    manifest_integrity = manifest_registry.validate()
     fingerprint = hashlib.sha256(
         (ORCA_REPO + ORCA_REV + DONOR_REV + SOURCE_COMMIT + profile).encode()
     ).hexdigest()
@@ -260,6 +248,11 @@ def source_plan(profile: str = "mtp0") -> dict:
         "profile": profile, "status": BLOCKED, "scope": "SOURCE_ONLY",
         "source_reference": SOURCE_COMMIT, "vllm_version": "0.32.0",
         "host_api_port": 8000, "one_active_model_only": True,
+        "manifest_integrity": manifest_integrity,
+        "ple_asset": {"asset_id": PLE_ID,
+                      "manifest": "runtimes/ple-assets.json",
+                      "expected": ple_asset_spec()["layout"],
+                      "metadata_verified": False, "runtime_mmap_status": NOT_RUN},
         "stages": [static,
                    _gate("bf16_direct_ple", NOT_RUN),
                    _gate("mtp_donor_31", NOT_RUN),
@@ -277,6 +270,7 @@ def source_plan(profile: str = "mtp0") -> dict:
 
 def cpu_only() -> dict:
     static = abi_source_audit()
+    manifest_integrity = manifest_registry.validate()
     if static["status"] != PASS:
         result = _gate("cpu_fake_dgx", FAIL, "P5_SOURCE_CONTRACT_INVALID")
     else:
@@ -310,19 +304,23 @@ def cpu_only() -> dict:
             result = _gate("cpu_fake_dgx", INCONCLUSIVE, "P5_CPU_RUNNER_UNAVAILABLE")
     return {
         "schema_version": 1, "stage": "p5", "mode": "cpu-only",
-        "status": PASS if static["status"] == PASS and result["status"] == PASS else FAIL,
-        "scope": "CPU_FAKE_DGX_ONLY", "stages": [static, result,
+        "status": PASS if static["status"] == PASS and result["status"] == PASS
+        and manifest_integrity["status"] == PASS else FAIL,
+        "scope": "CPU_FAKE_DGX_ONLY", "manifest_integrity": manifest_integrity,
+        "stages": [static, result,
                     _gate("dgx_read_only", NOT_RUN),
                     _gate("gpu_api_benchmark_rollback", NOT_RUN)],
         "executed": False, "approval_accepted": False,
         "operations_enabled": False, "gpu_verified": False,
-        "issues": sorted(set(static["issues"] + result["issues"])),
+        "issues": sorted(set(static["issues"] + result["issues"] +
+                             manifest_integrity["issues"])),
     }
 
 
 def read_only(*, roots: list[Path] | None = None,
               service_inspector: Callable[[], dict] | None = None) -> dict:
     static = abi_source_audit()
+    manifest_integrity = manifest_registry.validate()
     ple = audit_ple(roots=roots)
     donor = audit_donor(roots=roots)
     if service_inspector is None:
@@ -341,10 +339,14 @@ def read_only(*, roots: list[Path] | None = None,
         svc = _gate("preserve_live_27b", INCONCLUSIVE, "LIVE_STATUS_UNAVAILABLE")
     gates = [static, ple, donor, svc, _gate("mtp_overlay", NOT_RUN),
              _gate("gpu_api_benchmark_rollback", NOT_RUN)]
-    status = PASS if all(g["status"] == PASS for g in gates[:4]) else BLOCKED
+    status = (PASS if manifest_integrity["status"] == PASS and
+              all(g["status"] == PASS for g in gates[:4]) else BLOCKED)
     return {"schema_version": 1, "stage": "p5", "mode": "read-only",
             "scope": "DGX_READ_ONLY", "status": status, "stages": gates,
-            "issues": sorted(set(i for g in gates for i in g["issues"])),
+            "manifest_integrity": manifest_integrity,
+            "ple_asset": ple,
+            "issues": sorted(set([i for g in gates for i in g["issues"]] +
+                                 manifest_integrity["issues"])),
             "executed": False, "approval_accepted": False,
             "operations_enabled": False, "gpu_verified": False,
             "production_released": False}
@@ -358,10 +360,14 @@ def stage_action(action: str, *, profile: str = "mtp0",
     issues = list(plan["issues"])
     if execute or approve_plan:
         issues.append("UNVERIFIED_APPROVAL_CANNOT_EXECUTE")
+    ple = (audit_ple() if action in ("status", "doctor", "recipe")
+           else plan["ple_asset"])
     return {"schema_version": 1, "stage": "p5", "action": action,
             "status": BLOCKED if action != "status" else BLOCKED,
             "runtime": NOT_RUN, "profile": profile, "implementation": "SOURCE_ADAPTER_AVAILABLE",
             "source_audit": plan["stages"][0],
+            "manifest_integrity": plan["manifest_integrity"],
+            "ple_asset": ple,
             "recipe_path": "recipes/qwen38-orcarouter.runtime.json",
             "checkpoint": ORCA_REPO, "revision": ORCA_REV,
             "served_id": _recipe()["profiles"][profile]["served_id"],

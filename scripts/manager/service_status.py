@@ -73,6 +73,16 @@ def inspect_live_status(
     issues.update(health.get("issues") or [])
     issues.update(k.upper() + "_FAILED" for k, value in checks.items() if not value)
     ok = not issues
+    # Registration is inventory metadata only; it does not mean PLE is active.
+    try:
+        from scripts.manager.ple_assets import catalog
+        ple_registration = catalog()["assets"]
+    except (OSError, RuntimeError, ValueError, TypeError, KeyError):
+        ple_registration = [{"asset_id": "orcarouter-bf16-ple",
+                             "registered": False, "status": "BLOCKED",
+                             "issues": ["PLE_MANIFEST_UNAVAILABLE"]}]
+    from scripts.manager.manifest_registry import validate as validate_manifests
+    manifest_integrity = validate_manifests()
     return {
         "schema_version": 1, "stage": "svc", "action": "status",
         "scope": "DGX_READ_ONLY_MANIFEST_AND_API",
@@ -85,6 +95,8 @@ def inspect_live_status(
              "ports": active.get("ports")} if active is not None else None),
         "host_port": 8000, "observed_model_ids": model_ids,
         "checks": checks, "issues": sorted(issues),
+        "registered_ple_assets": ple_registration,
+        "manifest_integrity": manifest_integrity,
         "manifest_status": manifest.get("status"),
         "api_health_status": health.get("status"),
         "executed": False, "operations_enabled": False,

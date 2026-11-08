@@ -12,6 +12,9 @@ import re
 from typing import Any
 
 from scripts.manager.p2_27b_inventory import _indexed_shards, _file_info
+from scripts.manager import manifest_registry
+from scripts.manager.ple_assets import (ASSET_ID as PLE_ASSET_ID, inspect_ple_asset,
+                                        asset_spec as read_ple_spec)
 from scripts.manager.service_manifest import policy
 from scripts.manager.service_status import inspect_live_status
 
@@ -129,10 +132,12 @@ def _other_repos(roots: list[Path], known: set[str]) -> tuple[list[dict], bool]:
 def installed_models(*, manifest: dict | None = None, home: Path | None = None,
                      environment: dict[str, str] | None = None,
                      service_inspector=inspect_live_status) -> dict[str, Any]:
-    config = (json.loads(DISCOVERY_MANIFEST.read_text(encoding="utf-8"))
+    config = (manifest_registry.load("model_discovery")
               if manifest is None else manifest)
     if config.get("schema_version") != 1 or not isinstance(config.get("models"), dict):
         raise ValueError("invalid model discovery manifest")
+    if config.get("ple_asset_manifest") not in (None, "runtimes/ple-assets.json"):
+        raise ValueError("INVALID_PLE_ASSET_MANIFEST_LOCATION")
     home = Path.home() if home is None else Path(home)
     env = os.environ if environment is None else environment
     roots = _roots(config, home, env)
@@ -174,11 +179,19 @@ def installed_models(*, manifest: dict | None = None, home: Path | None = None,
                         "SNAPSHOT_INCOMPLETE_OR_UNVERIFIED" if sightings else
                         "RECIPE_VIEW_ONLY_SOURCE_UNVERIFIED" if view_seen else
                         "NOT_FOUND_IN_CONFIGURED_ROOTS")
+        asset_id = spec.get("ple_asset_id")
+        if asset_id is not None and asset_id != PLE_ASSET_ID:
+            raise ValueError("UNKNOWN_REGISTERED_PLE_ASSET")
+        ple = inspect_ple_asset(asset_id=asset_id, roots=roots) if asset_id else None
+        if ple is not None and (ple.get("source_repo") != repo_id
+                                or ple.get("revision") != pin):
+            raise ValueError("MODEL_PLE_PIN_MISMATCH")
         results.append({
             "model": model, "repo_id": repo_id,
             "service_manifest_registered": model in registered,
             "manifest_revision": pin,
             "source_state": result_state,
+            "ple_asset": ple,
             "source_files_present": ready,
             "cache_snapshots": sightings,
             "legacy_recipe_view": {
@@ -191,10 +204,18 @@ def installed_models(*, manifest: dict | None = None, home: Path | None = None,
         })
     unregistered, truncated = _other_repos(
         roots, {row["repo_id"] for row in results})
+    integrity = manifest_registry.validate() if manifest is None else None
     return {
         "schema_version": 1, "stage": "models", "action": "list-installed",
-        "status": "READ_ONLY_INVENTORY", "scope": "CONFIGURED_CACHE_ROOTS_ONLY",
+        "status": ("READ_ONLY_INVENTORY" if integrity is None or
+                   integrity["status"] == "PASS" else "BLOCKED"),
+        "issues": [] if integrity is None else list(integrity["issues"]),
+        "scope": "CONFIGURED_CACHE_ROOTS_ONLY",
         "manifest": str(DISCOVERY_MANIFEST),
+        "manifest_integrity": integrity,
+        "ple_asset_manifest": ("runtimes/ple-assets.json"
+                               if any(s.get("ple_asset_id") for s in config["models"].values())
+                               else None),
         "cache_roots_checked": [str(p) for p in roots],
         "models": results, "other_cached_repos": unregistered,
         "other_cached_repos_truncated": truncated,

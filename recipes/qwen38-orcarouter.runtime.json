@@ -28,7 +28,8 @@
       "layer_id": 1,
       "weight_scale_present": false,
       "mmap_bytes": 102400491520
-    }
+    },
+    "ple_asset_id": "orcarouter-bf16-ple"
   },
   "mtp_donor": {
     "repo_id": "RadixArk/Qwen3.8-Flash-Next-NVFP4",

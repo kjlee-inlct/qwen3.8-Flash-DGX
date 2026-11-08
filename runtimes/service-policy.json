@@ -50,7 +50,9 @@
       "proposed_served_ids": {
         "mtp0": "qwen3.8-flash-next-orca-uncensored-bf16",
         "mtp2": "qwen3.8-flash-next-orca-uncensored-bf16-mtp"
-      }
+      },
+      "ple_asset_id": "orcarouter-bf16-ple",
+      "ple_asset_manifest": "runtimes/ple-assets.json"
     }
   },
   "transitions": {

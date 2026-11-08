@@ -8,7 +8,8 @@ on:
       - 'scripts/temporary/**'
       - 'tests/test_p1_temporary_cpu.py'
       - 'tests/test_manager_manifest_cpu.py'
-      - 'runtimes/model-discovery.json'
+      - 'tests/test_manifest_registry_cpu.py'
+      - 'runtimes/**'
       - 'tests/fixtures/**'
       - 'requirements-manager.txt'
       - 'flash'
@@ -105,6 +106,8 @@ jobs:
       - name: Validate manifest unit tests (no Docker, GPU or network runtime)
         run: |
           python -m unittest discover -s tests -p 'test_manager_manifest_cpu.py' -v
+          python -m unittest discover -s tests -p 'test_manifest_registry_cpu.py' -v
+          python -m wizard manifest validate --json
           python -m unittest discover -s tests -p 'test_manager_inventory_cpu.py' -v
           python -m unittest discover -s tests -p 'test_flash_launch.py' -v
           python -m unittest discover -s tests -p 'test_script_modes_cpu.py' -v

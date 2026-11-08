@@ -10,13 +10,14 @@ import json
 from pathlib import Path
 from typing import Any
 
+from scripts.manager import manifest_registry
 from scripts.manager.inventory import inspect_host
 
 POLICY_PATH = Path(__file__).resolve().parents[2] / "runtimes/service-policy.json"
 
 
 def policy() -> dict[str, Any]:
-    doc = json.loads(POLICY_PATH.read_text(encoding="utf-8"))
+    doc = manifest_registry.load("service_policy")
     if (doc["max_active_gpu_models"] != 1
             or doc["api"]["host_port"] != 8000
             or not doc["transitions"]["stop_old_before_start_new"]):

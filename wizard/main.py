@@ -11,7 +11,7 @@ from wizard.menus import (
 USAGE = """Blazux Wizard (vLLM 0.32 only)
 
   ./wizard.sh                                simple model-first interactive menu\n  ./wizard.sh select 27b --json              read-only lifecycle selection plan\n  ./wizard.sh model choose flash-next --json same planner
-  ./wizard.sh list --json                    model/switch/storage/operations catalog\n  ./wizard.sh model list --installed --json   read-only pinned and legacy cache discovery\n  ./wizard.sh workflow 27b --json            full model lifecycle actions and gates\n  ./wizard.sh roadmap --json                 complete P1-P8 acceptance checklist\n  ./wizard.sh workflow 27b --for-action start --json  read-only action capability
+  ./wizard.sh list --json                    model/switch/storage/operations catalog\n  ./wizard.sh model list --installed --json   read-only pinned and legacy cache discovery\n  ./wizard.sh manifest status --json         shared manifest registry + cross-reference integrity\n  ./wizard.sh manifest validate --json       fails closed on mismatched PLE/model/service pins\n  ./wizard.sh workflow 27b --json            full model lifecycle actions and gates\n  ./wizard.sh roadmap --json                 complete P1-P8 acceptance checklist\n  ./wizard.sh workflow 27b --for-action start --json  read-only action capability
   ./wizard.sh model flash-next status --json
   ./wizard.sh model 27b recipe-diff --json  normalized desired/observed read-only diff\n  ./wizard.sh model 27b recipe-diff --cache-source /host/hf-cache --json  compare observed bind path\n  ./wizard.sh model 27b lifecycle restart --plan --json  read-only recreate decision\n  ./wizard.sh model 27b lifecycle remove --plan --json  scoped removal preview (no execute)\n  ./wizard.sh model 27b plan --for-action prepare --json
   ./wizard.sh model orcarouter-flash-next status --json
@@ -85,16 +85,19 @@ def catalog() -> dict:
         "api_host_port": 8000, "groups": groups, "stages": stages,
         "primary_menus": ["select_model", "service", "advanced"],
         "model_selector": "select",
+        "manifest_registry": {"path": "runtimes/manifest-registry.json",
+                              "commands": ["manifest status", "manifest validate"],
+                              "read_only": True},
     }
 
 
 def _advanced_menu() -> int:
     """Keep all legacy module workflows in a secondary, explicit menu."""
-    groups = ["model", "switch", "storage", "operations", "service"]
+    groups = ["model", "switch", "storage", "operations", "service", "manifest"]
     while True:
         print("\nAdvanced actions (0 back)")
         for i, group in enumerate(groups, 1):
-            print(f"  {i}. {group}: {GROUP_TITLES[group]}")
+            print(f"  {i}. {group}: {GROUP_TITLES.get(group, 'Manifest registry / 읽기 전용 무결성')}")
         try:
             value = input("Advanced group (0 back): ").strip().lower()
         except EOFError:
@@ -104,6 +107,10 @@ def _advanced_menu() -> int:
         group = (groups[int(value) - 1]
                  if value.isdigit() and 1 <= int(value) <= len(groups)
                  else GROUP_ALIASES.get(value, value))
+        if group == "manifest":
+            from scripts.manager.manifest_registry import main as manifest_main
+            manifest_main(["status"])
+            continue
         if group not in GROUPS:
             print("Unknown group.")
             continue
@@ -226,6 +233,10 @@ def main(argv: list[str] | None = None) -> int:
         if sys.stdin.isatty() and not as_json:
             return interactive()
         args = ["list"]
+    if args[0] == "manifest":
+        from scripts.manager.manifest_registry import main as manifest_main
+        return manifest_main(args[1:] + (["--json"] if as_json else [])
+                             + (["--dry-run"] if dry_run else []))
     if args[0] == "evidence":
         from scripts.manager.evidence_catalog import main as evidence_main
         return evidence_main(args[1:])
@@ -303,6 +314,11 @@ def main(argv: list[str] | None = None) -> int:
                     print("  " + entry["model"] + ": " + entry["source_state"] + active)
                     for snap in entry["cache_snapshots"][:4]:
                         print("     " + snap["snapshot"] + " (" + snap["state"] + ")")
+                    ple = entry.get("ple_asset")
+                    if ple:
+                        print("     PLE " + ple["asset_id"] + ": " +
+                              ple.get("source_state", ple["status"]) +
+                              " (GPU mmap " + ple["runtime_mmap_status"] + ")")
                     view = entry.get("legacy_recipe_view")
                     if view and view["directory_present"]:
                         print("     legacy recipe view: " + view["path"])

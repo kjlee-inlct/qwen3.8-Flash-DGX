@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "registry_id": "blazux-wizard-v1",
+  "engine": "vllm-0.32",
+  "api_port": 8000,
+  "title": "Shared Wizard manifest registry (declarative, not service execution approval)",
+  "entries": {
+    "service_policy": "runtimes/service-policy.json",
+    "model_discovery": "runtimes/model-discovery.json",
+    "ple_assets": "runtimes/ple-assets.json",
+    "orcarouter_recipe": "recipes/qwen38-orcarouter.runtime.json",
+    "27b_recipe": "recipes/qwen38-27b.runtime.json",
+    "yslab_compatibility": "scripts/p5_vendor/compatibility.json"
+  },
+  "truth_model": {
+    "desired": "versioned registry, service policy, recipes and asset specifications",
+    "observed": "fresh Docker, API, host-cache and checkpoint-audit results",
+    "execution": "independent approval and runtime-qualified plan only",
+    "manifest_integrity_is_not_runtime_qualification": true
+  },
+  "safety": {
+    "max_active_gpu_models": 1,
+    "api_port": 8000,
+    "read_only_validation": true,
+    "no_implicit_docker_mutations": true,
+    "no_implicit_cache_mutations": true,
+    "strict_p5_gpu_release_gate": true
+  }
+}
