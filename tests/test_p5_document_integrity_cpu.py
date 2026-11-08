@@ -13,6 +13,7 @@ RUNBOOK = "docs/P5-LMHEAD-V2-DGX-GPU-TRIAL-RUNBOOK-20261108.md"
 MARKER = "CURRENT P5 DOCUMENT SUPERSESSION"
 SECONDARY = "current P5 v2 supersession"
 ADAPTER = "qwen4exp-qsa62318-lmhead-v032-v2"
+ADAPTER_V3 = "qwen4exp-qsa62318-lmhead-v032-v3"
 README_LATEST = [
     "README.md",
     "recipes/README.md",
@@ -71,7 +72,7 @@ class P5HandoffFullDocumentCPU(unittest.TestCase):
             with self.subTest(path=path):
                 content = (ROOT / path).read_text(encoding="utf-8")
                 self.assertIn(MARKER, content[:180])
-                self.assertIn(ADAPTER, content[:2500])
+                self.assertTrue(ADAPTER in content[:2500] or ADAPTER_V3 in content[:2500], path)
                 self.assertIn("lm_head.weight_scale", content[:2500])
         for path in README_LATEST:
             with self.subTest(path=path):
