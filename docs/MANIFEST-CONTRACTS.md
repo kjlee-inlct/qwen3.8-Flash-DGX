@@ -1,3 +1,9 @@
+## 2026-11-08 current P5 v2 supersession (document-wide audit)
+
+The complete [document inventory and consistency audit](HANDOFF-DOCUMENT-AUDIT-FULL-P5-20261108.md) and [current **P5 QSA+LM-head v2** DGX trial runbook](P5-LMHEAD-V2-DGX-GPU-TRIAL-RUNBOOK-20261108.md) supersede earlier P5 source-only / GPU NOT_RUN descriptions and older QSA-only commands. Latest actual DGX **QSA-only** trial failed after 15/17 safetensors shards with missing `lm_head.weight_scale`; the candidate v2 source/CPU CI passed but **v2 GPU load is not proven**. Current v2 adapter is `qwen4exp-qsa62318-lmhead-v032-v2` and its **new** target is `qwen38-orcarouter-qsa62318-lmhead`. Actual current :8000 service state remains unobserved since that failed trial. Previous 27B and failed candidate images/containers are preserved. Never copy the earlier QSA-only `execute` commands without revalidation. vLLM=0.32.0, one active model, :8000; P6/P8 live operations and PR #1 merge remain out of scope. Older sections below remain historical.
+
+---
+
 ## 2026-11-08 — PLE schema v2; format independence and DGX Spark reference adoption
 
 Superseding update: `runtimes/ple-assets.json` is **schema v2**, independent PLE storage dtype, scale mode, scale dtype, packing and placement; the fixed Orcarouter BF16 asset remains untouched. `runtimes/ple-loader-profiles.json` is now included in the **seven-document** common Wizard registry and separately records target vLLM **0.32.0** ABI/GB10 capabilities as **UNQUALIFIED**. Other models may register FP8 etc PLE separately; BF16 is not a global assumption. `scripts/manager/ple_format.py` and `service_transition_preview.py` enforce unmap/release/reload/no-unverified-hot-swap for PLE model/profile/dtype changes, preserve rollback sources, GPU allocations and port 8000.
