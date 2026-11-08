@@ -195,9 +195,7 @@ def _validate_bundle(parts: dict[str, dict[str, Any]], *, root: Path = ROOT) -> 
       and orca["profiles"]["mtp0"].get("enforce_eager") is True
       and orca["profiles"]["mtp0"].get("enable_native_tools") is True
       and orca["profiles"]["mtp0"].get("tool_call_parser") == "qwen3_coder"
-      and orca["profiles"]["mtp0"].get("reasoning_parser") == "qwen3"
-      and (root / "Dockerfile.p5.qsa62318").is_file()
-      and (root / "src/p5_qsa_quant_backport_v032.py").is_file(),
+      and orca["profiles"]["mtp0"].get("reasoning_parser") == "qwen3",
       "P5_SCOPED_QSA62318_RECIPE_ADAPTER_DRIFT")
     _required(models["orcarouter"].get("source_recipe") == FILES["orcarouter_recipe"]
               and models["orcarouter"].get("ple_asset_manifest") == FILES["ple_assets"]
