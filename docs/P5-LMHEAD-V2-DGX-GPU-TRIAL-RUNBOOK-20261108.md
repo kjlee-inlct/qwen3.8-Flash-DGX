@@ -1,4 +1,23 @@
-# P5 Orcarouter vLLM 0.32.0 — current DGX MTP0 trial, QSA + LM-head v2
+# P5 Orcarouter vLLM 0.32.0 — current DGX MTP0 trial, QSA + LM-head v3
+
+## 2026-11-08 Orcarouter v3 — actual DGX loader failure fixed at source
+
+**Confirmed live failure at 2026-11-08 13:27 UTC, v2 image `sha256:3e0afbb4...`:** 15/17 safetensors loaded, PLE BF16 mmap engaged, then the exact previous `ValueError: There is no module or parameter named 'lm_head.weight_scale'`; Docker exit=1, `OOMKilled=false`. Actual checkpoint has `lm_head.weight_scale` BF16 `[248320,1]`, `group_0` targets `lm_head`, not ignored.
+
+**Root-cause patch:** vLLM 0.32's nested Qwen4Exp model passes `maybe_prefix(prefix, "lm_head")` (e.g. `model.language_model.lm_head`) into compressed-tensors. That name does NOT match the pinned checkpoint quant target `lm_head`; v2 forwarded `quant_config` but kept the incorrect quant-dispatch name, so `ParallelLMHead` instantiated only `weight`. New isolated **v3** patches only that constructor to `quant_config=self.quant_config, prefix="lm_head"`, per pinned YSLAB compatibility approach. It does not edit HF weights, change global vLLM, use SGLang, or replace old v2 images/failed containers.
+
+**New candidate (NOT GPU verified):**
+- Source: `src/p5_lm_head_quant_backport_v032_v3.py`, QSA #62318 unchanged
+- Dockerfile: `Dockerfile.p5.qsa62318-lmhead-v3`
+- Image: `blazux-p5-orcarouter:qsa62318-lmhead-v3-v032`
+- Container: `qwen38-orcarouter-qsa62318-lmhead-v3`
+- Adapter: `qwen4exp-qsa62318-lmhead-v032-v3`
+- P5 MTP0, host port 8000, single active model, exact new-plan + no-auto-rollback acknowledgement required.
+
+**Run on DGX:** clean `git pull --ff-only origin feature/recipe-wizard-handoff`; then `./wizard.sh p5 trial prepare --json` (offline scoped v3 image build), `./wizard.sh p5 trial plan --json` (read-only plan). If both PASS/READY, and the operator knowingly approves downtime/no automatic restore, execute the fresh `./wizard.sh p5 trial execute --approve-plan <FRESH_64_HEX_PLAN_ID> --ack-downtime I_ACCEPT_P5_NO_ROLLBACK --json`. Reuse **no previous plan ID**. Actual PASS requires running Orcarouter + API identity + chat inference, not metadata/CI alone. On failure preserve all existing containers and report the *new* v3 container's Docker logs.
+
+---
+
 
 **2026-11-08 current superseding instructions.** Earlier sections of `docs/P5-ORCAROUTER-MTP0-DGX-LIVE-NO-RESTORE-RUNBOOK-20261108.md` that refer to the QSA-only adapter/container are historical. Use **this** runbook for the next P5 experiment; never reuse an old plan ID.
 
