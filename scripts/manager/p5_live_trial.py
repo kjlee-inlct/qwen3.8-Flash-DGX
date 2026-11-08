@@ -91,7 +91,7 @@ def _trial_recipe() -> dict:
     profile = recipe["profiles"][trial["profile"]]
     compat = recipe["compatibility_adapter"]
     if (trial["runtime_strategy"]
-        != "RECIPE_PINNED_QSA62318_DERIVED_IMAGE_FROM_EXISTING_VLLM032"
+        != "RECIPE_PINNED_QSA62318_LMHEAD_V2_DERIVED_IMAGE_FROM_EXISTING_VLLM032"
         or trial["require_image_build"] is not True
         or trial["allow_source_patch"] is not False
         or trial["allow_isolated_derived_image_source_backport"] is not True
