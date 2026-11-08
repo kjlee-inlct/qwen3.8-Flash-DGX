@@ -8,6 +8,8 @@ GitHub source `21aa6c9` implements P6 non-authorizing live preflight, two-direct
 
 [Full document audit](../docs/HANDOFF-DOCUMENT-AUDIT-FULL-P5-20261108.md) · [P5 resource and engine details](../docs/P5-ORCAROUTER-BF16PLE-VLLM032-ADOPTION-20261108.md)
 
+**P5~P8 범용 기능 (2026-11-09):** 모든 등록 모델에 공통인 리소스/벤치 근거(P5), 전환 검증(P6), Wizard UX·서비스 통합 증거(P7), Fake-DGX 복구 매트릭스(P8)를 구현했다. 모델별 엔진·로더·PLE·MTP는 별도 어댑터이며, source PASS는 운영 승격/복구 승인이 아니다. 07:18 KST 제공된 DGX idle 관측에서 v3/API 8000 유지 확인. [범용 운영 명세](../docs/P5-P8-MODEL-AGNOSTIC-OPERATIONS-20261109.md).
+
 ---
 
 ## CURRENT P5 DOCUMENT SUPERSESSION — 2026-11-08 (actual v3 inference PASS; resource protection next)
