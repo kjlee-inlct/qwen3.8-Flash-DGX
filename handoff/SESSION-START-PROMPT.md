@@ -860,3 +860,11 @@ After P3-C actual DGX PASS, an ordinary operating switch **read-only preview** a
 5. 실제 live 서비스 변경이 필요한 검증 단계에 도달하면 **그 작업 범위와 다운타임 영향을 설명한 뒤 명시적 승인을 받아야 한다**. 승인이 없는 상태에서는 코드/문서/CPU-only까지 완료하고, 필요하면 단일 read-only 추적 스크립트만 제시.
 
 **이번 대화에서 완료할 핵심 목표: 일반 운영자가 메뉴에서 모델을 선택해 쉽게 상태·벤치·전환을 관리할 수 있도록 Wizard를 개발하고, 안전성을 후퇴시키지 않는 CPU 회귀/CI/인수인계까지 진행. 실제 27B 서비스는 유지.**
+
+## 2026-11-08 P5 resource diagnostics implementation (SOURCE ONLY; no DGX measurement)
+
+- New non-mutating `./wizard.sh operations resources snapshot --json`, `observe --samples 3 --interval 5 --json`, and `preflight --json`. Only passive /proc, /sys, nvidia-smi query, Docker ps/inspect/stats and git rev-parse are invoked; no inference, system tuning, model restart, Docker cleanup, or GPU mutation.
+- Host MemAvailable/page-cache/swap, memory/cpu/io PSI, CPU cpufreq/governors, thermal, nvidia-smi metrics where supported, Docker exact candidate identity, cgroup v2 memory, process smaps_rollup (NOT PLE-specific), NVMe cumulative counters are reported. Missing permissions/sensors => UNSUPPORTED/NOT_OBSERVED, never a fabricated zero.
+- Recipe resource policy is OBSERVE_ONLY; proposed startup threshold and pressure limits are null until DGX data is measured and policy approved. Preflight returns BLOCKED_UNCALIBRATED when no approved threshold; it is not wired into live startup and does NOT grant launch approval.
+- `--save` opt-in writes a 0600 evidence JSON under `~/.local/state/blazux-wizard/resource-diagnostics/`. Default snapshot is write-free. These are SOURCE-only changes pending real DGX data and CI.
+- YSLAB pinned 9492b78 applies a static 100-GiB pre-launch MemAvailable check and mmap/no-prewarm; it does not establish approved thresholds for this vLLM 0.32.0 Orcarouter deployment. P8 recovery and operator-authorized hard resource controls remain excluded.

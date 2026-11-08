@@ -167,5 +167,18 @@
     "gpu_qualified": false,
     "adapter_qualified": false,
     "lm_head_patch_script": "src/p5_lm_head_quant_backport_v032_v3.py"
+  },
+  "resource_policy": {
+    "schema_version": 1,
+    "mode": "OBSERVE_ONLY",
+    "min_mem_available_gib_for_start": null,
+    "max_memory_psi_some_avg10_pct_warn": null,
+    "max_swap_used_gib_warn": null,
+    "cpu_frequency_setting": "OPERATOR_APPROVAL_ONLY",
+    "cgroup_memory_setting": "OPERATOR_APPROVAL_ONLY",
+    "startup_gate_enabled": false,
+    "do_not_copy_yslab_100gib_without_measurement": true,
+    "observation_samples_max": 5,
+    "observation_interval_seconds_max": 30
   }
 }

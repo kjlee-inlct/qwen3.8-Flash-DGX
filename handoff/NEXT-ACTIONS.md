@@ -1327,3 +1327,12 @@ Each completed N-step must report: file+commit SHA, `PASS/FAIL/NOT_RUN` with sou
 ## Current exclusions
 
 Current **source-only development**: no operational GPU usage; no `./flash setup` or `./flash serve` run on DGX; no image pull/build/download; no Docker stop/rm; no deletion; no SGLang. User-requested source default now targets :8000; actual port occupancy and service deployment remain unverified and require separate preflight.
+
+
+## 2026-11-08 P5 resource diagnostics implementation (SOURCE ONLY; no DGX measurement)
+
+- New non-mutating `./wizard.sh operations resources snapshot --json`, `observe --samples 3 --interval 5 --json`, and `preflight --json`. Only passive /proc, /sys, nvidia-smi query, Docker ps/inspect/stats and git rev-parse are invoked; no inference, system tuning, model restart, Docker cleanup, or GPU mutation.
+- Host MemAvailable/page-cache/swap, memory/cpu/io PSI, CPU cpufreq/governors, thermal, nvidia-smi metrics where supported, Docker exact candidate identity, cgroup v2 memory, process smaps_rollup (NOT PLE-specific), NVMe cumulative counters are reported. Missing permissions/sensors => UNSUPPORTED/NOT_OBSERVED, never a fabricated zero.
+- Recipe resource policy is OBSERVE_ONLY; proposed startup threshold and pressure limits are null until DGX data is measured and policy approved. Preflight returns BLOCKED_UNCALIBRATED when no approved threshold; it is not wired into live startup and does NOT grant launch approval.
+- `--save` opt-in writes a 0600 evidence JSON under `~/.local/state/blazux-wizard/resource-diagnostics/`. Default snapshot is write-free. These are SOURCE-only changes pending real DGX data and CI.
+- YSLAB pinned 9492b78 applies a static 100-GiB pre-launch MemAvailable check and mmap/no-prewarm; it does not establish approved thresholds for this vLLM 0.32.0 Orcarouter deployment. P8 recovery and operator-authorized hard resource controls remain excluded.

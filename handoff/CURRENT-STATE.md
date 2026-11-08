@@ -1189,3 +1189,12 @@ GitHub-linked source changes add a bounded, read-only 27B `config.json` inspecto
 3. After scope-specific operational go-ahead and rollback plan, execute **P1 via Wizard** on DGX, collect actual API/benchmark evidence, then advance to P2 (27B Wizard), not directly to Orcarouter.
 
 See [NEXT-ACTIONS.md](NEXT-ACTIONS.md), [EVIDENCE-LEDGER.md](EVIDENCE-LEDGER.md) and [../docs/MODEL-RECIPE-WIZARD-PLAN.md](../docs/MODEL-RECIPE-WIZARD-PLAN.md).
+
+
+## 2026-11-08 P5 resource diagnostics implementation (SOURCE ONLY; no DGX measurement)
+
+- New non-mutating `./wizard.sh operations resources snapshot --json`, `observe --samples 3 --interval 5 --json`, and `preflight --json`. Only passive /proc, /sys, nvidia-smi query, Docker ps/inspect/stats and git rev-parse are invoked; no inference, system tuning, model restart, Docker cleanup, or GPU mutation.
+- Host MemAvailable/page-cache/swap, memory/cpu/io PSI, CPU cpufreq/governors, thermal, nvidia-smi metrics where supported, Docker exact candidate identity, cgroup v2 memory, process smaps_rollup (NOT PLE-specific), NVMe cumulative counters are reported. Missing permissions/sensors => UNSUPPORTED/NOT_OBSERVED, never a fabricated zero.
+- Recipe resource policy is OBSERVE_ONLY; proposed startup threshold and pressure limits are null until DGX data is measured and policy approved. Preflight returns BLOCKED_UNCALIBRATED when no approved threshold; it is not wired into live startup and does NOT grant launch approval.
+- `--save` opt-in writes a 0600 evidence JSON under `~/.local/state/blazux-wizard/resource-diagnostics/`. Default snapshot is write-free. These are SOURCE-only changes pending real DGX data and CI.
+- YSLAB pinned 9492b78 applies a static 100-GiB pre-launch MemAvailable check and mmap/no-prewarm; it does not establish approved thresholds for this vLLM 0.32.0 Orcarouter deployment. P8 recovery and operator-authorized hard resource controls remain excluded.

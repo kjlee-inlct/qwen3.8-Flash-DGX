@@ -27,7 +27,7 @@ USAGE = """Blazux Wizard (vLLM 0.32 only)
     --from-model flash-next --to-model 27b --json
   ./wizard.sh operations recovery-acceptance status --json  P8 fault/recovery/final signoff (source-only)\n  ./wizard.sh storage flash-next status --json
   ./wizard.sh storage flash-next inventory --json  P4-A read-only capacity and model state (NO DELETE)\n  ./wizard.sh storage flash-next dry-run --json  P4-B + P4-C combined review (NO DELETE)\n  ./wizard.sh p4 candidates --dry-run --json  P4-B only\n  ./wizard.sh p4 retire --dry-run --json  P4-C rehearsal only
-  ./wizard.sh operations system status --json
+  ./wizard.sh operations resources snapshot --json  P5 host/Docker/GPU read-only resource telemetry\n  ./wizard.sh operations resources observe --samples 3 --interval 5 --json\n  ./wizard.sh operations resources preflight --json  non-authorizing capacity gate review\n  ./wizard.sh operations system status --json
   ./wizard.sh service manager status --json   manifest + local API identity (read-only)\n  ./wizard.sh service manager health --json  read-only local API identity\n  ./wizard.sh service manager logs --json    bounded local log tail
   ./wizard.sh service manager plan --for-action restart --json
   ./wizard.sh model 27b benchmark --plan --json  read-only exact P2 benchmark plan\n  ./wizard.sh model 27b benchmark --execute --approve-plan SHA64 --ack-downtime ACK\n  ./wizard.sh switch flash-next-27b operational --target flash-next --plan --json  read-only ordinary switch preview\n  ./wizard.sh switch flash-next-27b operational guided --target flash-next  release-gated TTY review
@@ -233,6 +233,9 @@ def main(argv: list[str] | None = None) -> int:
         if sys.stdin.isatty() and not as_json:
             return interactive()
         args = ["list"]
+    if len(args) >= 2 and args[:2] == ["operations", "resources"]:
+        from scripts.manager.resource_diagnostics import main as resources_main
+        return resources_main(args[2:] + (["--json"] if as_json else []))
     if len(args) >= 2 and args[:2] == ["p5", "trial"]:
         if dry_run and any(action in ("prepare", "execute") for action in args[2:]):
             print(json.dumps({"status": "BLOCKED",
