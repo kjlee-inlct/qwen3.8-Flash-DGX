@@ -1,6 +1,6 @@
 # Full GitHub document inventory and P5 state-consistency audit — 2026-11-08
 
-**Scope and method:** recursive Git tree `1494a714ef1034d69471d2e16df0ad491b6695fb` on branch `feature/recipe-wizard-handoff`, `truncated=false`. The **initial** tree at `9e7cd1b9cb18` contained 466 files and **161 document-like items**, all reviewed: 84 Markdown/markup and 77 JSON/YAML/TXT/CI/evidence (six segments each). After adding the new v2 Runbook, the enumeration snapshot at `1494a714ef10` contains **467 files and 162 document-like items** (85 Markdown, including that newly authored Runbook, plus the same 77 structured/text artifacts). This audit file was itself created after that snapshot. Each item's contents were fetched from its Git blob and inspected for subject, provenance and current-versus-historical status. Programmatic enumeration is a completeness claim for these extensions, **not** proof of deep semantic correctness of every historical log entry. No DGX/network service state was changed by the audit. No document is treated as live GPU evidence.
+**Scope and method:** recursive Git tree `1494a714ef1034d69471d2e16df0ad491b6695fb` on branch `feature/recipe-wizard-handoff`, `truncated=false`. The **initial** tree at `9e7cd1b9cb18` contained 466 files and **168 document-like items**, all reviewed: 84 Markdown/markup, 77 JSON/YAML/TXT/CI/evidence (six segments each), plus **7 extensionless LICENSE/NOTICE files**. After adding the new v2 Runbook, the enumeration snapshot at `1494a714ef10` contains **467 files and 169 document-like items** (85 Markdown, including the newly authored Runbook, 77 structured/text items and 7 legal/attribution notices). This audit file was itself created after that snapshot. Each item's contents were fetched from its Git blob and inspected for subject, provenance and current-versus-historical status. Programmatic enumeration is a completeness claim for these extensions **and the seven identified extensionless notices**, **not** proof of deep semantic correctness of every historical log entry. No DGX/network service state was changed by the audit. No document is treated as live GPU evidence.
 
 ## Audit conclusion and documents that had been missed
 
@@ -11,7 +11,8 @@
 5. **Read-only capability is not GPU qualification.** `runtimes/ple-assets.json` schema v2 retains 128 BF16 PLE, with independent source/format. `runtimes/ple-loader-profiles.json` now binds the scoped v2 adapter but deliberately keeps `cuda_loader_verified=false`, `mmap_gpu_verified=false`, `autostart_released=false`. Neither model metadata nor CPU image ABI probes prove that `lm_head.weight_scale` matches a registered quantization scheme. Do not change `quantization_config.ignore` or truncate scales merely because an external forum post has a recipe.
 6. **Source implementation changes are intentionally isolated.** `recipes/qwen38-orcarouter.runtime.json`, `scripts/manager/manifest_registry.py`, `scripts/manager/p5_live_trial.py`, `Dockerfile.p5.qsa62318-lmhead`, `src/p5_lm_head_quant_backport_v032.py`, `tests/test_p5_lm_head_quant_backport_cpu.py` hold the current candidate. Canonical vLLM=0.32.0; SGLang forbidden; API :8000, one model active. QSA-only image and both failed containers preserved. No checkpoint, HF-cache or 27B original image modification.
 7. **Historic documents and fixtures remain historic.** 2026-10 vLLM-031/032 validation, historical P1/P2/P3/P4 evidence, previous PR/CI notes and `tests/vllm032/validation/` fixtures are not claims about current P5. Do not edit historical raw evidence to force consistency.
-8. **CI/PR:** source update HEAD `9e7cd1b9cb189122cbbf319c4b274a2fa4072dd7` completed two successful GitHub Actions runs: [push #42473176346](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42473176346) and [PR #42473180100](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42473180100). These are CPU/source validations only. PR #1 stays Draft/Open/unmerged. Additional documentation commits need their own CI confirmation.
+8. **License/NOTICE completeness:** The extensionless root/vendor/test-bundle license/attribution files were separately discovered and read after the first extension-based pass; all seven are recorded below. No source license was changed.
+9. **CI/PR:** source update HEAD `9e7cd1b9cb189122cbbf319c4b274a2fa4072dd7` completed two successful GitHub Actions runs: [push #42473176346](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42473176346) and [PR #42473180100](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42473180100). These are CPU/source validations only. PR #1 stays Draft/Open/unmerged. Additional documentation commits need their own CI confirmation.
 
 ## Decisions
 
@@ -22,7 +23,7 @@
 
 ## Complete enumerated review inventory
 
-The paths below are exhaustive for the stated document-like extensions at the pre-audit tree. Counts include raw test evidence fixtures so no file is silently excluded; this is not a claim that log fixtures constitute procedural documentation.
+The paths below are exhaustive for the audited text/document-like extensions **plus extensionless LICENSE/NOTICE** at the pre-audit tree. Counts include raw test evidence fixtures so no file is silently excluded; this is not a claim that log fixtures constitute procedural documentation.
 
 ### Markdown / markup (85, including the newly added v2 Runbook)
 
@@ -192,6 +193,18 @@ The paths below are exhaustive for the stated document-like extensions at the pr
 - `tests/vllm032/validation/review-20261022/schema.txt`
 - `tests/vllm032/validation/review-20261022/summary.json`
 
+### Extensionless license and attribution documents (7)
+
+- `LICENSE`
+- `scripts/p5_vendor/LICENSE`
+- `scripts/p5_vendor/NOTICE`
+- `tests/issue31_safe_output/LICENSE`
+- `tests/issue31_safe_output/NOTICE`
+- `tests/issue31_schema_arguments/LICENSE`
+- `tests/issue31_schema_arguments/NOTICE`
+
+**Content checked:** root/vendor Apache-2.0 text and YSLAB attribution notice, plus the historical vLLM issue #31 source-bundle LICENSE and NOTICE files. Preserve these originals and their pinned source/provenance; do not rewrite them as current P5 runtime approvals.
+
 ## Exclusions and limits
 
-The remaining 305 repository files are source/code, shell scripts, Dockerfiles, Git metadata, binary/test assets or other extensions and were **not** counted as document-like inventory. The P5 source/manifest/CI files noted above were separately inspected for cross-consistency, but this is not a line-by-line code audit of all 466 files. The user's actual DGX filesystem, Docker daemon, runtime GPU state and local private receipts are not connected to this GitHub audit. Do not assert current Docker/API availability or claim a GPU PASS from this audit.
+The remaining 298 repository files are source/code, shell scripts, Dockerfiles, Git metadata, binary/test assets or other extensions and were **not** counted as document-like inventory. The P5 source/manifest/CI files noted above were separately inspected for cross-consistency, but this is not a line-by-line code audit of all 467 files in the enumeration snapshot. The user's actual DGX filesystem, Docker daemon, runtime GPU state and local private receipts are not connected to this GitHub audit. Do not assert current Docker/API availability or claim a GPU PASS from this audit.

@@ -52,14 +52,15 @@ class P5HandoffFullDocumentCPU(unittest.TestCase):
             line[3:-1] for line in text.splitlines()
             if line.startswith("- " + mark) and line.endswith(mark)
         ]
-        self.assertEqual(len(original), 162)
-        self.assertEqual(len(set(original)), 162)
+        self.assertEqual(len(original), 169)
+        self.assertEqual(len(set(original)), 169)
         missing = [p for p in original if not (ROOT / p).is_file()]
         self.assertFalse(missing, missing)
         current = {
             p.relative_to(ROOT).as_posix()
             for p in ROOT.rglob("*")
-            if p.is_file() and p.suffix.lower() in EXT
+            if p.is_file() and (p.suffix.lower() in EXT
+                            or p.name in ("LICENSE", "NOTICE"))
             and ".git" not in p.parts
         }
         self.assertEqual(current - set(original), {AUDIT})
