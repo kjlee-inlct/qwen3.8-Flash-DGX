@@ -95,6 +95,9 @@ class P5HandoffFullDocumentCPU(unittest.TestCase):
             urls = LINK.findall(header)
             self.assertGreaterEqual(len(urls), 2, name)
             for rel in urls:
+                if rel.startswith(("https://", "http://")):
+                    # External pinned research links are not local files.
+                    continue
                 target = (p.parent / rel).resolve()
                 with self.subTest(doc=name, link=rel):
                     self.assertTrue(target.is_relative_to(ROOT))
