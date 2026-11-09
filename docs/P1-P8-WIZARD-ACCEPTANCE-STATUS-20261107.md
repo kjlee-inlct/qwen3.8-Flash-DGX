@@ -199,6 +199,8 @@ All claims below are **CPU/Fake-DGX source contracts only**; no DGX, Docker, GPU
 
 ## P5-C and P6-D SOURCE implementation (2026-11-10)
 
+CI verified on source commit `37f3a1b8417a777206fea63965e6fcd7acef0ada`: Push [42720683321](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42720683321) SUCCESS and PR [42720691856](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42720691856) SUCCESS. All 9 new P5-C/P6-D CPU tests PASS. No actual DGX observation or operating transition occurred; the source code is not production qualified.
+
 P5 read-only paired service/resource binding: `observation-capture --model orcarouter --json` is strictly sequential and calls existing non-mutating Docker/API/host-metric probes. Resource Docker ID is a single-probe observation; service status currently does not independently expose a full Docker ID or verify the process binding for :8000. Any role/API/checkpoint/name/image mismatch produces BLOCKED; a source-correlated report never qualifies a live benchmark or production. To avoid even a read-only host probe, use `observation-review --model orcarouter --service-evidence /absolute/service.json --resource-evidence /absolute/resource.json --json`.
 
 P6 operating-gate-review never returns READY/APPROVED. Its input evidence is untrusted, including fake approval, declared independent GPU exclusivity, journal VERIFIED flags, and synthetic clock. It always reports `BLOCKED_LIVE_EXECUTOR_NOT_QUALIFIED` and preserves the existing two-model `service_journal.py`/operational_audit behavior. Orcarouter live switching is still prohibited without future qualified schema, real approval and verified executor.
