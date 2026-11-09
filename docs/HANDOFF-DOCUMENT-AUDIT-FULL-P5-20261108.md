@@ -1,3 +1,9 @@
+## 2026-11-09 post-update audit/CI supersession
+
+At code+workflow HEAD `29c28e4750adabbd421dcda64a432127d3f45659`, GitHub Push CI 42553107135 and PR CI 42553114059 were both SUCCESS, including newly wired 23 CPU regression tests (P5 8, P6/P8 8, P7 6, TTY 1). After the latest handoff/permanent-doc updates, the core **16** documents' Markdown local relative links were independently checked: **318 links, 0 broken**. Recursive Git tree remained **534 entries/492 blobs/truncated=false**, **171 document-like paths**, original frozen **169/169 present**, exactly two additional paths (this audit and the P5–P8 common document). These checks do not prove historical semantic consistency or real DGX operational acceptance. Earlier baseline checks and raw audit history remain below.
+
+---
+
 ## 2026-11-09 current document/tree audit supersession
 
 Checked branch at source HEAD `90301803dc740f7a6a362b744434c2038c31ccc9` before documentation updates: recursive tree **534 entries / 492 blobs / truncated=false**; document-like text paths **171** using `.md/.mdx/.rst/.adoc/.json/.yaml/.yml/.toml/.txt` and LICENSE/NOTICE. Historical frozen **169** listed paths all present (missing 0). Exactly two additional document paths remain: this audit file and `docs/P5-P8-MODEL-AGNOSTIC-OPERATIONS-20261109.md`. Core 16 docs contained **280 local relative Markdown links checked / 0 broken**. This is an inventory/selected-link audit, **not** full semantic validation of all 171 contents. Source, 2026-11-09 10:15 KST private idle evidence and acceptance caveats are superseded in [common contract](P5-P8-MODEL-AGNOSTIC-OPERATIONS-20261109.md); older facts below retain historical dates.

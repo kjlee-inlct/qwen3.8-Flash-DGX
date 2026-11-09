@@ -1,5 +1,7 @@
 ## CURRENT P5 DOCUMENT SUPERSESSION — 2026-11-09 10:15 KST (P5–P8 model-agnostic update)
 
+**Latest source CI verified:** code+workflow HEAD `29c28e4750adabbd421dcda64a432127d3f45659`, GitHub Push run [42553107135](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42553107135) and PR run [42553114059](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42553114059) both **SUCCESS**. Newly added CPU checks explicitly included: P5 session 8, P6/P8 extended transition 8, P7 reconciliation 6, Wizard TTY 1 = **23 added tests PASS**. Original 24 synthetic cases preserved, 66 extended synthetic cases PASS as expected. **CI does not validate real Docker/GPU/inference/recovery**. Subsequent documentation-only commits may advance branch HEAD; always query the live branch/PR on restart.
+
 **Current P5 trial:** adapter `qwen4exp-qsa62318-lmhead-v032-v3` resolved `lm_head.weight_scale`. Orcarouter v3 remains DEVELOPMENT_TRIAL, not production. The newer 10:15 KST operator-provided *idle-only* telemetry and P5–P8 source-only implementation/acceptance supersession immediately below do not authorize any actual DGX service change.
 
 [Model-independent P5–P8 source/acceptance contract](../docs/P5-P8-MODEL-AGNOSTIC-OPERATIONS-20261109.md) · [Full document audit](../docs/HANDOFF-DOCUMENT-AUDIT-FULL-P5-20261108.md)
