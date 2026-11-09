@@ -223,13 +223,17 @@ def _generic_qualification_menu(model: str) -> None:
     if model not in catalog["models"]:
         print("Model is not registered. No diagnostics executed.")
         return
-    actions = ("resource", "switch", "faults", "integration")
+    actions = ("resource", "switch", "faults", "integration",
+               "session", "faults-extended", "integration-reconcile")
     while True:
         print("\nP5–P8 common model qualification (0 back)")
         print("  1. P5 bounded read-only resource snapshot")
         print("  2. P6 read-only switch preflight")
         print("  3. P8 all-model Fake-DGX failure matrix")
         print("  4. P7 component evidence requirements")
+        print("  5. P5 benchmark/resource correlation session plan (no workload)")
+        print("  6. P8 extended all-model Fake-DGX fault matrix")
+        print("  7. P7 strict component observation reconciliation (read-only)")
         picked = _choice(_input("Review (0 back): "), list(actions))
         if picked is None:
             return
@@ -264,12 +268,33 @@ def _generic_qualification_menu(model: str) -> None:
                   " | pairs: " + str(report["pair_count"]) +
                   " | cases: " + str(report["test_count"]))
             print("  Synthetic states are not live recovery evidence.")
-        else:
+        elif picked == "integration":
             report = integration_review(model, {})
             print("  P7 evidence: " + report["status"])
             for issue in report["issues"]:
                 print("   - " + issue)
             print("  Service/proxy/gateway/storage are not inferred healthy.")
+        elif picked == "session":
+            from scripts.manager.benchmark_session import session_plan
+            report = session_plan(model)
+            print("  P5 benchmark session: " + report["status"])
+            print("  Expected served ID: " + report["identity"]["served_id"])
+            print("  No workload is generated; fresh operator approval is required.")
+            print("  For source review: ./wizard.sh operations generic session-review")
+        elif picked == "faults-extended":
+            from scripts.manager.transition_safety import extended_fault_matrix
+            report = extended_fault_matrix()
+            print("  Extended Fake-DGX: " + report["status"] +
+                  " | pairs: " + str(report["pair_count"]) +
+                  " | cases: " + str(report["test_count"]))
+            print("  Existing 24-case matrix remains unchanged; no Docker is touched.")
+        else:
+            from scripts.manager.integration_contract import integration_reconcile
+            report = integration_reconcile(model, {})
+            print("  P7 strict reconciliation: " + report["status"])
+            for issue in report["issues"]:
+                print("   - " + issue)
+            print("  Use the integration-reconcile CLI with independently collected component evidence.")
 
 
 def _model_screen(model: str) -> None:
