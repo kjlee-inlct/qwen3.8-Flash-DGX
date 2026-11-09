@@ -361,11 +361,13 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Model-agnostic source-only P5-P8")
     parser.add_argument("action", choices=(
         "catalog", "preflight", "simulate", "fault-matrix",
-        "resource-review", "integration", "session-plan", "session-review"))
+        "resource-review", "integration", "session-plan", "session-review",
+        "transaction-simulate", "extended-fault-matrix"))
     parser.add_argument("--from-model")
     parser.add_argument("--to-model")
     parser.add_argument("--model")
     parser.add_argument("--fault", choices=FAULTS, default="none")
+    parser.add_argument("--extended-fault", default="none")
     parser.add_argument("--resource-evidence")
     parser.add_argument("--benchmark-evidence")
     parser.add_argument("--component-evidence")
@@ -376,7 +378,7 @@ def main(argv: list[str] | None = None) -> int:
                         help="fault-matrix concise output; all cases still evaluated")
     args = parser.parse_args(argv)
     try:
-        if args.summary_only and args.action != "fault-matrix":
+        if args.summary_only and args.action not in ("fault-matrix", "extended-fault-matrix"):
             raise ValueError("SUMMARY_ONLY_SUPPORTED_FOR_FAULT_MATRIX")
         if args.action == "catalog":
             result = model_catalog()
@@ -384,6 +386,25 @@ def main(argv: list[str] | None = None) -> int:
             result = fault_matrix()
             if args.summary_only:
                 result = fault_matrix_summary(result)
+        elif args.action in ("transaction-simulate", "extended-fault-matrix"):
+            from scripts.manager.transition_safety import simulate_transaction, extended_fault_matrix
+            if args.action == "extended-fault-matrix":
+                result = extended_fault_matrix()
+                if args.summary_only:
+                    cases = result.pop("cases")
+                    result["summary_only"] = True
+                    result["full_journals_omitted"] = True
+                    result["status_counts"] = {
+                        status: sum(c["status"] == status for c in cases)
+                        for status in sorted({c["status"] for c in cases})}
+                    result["fault_counts"] = {
+                        fault: sum(c["injected_fault"] == fault for c in cases)
+                        for fault in sorted({c["injected_fault"] for c in cases})}
+            else:
+                if not args.from_model or not args.to_model:
+                    raise ValueError("EXACT_SOURCE_AND_TARGET_REQUIRED")
+                result = simulate_transaction(args.from_model, args.to_model,
+                                              fault=args.extended_fault)
         elif args.action in ("preflight", "simulate"):
             if not args.from_model or not args.to_model:
                 raise ValueError("EXACT_SOURCE_AND_TARGET_REQUIRED")
