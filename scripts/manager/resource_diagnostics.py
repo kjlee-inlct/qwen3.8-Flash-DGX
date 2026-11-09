@@ -356,6 +356,7 @@ def snapshot(*, proc: Path = PROC, sysfs: Path = SYS, runner=subprocess.run,
         if "SwapTotal" in mem and "SwapFree" in mem else None)
     doc = {"schema_version": 1,
            "timestamp_utc": datetime.now(timezone.utc).isoformat(),
+           "monotonic_ns": time.monotonic_ns(),
            "scope": "READ_ONLY_HOST_AND_ALLOWED_DOCKER_INSPECTION",
            "status": "OBSERVED_PARTIAL" if "MemAvailable" in mem else "BLOCKED",
            "executed": False, "resource_limits_changed": False,
