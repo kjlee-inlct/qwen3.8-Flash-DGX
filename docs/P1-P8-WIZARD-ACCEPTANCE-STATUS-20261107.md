@@ -182,3 +182,7 @@ A successful *source-only* P8 plan or Fake-DGX tests **cannot** mark P8-C or P8-
 ## Handoff rule
 
 Future work on P4–P7 may proceed without reopening P3-G. P8 remains the dedicated safety/end-to-end acceptance milestone. Preserve old DGX switch receipts, preserve model files/HF cache and vLLM 0.32/API 8000/ONE_ACTIVE_MODEL_ONLY rules; do not use SGLang. PR #1 stays Draft/unmerged until a separate release decision.
+
+## 2026-11-09 P5-B / P6-A source-only mock additions
+
+P5 `./wizard.sh operations generic session-mock --model orcarouter --json`, `session-matrix --summary-only --json` exercise the mock pre-sample/workload/post-sample clock and failure correlation (3 registered models × 7 faults = 21). P6 `pipeline-mock --from-model orcarouter --to-model 27b --json` exercises in-memory transition plus hash-linked mock journal and phase audit. Hashes cannot authenticate source evidence, and there is no real benchmark, service write, approval or durable recovery. New tests are explicitly in `.github/workflows/recipe-manifest-cpu.yml`; verified Actions outcome must be recorded separately after commit. All live P5/P6/P7/P8 acceptance remains NOT RUN; PR #1 Draft, no merge.

@@ -258,3 +258,7 @@ The accepted execution/acceptance order remains P1→P2→P3→conditional P4→
 1. Fix source/CI failures and make machine interface consistent across commands (including P1 payload versioning), while preserving legacy P1 scripts.
 2. Complete DGX P1 verification/benchmark using **existing** downloaded/serving assets and record JSON evidence.
 3. Implement P2-specific vLLM 0.32 pinned source adapter and CPU compatibility tests, then progress along the stage order; P3/P4/P5/P6/P7 adapters stay disabled until validated.
+
+## 2026-11-09 P5-B / P6-A source-only mock additions
+
+P5 `./wizard.sh operations generic session-mock --model orcarouter --json`, `session-matrix --summary-only --json` exercise the mock pre-sample/workload/post-sample clock and failure correlation (3 registered models × 7 faults = 21). P6 `pipeline-mock --from-model orcarouter --to-model 27b --json` exercises in-memory transition plus hash-linked mock journal and phase audit. Hashes cannot authenticate source evidence, and there is no real benchmark, service write, approval or durable recovery. New tests are explicitly in `.github/workflows/recipe-manifest-cpu.yml`; verified Actions outcome must be recorded separately after commit. All live P5/P6/P7/P8 acceptance remains NOT RUN; PR #1 Draft, no merge.

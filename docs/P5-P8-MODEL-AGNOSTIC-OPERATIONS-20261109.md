@@ -1,3 +1,20 @@
+## P5-B / P6-A MOCK coordination and journal extension — 2026-11-09
+
+**Source and CPU/Fake-DGX only; no live DGX mutation or promotion.** New `mock_benchmark_session.py` implements model-independent P5 synthetic timeline coordination (pre-sample → mock benchmark → post-sample) and feeds the existing `benchmark_session.session_review`. Mock metrics, API observation flags, timestamps and Docker IDs are synthetic test fixtures, not current performance values. New `mock_transaction_pipeline.py` connects the exact in-memory P6 executor trace to indexed hash-linked in-memory events with a fail-closed journal audit; the hash chain does not establish origin, fsync durability, true approval, live status, or the ability to restart a model. Existing persistent `service_journal.py` remains untouched and does not yet implement Orcarouter live transaction support.
+
+Commands (all source-only):
+```bash
+./wizard.sh operations generic session-mock --model orcarouter --json
+./wizard.sh operations generic session-mock --model 27b --mock-fault oom --json
+./wizard.sh operations generic session-matrix --summary-only --json
+./wizard.sh operations generic pipeline-mock --from-model orcarouter --to-model 27b --json
+./wizard.sh operations generic pipeline-mock --from-model 27b --to-model flash-next --extended-fault target-api --json
+```
+
+P5 fixture has 7 faults including normal, missing sample, container/API drift, clock drift, request error, OOM. The extended P8 baseline continues separately with 11 faults × 6 pairs = 66 Fake-DGX cases. All tests must remain explicit in GitHub Actions. Operational P5 Session Plan still correctly BLOCKS unapproved real workload; actual live benchmark/resource capture, persistent journal, real P6 executor, Proxy/Gateway, live P8 recovery and final release remain unverified.
+
+---
+
 ## 2026-11-09 10:15 KST source-contract supersession (operator DGX idle-only)
 
 Operator's newest read-only Orcarouter v3 receipt: `/home/inlc/.local/state/blazux-wizard/resource-diagnostics/20261109T011520343025Z.json`, **5 samples / 44.27 s**; min MemAvailable ~30.16 GiB, last ~30.18 GiB, host MemTotal ~121.63 GiB; cgroup memory.current ~25.25 GiB, peak ~37.02 GiB; host swap used ~1.31 GiB, cgroup swap 0; memory PSI avg10=0%, OOM/OOMKill/major fault/file refault interval delta 0, swap in/out 0; CPU busy 0.19%, GPU 0% and 33°C, system peak 33.8°C, Docker identity unchanged. **Idle-only**: not loaded inference, PLE RSS, TTFT/TPS, or safe startup threshold verification. Keep OBSERVE_ONLY and startup_gate_enabled=false.

@@ -362,12 +362,14 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("action", choices=(
         "catalog", "preflight", "simulate", "fault-matrix",
         "resource-review", "integration", "session-plan", "session-review",
-        "transaction-simulate", "extended-fault-matrix", "integration-reconcile"))
+        "transaction-simulate", "extended-fault-matrix", "integration-reconcile",
+        "session-mock", "session-matrix", "pipeline-mock"))
     parser.add_argument("--from-model")
     parser.add_argument("--to-model")
     parser.add_argument("--model")
     parser.add_argument("--fault", choices=FAULTS, default="none")
     parser.add_argument("--extended-fault", default="none")
+    parser.add_argument("--mock-fault", default="none")
     parser.add_argument("--resource-evidence")
     parser.add_argument("--benchmark-evidence")
     parser.add_argument("--component-evidence")
@@ -378,10 +380,25 @@ def main(argv: list[str] | None = None) -> int:
                         help="fault-matrix concise output; all cases still evaluated")
     args = parser.parse_args(argv)
     try:
-        if args.summary_only and args.action not in ("fault-matrix", "extended-fault-matrix"):
+        if args.summary_only and args.action not in ("fault-matrix", "extended-fault-matrix", "session-matrix"):
             raise ValueError("SUMMARY_ONLY_SUPPORTED_FOR_FAULT_MATRIX")
         if args.action == "catalog":
             result = model_catalog()
+
+        elif args.action == "session-mock":
+            if not args.model:
+                raise ValueError("EXACT_MODEL_REQUIRED")
+            from scripts.manager.mock_benchmark_session import mock_session
+            result = mock_session(args.model, fault=args.mock_fault)
+        elif args.action == "session-matrix":
+            from scripts.manager.mock_benchmark_session import mock_session_matrix
+            result = mock_session_matrix(summary_only=args.summary_only)
+        elif args.action == "pipeline-mock":
+            if not args.from_model or not args.to_model:
+                raise ValueError("EXACT_SOURCE_AND_TARGET_REQUIRED")
+            from scripts.manager.mock_transaction_pipeline import mock_pipeline
+            result = mock_pipeline(args.from_model, args.to_model,
+                                   fault=args.extended_fault)
         elif args.action == "fault-matrix":
             result = fault_matrix()
             if args.summary_only:
@@ -448,6 +465,8 @@ def main(argv: list[str] | None = None) -> int:
         "PASS_FAKE_RECOVERY", "PASS_FAKE_DGX_EXPECTED_OUTCOMES",
         "SOURCE_METRICS_PRESENT_NOT_LIVE_ACCEPTANCE",
         "SOURCE_SESSION_CORRELATED_NOT_LIVE_ACCEPTANCE",
+        "PASS_FAKE_P5_SESSION", "PASS_FAKE_P5_FAULT_BLOCKED",
+        "PASS_FAKE_PIPELINE_CONTRACT",
         "SOURCE_COMPONENT_FIELDS_CONSISTENT_NOT_LIVE_VERIFIED",
         "SOURCE_EVIDENCE_COMPLETE_NOT_RUNTIME_ACCEPTANCE",
     ) else 3

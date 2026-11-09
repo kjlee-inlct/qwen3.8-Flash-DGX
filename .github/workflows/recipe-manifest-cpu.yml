@@ -55,6 +55,8 @@ on:
       - 'tests/test_p4_bc_dry_run_cpu.py'
       - 'tests/test_p6_p8_fakedgx_cpu.py'
       - 'tests/test_benchmark_session_cpu.py'
+      - 'tests/test_mock_benchmark_session_cpu.py'
+      - 'tests/test_mock_transaction_pipeline_cpu.py'
       - 'tests/test_transition_safety_cpu.py'
       - 'tests/test_integration_contract_cpu.py'
       - 'tests/test_generic_operations_cpu.py'
@@ -146,6 +148,10 @@ jobs:
           python -m unittest discover -s tests -p 'test_p5_*_cpu.py' -v
           python -m unittest discover -s tests -p 'test_p6_p8_fakedgx_cpu.py' -v
           python -m unittest discover -s tests -p 'test_benchmark_session_cpu.py' -v
+          python -m unittest discover -s tests -p 'test_mock_benchmark_session_cpu.py' -v
+          python -m unittest discover -s tests -p 'test_mock_transaction_pipeline_cpu.py' -v
+          python -m wizard operations generic session-matrix --summary-only --json
+          python -m wizard operations generic pipeline-mock --from-model 27b --to-model flash-next --json
           python -m unittest discover -s tests -p 'test_transition_safety_cpu.py' -v
           python -m unittest discover -s tests -p 'test_integration_contract_cpu.py' -v
           python -m unittest discover -s tests -p 'test_generic_operations_cpu.py' -v
