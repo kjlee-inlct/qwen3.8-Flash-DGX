@@ -1,3 +1,11 @@
+## 2026-11-09 current P5 v2 supersession — archived adapter compatibility marker
+
+Historical adapter `qwen4exp-qsa62318-lmhead-v032-v2` was superseded by v3, which resolved `lm_head.weight_scale`; neither legacy adapter nor source-only P5–P8 updates grant production release. Latest 10:15 KST operator idle observation and common source status appear below.
+
+[Latest common model-independent operations](P5-P8-MODEL-AGNOSTIC-OPERATIONS-20261109.md) · [Complete P5 document audit](HANDOFF-DOCUMENT-AUDIT-FULL-P5-20261108.md)
+
+---
+
 ## 2026-11-09 latest P5–P8 source-vs-real supersession
 
 **P5:** read-only common benchmark session plan/review module and monotonic snapshot stamps SOURCE IMPLEMENTED; 10:15 KST Orcarouter v3 operator idle resource sample REAL DGX OBSERVED (**idle-only**). Real loaded benchmark/TTFT/TPS, PLE-specific RSS, concurrent/long-context test, safe threshold and sampler/workload coordination NOT RUN. **P6:** model-agnostic in-memory transactional faults SOURCE IMPLEMENTED and CPU/Fake-DGX tested; approved live generic switch executor and actual three-model pair acceptance NOT RUN/NOT RELEASED. **P7:** strict model-bound four-component source reconciliation and read-only TTY options implemented; independent Proxy/Gateway/OpenWebUI API health NOT VERIFIED. **P8:** preserve original 24 general Fake-DGX cases plus 66 extended in-memory cases; live fault injection, real rollback and final operator release NOT RUN. Do not merge historical P3-G roundtrip or P5 trial MTP0 verification into later generic release claims. [Common contract](P5-P8-MODEL-AGNOSTIC-OPERATIONS-20261109.md).

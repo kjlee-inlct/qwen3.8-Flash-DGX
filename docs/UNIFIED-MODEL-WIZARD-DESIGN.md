@@ -1,3 +1,11 @@
+## 2026-11-09 current P5 v2 supersession — archived adapter compatibility marker
+
+Historical adapter `qwen4exp-qsa62318-lmhead-v032-v2` was superseded by v3, which resolved `lm_head.weight_scale`; neither legacy adapter nor source-only P5–P8 updates grant production release. Latest 10:15 KST operator idle observation and common source status appear below.
+
+[Latest common model-independent operations](P5-P8-MODEL-AGNOSTIC-OPERATIONS-20261109.md) · [Complete P5 document audit](HANDOFF-DOCUMENT-AUDIT-FULL-P5-20261108.md)
+
+---
+
 ## 2026-11-09 model-independent common architecture supersession
 
 Registered models are read from `runtimes/service-policy.json`; checkpoint/served ID/container/recipe differ by registered model while common control logic remains model-agnostic. New P5 `benchmark_session.py` is **read-only source evidence correlation**, P6/P8 `transition_safety.py` is **in-memory-only** fault state machine (66 synthetic scenarios with current registry; historical 24 preserved), P7 `integration_contract.py` is **strict source component reconciliation**. `generic_operations.py` exposes CLI and `wizard/console.py` adds non-mutating reviews. No real transaction executor, resource actuator, independent proxy/gateway probe or authenticated benchmark provenance has been delivered by this source-only change. [Common spec](P5-P8-MODEL-AGNOSTIC-OPERATIONS-20261109.md).

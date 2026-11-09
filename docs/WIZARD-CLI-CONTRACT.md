@@ -1,3 +1,11 @@
+## 2026-11-09 current P5 v2 supersession — archived adapter compatibility marker
+
+Historical adapter `qwen4exp-qsa62318-lmhead-v032-v2` was superseded by v3, which resolved `lm_head.weight_scale`; neither legacy adapter nor source-only P5–P8 updates grant production release. Latest 10:15 KST operator idle observation and common source status appear below.
+
+[Latest common model-independent operations](P5-P8-MODEL-AGNOSTIC-OPERATIONS-20261109.md) · [Complete P5 document audit](HANDOFF-DOCUMENT-AUDIT-FULL-P5-20261108.md)
+
+---
+
 ## 2026-11-09 P5–P8 generic CLI source-only additions
 
 New `./wizard.sh operations generic` actions:

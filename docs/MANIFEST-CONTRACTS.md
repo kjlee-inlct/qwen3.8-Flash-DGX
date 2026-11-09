@@ -1,3 +1,11 @@
+## 2026-11-09 current P5 v2 supersession — archived adapter compatibility marker
+
+Historical adapter `qwen4exp-qsa62318-lmhead-v032-v2` was superseded by v3, which resolved `lm_head.weight_scale`; neither legacy adapter nor source-only P5–P8 updates grant production release. Latest 10:15 KST operator idle observation and common source status appear below.
+
+[Latest common model-independent operations](P5-P8-MODEL-AGNOSTIC-OPERATIONS-20261109.md) · [Complete P5 document audit](HANDOFF-DOCUMENT-AUDIT-FULL-P5-20261108.md)
+
+---
+
 ## 2026-11-09 common operation identity supersession (no schema migration)
 
 P5 benchmark sessions, P6/P8 synthetic transitions and P7 strict component reconciliation obtain model keys, checkpoint, served API ID, canonical Docker container and recipe path from the existing `runtimes/service-policy.json` registry. New models automatically expand directed transition test pairs; the common engine does not add a model-specific switch script. No manifest schema change or runtime promotion; provisional Orcarouter served ID and canonical `qwen38-orcarouter` qualification hold continue to block real switch. Real Docker, GPU, Proxy/Gateway and asset provenance must be checked independently before approval. [P5–P8 common spec](P5-P8-MODEL-AGNOSTIC-OPERATIONS-20261109.md).
