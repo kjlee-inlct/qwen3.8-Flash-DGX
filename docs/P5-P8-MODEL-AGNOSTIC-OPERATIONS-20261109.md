@@ -1,3 +1,13 @@
+## P5-C and P6-D SOURCE implementation (2026-11-10)
+
+P5 read-only paired service/resource binding: `observation-capture --model orcarouter --json` is strictly sequential and calls existing non-mutating Docker/API/host-metric probes. Resource Docker ID is a single-probe observation; service status currently does not independently expose a full Docker ID or verify the process binding for :8000. Any role/API/checkpoint/name/image mismatch produces BLOCKED; a source-correlated report never qualifies a live benchmark or production. To avoid even a read-only host probe, use `observation-review --model orcarouter --service-evidence /absolute/service.json --resource-evidence /absolute/resource.json --json`.
+
+P6 operating-gate-review never returns READY/APPROVED. Its input evidence is untrusted, including fake approval, declared independent GPU exclusivity, journal VERIFIED flags, and synthetic clock. It always reports `BLOCKED_LIVE_EXECUTOR_NOT_QUALIFIED` and preserves the existing two-model `service_journal.py`/operational_audit behavior. Orcarouter live switching is still prohibited without future qualified schema, real approval and verified executor.
+
+New dedicated CPU tests in workflow, plus existing legacy suites. CI success must be checked on this new commit. No DGX service change, no inference, no live switching or auto restore. This is not P5 loaded performance or P6 production executor acceptance.
+
+---
+
 ## P6-B / P6-C — distinct fake container IDs and temp-file Journal acceptance (2026-11-09)
 
 All claims below are **CPU/Fake-DGX source contracts only**; no DGX, Docker, GPU, inference, live port release, real switch, production-approved journal, or operator approval.

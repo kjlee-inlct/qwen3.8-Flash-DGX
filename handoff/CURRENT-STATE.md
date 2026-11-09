@@ -8,6 +8,14 @@
 
 ---
 
+### 2026-11-10 P5-C + P6-D source-only observation / operating gate
+
+- **P5-C** `scripts/manager/observation_binding.py`: reconcile one existing `service_status.inspect_live_status` observation with one `resource_diagnostics.snapshot` observation. Explicit Orcarouter v3 DEVELOPMENT_TRIAL vs CANONICAL roles; cross-check registered checkpoint, served ID, container name/image and Docker full ID obtained from resource probe. `observation-review --model orcarouter --service-evidence /absolute/service.json --resource-evidence /absolute/resource.json --json` consumes untrusted JSON only; `observation-capture --model orcarouter --json` performs exactly one sequential **read-only** service and resource probe (Docker inspect, system sensors and GET /health,/v1/models), with **no inference**. Neither path proves port-PID or GPU exclusivity, source Docker-ID continuity across simultaneous probes, PLE residency, loaded benchmark, or release; never promote a Trial.
+- **P6-D** `scripts/manager/generic_operating_gate.py`: `operating-gate-review --from-model orcarouter --to-model 27b --json` returns **BLOCKED** with explicit missing live executor, independent approval/authentication, cross-process durable nonce, atomic live-state and journal fencing. Even forged fully consistent JSON is never accepted as permission. The historical on-disk journal remains **2-model scoped**, Orcarouter schema unsupported; no new write to `service_journal.py`, no model start/stop/restore. `--review-now-utc` is untrusted source consistency clock input, not approval.
+- New CPU module `tests/test_p5c_p6d_contract_cpu.py` and GitHub Actions workflow gate; source tests and CI outcome must be independently verified on the new commit. Previous P5 synthetic 21, P6 fake-disk 48, P8 extended 66, original 24 remain.
+- No actual DGX service mutation, benchmark, model/cache/PLE deletion, GPU settings or PR merge. vLLM 0.32, no SGLang, ONE_ACTIVE_MODEL_ONLY, host 8000, Orcarouter v3 DEVELOPMENT_TRIAL untouched. PR #1 Draft/Open/Unmerged. Next: independent atomic Docker-ID/port PID/GPU process probes, separately approved operating journal schema upgrade, live P5 benchmark and P8 acceptance.
+
+
 ### 2026-11-09 P6-B/C SOURCE-ONLY: separate Docker identities and private fake-disk contract
 
 - P6-B `scripts/manager/transition_safety.py` + `mock_transaction_pipeline.py`: each in-memory event has **distinct** `source_container_id`/`target_container_id`, plus `active_container_id` and `port_owner_container_id`. The legacy `docker_id` field is retained as synthetic SOURCE ID only. The audit blocks ID collisions, drift, mismatched phase/active ID, forged port owner, inconsistent phase, or unresolved transition. These are deterministic test IDs, **NOT** Orcarouter v3's live Docker ID.

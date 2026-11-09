@@ -58,6 +58,7 @@ on:
       - 'tests/test_mock_benchmark_session_cpu.py'
       - 'tests/test_mock_transaction_pipeline_cpu.py'
       - 'tests/test_mock_persistent_contract_cpu.py'
+      - 'tests/test_p5c_p6d_contract_cpu.py'
       - 'tests/test_transition_safety_cpu.py'
       - 'tests/test_integration_contract_cpu.py'
       - 'tests/test_generic_operations_cpu.py'
@@ -152,6 +153,8 @@ jobs:
           python -m unittest discover -s tests -p 'test_mock_benchmark_session_cpu.py' -v
           python -m unittest discover -s tests -p 'test_mock_transaction_pipeline_cpu.py' -v
           python -m unittest discover -s tests -p 'test_mock_persistent_contract_cpu.py' -v
+          python -m unittest discover -s tests -p 'test_p5c_p6d_contract_cpu.py' -v
+          python -m wizard operations generic operating-gate-review --from-model orcarouter --to-model 27b --json || test $? -eq 3
           python -m wizard operations generic fake-disk-matrix --summary-only --json
           python -m wizard operations generic fake-disk-contract --from-model orcarouter --to-model 27b --json
           python -m wizard operations generic session-matrix --summary-only --json

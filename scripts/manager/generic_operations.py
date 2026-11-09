@@ -364,7 +364,8 @@ def main(argv: list[str] | None = None) -> int:
         "resource-review", "integration", "session-plan", "session-review",
         "transaction-simulate", "extended-fault-matrix", "integration-reconcile",
         "session-mock", "session-matrix", "pipeline-mock",
-        "fake-disk-contract", "fake-disk-matrix"))
+        "fake-disk-contract", "fake-disk-matrix",
+        "observation-review", "observation-capture", "operating-gate-review"))
     parser.add_argument("--from-model")
     parser.add_argument("--to-model")
     parser.add_argument("--model")
@@ -375,6 +376,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--resource-evidence")
     parser.add_argument("--benchmark-evidence")
     parser.add_argument("--component-evidence")
+    parser.add_argument("--service-evidence")
+    parser.add_argument("--operating-journal-evidence")
+    parser.add_argument("--approval-evidence")
+    parser.add_argument("--source-container-id")
+    parser.add_argument("--target-container-id")
+    parser.add_argument("--review-now-utc")
     parser.add_argument("--session-resource-evidence")
     parser.add_argument("--session-benchmark-evidence")
     parser.add_argument("--json", action="store_true")
@@ -387,6 +394,27 @@ def main(argv: list[str] | None = None) -> int:
         if args.action == "catalog":
             result = model_catalog()
 
+        elif args.action in ("observation-review", "observation-capture"):
+            if not args.model:
+                raise ValueError("EXACT_MODEL_REQUIRED")
+            from scripts.manager.observation_binding import (
+                observation_capture, observation_review)
+            result = (observation_capture(args.model)
+                      if args.action == "observation-capture"
+                      else observation_review(
+                          args.model, _load_evidence(args.service_evidence),
+                          _load_evidence(args.resource_evidence)))
+        elif args.action == "operating-gate-review":
+            if not args.from_model or not args.to_model:
+                raise ValueError("EXACT_SOURCE_AND_TARGET_REQUIRED")
+            from scripts.manager.generic_operating_gate import gate_review
+            result = gate_review(
+                args.from_model, args.to_model,
+                _load_evidence(args.service_evidence),
+                args.source_container_id, args.target_container_id,
+                _load_evidence(args.operating_journal_evidence),
+                _load_evidence(args.approval_evidence),
+                now_utc=args.review_now_utc)
         elif args.action == "session-mock":
             if not args.model:
                 raise ValueError("EXACT_MODEL_REQUIRED")
@@ -483,6 +511,7 @@ def main(argv: list[str] | None = None) -> int:
         "PASS_FAKE_P5_SESSION", "PASS_FAKE_P5_FAULT_BLOCKED",
         "PASS_FAKE_PIPELINE_CONTRACT",
         "PASS_FAKE_DISK_CONTRACT", "PASS_FAKE_DISK_FAILURE_DETECTED",
+        "SOURCE_OBSERVATIONS_CORRELATED_NOT_LIVE_ACCEPTANCE",
         "SOURCE_COMPONENT_FIELDS_CONSISTENT_NOT_LIVE_VERIFIED",
         "SOURCE_EVIDENCE_COMPLETE_NOT_RUNTIME_ACCEPTANCE",
     ) else 3

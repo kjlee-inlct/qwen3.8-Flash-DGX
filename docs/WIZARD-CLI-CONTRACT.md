@@ -272,3 +272,12 @@ All claims below are **CPU/Fake-DGX source contracts only**; no DGX, Docker, GPU
 - New commands: `./wizard.sh operations generic fake-disk-contract --from-model orcarouter --to-model 27b --json`; `./wizard.sh operations generic fake-disk-contract --from-model 27b --to-model flash-next --mock-disk-scenario interrupted-snapshot --json`; `./wizard.sh operations generic fake-disk-matrix --summary-only --json`. Three models = 6 directed pairs × 8 scenarios = 48. Existing P5 21, P8 extended 66, legacy 24 cases remain separate.
 - Acceptance: SOURCE IMPLEMENTED / 4369bb1 Push+PR CI SUCCESS (new P6-B/C 11 tests PASS, fake disk 48 PASS); docs-only changes are not live acceptance; REAL DGX runtime/provenance/loaded benchmark, real approval, durable operating rollback, P7 independent proxy/gateway and P8 live fault/release **NOT RUN**. Do not remove or rename the operating Orcarouter v3 container or change governor/cgroup/port 8000.
 
+
+## P5-C and P6-D SOURCE implementation (2026-11-10)
+
+P5 read-only paired service/resource binding: `observation-capture --model orcarouter --json` is strictly sequential and calls existing non-mutating Docker/API/host-metric probes. Resource Docker ID is a single-probe observation; service status currently does not independently expose a full Docker ID or verify the process binding for :8000. Any role/API/checkpoint/name/image mismatch produces BLOCKED; a source-correlated report never qualifies a live benchmark or production. To avoid even a read-only host probe, use `observation-review --model orcarouter --service-evidence /absolute/service.json --resource-evidence /absolute/resource.json --json`.
+
+P6 operating-gate-review never returns READY/APPROVED. Its input evidence is untrusted, including fake approval, declared independent GPU exclusivity, journal VERIFIED flags, and synthetic clock. It always reports `BLOCKED_LIVE_EXECUTOR_NOT_QUALIFIED` and preserves the existing two-model `service_journal.py`/operational_audit behavior. Orcarouter live switching is still prohibited without future qualified schema, real approval and verified executor.
+
+New dedicated CPU tests in workflow, plus existing legacy suites. CI success must be checked on this new commit. No DGX service change, no inference, no live switching or auto restore. This is not P5 loaded performance or P6 production executor acceptance.
+
