@@ -1,3 +1,11 @@
+## CURRENT P5 DOCUMENT SUPERSESSION — 2026-11-09 10:15 KST (P5–P8 model-agnostic update)
+
+**Current P5 trial:** adapter `qwen4exp-qsa62318-lmhead-v032-v3` resolved `lm_head.weight_scale`. Orcarouter v3 remains DEVELOPMENT_TRIAL, not production. The newer 10:15 KST operator-provided *idle-only* telemetry and P5–P8 source-only implementation/acceptance supersession immediately below do not authorize any actual DGX service change.
+
+[Model-independent P5–P8 source/acceptance contract](../docs/P5-P8-MODEL-AGNOSTIC-OPERATIONS-20261109.md) · [Full document audit](../docs/HANDOFF-DOCUMENT-AUDIT-FULL-P5-20261108.md)
+
+---
+
 ## CURRENT SUPERSESSION — 2026-11-09 10:15 KST P5–P8 generic source and operator evidence
 
 **Latest DGX observation supplied by operator (not executed by this GitHub session):** Orcarouter v3 `qwen38-orcarouter-qsa62318-lmhead-v3`, unchanged Docker ID `9c49950015a845357e90fabe74946565d41069362c083fe7982f54caa2b3beac`. Private read-only receipt `/home/inlc/.local/state/blazux-wizard/resource-diagnostics/20261109T011520343025Z.json`: **5 IDLE samples / 44.27 seconds**, host MemTotal 121.63 GiB / min MemAvailable 30.16 GiB / last 30.18 GiB; cgroup memory.current 25.25 GiB / peak 37.02 GiB; host swap used 1.31 GiB vs cgroup swap zero; memory PSI avg10 zero, OOM/OOMKill/major fault/file refault and swap-I/O interval deltas zero; CPU busy 0.19%, GPU utilization zero/33°C, host maximum temperature 33.8°C. This is **IDLE ONLY** and resource policy remains `OBSERVE_ONLY` / `UNCALIBRATED` / `startup_gate_enabled=false`. Not PLE RSS, loaded TTFT/TPS, safe memory threshold, loaded stability or production proof. Raw receipt is retained on DGX only.
