@@ -327,6 +327,36 @@ def _load_evidence(path: str | None) -> dict | None:
     return document
 
 
+def fault_matrix_summary(document: dict) -> dict:
+    """Compact presentation of a *completed* synthetic matrix.
+
+    Never changes the scenario evaluation, operation or release flags. Full
+    journals remain available without --summary-only; this is not evidence.
+    """
+    cases = document["cases"]
+    counts = {status: sum(row["status"] == status for row in cases)
+              for status in sorted(set(row["status"] for row in cases))}
+    fault_counts = {fault: sum(row["injected_fault"] == fault for row in cases)
+                    for fault in FAULTS}
+    return {
+        "schema_version": document["schema_version"],
+        "stage": document["stage"], "scope": document["scope"],
+        "status": document["status"], "models": document["models"],
+        "pair_count": document["pair_count"],
+        "test_count": document["test_count"],
+        "status_counts": counts,
+        "fault_counts": fault_counts,
+        "invariant_violation_cases": sum(bool(row["invariant_issues"])
+                                         for row in cases),
+        "executed": False, "fake_executed": True,
+        "operations_enabled": False, "real_dgx_verified": False,
+        "production_released": False, "plan_id": None,
+        "summary_only": True,
+        "full_journals_omitted": True,
+        "note": "In-memory test only. Omitted journals are not missing execution evidence.",
+    }
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Model-agnostic source-only P5-P8")
     parser.add_argument("action", choices=(
@@ -340,12 +370,18 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--benchmark-evidence")
     parser.add_argument("--component-evidence")
     parser.add_argument("--json", action="store_true")
+    parser.add_argument("--summary-only", action="store_true",
+                        help="fault-matrix concise output; all cases still evaluated")
     args = parser.parse_args(argv)
     try:
+        if args.summary_only and args.action != "fault-matrix":
+            raise ValueError("SUMMARY_ONLY_SUPPORTED_FOR_FAULT_MATRIX")
         if args.action == "catalog":
             result = model_catalog()
         elif args.action == "fault-matrix":
             result = fault_matrix()
+            if args.summary_only:
+                result = fault_matrix_summary(result)
         elif args.action in ("preflight", "simulate"):
             if not args.from_model or not args.to_model:
                 raise ValueError("EXACT_SOURCE_AND_TARGET_REQUIRED")

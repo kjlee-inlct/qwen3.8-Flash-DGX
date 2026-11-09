@@ -552,6 +552,42 @@ def _save_private(doc: dict) -> str:
     return str(path)
 
 
+def summary_view(document: dict) -> dict:
+    """Short stdout; private --save receipt retains every original snapshot."""
+    samples = document["snapshots"]
+    last = samples[-1]
+    docker = last.get("docker") or {}
+    container = docker.get("container") or {}
+    cgroup = (docker.get("cgroup_v2") or {}).get("metrics") or {}
+    return {
+        "schema_version": 1, "stage": "p5", "action": document["action"],
+        "model": document["model"], "scope": "READ_ONLY_RESOURCE_SUMMARY",
+        "executed": False, "service_mutated": False,
+        "resource_limits_changed": False, "summary_only": True,
+        "sample_count": len(samples),
+        "sample_start_utc": samples[0].get("timestamp_utc"),
+        "sample_end_utc": last.get("timestamp_utc"),
+        "latest_snapshot_status": last.get("status"),
+        "model_repo": last.get("model_repo"),
+        "container": {"name": container.get("name"),
+                      "id": container.get("id"),
+                      "observed": docker.get("status")},
+        "host_memory": {key: last.get("host_memory", {}).get(key) for key
+                        in ("MemTotal_bytes", "MemAvailable_bytes",
+                            "swap_used_bytes")},
+        "cgroup_memory": {key: cgroup.get(key) for key
+                          in ("memory.current", "memory.peak",
+                              "memory.swap.current")},
+        "gpu": last.get("gpu"),
+        "thermal": {"max_celsius": (last.get("thermal") or {}).get("max_celsius")},
+        "interval_summary": document.get("interval_summary"),
+        "admission": document.get("admission"),
+        "warnings": document["warnings"],
+        "evidence_file": document.get("evidence_file"),
+        "note": "Full sample JSON remains available via --save. Read-only idle data are not loaded inference acceptance.",
+    }
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Non-mutating DGX resource diagnostics")
     parser.add_argument("action", choices=("snapshot", "observe", "preflight"))
@@ -561,6 +597,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--samples", type=int, default=2)
     parser.add_argument("--interval", type=float, default=2.0)
     parser.add_argument("--save", action="store_true", help="write private 0600 evidence JSON only")
+    parser.add_argument("--summary-only", action="store_true",
+                        help="compact stdout; --save still writes full receipt")
     parser.add_argument("--json", action="store_true")
     args = parser.parse_args(argv)
     if not 1 <= args.samples <= 5 or not 0 <= args.interval <= 30:
@@ -581,7 +619,8 @@ def main(argv: list[str] | None = None) -> int:
         doc["admission"] = admission(samples[-1])
     if args.save:
         doc["evidence_file"] = _save_private(doc)
-    print(json.dumps(doc, indent=2, ensure_ascii=False, sort_keys=True))
+    shown = summary_view(doc) if args.summary_only else doc
+    print(json.dumps(shown, indent=2, ensure_ascii=False, sort_keys=True))
     good = all(x["status"] != "BLOCKED" for x in samples)
     if args.action == "preflight" and doc["admission"]["status"] != "CAPACITY_CHECK_PASS_NOT_LAUNCH_APPROVAL":
         good = False

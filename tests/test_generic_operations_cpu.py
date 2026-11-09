@@ -127,6 +127,24 @@ class GenericOperationsCPU(unittest.TestCase):
         self.assertIn("GATEWAY_MODEL_BOUND_EVIDENCE_MISSING",
                       g.integration_review("flash-next", evidence)["issues"])
 
+    def test_fault_matrix_summary_does_not_change_the_result_or_recovery_counts(self):
+        matrix = g.fault_matrix()
+        compact = g.fault_matrix_summary(matrix)
+        self.assertEqual(compact["status"], matrix["status"])
+        self.assertEqual(compact["test_count"], 24)
+        self.assertEqual(compact["status_counts"]["PASS_FAKE_SWITCH"], 6)
+        self.assertEqual(compact["status_counts"]["PASS_FAKE_RECOVERY"], 12)
+        self.assertEqual(compact["status_counts"]["FAIL_FAKE_RECOVERY"], 6)
+        self.assertEqual(compact["fault_counts"]["restore-source"], 6)
+        self.assertFalse(compact["executed"])
+        self.assertNotIn("cases", compact)
+        with patch("subprocess.run", side_effect=AssertionError("no live runtime")), \\
+             contextlib.redirect_stdout(io.StringIO()) as output:
+            rc = wizard_main(["operations", "generic", "fault-matrix",
+                              "--summary-only", "--json"])
+        self.assertEqual(rc, 0)
+        self.assertEqual(json.loads(output.getvalue())["test_count"], 24)
+
     def test_cli_routing_is_read_only_and_all_model_matrix(self):
         with patch("subprocess.run", side_effect=AssertionError("no Docker")), \
              contextlib.redirect_stdout(io.StringIO()) as out:

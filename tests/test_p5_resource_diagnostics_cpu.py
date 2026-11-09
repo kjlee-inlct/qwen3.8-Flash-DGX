@@ -12,6 +12,36 @@ from scripts.manager import resource_diagnostics as r
 
 
 class ResourceDiagnosticsCPU(unittest.TestCase):
+    def test_summary_only_retains_full_private_evidence(self):
+        from unittest.mock import patch
+        import contextlib
+        import io
+        first = {"model": "27b", "status": "OBSERVED_PARTIAL",
+                 "timestamp_utc": "2026-11-09T00:00:00+00:00",
+                 "host_memory": {"MemTotal_bytes": 100, "MemAvailable_bytes": 50,
+                                 "swap_used_bytes": 2},
+                 "docker": {"status": "OBSERVED",
+                            "container": {"name": "qwen38-27b", "id": "a" * 64},
+                            "cgroup_v2": {"metrics": {"memory.current": "20"}}}}
+        second = {**first, "timestamp_utc": "2026-11-09T00:00:10+00:00"}
+        with patch.object(r, "snapshot", side_effect=[first, second]) as sample, \\
+             patch.object(r, "_save_private", return_value="/tmp/saved.json") as saved, \\
+             patch.object(r.time, "sleep"), \\
+             contextlib.redirect_stdout(io.StringIO()) as output:
+            rc = r.main(["observe", "--model", "27b", "--samples", "2",
+                         "--interval", "0", "--summary-only", "--save", "--json"])
+        self.assertEqual(rc, 0)
+        data = json.loads(output.getvalue())
+        self.assertTrue(data["summary_only"])
+        self.assertNotIn("snapshots", data)
+        self.assertEqual(data["sample_count"], 2)
+        self.assertEqual(data["model"], "27b")
+        self.assertEqual(data["evidence_file"], "/tmp/saved.json")
+        self.assertEqual(len(saved.call_args.args[0]["snapshots"]), 2)
+        self.assertEqual(saved.call_args.args[0]["model"], "27b")
+        self.assertFalse(data["service_mutated"])
+        self.assertEqual(sample.call_count, 2)
+
     def test_meminfo_kib_and_swap_are_not_gpu_double_counted(self):
         result = r._kv_bytes("MemAvailable: 102400 kB\nSwapTotal: 4096 kB\nSwapFree: 1024 kB\n")
         self.assertEqual(result["MemAvailable"], 102400 * 1024)

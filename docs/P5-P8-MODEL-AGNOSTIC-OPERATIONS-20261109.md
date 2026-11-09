@@ -54,3 +54,11 @@ Resource-review는 증거의 `model`/`snapshots`/`interval_summary`와 benchmark
 ## 미완료
 
 실기 benchmark 동시 계측·장기 압박 테스트, PLE 실거주량, 별도 승인형 범용 실기 executor, 프록시/게이트웨이 실측 프로브, 실제 P8 fault/restore 및 최종 운영 수용. PR #1은 Draft/Open/Unmerged로 유지한다. 실제 모델 고유 Loader/PLE 어댑터는 계속 별도 검증한다.
+
+## 2026-11-09 09:23 KST 운영자 제공 신규 DGX 증거
+
+Git HEAD `e8d6c2a505e5023c1cbfaaba0ef723238125aa5e` fast-forward 완료. 3개 모델 카탈로그 PASS, 6방향×4종 Fake-DGX 총 24건 `PASS_FAKE_DGX_EXPECTED_OUTCOMES` (정상 6, 복구 12, 의도된 복구 실패 6), Orcarouter→27B preflight `BLOCKED` (7개 검증·승격 게이트 미완료). 실제 전환·장애 주입·복구 없음.
+
+P5 Orcarouter 5회/44.268초 read-only interval: 동일 Docker ID `9c49950015a845357e90fabe74946565d41069362c083fe7982f54caa2b3beac`, API :8000에 살아있는 v3의 메모리 cgroup 25.25 GiB, 전체 121.63 GiB, 최소 MemAvailable 30.13 GiB, cgroup Swap 0, host Swap 1.31 GiB, PSI memory 0, OOM/kill/major fault/refault 구간 증가 0, 호스트 swap in/out 0, CPU busy 0.2%. GPU 34°C, 시스템 최고 35.7°C; GPU utilization 0%, read-only idle measurement. `ple_specific_residency_status=NOT_OBSERVED`, `process_smaps_rollup_status=NOT_OBSERVED`, 운영 임계값 `UNCALIBRATED`. 증거 파일: `~/.local/state/blazux-wizard/resource-diagnostics/20261109T002330768366Z.json` (DGX 내부, GitHub에 업로드하지 않음).
+
+대용량 상세 출력이 있는 공통 도구에 명시적 `--summary-only` 추가: `./wizard.sh operations generic fault-matrix --summary-only --json`, `./wizard.sh operations resources observe --model orcarouter --samples 5 --interval 10 --summary-only --save --json`. 전자는 모든 시나리오를 평가한 후 집계만 출력하고, 후자는 모든 snapshot을 원본 그대로 private evidence JSON에 보존한 후 stdout만 축약한다. **요약은 증거 원본 또는 실제 실기 운영 수용의 대체물이 아님.**
