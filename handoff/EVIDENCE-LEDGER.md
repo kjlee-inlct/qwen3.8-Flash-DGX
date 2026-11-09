@@ -1,3 +1,13 @@
+## CURRENT P5 DOCUMENT SUPERSESSION — 2026-11-09 09:23 KST (model-agnostic DGX read-only validation)
+
+**Operator-provided DGX evidence (not this GitHub session's new GPU test):** checkout `e8d6c2a` fast-forward PASS. Three registered models (`flash-next`, `27b`, `orcarouter`); common 6 directed pairs × 4 Fake-DGX scenarios = 24 expected outcomes PASS (6 simulated switches, 12 simulated successful restores, 6 deliberately failed restores). P6 Orcarouter→27B preflight `BLOCKED` with seven real-runtime release/integrity blockers. No live model switch, outage, fault injection, or real recovery.
+
+**Latest P5 read-only interval, 09:22–09:23 KST:** 5 observations / 44.268 seconds, running `qwen38-orcarouter-qsa62318-lmhead-v3`, Docker ID `9c49950015a845357e90fabe74946565d41069362c083fe7982f54caa2b3beac`, stable :8000. Minimum MemAvailable ~30.13 GiB, cgroup memory.current ~25.25 GiB, host SwapUsed ~1.31 GiB but cgroup Swap 0, memory PSI 0, interval OOM/OOMKill/major fault/refault and host swap I/O increases 0; CPU busy ~0.2%, GPU 0% and 34°C, host maximum 35.7°C. **Idle-only**: no loaded benchmark, PLE RSS or production qualification. CPU/memory policy remains `OBSERVE_ONLY`/`UNCALIBRATED`. Private full evidence at `~/.local/state/blazux-wizard/resource-diagnostics/20261109T002330768366Z.json` stays on DGX.
+
+**Implementation follow-up:** common `--summary-only` for full-matrix Fake-DGX and bounded resource observations retains unaltered full private JSON when `--save` is used. Adapter `qwen4exp-qsa62318-lmhead-v032-v3` resolved historical `lm_head.weight_scale`; current Orcarouter remains a `DEVELOPMENT_TRIAL`. vLLM 0.32.0, no SGLang, ONE_ACTIVE_MODEL_ONLY, :8000. No new approval, container stop/rename, limit changes or PR merge. [Generic P5–P8 specification](../docs/P5-P8-MODEL-AGNOSTIC-OPERATIONS-20261109.md) · [Evidence ledger](EVIDENCE-LEDGER.md).
+
+---
+
 ## CURRENT P5 DOCUMENT SUPERSESSION — 2026-11-09 00:55 KST (v3 MTP0 + P6/P8 source)
 
 **Actual operator DGX record, not a new session runtime test:** Orcarouter `qwen38-orcarouter-qsa62318-lmhead-v3` on :8000, API `qwen3.8-flash-next-orca-uncensored-bf16`; `LIVE_P5_TRIAL_API_VERIFIED` and `PASS_LIVE_INFERENCE` (READY). Adapter `qwen4exp-qsa62318-lmhead-v032-v3` resolves `lm_head.weight_scale`. Still `DEVELOPMENT_TRIAL`, not production. Failed-candidate cleanup is already complete; no repeat.
