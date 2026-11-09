@@ -24,9 +24,9 @@ class ResourceDiagnosticsCPU(unittest.TestCase):
                             "container": {"name": "qwen38-27b", "id": "a" * 64},
                             "cgroup_v2": {"metrics": {"memory.current": "20"}}}}
         second = {**first, "timestamp_utc": "2026-11-09T00:00:10+00:00"}
-        with patch.object(r, "snapshot", side_effect=[first, second]) as sample, \\
-             patch.object(r, "_save_private", return_value="/tmp/saved.json") as saved, \\
-             patch.object(r.time, "sleep"), \\
+        with patch.object(r, "snapshot", side_effect=[first, second]) as sample, \
+             patch.object(r, "_save_private", return_value="/tmp/saved.json") as saved, \
+             patch.object(r.time, "sleep"), \
              contextlib.redirect_stdout(io.StringIO()) as output:
             rc = r.main(["observe", "--model", "27b", "--samples", "2",
                          "--interval", "0", "--summary-only", "--save", "--json"])

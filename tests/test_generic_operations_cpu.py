@@ -138,7 +138,7 @@ class GenericOperationsCPU(unittest.TestCase):
         self.assertEqual(compact["fault_counts"]["restore-source"], 6)
         self.assertFalse(compact["executed"])
         self.assertNotIn("cases", compact)
-        with patch("subprocess.run", side_effect=AssertionError("no live runtime")), \\
+        with patch("subprocess.run", side_effect=AssertionError("no live runtime")), \
              contextlib.redirect_stdout(io.StringIO()) as output:
             rc = wizard_main(["operations", "generic", "fault-matrix",
                               "--summary-only", "--json"])
