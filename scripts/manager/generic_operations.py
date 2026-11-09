@@ -363,13 +363,15 @@ def main(argv: list[str] | None = None) -> int:
         "catalog", "preflight", "simulate", "fault-matrix",
         "resource-review", "integration", "session-plan", "session-review",
         "transaction-simulate", "extended-fault-matrix", "integration-reconcile",
-        "session-mock", "session-matrix", "pipeline-mock"))
+        "session-mock", "session-matrix", "pipeline-mock",
+        "fake-disk-contract", "fake-disk-matrix"))
     parser.add_argument("--from-model")
     parser.add_argument("--to-model")
     parser.add_argument("--model")
     parser.add_argument("--fault", choices=FAULTS, default="none")
     parser.add_argument("--extended-fault", default="none")
     parser.add_argument("--mock-fault", default="none")
+    parser.add_argument("--mock-disk-scenario", default="none")
     parser.add_argument("--resource-evidence")
     parser.add_argument("--benchmark-evidence")
     parser.add_argument("--component-evidence")
@@ -380,7 +382,7 @@ def main(argv: list[str] | None = None) -> int:
                         help="fault-matrix concise output; all cases still evaluated")
     args = parser.parse_args(argv)
     try:
-        if args.summary_only and args.action not in ("fault-matrix", "extended-fault-matrix", "session-matrix"):
+        if args.summary_only and args.action not in ("fault-matrix", "extended-fault-matrix", "session-matrix", "fake-disk-matrix"):
             raise ValueError("SUMMARY_ONLY_SUPPORTED_FOR_FAULT_MATRIX")
         if args.action == "catalog":
             result = model_catalog()
@@ -393,6 +395,19 @@ def main(argv: list[str] | None = None) -> int:
         elif args.action == "session-matrix":
             from scripts.manager.mock_benchmark_session import mock_session_matrix
             result = mock_session_matrix(summary_only=args.summary_only)
+        elif args.action == "fake-disk-matrix":
+            from scripts.manager.mock_persistent_contract import fake_disk_matrix
+            result = fake_disk_matrix()
+            if args.summary_only:
+                result.pop("cases")
+                result["summary_only"] = True
+                result["full_cases_omitted"] = True
+        elif args.action == "fake-disk-contract":
+            if not args.from_model or not args.to_model:
+                raise ValueError("EXACT_SOURCE_AND_TARGET_REQUIRED")
+            from scripts.manager.mock_persistent_contract import fake_disk_contract
+            result = fake_disk_contract(args.from_model, args.to_model,
+                                        scenario=args.mock_disk_scenario)
         elif args.action == "pipeline-mock":
             if not args.from_model or not args.to_model:
                 raise ValueError("EXACT_SOURCE_AND_TARGET_REQUIRED")
@@ -467,6 +482,7 @@ def main(argv: list[str] | None = None) -> int:
         "SOURCE_SESSION_CORRELATED_NOT_LIVE_ACCEPTANCE",
         "PASS_FAKE_P5_SESSION", "PASS_FAKE_P5_FAULT_BLOCKED",
         "PASS_FAKE_PIPELINE_CONTRACT",
+        "PASS_FAKE_DISK_CONTRACT", "PASS_FAKE_DISK_FAILURE_DETECTED",
         "SOURCE_COMPONENT_FIELDS_CONSISTENT_NOT_LIVE_VERIFIED",
         "SOURCE_EVIDENCE_COMPLETE_NOT_RUNTIME_ACCEPTANCE",
     ) else 3

@@ -62,6 +62,10 @@ def _chain(trace: list[dict], source: str, target: str, plan_id: str) -> list[di
             "active_models": record["active_models"],
             "port_8000_owner": record["port_8000_owner"],
             "docker_id": record["docker_id"],
+            "source_container_id": record["source_container_id"],
+            "target_container_id": record["target_container_id"],
+            "active_container_id": record["active_container_id"],
+            "port_owner_container_id": record["port_owner_container_id"],
             "host_port": 8000, "max_active_gpu_models": 1,
             "record_origin": "IN_MEMORY_ONLY_NEVER_FSYNCED",
             "previous_hash": previous,
@@ -83,7 +87,8 @@ def audit_mock_journal(events: object, source: str, target: str, *,
     issues = []
     prior_hash = None
     prior_phase = None
-    previous_docker = None
+    initial_source_id = None
+    initial_target_id = None
     if not isinstance(events, list) or not (1 <= len(events) <= 64):
         issues.append("MISSING_OR_UNBOUNDED_MOCK_JOURNAL")
         events = []
@@ -94,7 +99,9 @@ def audit_mock_journal(events: object, source: str, target: str, *,
         if set(event) != {
             "schema_version", "index", "phase", "synthetic_action",
             "source_model", "target_model", "plan_id", "active_models",
-            "port_8000_owner", "docker_id", "host_port",
+            "port_8000_owner", "docker_id",
+            "source_container_id", "target_container_id",
+            "active_container_id", "port_owner_container_id", "host_port",
             "max_active_gpu_models", "record_origin", "previous_hash",
             "event_hash",
         }:
@@ -124,12 +131,37 @@ def audit_mock_journal(events: object, source: str, target: str, *,
                 owner not in (None, source, target) or
                 (owner is not None and active != [owner])):
             issues.append("ONE_MODEL_OR_PORT_OWNER_INVARIANT_VIOLATION")
-        docker = event.get("docker_id")
-        if not isinstance(docker, str) or not _SHA.fullmatch(docker):
-            issues.append("MOCK_DOCKER_ID_INVALID")
-        if previous_docker is not None and docker != previous_docker:
+        src_id, dst_id = event.get("source_container_id"), event.get("target_container_id")
+        if not (isinstance(src_id, str) and _SHA.fullmatch(src_id)
+                and isinstance(dst_id, str) and _SHA.fullmatch(dst_id)
+                and src_id != dst_id):
+            issues.append("SOURCE_TARGET_DOCKER_ID_NOT_DISTINCT_OR_INVALID")
+        if initial_source_id is None:
+            initial_source_id, initial_target_id = src_id, dst_id
+        elif (src_id, dst_id) != (initial_source_id, initial_target_id):
             issues.append("MOCK_DOCKER_ID_DRIFT")
-        previous_docker = docker
+        if event.get("docker_id") != src_id:
+            issues.append("LEGACY_SOURCE_DOCKER_ID_DRIFT")
+        expected_active_id = (src_id if active == [source] else
+                              dst_id if active == [target] else None)
+        expected_owner_id = (src_id if owner == source else
+                             dst_id if owner == target else None)
+        if event.get("active_container_id") != expected_active_id:
+            issues.append("ACTIVE_CONTAINER_ID_UNBOUND")
+        if event.get("port_owner_container_id") != expected_owner_id:
+            issues.append("PORT_OWNER_CONTAINER_ID_UNBOUND")
+        if phase in ("OBSERVED", "PLANNED", "OLD_STOPPING", "CANCELLED", "RESTORED"):
+            if active != [source] or owner != source:
+                issues.append("SOURCE_PHASE_IDENTITY_UNBOUND")
+        elif phase in ("NEW_VERIFYING", "COMMITTED"):
+            if active != [target] or owner != target:
+                issues.append("TARGET_PHASE_IDENTITY_UNBOUND")
+        elif phase in ("OLD_STOPPED", "NEW_STARTING", "ROLLBACK_STARTING"):
+            if active != [] or owner is not None:
+                issues.append("PORT_RELEASE_NOT_VERIFIED")
+        elif phase == "RECOVERY_FAILED":
+            if active != [] or owner is not None:
+                issues.append("UNSAFE_RECOVERY_FAILURE_STATE")
         prior_hash = digest
         prior_phase = phase
     if events and prior_phase not in _TERMINAL:
@@ -177,6 +209,10 @@ def mock_pipeline(source: str, target: str, *, fault: str = "none",
         "invariant_issues": transition["invariant_issues"],
         "final_active_model": transition["final_active_model"],
         "final_port_owner": transition["final_port_owner"],
+        "source_container_id": transition["source_container_id"],
+        "target_container_id": transition["target_container_id"],
+        "final_active_container_id": transition["final_active_container_id"],
+        "final_port_owner_container_id": transition["final_port_owner_container_id"],
         "executed": False, "fake_executed": True, "approval_accepted": False,
         "real_dgx_verified": False, "operations_enabled": False,
         "production_released": False,

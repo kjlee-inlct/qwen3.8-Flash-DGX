@@ -8,6 +8,14 @@
 
 ---
 
+### 2026-11-09 P6-B/C SOURCE-ONLY: separate Docker identities and private fake-disk contract
+
+- P6-B `scripts/manager/transition_safety.py` + `mock_transaction_pipeline.py`: each in-memory event has **distinct** `source_container_id`/`target_container_id`, plus `active_container_id` and `port_owner_container_id`. The legacy `docker_id` field is retained as synthetic SOURCE ID only. The audit blocks ID collisions, drift, mismatched phase/active ID, forged port owner, inconsistent phase, or unresolved transition. These are deterministic test IDs, **NOT** Orcarouter v3's live Docker ID.
+- P6-C `scripts/manager/mock_persistent_contract.py`: **TEST TEMP FILES ONLY** under fresh `blazux-p6-fake-*` private directory, `fake-events.jsonl` / `fake-state.json`; O_EXCL, 0600, fsync(log/snapshot), os.replace, read-only audit, planned log-vs-snapshot interruption, symlink/tamper/dirty rejection. Synthetic bounded-clock lease ties model pair + two IDs + plan + nonce and detects expiry, drift and replay, **NOT** a real/operator approval or durable operating journal.
+- CLI: `./wizard.sh operations generic fake-disk-matrix --summary-only --json` tests all 3 registered models / 6 directed pairs × 8 scenarios = **48 fake cases**. `fake-disk-contract --from-model orcarouter --to-model 27b --json` runs one ephemeral filesystem contract. Both avoid Docker/GPU/inference, model switch or any production journal path. Original 24/66 Fake-DGX scenarios and legacy service_journal/operational_audit are unchanged. Dedicated `tests/test_mock_persistent_contract_cpu.py` added to GitHub Actions; report CI results only after independently checking the new commit.
+- **Not released**: no real cross-process authorization, authenticated observation, long-running lock, crash-safe persistent nonce across machines, operating journal migration, real Docker backend, automatic restore, performance qualification or P7/P8 live acceptance. Host :8000; ONE_ACTIVE_MODEL_ONLY; vLLM 0.32; no SGLang; Orcarouter v3 DEVELOPMENT_TRIAL untouched; PR #1 Draft/Open/Unmerged; retain all HF/PLE/assets.
+
+
 ### 2026-11-09 P5-B / P6-A in-memory pipeline source addition (no DGX mutation)
 
 - **P5-B** `scripts/manager/mock_benchmark_session.py`: an exact synthetic, model-registry-driven coordination fixture produces bound session/profile hashes, mock before/after resource samples, an enclosed mock 3-request workload window, and reuses `session_review` to catch sample loss, Docker ID drift, API identity drift, clock drift, request failure and OOM. `./wizard.sh operations generic session-mock --model orcarouter --json`; `session-matrix --summary-only --json` = 3 models × 7 fixture scenarios (21). ALL synthetic numbers are invented fixture values, NOT actual benchmarks or resource measurements.

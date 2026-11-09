@@ -174,3 +174,13 @@ Operator requested **build the complete Wizard now**, with adapters debugged thr
 
 **Critical boundary:** complete menu/action/planning source does NOT claim P2–P7 DGX runtime readiness. This is intentional per operator direction; as P2–P7 progress, replace only qualified backend slots, add CPU fault injection, then run separately approved DGX trials. No live changes during the operator-owned 27B transfer. CI and artifact evidence must be checked against the exact GitHub HEAD before claiming source PASS.
 
+
+## P6-B / P6-C — distinct fake container IDs and temp-file Journal acceptance (2026-11-09)
+
+All claims below are **CPU/Fake-DGX source contracts only**; no DGX, Docker, GPU, inference, live port release, real switch, production-approved journal, or operator approval.
+
+- `transition_safety.InMemoryBackend` binds two different synthetic SHA-256 container IDs; `mock_transaction_pipeline` exports each model's ID and the currently active/host-port-owner container ID per phase. Audit enforces exact phase-owner-ID correspondence, hash, sequence, single model and :8000. The legacy `docker_id` key retains its SOURCE-only meaning for existing consumers, not current active container identity.
+- `mock_persistent_contract.py` tests OS-level O_EXCL, 0600 file permissions, log fsync, atomic snapshot rename+fsync, orphaned log, forged snapshot, unresolved phase, duplicate write, fake TTL expiry, ticket identity drift and replay. **Only auto-deleted private temporary directories** are created. This is an exercise of the write/read contract, *not* authorization or verified production durability; existing `service_journal.py` and `operational_audit.py` still apply to their historical, separately qualified operating domain and are not modified.
+- New commands: `./wizard.sh operations generic fake-disk-contract --from-model orcarouter --to-model 27b --json`; `./wizard.sh operations generic fake-disk-contract --from-model 27b --to-model flash-next --mock-disk-scenario interrupted-snapshot --json`; `./wizard.sh operations generic fake-disk-matrix --summary-only --json`. Three models = 6 directed pairs × 8 scenarios = 48. Existing P5 21, P8 extended 66, legacy 24 cases remain separate.
+- Acceptance: SOURCE IMPLEMENTED / CI pending verification for this commit; REAL DGX runtime/provenance/loaded benchmark, real approval, durable operating rollback, P7 independent proxy/gateway and P8 live fault/release **NOT RUN**. Do not remove or rename the operating Orcarouter v3 container or change governor/cgroup/port 8000.
+
