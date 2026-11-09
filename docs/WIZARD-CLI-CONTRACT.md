@@ -1,3 +1,16 @@
+## 2026-11-09 P5–P8 generic CLI source-only additions
+
+New `./wizard.sh operations generic` actions:
+- `session-plan --model <registered> --json`: always BLOCKED until a separate approved workload executor exists; reads registry without generating inference.
+- `session-review --model <registered> --session-resource-evidence /absolute/resource.json --session-benchmark-evidence /absolute/benchmark.json --json`: requires matching session ID/profile SHA, checkpoint/served ID/Docker ID, bracketed UTC+monotonic resource/benchmark windows, API identity flags, valid request/TTFT/TPS/error metrics and OOM evidence. Matching files imply `SOURCE_SESSION_CORRELATED_NOT_LIVE_ACCEPTANCE`, **not** authenticated real benchmarking.
+- `transaction-simulate --from-model <key> --to-model <key> --extended-fault <fault> --json`: exact in-memory backend, no Docker.
+- `extended-fault-matrix --summary-only --json`: all pairs × 11 simulated faults (**66 cases** for three models), excluding case journals from compact stdout while evaluating all cases.
+- `integration-reconcile --model <key> --component-evidence /absolute/components.json --json`: strict source evidence consistency for service/proxy/gateway/storage, no live health assertion.
+
+All evidence input files remain subject to existing absolute, non-symlink, ≤1 MiB JSON object checks. Original `fault-matrix` keeps 24 cases and existing CLI routes retain backward compatibility. TTY now adds common P5 session, expanded P8 and P7 strict reconciliation review. No new execution approval is implied. [General P5–P8 specification](P5-P8-MODEL-AGNOSTIC-OPERATIONS-20261109.md).
+
+---
+
 ## 2026-11-09 current P5 v2 supersession — historical adapter now replaced by v3 runtime observation
 
 [Current P5 audit](HANDOFF-DOCUMENT-AUDIT-FULL-P5-20261108.md) · [Active P5 technical record](P5-ORCAROUTER-BF16PLE-VLLM032-ADOPTION-20261108.md)

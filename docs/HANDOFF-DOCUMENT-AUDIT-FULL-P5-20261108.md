@@ -1,3 +1,9 @@
+## 2026-11-09 current document/tree audit supersession
+
+Checked branch at source HEAD `90301803dc740f7a6a362b744434c2038c31ccc9` before documentation updates: recursive tree **534 entries / 492 blobs / truncated=false**; document-like text paths **171** using `.md/.mdx/.rst/.adoc/.json/.yaml/.yml/.toml/.txt` and LICENSE/NOTICE. Historical frozen **169** listed paths all present (missing 0). Exactly two additional document paths remain: this audit file and `docs/P5-P8-MODEL-AGNOSTIC-OPERATIONS-20261109.md`. Core 16 docs contained **280 local relative Markdown links checked / 0 broken**. This is an inventory/selected-link audit, **not** full semantic validation of all 171 contents. Source, 2026-11-09 10:15 KST private idle evidence and acceptance caveats are superseded in [common contract](P5-P8-MODEL-AGNOSTIC-OPERATIONS-20261109.md); older facts below retain historical dates.
+
+---
+
 ## 2026-11-09 문서 인벤토리 증분 감사
 
 Frozen 169-item 원본 목록과 감사 보고서 자체는 유지한다. 2026-11-09 신규 범용 문서 한 개: docs/P5-P8-MODEL-AGNOSTIC-OPERATIONS-20261109.md. 현재 문서 유사 파일 총계는 기존 170개에서 **171개**. [현재 인수인계](../handoff/CURRENT-STATE.md) 및 [범용 운영 명세](P5-P8-MODEL-AGNOSTIC-OPERATIONS-20261109.md)를 참조한다.

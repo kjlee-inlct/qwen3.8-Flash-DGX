@@ -1,3 +1,9 @@
+## 2026-11-09 common operation identity supersession (no schema migration)
+
+P5 benchmark sessions, P6/P8 synthetic transitions and P7 strict component reconciliation obtain model keys, checkpoint, served API ID, canonical Docker container and recipe path from the existing `runtimes/service-policy.json` registry. New models automatically expand directed transition test pairs; the common engine does not add a model-specific switch script. No manifest schema change or runtime promotion; provisional Orcarouter served ID and canonical `qwen38-orcarouter` qualification hold continue to block real switch. Real Docker, GPU, Proxy/Gateway and asset provenance must be checked independently before approval. [P5–P8 common spec](P5-P8-MODEL-AGNOSTIC-OPERATIONS-20261109.md).
+
+---
+
 ## 2026-11-09 current P5 v2 supersession — historical adapter now replaced by v3 runtime observation
 
 [Current P5 audit](HANDOFF-DOCUMENT-AUDIT-FULL-P5-20261108.md) · [Active P5 technical record](P5-ORCAROUTER-BF16PLE-VLLM032-ADOPTION-20261108.md)
