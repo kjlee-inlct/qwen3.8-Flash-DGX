@@ -362,7 +362,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("action", choices=(
         "catalog", "preflight", "simulate", "fault-matrix",
         "resource-review", "integration", "session-plan", "session-review",
-        "transaction-simulate", "extended-fault-matrix"))
+        "transaction-simulate", "extended-fault-matrix", "integration-reconcile"))
     parser.add_argument("--from-model")
     parser.add_argument("--to-model")
     parser.add_argument("--model")
@@ -420,6 +420,11 @@ def main(argv: list[str] | None = None) -> int:
                       else session_review(args.model,
                           _load_evidence(args.session_resource_evidence),
                           _load_evidence(args.session_benchmark_evidence)))
+        elif args.action == "integration-reconcile":
+            if not args.model:
+                raise ValueError("EXACT_MODEL_REQUIRED")
+            from scripts.manager.integration_contract import integration_reconcile
+            result = integration_reconcile(args.model, _load_evidence(args.component_evidence))
         elif args.action == "resource-review":
             if not args.model:
                 raise ValueError("EXACT_MODEL_REQUIRED")
@@ -443,6 +448,7 @@ def main(argv: list[str] | None = None) -> int:
         "PASS_FAKE_RECOVERY", "PASS_FAKE_DGX_EXPECTED_OUTCOMES",
         "SOURCE_METRICS_PRESENT_NOT_LIVE_ACCEPTANCE",
         "SOURCE_SESSION_CORRELATED_NOT_LIVE_ACCEPTANCE",
+        "SOURCE_COMPONENT_FIELDS_CONSISTENT_NOT_LIVE_VERIFIED",
         "SOURCE_EVIDENCE_COMPLETE_NOT_RUNTIME_ACCEPTANCE",
     ) else 3
 
