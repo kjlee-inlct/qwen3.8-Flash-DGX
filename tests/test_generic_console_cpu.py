@@ -17,6 +17,17 @@ class CommonUXCPU(unittest.TestCase):
             console._generic_qualification_menu("27b")
         self.assertIn("pairs: 6 | cases: 24", output.getvalue())
 
+    def test_model_common_new_reviews_are_non_mutating(self):
+        for option, phrase in (("5", "P5 benchmark session:"),
+                               ("6", "Extended Fake-DGX:"),
+                               ("7", "P7 strict reconciliation:")):
+            with self.subTest(option=option), \
+                 patch.object(console, "_input", side_effect=[option, "0"]), \
+                 patch("subprocess.run", side_effect=AssertionError("no live operation")), \
+                 contextlib.redirect_stdout(io.StringIO()) as output:
+                console._generic_qualification_menu("27b")
+            self.assertIn(phrase, output.getvalue())
+
     def test_registered_unqualified_target_is_previewed_not_switched(self):
         live = {
             "status": "LIVE_SERVICE_VERIFIED", "observed_model": "27b",
