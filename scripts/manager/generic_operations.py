@@ -361,7 +361,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Model-agnostic source-only P5-P8")
     parser.add_argument("action", choices=(
         "catalog", "preflight", "simulate", "fault-matrix",
-        "resource-review", "integration"))
+        "resource-review", "integration", "session-plan", "session-review"))
     parser.add_argument("--from-model")
     parser.add_argument("--to-model")
     parser.add_argument("--model")
@@ -369,6 +369,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--resource-evidence")
     parser.add_argument("--benchmark-evidence")
     parser.add_argument("--component-evidence")
+    parser.add_argument("--session-resource-evidence")
+    parser.add_argument("--session-benchmark-evidence")
     parser.add_argument("--json", action="store_true")
     parser.add_argument("--summary-only", action="store_true",
                         help="fault-matrix concise output; all cases still evaluated")
@@ -389,6 +391,14 @@ def main(argv: list[str] | None = None) -> int:
                       if args.action == "preflight"
                       else simulate(args.from_model, args.to_model,
                                     fault=args.fault))
+        elif args.action in ("session-plan", "session-review"):
+            if not args.model:
+                raise ValueError("EXACT_MODEL_REQUIRED")
+            from scripts.manager.benchmark_session import session_plan, session_review
+            result = (session_plan(args.model) if args.action == "session-plan"
+                      else session_review(args.model,
+                          _load_evidence(args.session_resource_evidence),
+                          _load_evidence(args.session_benchmark_evidence)))
         elif args.action == "resource-review":
             if not args.model:
                 raise ValueError("EXACT_MODEL_REQUIRED")
@@ -411,6 +421,7 @@ def main(argv: list[str] | None = None) -> int:
         "SOURCE_CATALOG_ONLY", "PASS_FAKE_SWITCH",
         "PASS_FAKE_RECOVERY", "PASS_FAKE_DGX_EXPECTED_OUTCOMES",
         "SOURCE_METRICS_PRESENT_NOT_LIVE_ACCEPTANCE",
+        "SOURCE_SESSION_CORRELATED_NOT_LIVE_ACCEPTANCE",
         "SOURCE_EVIDENCE_COMPLETE_NOT_RUNTIME_ACCEPTANCE",
     ) else 3
 
