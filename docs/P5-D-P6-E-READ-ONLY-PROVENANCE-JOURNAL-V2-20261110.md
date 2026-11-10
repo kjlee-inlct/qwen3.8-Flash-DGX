@@ -83,6 +83,8 @@ python3 -m unittest discover -s tests -p 'test_p5d_p6e_cpu.py' -v
 
 ## Acceptance and open requirements
 
+P5-D/P6-E SOURCE CI VERIFIED: implementation commit `61effbd25a856a1736bb01098f2f87742b0248e0` (initial failed only because document inventory excluded new runbook); inventory correction commit `c697c7474550e1703f4f68daf857582e66292eec` passed **9/9 new CPU tests**, full Push [42739085075](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42739085075) and PR [42739090964](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42739090964) both **SUCCESS**. DGX P5-D command has **NOT** been run; P6-E migration is source-only, not a production write.
+
 CPU and CI outcome must be checked against the source commit before marking
 pass. Do not conflate read-only inventory with independent atomic observation
 of Docker ID, host PID, :8000 listener forwarding and GPU kernel context.
