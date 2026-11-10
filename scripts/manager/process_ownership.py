@@ -69,6 +69,21 @@ def ownership_review(model: str, observation: dict | None,
     info = inspect if isinstance(inspect, dict) else {}
     issues = []
     name, cid = obs.get("observed_container"), obs.get("container_id")
+    spec = names[model]
+    # P5-C source JSON is untrusted; matching PIDs alone confer no authority.
+    if obs.get("model") != model:
+        issues.append("P5_C_MODEL_NOT_BOUND")
+    if obs.get("served_id") != spec["served_id"]:
+        issues.append("P5_C_API_ID_NOT_BOUND")
+    if obs.get("canonical_container") != spec["container"]:
+        issues.append("P5_C_CANONICAL_CONTAINER_DRIFT")
+    if obs.get("api_port") != 8000 or obs.get("issues") != []:
+        issues.append("P5_C_POLICY_OR_ISSUES_UNVERIFIED")
+    role = obs.get("runtime_role")
+    if (role not in ("CANONICAL", "DEVELOPMENT_TRIAL")
+            or (role == "CANONICAL" and name != spec["container"])
+            or (role == "DEVELOPMENT_TRIAL" and name == spec["container"])):
+        issues.append("P5_C_RUNTIME_ROLE_CONTAINER_MISMATCH")
     state = info.get("State") if isinstance(info.get("State"), dict) else {}
     image = info.get("Image")
     pid = state.get("Pid")

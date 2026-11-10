@@ -91,3 +91,16 @@ of Docker ID, host PID, :8000 listener forwarding and GPU kernel context.
 P5 live performance under load, V2 migration, real operator approval, durable
 nonce/receipt and rollback, P7 verified proxies/gateway/storage, P8 live
 fault handling and production acceptance are **not yet implemented or qualified**.
+
+## 2026-11-10 read-only hardening supersession
+
+P5-D now rejects externally supplied P5-C evidence when the requested model,
+served API ID, canonical container, fixed port, unresolved issue list, or
+runtime role/container pairing is inconsistent. These are untrusted source
+checks only, never proof of Docker/port/GPU ownership.
+
+P6-E in-memory Journal v2 auditing now fails closed for malformed JSON field
+types (boolean indexes, list phases, non-string hashes) without exceptions.
+Draft extension checks the prior event hash and type; a boolean V1 event count
+cannot be treated as an empty journal. New CPU negative fixtures cover these
+cases. No operating Journal migration, writer, execution or release enabled.

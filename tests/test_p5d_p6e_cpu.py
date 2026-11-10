@@ -11,6 +11,7 @@ import subprocess
 import unittest
 from unittest.mock import patch
 
+from scripts.manager.generic_operations import model_catalog
 from scripts.manager.process_ownership import (
     ownership_capture, ownership_review, _parse_ss, _parse_gpu, _parse_top)
 from scripts.manager.generic_journal_v2 import (
@@ -25,6 +26,9 @@ class P5DCPU(unittest.TestCase):
             "runtime_role": "DEVELOPMENT_TRIAL",
             "observed_container": "qwen38-orcarouter-qsa62318-lmhead-v3",
             "container_id": "a" * 64,
+            "model": "orcarouter", "api_port": 8000, "issues": [],
+            "served_id": model_catalog()["models"]["orcarouter"]["served_id"],
+            "canonical_container": model_catalog()["models"]["orcarouter"]["container"],
         }
         self.inspect = {"Id": "a" * 64,
                         "Name": "/" + self.obs["observed_container"],
@@ -43,6 +47,26 @@ class P5DCPU(unittest.TestCase):
         self.assertFalse(doc["port_process_ownership_verified"])
         self.assertFalse(doc["gpu_exclusivity_verified"])
         self.assertFalse(doc["production_released"])
+
+    def test_untrusted_p5c_identity_and_policy_drift_blocks(self):
+        cases = [
+            ("model", "27b", "P5_C_MODEL_NOT_BOUND"),
+            ("served_id", "foreign", "P5_C_API_ID_NOT_BOUND"),
+            ("canonical_container", "foreign", "P5_C_CANONICAL_CONTAINER_DRIFT"),
+            ("api_port", 8001, "P5_C_POLICY_OR_ISSUES_UNVERIFIED"),
+            ("issues", ["FORGED"], "P5_C_POLICY_OR_ISSUES_UNVERIFIED"),
+            ("runtime_role", "CANONICAL", "P5_C_RUNTIME_ROLE_CONTAINER_MISMATCH"),
+        ]
+        for field, value, expected in cases:
+            with self.subTest(field=field):
+                obs = dict(self.obs, **{field: value})
+                doc = ownership_review(
+                    "orcarouter", obs, self.inspect, "PID\\n101\\n102\\n",
+                    'LISTEN 0 4096 :8000 0.0.0.0:* users:((x,pid=201,fd=3))',
+                    "102\\n")
+                self.assertEqual(doc["status"], "BLOCKED_PARTIAL_PROCESS_EVIDENCE")
+                self.assertIn(expected, doc["issues"])
+                self.assertFalse(doc["operations_enabled"])
 
     def test_foreign_gpu_and_docker_identity_drift_block(self):
         info = dict(self.inspect, Id="c" * 64)
@@ -132,6 +156,44 @@ class P6ECPU(unittest.TestCase):
             draft_v2_event("27b","orcarouter",
                            source_id="a"*64,target_id="b"*64,
                            plan_id="c"*64,phase="COMMITTED")
+
+    def test_malformed_v2_json_types_fail_closed(self):
+        first = draft_v2_event("27b", "flash-next",
+                               source_id="a"*64, target_id="b"*64, plan_id="c"*64)
+        for field, value in (
+            ("phase", []), ("event_index", True),
+            ("api_host_port", True), ("source_model", {}),
+            ("legacy_v1_anchor_hash", []), ("previous_hash", []),
+            ("event_hash", None), ("max_active_gpu_models", False),
+            ("live_revalidation_required", 1),
+        ):
+            with self.subTest(field=field):
+                event = copy.deepcopy(first)
+                event[field] = value
+                result = audit_v2_draft([event])
+                self.assertEqual(result["status"], "BLOCKED_V2_DRAFT")
+                self.assertIn("V2_EVENT_SCHEMA_INVALID", result["issues"])
+                self.assertFalse(result["resume_eligible"])
+
+    def test_untrusted_prior_cannot_extend_v2_draft(self):
+        first = draft_v2_event("27b", "flash-next",
+                               source_id="a"*64, target_id="b"*64, plan_id="c"*64)
+        for field, value in (
+            ("phase", []), ("event_index", True),
+            ("event_index", 63), ("event_hash", "f"*64),
+        ):
+            with self.subTest(field=field, value=str(value)):
+                previous = dict(first, **{field: value})
+                with self.assertRaises(ValueError):
+                    draft_v2_event("27b", "flash-next",
+                                   source_id="a"*64, target_id="b"*64,
+                                   plan_id="c"*64, prior=previous, phase="PLANNED")
+
+    def test_v1_boolean_event_count_not_empty(self):
+        p = migration_preview("27b", "flash-next",
+                              {"status": "EMPTY", "event_count": False, "issues": []})
+        self.assertEqual(p["mode"], "FREEZE_UNTRUSTED_OR_UNRESOLVED_V1")
+        self.assertEqual(p["status"], "BLOCKED_V2_MIGRATION_NOT_AUTHORIZED")
 
     def test_read_only_v1_state_never_migrates_or_admits_live(self):
         fixtures=[

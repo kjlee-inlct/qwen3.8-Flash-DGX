@@ -26,6 +26,28 @@ REQUIRED_V2 = frozenset((
 V2_ORIGIN = "UNTRUSTED_V2_IN_MEMORY_PROPOSAL_ONLY"
 
 
+def _valid_event_types(event: dict) -> bool:
+    """Reject untrusted non-scalar JSON fields without raising TypeError."""
+    sha_fields = ("source_container_id", "target_container_id",
+                  "plan_id", "event_hash")
+    text_fields = ("record_origin", "phase", "source_model", "target_model",
+                   "source_role", "target_role")
+    return (
+        isinstance(event, dict)
+        and frozenset(event) == REQUIRED_V2
+        and type(event["schema_version"]) is int
+        and type(event["event_index"]) is int
+        and type(event["api_host_port"]) is int
+        and type(event["max_active_gpu_models"]) is int
+        and all(isinstance(event[k], str) for k in sha_fields + text_fields)
+        and all(event[k] is None or isinstance(event[k], str)
+                for k in ("legacy_v1_anchor_hash", "previous_hash"))
+        and all(type(event[k]) is bool for k in (
+            "live_revalidation_required", "approval_authentication_required",
+            "nonce_ledger_required"))
+    )
+
+
 def _digest(obj: dict) -> str:
     return hashlib.sha256(json.dumps(obj, sort_keys=True,
                                      separators=(",", ":")).encode()).hexdigest()
@@ -53,7 +75,15 @@ def draft_v2_event(source: str, target: str, *,
         raise ValueError("V2_PROPOSED_IDENTITY_OR_PLAN_INVALID")
     if phase not in PHASE_LABELS:
         raise ValueError("V2_PHASE_UNREGISTERED")
-    previous_phase = prior.get("phase") if isinstance(prior, dict) else None
+    if prior is not None:
+        if not _valid_event_types(prior):
+            raise ValueError("V2_DRAFT_UNTRUSTED_PRIOR")
+        prev_body = {k: v for k, v in prior.items() if k != "event_hash"}
+        if (prior["event_hash"] != _digest(prev_body)
+                or not 0 <= prior["event_index"] < 63
+                or prior["phase"] not in PHASE_LABELS):
+            raise ValueError("V2_DRAFT_UNTRUSTED_PRIOR")
+    previous_phase = prior["phase"] if prior is not None else None
     if phase not in PHASES.get(previous_phase, set()):
         raise ValueError("V2_DRAFT_ILLEGAL_PHASE_TRANSITION")
     if prior is not None and (prior.get("schema_version") != 2
@@ -93,7 +123,7 @@ def audit_v2_draft(events: object) -> dict:
         events = []
     previous = None
     for index, event in enumerate(events):
-        if not isinstance(event, dict) or frozenset(event) != REQUIRED_V2:
+        if not _valid_event_types(event):
             issues.append("V2_EVENT_SCHEMA_INVALID")
             break
         body = {k: v for k, v in event.items() if k != "event_hash"}
@@ -150,13 +180,14 @@ def migration_preview(source: str, target: str, audit: dict | None) -> dict:
     v1 = audit if isinstance(audit, dict) else {}
     state = v1.get("status")
     issues = []
-    if state == "EMPTY" and v1.get("event_count") == 0 and v1.get("issues") == []:
+    if (state == "EMPTY" and type(v1.get("event_count")) is int
+            and v1["event_count"] == 0 and v1.get("issues") == []):
         mode = "REQUIRES_APPROVED_EMPTY_V2_BOOTSTRAP"
         anchor = None
     elif (state == "VERIFIED" and v1.get("phase") in ("COMMITTED","RESTORED","CANCELLED")
           and isinstance(v1.get("last_event_hash"), str)
           and _ID.fullmatch(v1["last_event_hash"]) and v1.get("issues") == []
-          and isinstance(v1.get("event_count"), int)
+          and type(v1.get("event_count")) is int
           and v1["event_count"] > 0):
         mode = "REQUIRES_APPROVED_V1_ANCHOR_AND_READ_ONLY_RECONCILIATION"
         anchor = v1["last_event_hash"]
