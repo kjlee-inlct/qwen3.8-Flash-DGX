@@ -365,7 +365,8 @@ def main(argv: list[str] | None = None) -> int:
         "transaction-simulate", "extended-fault-matrix", "integration-reconcile",
         "session-mock", "session-matrix", "pipeline-mock",
         "fake-disk-contract", "fake-disk-matrix",
-        "observation-review", "observation-capture", "operating-gate-review"))
+        "observation-review", "observation-capture", "operating-gate-review",
+        "ownership-review", "ownership-capture", "journal-v2-preview"))
     parser.add_argument("--from-model")
     parser.add_argument("--to-model")
     parser.add_argument("--model")
@@ -376,6 +377,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--resource-evidence")
     parser.add_argument("--benchmark-evidence")
     parser.add_argument("--component-evidence")
+    parser.add_argument("--ownership-evidence")
     parser.add_argument("--service-evidence")
     parser.add_argument("--operating-journal-evidence")
     parser.add_argument("--approval-evidence")
@@ -394,6 +396,27 @@ def main(argv: list[str] | None = None) -> int:
         if args.action == "catalog":
             result = model_catalog()
 
+        elif args.action in ("ownership-review", "ownership-capture"):
+            if not args.model:
+                raise ValueError("EXACT_MODEL_REQUIRED")
+            from scripts.manager.process_ownership import ownership_capture, ownership_review
+            if args.action == "ownership-capture":
+                result = ownership_capture(args.model)
+            else:
+                bundle = _load_evidence(args.ownership_evidence) or {}
+                result = ownership_review(
+                    args.model, bundle.get("observation"),
+                    bundle.get("docker_inspect"),
+                    bundle.get("docker_top_stdout"),
+                    bundle.get("ss_stdout"),
+                    bundle.get("gpu_stdout"))
+        elif args.action == "journal-v2-preview":
+            if not args.from_model or not args.to_model:
+                raise ValueError("EXACT_SOURCE_AND_TARGET_REQUIRED")
+            from scripts.manager.generic_journal_v2 import migration_preview
+            result = migration_preview(
+                args.from_model, args.to_model,
+                _load_evidence(args.operating_journal_evidence))
         elif args.action in ("observation-review", "observation-capture"):
             if not args.model:
                 raise ValueError("EXACT_MODEL_REQUIRED")
@@ -512,6 +535,7 @@ def main(argv: list[str] | None = None) -> int:
         "PASS_FAKE_PIPELINE_CONTRACT",
         "PASS_FAKE_DISK_CONTRACT", "PASS_FAKE_DISK_FAILURE_DETECTED",
         "SOURCE_OBSERVATIONS_CORRELATED_NOT_LIVE_ACCEPTANCE",
+        "OBSERVED_PID_SETS_CONSISTENT_NOT_AUTHORIZED",
         "SOURCE_COMPONENT_FIELDS_CONSISTENT_NOT_LIVE_VERIFIED",
         "SOURCE_EVIDENCE_COMPLETE_NOT_RUNTIME_ACCEPTANCE",
     ) else 3

@@ -1,3 +1,9 @@
+## 2026-11-10 P5-D / P6-E source-only implementation
+
+Read-only process inventory P5-D and generic Journal v2 proposal P6-E are implemented in `process_ownership.py` and `generic_journal_v2.py`. See `docs/P5-D-P6-E-READ-ONLY-PROVENANCE-JOURNAL-V2-20261110.md`. This is NOT loaded GPU benchmark, independently authenticated host-port-PID binding, GPU exclusivity, authenticated operator approval, or durable v2 operating Journal. P5-D `ownership-capture --model orcarouter --json` queries Docker/ss/nvidia-smi without mutation; unsupported data fail closed and ownership/exclusivity flags are always false. P6-E `journal-v2-preview --from-model orcarouter --to-model 27b --json` returns deliberately BLOCKED; original two-model v1 service journal is unchanged. CI verification pending on source commit; no DGX live mutation.
+
+---
+
 ## P5-C and P6-D SOURCE implementation (2026-11-10)
 
 CI verified on source commit `37f3a1b8417a777206fea63965e6fcd7acef0ada`: Push [42720683321](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42720683321) SUCCESS and PR [42720691856](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42720691856) SUCCESS. All 9 new P5-C/P6-D CPU tests PASS. No actual DGX observation or operating transition occurred; the source code is not production qualified.
