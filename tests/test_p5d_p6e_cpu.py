@@ -61,9 +61,9 @@ class P5DCPU(unittest.TestCase):
             with self.subTest(field=field):
                 obs = dict(self.obs, **{field: value})
                 doc = ownership_review(
-                    "orcarouter", obs, self.inspect, "PID\\n101\\n102\\n",
+                    "orcarouter", obs, self.inspect, "PID\n101\n102\n",
                     'LISTEN 0 4096 :8000 0.0.0.0:* users:((x,pid=201,fd=3))',
-                    "102\\n")
+                    "102\n")
                 self.assertEqual(doc["status"], "BLOCKED_PARTIAL_PROCESS_EVIDENCE")
                 self.assertIn(expected, doc["issues"])
                 self.assertFalse(doc["operations_enabled"])

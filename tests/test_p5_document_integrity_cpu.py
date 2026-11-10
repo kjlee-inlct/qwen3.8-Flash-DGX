@@ -82,6 +82,23 @@ class P5HandoffFullDocumentCPU(unittest.TestCase):
                 self.assertIn(SECONDARY, content[:180])
                 self.assertIn(ADAPTER, content[:1700])
 
+    def test_all_markdown_relative_document_links_resolve(self):
+        # Verify repository-wide local Markdown paths, not just handoff headers.
+        missing = []
+        inspected = 0
+        for page in ROOT.rglob("*.md"):
+            if ".git" in page.parts:
+                continue
+            for link in LINK.findall(page.read_text(encoding="utf-8")):
+                if link.startswith(("https://", "http://", "mailto:", "#")):
+                    continue
+                target = (page.parent / link).resolve()
+                inspected += 1
+                if not target.is_relative_to(ROOT) or not target.is_file():
+                    missing.append((page.relative_to(ROOT).as_posix(), link))
+        self.assertGreaterEqual(inspected, 100)
+        self.assertFalse(missing, missing[:30])
+
     def test_new_runbook_is_distinct_and_isolated(self):
         runbook = (ROOT / RUNBOOK).read_text(encoding="utf-8")
         self.assertIn("lm_head.weight_scale", runbook)
