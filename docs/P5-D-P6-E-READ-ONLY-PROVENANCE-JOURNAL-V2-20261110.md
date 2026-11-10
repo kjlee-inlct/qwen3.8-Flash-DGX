@@ -115,3 +115,13 @@ P6-D operating-gate / P6-E Journal migration preview with explanatory issues.
 They do **not** invoke a switch, approval, inference, actual Journal write,
 persistent replay fence or recovery. CPU tests mock both host probes and confirm
 that P6-D/P6-E menu paths never invoke external runtime commands.
+
+## P7 registry-first selector (source-only)
+
+The interactive model selector now reads registered model keys from the
+service-policy manifest. Existing P1/P2/P5 model-specific action adapters
+retain their guarded behavior and display order. Newly registered models
+appear with a **source-only** label and enter only the model-independent
+P5–P8 qualification menu. Unavailable/invalid registry state blocks the
+selector without attempting a model launch or legacy lifecycle action.
+Two CPU regression tests cover registry-only models and invalid registry.

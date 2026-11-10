@@ -394,10 +394,24 @@ def _model_screen(model: str) -> None:
 
 
 def _model_selector() -> None:
-    names = list(MODEL_CHOICES)
+    """List the service manifest registry, with legacy model actions opt-in.
+
+    A newly registered model gets only P5-P8 source qualification, never an
+    invented P1/P2 guarded lifecycle adapter or generic live executor.
+    """
+    from scripts.manager.generic_operations import model_catalog
+    try:
+        registered = model_catalog()["models"]
+    except (ValueError, KeyError, TypeError) as exc:
+        print("BLOCKED_MODEL_REGISTRY_UNQUALIFIED: " + type(exc).__name__)
+        return
+    names = ([name for name in MODEL_CHOICES if name in registered]
+             + [name for name in registered if name not in MODEL_CHOICES])
     print("\nSelect a model (0 back)")
     for i, name in enumerate(names, 1):
-        print(f" {i}. {MODEL_CHOICES[name]['title']}")
+        label = (MODEL_CHOICES[name]["title"] if name in MODEL_CHOICES
+                 else name + " (registered; source-only)")
+        print(f" {i}. {label}")
     print(f" {len(names) + 1}. Installed models (read only / legacy caches)")
     typed = _input("Model: ")
     if typed in (str(len(names) + 1), "installed", "list"):
@@ -410,7 +424,12 @@ def _model_selector() -> None:
     if not selection:
         print("Unknown model; nothing executed.")
         return
-    _model_screen(selection)
+    if selection in MODEL_CHOICES:
+        _model_screen(selection)
+    else:
+        print("Registry-only model: common P5-P8 source reviews only.")
+        print("No dedicated lifecycle or operating executor is qualified.")
+        _generic_qualification_menu(selection)
 
 
 def _switch_selector() -> None:

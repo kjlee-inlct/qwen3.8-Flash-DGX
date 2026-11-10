@@ -76,6 +76,33 @@ class CommonUXCPU(unittest.TestCase):
             self.assertIn(status, output.getvalue())
             self.assertIn("No approval accepted", output.getvalue())
 
+    def test_new_registry_model_exposes_only_common_readonly_menu(self):
+        registry = {"models": {
+            "flash-next": {}, "27b": {}, "orcarouter": {},
+            "experimental": {},
+        }}
+        with patch("scripts.manager.generic_operations.model_catalog",
+                   return_value=registry), \
+             patch.object(console, "_input", return_value="4"), \
+             patch.object(console, "_generic_qualification_menu") as common, \
+             patch.object(console, "_model_screen",
+                          side_effect=AssertionError("No legacy lifecycle")), \
+             patch("subprocess.run", side_effect=AssertionError("No runtime")), \
+             contextlib.redirect_stdout(io.StringIO()) as out:
+            console._model_selector()
+        common.assert_called_once_with("experimental")
+        self.assertIn("experimental (registered; source-only)", out.getvalue())
+        self.assertIn("No dedicated lifecycle", out.getvalue())
+
+    def test_invalid_registry_blocks_model_selector(self):
+        with patch("scripts.manager.generic_operations.model_catalog",
+                   side_effect=ValueError("invalid")), \
+             patch.object(console, "_model_screen",
+                          side_effect=AssertionError("Must fail closed")), \
+             contextlib.redirect_stdout(io.StringIO()) as out:
+            console._model_selector()
+        self.assertIn("BLOCKED_MODEL_REGISTRY_UNQUALIFIED", out.getvalue())
+
     def test_unknown_live_identity_blocks_without_starting_anything(self):
         with patch.object(console, "_input", return_value="1"), \
              patch("scripts.manager.service_status.inspect_live_status",
