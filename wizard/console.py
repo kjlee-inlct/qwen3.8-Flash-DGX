@@ -224,7 +224,8 @@ def _generic_qualification_menu(model: str) -> None:
         print("Model is not registered. No diagnostics executed.")
         return
     actions = ("resource", "switch", "faults", "integration",
-               "session", "faults-extended", "integration-reconcile")
+               "session", "faults-extended", "integration-reconcile",
+               "observation", "ownership", "operating-gate", "journal-v2")
     while True:
         print("\nP5–P8 common model qualification (0 back)")
         print("  1. P5 bounded read-only resource snapshot")
@@ -234,6 +235,10 @@ def _generic_qualification_menu(model: str) -> None:
         print("  5. P5 benchmark/resource correlation session plan (no workload)")
         print("  6. P8 extended all-model Fake-DGX fault matrix")
         print("  7. P7 strict component observation reconciliation (read-only)")
+        print("  8. P5-C correlate live service/resource evidence (read-only)")
+        print("  9. P5-D inspect host Docker/PID/GPU evidence (read-only)")
+        print(" 10. P6-D review switch operating gate (always BLOCKED)")
+        print(" 11. P6-E review Journal v2 migration (always BLOCKED)")
         picked = _choice(_input("Review (0 back): "), list(actions))
         if picked is None:
             return
@@ -288,13 +293,53 @@ def _generic_qualification_menu(model: str) -> None:
                   " | pairs: " + str(report["pair_count"]) +
                   " | cases: " + str(report["test_count"]))
             print("  Existing 24-case matrix remains unchanged; no Docker is touched.")
-        else:
+        elif picked == "integration-reconcile":
             from scripts.manager.integration_contract import integration_reconcile
             report = integration_reconcile(model, {})
             print("  P7 strict reconciliation: " + report["status"])
             for issue in report["issues"]:
                 print("   - " + issue)
             print("  Use the integration-reconcile CLI with independently collected component evidence.")
+        elif picked in ("observation", "ownership"):
+            # Explicit model-first read-only probes: no inference or runtime write.
+            try:
+                if picked == "observation":
+                    from scripts.manager.observation_binding import observation_capture
+                    report = observation_capture(model)
+                else:
+                    from scripts.manager.process_ownership import ownership_capture
+                    report = ownership_capture(model)
+            except (OSError, ValueError, RuntimeError, TypeError) as exc:
+                print("  BLOCKED_READ_ONLY_OBSERVATION_UNAVAILABLE: " + type(exc).__name__)
+                continue
+            print("  P5 " + picked + " status: " + str(report.get("status")))
+            print("  Role: " + str(report.get("runtime_role") or "NOT_OBSERVED"))
+            for issue in report.get("issues", []):
+                print("   - " + issue)
+            print("  No inference, independently authenticated ownership, or live release.")
+        elif picked in ("operating-gate", "journal-v2"):
+            targets = [name for name in catalog["models"] if name != model]
+            for i, target in enumerate(targets, 1):
+                print(f"  {i}. {target}")
+            chosen = _choice(_input("Target to review (0 back): "), targets)
+            if chosen is None:
+                continue
+            if not chosen:
+                print("Unknown target; nothing executed.")
+                continue
+            if picked == "operating-gate":
+                from scripts.manager.generic_operating_gate import gate_review
+                report = gate_review(model, chosen, None, None, None, None, None)
+                print("  P6-D operating gate: " + report["status"])
+                print("  For external evidence use operations generic operating-gate-review.")
+            else:
+                from scripts.manager.generic_journal_v2 import migration_preview
+                report = migration_preview(model, chosen, None)
+                print("  P6-E Journal v2: " + report["status"])
+                print("  For V1 evidence use operations generic journal-v2-preview.")
+            for issue in report.get("issues", []):
+                print("   - " + issue)
+            print("  No approval accepted, Journal write, service switch, or recovery.")
 
 
 def _model_screen(model: str) -> None:

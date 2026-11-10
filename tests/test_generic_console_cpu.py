@@ -45,6 +45,37 @@ class CommonUXCPU(unittest.TestCase):
         self.assertIn("Model-agnostic preflight: BLOCKED", out.getvalue())
         self.assertIn("TARGET_CANONICAL_RUNTIME_NOT_QUALIFIED", out.getvalue())
 
+    def test_p5c_p5d_model_menu_only_runs_readonly_probes(self):
+        for item, module_path, expected in (
+            ("8", "scripts.manager.observation_binding.observation_capture",
+             "SOURCE_OBSERVATIONS_CORRELATED_NOT_LIVE_ACCEPTANCE"),
+            ("9", "scripts.manager.process_ownership.ownership_capture",
+             "BLOCKED_PARTIAL_PROCESS_EVIDENCE"),
+        ):
+            with self.subTest(item=item), \
+                 patch.object(console, "_input", side_effect=[item, "0"]), \
+                 patch(module_path, return_value={
+                     "status": expected, "runtime_role": "DEVELOPMENT_TRIAL",
+                     "issues": [], "executed": False}), \
+                 patch("subprocess.run", side_effect=AssertionError("No runtime")), \
+                 contextlib.redirect_stdout(io.StringIO()) as output:
+                console._generic_qualification_menu("orcarouter")
+            self.assertIn(expected, output.getvalue())
+            self.assertIn("No inference", output.getvalue())
+
+    def test_p6d_p6e_model_menu_is_never_operating_approval(self):
+        for item, status in (
+            ("10", "BLOCKED_LIVE_EXECUTOR_NOT_QUALIFIED"),
+            ("11", "BLOCKED_V2_MIGRATION_NOT_AUTHORIZED"),
+        ):
+            with self.subTest(item=item), \
+                 patch.object(console, "_input", side_effect=[item, "1", "0"]), \
+                 patch("subprocess.run", side_effect=AssertionError("No runtime")), \
+                 contextlib.redirect_stdout(io.StringIO()) as output:
+                console._generic_qualification_menu("27b")
+            self.assertIn(status, output.getvalue())
+            self.assertIn("No approval accepted", output.getvalue())
+
     def test_unknown_live_identity_blocks_without_starting_anything(self):
         with patch.object(console, "_input", return_value="1"), \
              patch("scripts.manager.service_status.inspect_live_status",

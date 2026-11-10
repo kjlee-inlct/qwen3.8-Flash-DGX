@@ -104,3 +104,14 @@ types (boolean indexes, list phases, non-string hashes) without exceptions.
 Draft extension checks the prior event hash and type; a boolean V1 event count
 cannot be treated as an empty journal. New CPU negative fixtures cover these
 cases. No operating Journal migration, writer, execution or release enabled.
+
+## P7 model-first TTY integration (source-only; 2026-11-10)
+
+In `./wizard.sh` select a model, then "P5–P8 common model qualification".
+Menu items 8/9 perform explicit P5-C/P5-D sequential read-only host probes
+and label the resulting observation as **not live acceptance**. Items 10/11
+select a target from the manifest registry and display the permanently blocked
+P6-D operating-gate / P6-E Journal migration preview with explanatory issues.
+They do **not** invoke a switch, approval, inference, actual Journal write,
+persistent replay fence or recovery. CPU tests mock both host probes and confirm
+that P6-D/P6-E menu paths never invoke external runtime commands.
