@@ -245,6 +245,11 @@ def main(argv: list[str] | None = None) -> int:
     if len(args) >= 2 and args[:2] == ["operations", "generic"]:
         from scripts.manager.generic_operations import main as generic_main
         return generic_main(args[2:] + (["--json"] if as_json else []))
+    if (dry_run and len(args) >= 3 and
+            args[:3] == ["operations", "measurements", "benchmark-execute"]):
+        print(json.dumps({"status": "BLOCKED", "issues": ["DRY_RUN_INFERENCE_CONFLICT"],
+                          "inference_executed": False, "service_mutated": False}))
+        return 3
     if len(args) >= 2 and args[:2] == ["operations", "measurements"]:
         from scripts.manager.model_measurements import main as measurements_main
         return measurements_main(args[2:] + (["--json"] if as_json else []))

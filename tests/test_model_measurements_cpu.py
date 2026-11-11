@@ -133,6 +133,29 @@ class MetricInventoryCPU(unittest.TestCase):
             Path(td, "orcarouter--20261112T010203000001Z--aaaaaaaaaaaa.json").write_text("BROKEN")
             self.assertEqual(m.history("orcarouter", directory=td)["count"], 1)
 
+    def test_history_preserves_per_context_measurement_summary(self):
+        with tempfile.TemporaryDirectory() as td, \
+             patch.object(m, "model_catalog", return_value=CAT):
+            doc = {
+                "schema_version": 1, "model": "orcarouter",
+                "action": "benchmark-execute", "status": "COLLECTED_UNQUALIFIED",
+                "container": {"id": CID},
+                "timestamp_utc": "2026-11-12T00:00:00+00:00",
+                "results": [{
+                    "context_k": 4, "status": "MEASURED",
+                    "tokenizer_input_tokens": 4096,
+                    "metrics": {"ttft_seconds": 0.8, "ttfc_seconds": 1.4,
+                                "generation_tps_after_first_token": 42.2,
+                                "prompt_tokens_reported": 4100,
+                                "completion_tokens_reported": 128},
+                }],
+            }
+            m.save_record(doc, directory=td)
+            rows = m.history("orcarouter", directory=td)["records"]
+        self.assertEqual(rows[0]["benchmark_cases"][0]["context_k"], 4)
+        self.assertEqual(rows[0]["benchmark_cases"][0]["ttfc_seconds"], 1.4)
+        self.assertEqual(rows[0]["benchmark_cases"][0]["generation_tps"], 42.2)
+
     def test_inventory_cli_blocked_on_unknown_model(self):
         with patch.object(m, "model_catalog", return_value=CAT), \
              contextlib.redirect_stdout(io.StringIO()) as stdout:
@@ -216,6 +239,17 @@ class SyntheticBenchmarkCPU(unittest.TestCase):
                              service_probe=lambda: good_service,
                              capture=lambda **_: resource(),
                              http=lambda _: {"data": [{"id": "wrong-model", "max_model_len": 8192}]})
+
+    def test_wizard_dry_run_explicitly_blocks_benchmark_execute(self):
+        with patch.object(b, "_stream_chat", side_effect=AssertionError("must not infer")), \
+             contextlib.redirect_stdout(io.StringIO()) as output:
+            code = wizard_main(["operations", "measurements", "benchmark-execute",
+                                "--model", "orcarouter", "--dry-run",
+                                "--ack-live-inference", b.ACK, "--json"])
+        self.assertEqual(code, 3)
+        data = json.loads(output.getvalue())
+        self.assertIn("DRY_RUN_INFERENCE_CONFLICT", data["issues"])
+        self.assertFalse(data["inference_executed"])
 
     def test_wizard_routes_generic_measurements_without_inference(self):
         with patch.object(m, "model_catalog", return_value=CAT), \

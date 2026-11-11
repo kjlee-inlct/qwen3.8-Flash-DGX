@@ -217,7 +217,7 @@ def _show_measurement_dashboard(model: str) -> None:
     from scripts.manager.model_measurements import inventory, history
     try:
         report = inventory(model)
-        past = history(model, limit=1)
+        past = history(model, limit=10)
     except (OSError, ValueError, RuntimeError, TypeError) as exc:
         print("  Measurement dashboard: NOT_OBSERVED (" + type(exc).__name__ + ")")
         return
@@ -225,6 +225,14 @@ def _show_measurement_dashboard(model: str) -> None:
     print("  Runtime: " + str(report["runtime"]["status"]))
     print("  Candidate profile: " + str(report["profile"]["declared_profile"]) +
           " (not verified launch arguments)")
+    candidate = report["profile"].get("candidate_settings") or {}
+    print("  Candidate configuration (not runtime proof): " + str({
+        k: candidate.get(k) for k in (
+            "num_speculative_tokens", "max_model_len_candidate",
+            "max_num_seqs_candidate", "gpu_memory_utilization_candidate",
+            "kv_cache_dtype", "ple_mmap", "ple_prewarm", "cuda_graph")
+        if k in candidate
+    }))
     print("  Observed launch flags: " + str(report["runtime"].get("launch_flags") or "NOT_OBSERVED"))
     print("  PLE mmap settings: " + str(report["runtime"].get("selected_env") or "NOT_OBSERVED"))
     for key in ("host_mem_available_bytes", "host_cached_bytes",
@@ -241,6 +249,15 @@ def _show_measurement_dashboard(model: str) -> None:
     if items:
         print("  Last saved measurement: " + str(items[0].get("timestamp_utc")) +
               " / " + str(items[0].get("action")))
+        saved_benchmark = next((entry for entry in items if entry.get("benchmark_cases")), None)
+        if saved_benchmark:
+            print("  Last saved context sweep (historical; not current-model runtime proof):")
+            for case in saved_benchmark["benchmark_cases"]:
+                print("   " + str(case.get("context_k")) + "K | " +
+                      str(case.get("status")) + " | TTFC(s)=" +
+                      str(case.get("ttfc_seconds")) + " | tok/s=" +
+                      str(case.get("generation_tps")) +
+                      " | prompt tokens=" + str(case.get("prompt_tokens_reported")))
     else:
         print("  Last saved measurement: NONE")
     print("  Full records: ./wizard.sh operations measurements inventory --model " + model + " --json")

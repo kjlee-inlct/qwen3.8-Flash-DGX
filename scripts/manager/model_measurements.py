@@ -321,6 +321,17 @@ def history(model, *, directory=None, limit=20):
                     "summary": doc.get("summary") or {
                         k: v.get("value") for k, v in (doc.get("metrics") or {}).items()
                         if isinstance(v, dict) and v.get("value") is not None},
+                    "benchmark_cases": [
+                        {"context_k": case.get("context_k"),
+                         "status": case.get("status"),
+                         "tokenizer_input_tokens": case.get("tokenizer_input_tokens"),
+                         "ttft_seconds": (case.get("metrics") or {}).get("ttft_seconds"),
+                         "ttfc_seconds": (case.get("metrics") or {}).get("ttfc_seconds"),
+                         "generation_tps": (case.get("metrics") or {}).get("generation_tps_after_first_token"),
+                         "prompt_tokens_reported": (case.get("metrics") or {}).get("prompt_tokens_reported"),
+                         "completion_tokens_reported": (case.get("metrics") or {}).get("completion_tokens_reported")}
+                        for case in (doc.get("results") or [])[:8] if isinstance(case, dict)
+                    ] if doc.get("action") == "benchmark-execute" else [],
                     "file": str(p),
                 })
             except (OSError, ValueError, TypeError, AttributeError):
