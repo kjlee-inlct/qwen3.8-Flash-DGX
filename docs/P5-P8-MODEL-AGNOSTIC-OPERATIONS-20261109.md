@@ -1,3 +1,30 @@
+## 2026-11-12 — P5-D DGX evidence and P6-E-first development priority
+
+The operator's current DGX read-only transcript, collected at source HEAD
+`5a48e9ca417b939b1cc51b2933c3086472033b6a`, now supersedes earlier
+P5-D **NOT_RUN** statements. Orcarouter v3 service and API were observed
+healthy, P5-C correlation returned `issues=[]`, while P5-D
+`ownership-capture` reported `BLOCKED_PARTIAL_PROCESS_EVIDENCE` with
+`PORT_8000_HOST_LISTENER_PID_UNAVAILABLE_OR_NAT`: Docker identity and GPU
+PID subset were consistent, but `ss` had no attributable host listener PID.
+This is **not a demonstrated service failure**; generic CLI exit code 3 means
+the provenance evidence is non-authorizing, not that the service is down.
+No independent GPU exclusivity, port PID ownership, or production release
+was established. The separate Orcarouter inventory captured read-only 9.83 GiB
+engine-reported KV memory and 197352 KV cache tokens; no inference benchmark.
+See [2026-11-12 P5-D observed evidence](P5-D-P6-E-READ-ONLY-PROVENANCE-JOURNAL-V2-20261110.md).
+
+**Priority:** P6-E durable cross-process Nonce/Replay Fence and Journal v2
+contracts first; then P5 benchmark/resource Session integration; then P7
+independent Proxy/Gateway/Storage qualification; finally P8 real recovery,
+loaded acceptance and deferred P5-D/measurement collection completeness.
+Actual inference load, service switching, fault injection, durable operating
+Journal migration and recovery/release remain separately approval-gated.
+This documentation-only GitHub change does not alter the operating service,
+model, container, port 8000, CPU/cgroup settings, HF cache or PR status.
+
+---
+
 ## 2026-11-12 — Model-independent measurement workspace (SOURCE implementation only)
 
 **Baseline branch before implementation:** `feature/recipe-wizard-handoff` at `df9829cf815527f3b931aed6f5d608972c094641`; PR #1 remains Draft/Open. This source addition does not constitute a new DGX measurement, model switch, production release, tool/vision/MTP2 qualification, or operating Journal mutation. CI status must be verified against the actual resulting commit.

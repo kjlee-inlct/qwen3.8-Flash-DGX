@@ -1,3 +1,15 @@
+## CURRENT P5 DOCUMENT SUPERSESSION — 2026-11-12 P5-D actual DGX result
+
+**Verified source identity:** operator-run Orcarouter v3 `qwen38-orcarouter-qsa62318-lmhead-v3` (adapter `qwen4exp-qsa62318-lmhead-v032-v3`, previous `lm_head.weight_scale` fix), API :8000, DEVELOPMENT_TRIAL. **This is an operator-provided receipt, not a new GPU/API test by GitHub.**
+
+NEXT SESSION: start at P6-E, not P5-D collection. Existing actual P5-D evidence is partial but read-only validated: service healthy, P5-C correlated, P5-D blocked by no host :8000 listener PID, source `5a48e9c`, no operating auth. Implement durable Nonce/Replay Fence and safe Journal v2 contract CPU/Fake-DGX first. Then P5 benchmark session, P7 independent verification, P8 fault/recovery + collection completeness. Never launch workload, switch service, mutate CPU/cgroups, migrate operating Journal or merge PR without explicit approval.
+
+[Actual P5-D evidence and PID-limitations runbook](../docs/P5-D-P6-E-READ-ONLY-PROVENANCE-JOURNAL-V2-20261110.md) · [P5–P8 operating scope](../docs/P5-P8-MODEL-AGNOSTIC-OPERATIONS-20261109.md)
+
+**Safety boundary:** ONE_ACTIVE_MODEL_ONLY; vLLM 0.32.0; no SGLang, startup/shutdown, inference, port/cgroup/governor change, journal migration, auto-recovery or PR merge. Draft PR #1 unchanged. See the runbook for exact PID evidence and historical timestamp.
+
+---
+
 ## 2026-11-12 — Measurement workspace handoff (SOURCE ONLY; DGX test deferred)
 
 Model-independent, extensible measurement workspace added on top of branch baseline `df9829cf815527f3b931aed6f5d608972c094641`. It integrates the existing P5 resource snapshot (all host/cgroup/GPU/NVMe/PSI/Swap telemetry) with read-only exact-container runtime launch/profile inspection and non-secret parsed model-load/KV log metrics. New `operations measurements {catalog,inventory,history,benchmark-plan,benchmark-execute}` route; the model-selected TTY shows current memory and runtime settings, with refresh and local opt-in measurement history. This is **source code, not a newly measured value**; runtime log labels are not full host memory or PLE RSS. Benchmark requires exact `I_ACCEPT_ACTIVE_MODEL_INFERENCE`, active API/Docker identity, bounded 1..256K requested context calibration, and never runs automatically from menu. Data are stored only with `--save` as private 0600 JSON outside the P6 operating Journal. No Docker start/stop, model switch, checkpoint/cache deletion, GPU/governor/cgroup change, service release or PR merge. Existing Orcarouter v3 remains DEVELOPMENT_TRIAL, :8000, ONE_ACTIVE_MODEL_ONLY, vLLM 0.32, no SGLang. **No DGX measurement or API workload occurred in this GitHub-only change; CI must be confirmed on the final commit.**
