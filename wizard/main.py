@@ -232,6 +232,7 @@ def main(argv: list[str] | None = None) -> int:
         if not lifecycle_route and not (len(args) >= 2 and args[:2] in
                                        (["model", "choose"], ["model", "list"],
                                         ["operations", "resources"],
+                                        ["operations", "measurements"],
                                         ["operations", "generic"])):
             args = _resolve_stage(args)
     except ValueError as exc:
@@ -244,6 +245,9 @@ def main(argv: list[str] | None = None) -> int:
     if len(args) >= 2 and args[:2] == ["operations", "generic"]:
         from scripts.manager.generic_operations import main as generic_main
         return generic_main(args[2:] + (["--json"] if as_json else []))
+    if len(args) >= 2 and args[:2] == ["operations", "measurements"]:
+        from scripts.manager.model_measurements import main as measurements_main
+        return measurements_main(args[2:] + (["--json"] if as_json else []))
     if len(args) >= 2 and args[:2] == ["operations", "resources"]:
         from scripts.manager.resource_diagnostics import main as resources_main
         return resources_main(args[2:] + (["--json"] if as_json else []))

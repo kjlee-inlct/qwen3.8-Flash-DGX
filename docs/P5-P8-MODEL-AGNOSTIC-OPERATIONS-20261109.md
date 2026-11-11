@@ -1,3 +1,47 @@
+## 2026-11-12 — Model-independent measurement workspace (SOURCE implementation only)
+
+**Baseline branch before implementation:** `feature/recipe-wizard-handoff` at `df9829cf815527f3b931aed6f5d608972c094641`; PR #1 remains Draft/Open. This source addition does not constitute a new DGX measurement, model switch, production release, tool/vision/MTP2 qualification, or operating Journal mutation. CI status must be verified against the actual resulting commit.
+
+### Architecture and evidence semantics
+
+- `scripts/manager/model_measurements.py`: extensible metric ID/unit/scope catalog; current read-only model-selected dashboard; reuses **all** fields of existing `resource_diagnostics.snapshot()` (CPU, thermal, unified memory, Swap, PSI, Docker/cgroup, NVMe, GPU, page faults and file cache) as `resource_snapshot`, and extracts a compact metric map for display. Never adds GB10 GPU "VRAM" to physical host RAM.
+- Bounded `docker inspect` and `docker logs` use the **exact observed full 64-character container ID**, recheck name/running identity, parse only allowlisted launch flags and the non-secret `VLLM_PLE_MMAP*` environment variables. Regexes extract engine-reported `Loading model weights took ... GiB`, `Available KV cache memory: ... GiB`, and `GPU KV cache size: ... tokens` if actually present. These are **runtime log claims, not host MemAvailable, full model residency, measured PLE RSS, or guaranteed cache allocation**. No raw logs, prompts, tokens, API keys or generated content are retained.
+- Declared recipe `mtp0/mtp2`, context candidate, PLE mmap and KV dtype are **candidate settings**; `runtime.launch_flags` and `runtime.selected_env` are **observed container settings**, not proof that every optional feature is active. Absent values are `NOT_OBSERVED`; source-declared PLE mapping is `DECLARED_NOT_RESIDENT`; actual PLE-resident bytes remain `NOT_OBSERVED` until a qualified file-specific process measurement is separately implemented.
+- `scripts/manager/measurement_bench.py`: separate **opt-in** synthetic localhost-only OpenAI chat SSE benchmark, default `1,4,8` Ki-token-size targets (K=1024), adjustable up to eight distinct requested context sizes 1..256K and at most 512 output tokens per case. Explicit `--ack-live-inference I_ACCEPT_ACTIVE_MODEL_INFERENCE` is required; no menu choice, plan, inventory, or history can issue inference. Exact active model/API identity and full Docker ID must be observed before the workload; `/v1/models` must supply a real `max_model_len`; `/tokenize` calibrates deterministic synthetic prompts and mismatching/oversized targets are skipped. A response reports actual server prompt/completion tokens when usage exists, TTFT (first reasoning or visible token), TTFC (first **visible** content), full latency and completion tokens/s measured from first generated token. Missing streaming usage/visible content is explicitly not observed. Same-container post-snapshot is captured but does not independently authenticate the runtime or claim benchmark acceptance. No prompts or generated text saved.
+- Bench requests use currently active `:8000/v1` only and must **never** stop, recreate, switch or rename a container. This does **not** grant operating approval or P8 acceptance. Any live test must be explicitly scheduled/approved by the operator; none was run in the source implementation session.
+- Independent `~/.local/state/blazux-wizard/model-measurements/` is **opt-in only with `--save`**, JSON `0600` with `O_EXCL` and `fsync`, not the P6 service transition Journal. History groups by registered model and records timestamp, Git HEAD, exact Docker ID, declared profile, observed source metrics and separately measured benchmark results. Cross-model comparisons must inspect profile/context/tokenization and provenance, not mix raw GPU/host/cgroup scopes. `history` reads existing receipts and neither writes nor performs inference.
+
+### Operator commands (not executed on DGX)
+
+```bash
+# Source catalog / metric definitions; no Docker or inference
+./wizard.sh operations measurements catalog --json
+
+# Read-only selected-model memory, runtime flags, model-load/KV log labels and all old telemetry
+./wizard.sh operations measurements inventory --model orcarouter --json
+
+# Optional local private history receipt, without inferencing
+./wizard.sh operations measurements inventory --model orcarouter --save --summary-only --json
+./wizard.sh operations measurements history --model orcarouter --json
+
+# No execution: bounded proposed context sweep, must not be mistaken for an actual benchmark
+./wizard.sh operations measurements benchmark-plan --model orcarouter --contexts-k 1,4,8,16 --max-output-tokens 128 --json
+
+# ONLY on operator-selected benchmark day, after reviewing currently active runtime + service health:
+./wizard.sh operations measurements benchmark-execute --model orcarouter --contexts-k 1,4,8 --max-output-tokens 128 --ack-live-inference I_ACCEPT_ACTIVE_MODEL_INFERENCE --save --json
+```
+
+The model-first TTY screen presents a read-only dashboard on selection; menu 9 refreshes it. The common P5–P8 qualification menu option 12 also shows it. It never triggers benchmark execution. All measured values must remain `NOT_OBSERVED` until actual capture. Workload performance is **not comparable to YSLAB** without matching MTP, quantization, prompt lengths, generation limits, warm/cold page-cache state and measurement definitions.
+
+### Limitations and later validation
+
+- Older Orcarouter idle observation (2026-11-09) remains: 121.63 GiB total, ~30.18 GiB MemAvailable, ~25.54 GiB cgroup memory.current, 1.31 GiB host swap (no observed churn), zero interval OOM and PSI. These are **historical user-supplied observations**, not measurements gathered by this implementation.
+- Start-up logs may have rotated or fallen outside the bounded tail; loader and KV log fields remain `NOT_OBSERVED`. No guessed "model-load memory = total − MemAvailable".
+- User-facing benchmark sizes are requested **Ki-token** targets; actual measured token counts come from live tokenization and API usage, not from prompt character length.
+- CPU/Fake-DGX CI validates only parsing, approval gates, identity, absence of raw prompt content and Wizard routing. A new real-DGX baseline, MTP0/MTP2 comparison, 16K..262K readiness and loaded measurements require a later operator session.
+
+---
+
 ## 2026-11-10 P5-D / P6-E source-only implementation
 
 P5-D/P6-E SOURCE CI VERIFIED: implementation commit `61effbd25a856a1736bb01098f2f87742b0248e0` (initial failed only because document inventory excluded new runbook); inventory correction commit `c697c7474550e1703f4f68daf857582e66292eec` passed **9/9 new CPU tests**, full Push [42739085075](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42739085075) and PR [42739090964](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42739090964) both **SUCCESS**. DGX P5-D command has **NOT** been run; P6-E migration is source-only, not a production write.

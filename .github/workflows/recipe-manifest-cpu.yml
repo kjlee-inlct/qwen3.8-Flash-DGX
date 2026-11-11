@@ -55,6 +55,9 @@ on:
       - 'tests/test_p4_bc_dry_run_cpu.py'
       - 'tests/test_p6_p8_fakedgx_cpu.py'
       - 'tests/test_benchmark_session_cpu.py'
+      - 'tests/test_model_measurements_cpu.py'
+      - 'scripts/manager/model_measurements.py'
+      - 'scripts/manager/measurement_bench.py'
       - 'tests/test_mock_benchmark_session_cpu.py'
       - 'tests/test_mock_transaction_pipeline_cpu.py'
       - 'tests/test_mock_persistent_contract_cpu.py'
@@ -151,6 +154,7 @@ jobs:
           python -m unittest discover -s tests -p 'test_p5_*_cpu.py' -v
           python -m unittest discover -s tests -p 'test_p6_p8_fakedgx_cpu.py' -v
           python -m unittest discover -s tests -p 'test_benchmark_session_cpu.py' -v
+          python -m unittest discover -s tests -p 'test_model_measurements_cpu.py' -v
           python -m unittest discover -s tests -p 'test_mock_benchmark_session_cpu.py' -v
           python -m unittest discover -s tests -p 'test_mock_transaction_pipeline_cpu.py' -v
           python -m unittest discover -s tests -p 'test_mock_persistent_contract_cpu.py' -v

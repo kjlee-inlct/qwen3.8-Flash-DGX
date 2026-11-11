@@ -211,6 +211,43 @@ def _lifecycle_review(model: str) -> None:
         print("  This is a review only. No service, Docker or cache changes.")
 
 
+
+def _show_measurement_dashboard(model: str) -> None:
+    """Read-only model-selected summary; no inference or service changes."""
+    from scripts.manager.model_measurements import inventory, history
+    try:
+        report = inventory(model)
+        past = history(model, limit=1)
+    except (OSError, ValueError, RuntimeError, TypeError) as exc:
+        print("  Measurement dashboard: NOT_OBSERVED (" + type(exc).__name__ + ")")
+        return
+    print("\n  Measurement dashboard (read only; live measurements not benchmark acceptance)")
+    print("  Runtime: " + str(report["runtime"]["status"]))
+    print("  Candidate profile: " + str(report["profile"]["declared_profile"]) +
+          " (not verified launch arguments)")
+    print("  Observed launch flags: " + str(report["runtime"].get("launch_flags") or "NOT_OBSERVED"))
+    print("  PLE mmap settings: " + str(report["runtime"].get("selected_env") or "NOT_OBSERVED"))
+    for key in ("host_mem_available_bytes", "host_cached_bytes",
+                "cgroup_memory_current_bytes", "cgroup_memory_peak_bytes",
+                "cgroup_inactive_file_bytes", "host_swap_used_bytes",
+                "weight_load_reported_gib", "kv_available_reported_gib",
+                "kv_capacity_reported_tokens", "ple_resident_bytes",
+                "gpu_utilization_pct", "loaded_generation_tps", "loaded_ttfc_seconds"):
+        metric = report["metrics"][key]
+        value = (str(metric["value"]) + " " + metric["unit"]
+                 if metric["value"] is not None else metric["status"])
+        print("   " + key + ": " + value)
+    items = past.get("records") or []
+    if items:
+        print("  Last saved measurement: " + str(items[0].get("timestamp_utc")) +
+              " / " + str(items[0].get("action")))
+    else:
+        print("  Last saved measurement: NONE")
+    print("  Full records: ./wizard.sh operations measurements inventory --model " + model + " --json")
+    print("  Save on demand: add --save (0600 local receipt only)")
+    print("  Benchmark requires a separate explicit --ack-live-inference; never runs on menu selection.")
+
+
 def _generic_qualification_menu(model: str) -> None:
     """P5-P8 shared read-only review for any registered service model.
 
@@ -239,13 +276,16 @@ def _generic_qualification_menu(model: str) -> None:
         print("  9. P5-D inspect host Docker/PID/GPU evidence (read-only)")
         print(" 10. P6-D review switch operating gate (always BLOCKED)")
         print(" 11. P6-E review Journal v2 migration (always BLOCKED)")
+        print(" 12. Model measurements: memory/profile/current metrics and history (read only)")
         picked = _choice(_input("Review (0 back): "), list(actions))
         if picked is None:
             return
         if not picked:
             print("Unknown option; nothing executed.")
             continue
-        if picked == "resource":
+        if picked == "measurements":
+            _show_measurement_dashboard(model)
+        elif picked == "resource":
             from scripts.manager.resource_diagnostics import snapshot, admission
             report = snapshot(model=model)
             gate = admission(report)
@@ -343,6 +383,7 @@ def _generic_qualification_menu(model: str) -> None:
 
 
 def _model_screen(model: str) -> None:
+    _show_measurement_dashboard(model)
     while True:
         doc = model_workflow(model)
         _display_workflow(doc)
@@ -354,6 +395,7 @@ def _model_screen(model: str) -> None:
         print("  6. Guided operating switch (release gated)")
         print("  7. Recipe diff / container lifecycle review (read only)")
         print("  8. P5–P8 common model qualification (read only / Fake-DGX)")
+        print("  9. Refresh model memory / launch profile / saved benchmark summary (read only)")
         print("  0. Back")
         selected = _input("Choice (0 back): ")
         if selected in (None, "0"):
@@ -389,6 +431,8 @@ def _model_screen(model: str) -> None:
             _lifecycle_review(model)
         elif selected == "8":
             _generic_qualification_menu(model)
+        elif selected == "9":
+            _show_measurement_dashboard(model)
         else:
             print("Unknown option; nothing executed.")
 
