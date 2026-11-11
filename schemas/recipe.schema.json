@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/blob/feature/recipe-wizard-handoff/schemas/recipe.schema.json",
+  "title": "DGX Spark pinned model recipe (source contract only)",
+  "description": "Schema validity is NOT runtime qualification or permission to launch/alter the live service.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "recipe_id", "engine", "runtime", "model", "service", "checks", "lifecycle"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "recipe_id": {"type": "string", "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$", "maxLength": 64},
+    "engine": {"const": "vllm"},
+    "runtime": {"$ref": "#/$defs/runtime"},
+    "model": {"$ref": "#/$defs/model"},
+    "service": {"$ref": "#/$defs/service"},
+    "checks": {
+      "type": "object", "additionalProperties": false,
+      "required": ["require_exact_revision", "require_ready_health", "allow_launch_without_gpu_approval"],
+      "properties": {
+        "require_exact_revision": {"const": true},
+        "require_ready_health": {"const": true},
+        "allow_launch_without_gpu_approval": {"const": false}
+      }
+    },
+    "lifecycle": {
+      "type": "object", "additionalProperties": false,
+      "required": ["protected", "allow_delete_without_approval"],
+      "properties": {
+        "protected": {"type": "boolean"},
+        "allow_delete_without_approval": {"const": false}
+      }
+    }
+  },
+  "$defs": {
+    "git_sha": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "runtime": {
+      "type": "object", "additionalProperties": false,
+      "required": ["vllm_version", "platform", "source_git_sha", "image_ref", "image_digest"],
+      "properties": {
+        "vllm_version": {"const": "0.32.0"},
+        "platform": {"const": "linux/arm64"},
+        "source_git_sha": {"$ref": "#/$defs/git_sha"},
+        "image_ref": {"type": "string", "pattern": "^[a-zA-Z0-9._/-]+(?:\\:[a-zA-Z0-9._-]+)?@sha256:[0-9a-f]{64}$", "maxLength": 256},
+        "image_digest": {"$ref": "#/$defs/digest"}
+      }
+    },
+    "model": {
+      "type": "object", "additionalProperties": false,
+      "required": ["repo_id", "revision", "architecture", "quantization", "ple", "mtp"],
+      "properties": {
+        "repo_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*/[A-Za-z0-9][A-Za-z0-9._-]*$", "maxLength": 160},
+        "revision": {"$ref": "#/$defs/git_sha"},
+        "architecture": {"type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_]{3,79}$", "not": {"pattern": "UNVERIFIED|UNKNOWN|REPLACE|PLACEHOLDER|TODO|unverified|unknown|replace|placeholder|todo"}},
+        "quantization": {"enum": ["nvfp4", "compressed-tensors", "bf16"]},
+        "ple": {"type": "object", "additionalProperties": false, "required": ["mode"], "properties": {"mode": {"enum": ["mmap", "direct-bf16", "none"]}}},
+        "mtp": {"type": "object", "additionalProperties": false, "required": ["enabled", "num_speculative_tokens"],
+          "properties": {"enabled": {"type": "boolean"}, "num_speculative_tokens": {"type": "integer", "minimum": 0, "maximum": 8}},
+          "allOf": [
+            {"if": {"properties": {"enabled": {"const": false}}, "required": ["enabled"]}, "then": {"properties": {"num_speculative_tokens": {"const": 0}}}},
+            {"if": {"properties": {"enabled": {"const": true}}, "required": ["enabled"]}, "then": {"properties": {"num_speculative_tokens": {"minimum": 1}}}}
+          ]}
+      }
+    },
+    "service": {
+      "type": "object", "additionalProperties": false,
+      "required": ["served_model_name", "container_name", "port"],
+      "properties": {
+        "served_model_name": {"type": "string", "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]{1,99}$"},
+        "container_name": {"type": "string", "pattern": "^[a-zA-Z][a-zA-Z0-9_.-]{1,99}$"},
+        "port": {"type": "integer", "minimum": 1024, "maximum": 65535}
+      }
+    }
+  }
+}

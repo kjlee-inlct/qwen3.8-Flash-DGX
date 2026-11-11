@@ -1,0 +1,174 @@
+"""CPU-only read-only diagnosis fixture tests. No Docker/GPU/API requests."""
+import json
+from pathlib import Path
+import tempfile
+import unittest
+from unittest.mock import patch
+
+from scripts.temporary.p1_cache_diagnosis import inspect
+
+
+class CacheDiagnosisCPU(unittest.TestCase):
+    def setUp(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.cache = Path(tmp.name) / "cache"
+        self.repo = self.cache / "hub/models--nvidia--Qwen3.8-Flash-Next-NVFP4"
+        self.rev = "b" * 40
+
+    def write(self, path, data="{}"):
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(data)
+
+    def complete(self):
+        src = self.repo / "snapshots" / self.rev
+        for f in ("config.json", "generation_config.json", "tokenizer.json",
+                  "tokenizer_config.json", "chat_template.jinja",
+                  "preprocessor_config.json"):
+            self.write(src / f, '{"quantization_config":{"quant_method":"nvfp4"}}')
+        self.write(src / "model.safetensors.index.json", json.dumps({
+            "weight_map": {"one": "model-00001.safetensors"}}))
+        self.write(src / "model-00001.safetensors", "weights")
+        return src
+
+    def test_missing_cache_returns_structured_facts(self):
+        data = inspect(self.cache)
+        self.assertIsNone(data["refs"]["main"])
+        self.assertFalse(data["wizard_audit"]["source_complete"])
+        self.assertEqual(data["snapshots"], [])
+        self.assertFalse(data["mutation_performed"])
+
+    def test_master_ref_complete_but_p1_main_ref_missing(self):
+        self.complete()
+        self.write(self.repo / "refs/master", self.rev)
+        data = inspect(self.cache)
+        self.assertFalse(data["wizard_audit"]["source_complete"])
+        self.assertIsNone(data["refs"]["main"])
+        self.assertEqual(data["refs"]["master"], self.rev)
+        self.assertEqual(data["snapshots"][0]["source_issues"], [])
+
+    def test_normal_main_snapshot_complete_hybrid_missing(self):
+        self.complete()
+        self.write(self.repo / "refs/main", self.rev)
+        data = inspect(self.cache)
+        self.assertTrue(data["wizard_audit"]["source_complete"])
+        self.assertFalse(data["wizard_audit"]["hybrid_ready"])
+        self.assertFalse(data["snapshots"][0]["hybrid_marker_present"])
+
+    def test_legacy_blob_incomplete_does_not_hide_reason(self):
+        self.complete()
+        self.write(self.repo / "refs/main", self.rev)
+        self.write(self.repo / "blobs/pending.incomplete", "partial")
+        data = inspect(self.cache)
+        self.assertEqual(data["uncompleted_blob_files"], 1)
+        self.assertIn("blob_incomplete_present",
+                      data["wizard_audit"]["source_issues"])
+        self.assertEqual(data["snapshots"][0]["source_issues"], [])
+
+    def test_missing_metadata_reasons_are_explicit(self):
+        self.complete()
+        self.write(self.repo / "refs/main", self.rev)
+        source = self.repo / "snapshots" / self.rev
+        (source / "tokenizer.json").unlink()
+        (source / "model.safetensors.index.json").unlink()
+        row = inspect(self.cache)["snapshots"][0]
+        self.assertEqual(row["source_metadata"]["tokenizer.json"]["status"], "MISSING")
+        self.assertEqual(row["source_metadata"]["model.safetensors.index.json"]["status"], "MISSING")
+
+    def test_dangling_hf_symlink_is_distinguished_from_missing(self):
+        self.complete()
+        self.write(self.repo / "refs/main", self.rev)
+        p = self.repo / "snapshots" / self.rev / "tokenizer.json"
+        p.unlink()
+        p.symlink_to("../../blobs/not-there")
+        row = inspect(self.cache)["snapshots"][0]
+        self.assertEqual(row["source_metadata"]["tokenizer.json"]["status"], "DANGLING_SYMLINK")
+        self.assertTrue(row["source_metadata"]["tokenizer.json"]["symlink"])
+
+    def test_snapshot_metadata_size_reports_old_gate(self):
+        self.complete()
+        self.write(self.repo / "refs/main", self.rev)
+        p = self.repo / "snapshots" / self.rev / "model.safetensors.index.json"
+        with p.open("ab") as file:
+            file.write(b" " * (17 * 1024 * 1024))
+        row = inspect(self.cache)["snapshots"][0]
+        self.assertEqual(row["source_metadata"]["model.safetensors.index.json"]["status"],
+                         "PRESENT_NONEMPTY")
+        self.assertTrue(row["source_metadata"]["model.safetensors.index.json"]["exceeds_old_16mib_gate"])
+        self.assertFalse(row["source_metadata"]["model.safetensors.index.json"]["exceeds_current_64mib_gate"])
+
+    def test_shared_metadata_symlink_is_visible_and_compatible(self):
+        self.complete()
+        self.write(self.repo / "refs/main", self.rev)
+        path = self.repo / "snapshots" / self.rev / "tokenizer.json"
+        external = Path(self.cache.parent) / "shared-tokenizer.json"
+        external.write_bytes(path.read_bytes())
+        path.unlink()
+        path.symlink_to(external)
+        data = inspect(self.cache)
+        info = data["snapshots"][0]["source_metadata"]["tokenizer.json"]
+        self.assertEqual(info["status"], "TARGET_OUTSIDE_REPOSITORY")
+        self.assertTrue(info["p1_metadata_link_compatible"])
+        self.assertTrue(data["wizard_audit"]["source_complete"])
+
+    def test_external_indexed_weights_reported_and_accepted(self):
+        self.complete()
+        self.write(self.repo / "refs/main", self.rev)
+        source = self.repo / "snapshots" / self.rev
+        external = Path(self.cache.parent) / "external-shard.safetensors"
+        external.write_bytes(b"example-weight")
+        (source / "model-00001.safetensors").unlink()
+        (source / "model-00001.safetensors").symlink_to(external)
+        data = inspect(self.cache)
+        shards = data["snapshots"][0]["source_indexed_shards"]
+        self.assertEqual(shards["index_status"], "PARSED")
+        self.assertEqual(shards["total"], 1)
+        status = shards["files"]["model-00001.safetensors"]
+        self.assertEqual(status["status"], "TARGET_OUTSIDE_REPOSITORY")
+        self.assertTrue(status["p1_indexed_shard_link_compatible"])
+        self.assertEqual(status["resolved_target_size_bytes"], 14)
+        self.assertTrue(data["wizard_audit"]["source_complete"], data)
+
+    def test_missing_external_indexed_weights_still_blocked(self):
+        self.complete()
+        self.write(self.repo / "refs/main", self.rev)
+        link = self.repo / "snapshots" / self.rev / "model-00001.safetensors"
+        link.unlink()
+        link.symlink_to(Path(self.cache.parent) / "missing-shard.safetensors")
+        data = inspect(self.cache)
+        status = data["snapshots"][0]["source_indexed_shards"]["files"][
+            "model-00001.safetensors"]
+        self.assertEqual(status["status"], "DANGLING_SYMLINK")
+        self.assertFalse(data["wizard_audit"]["source_complete"])
+
+    def test_hybrid_shared_weight_link_is_visible(self):
+        self.complete()
+        self.write(self.repo / "refs/main", self.rev)
+        src = self.repo / "snapshots" / self.rev
+        hybrid = self.repo / "snapshots" / (self.rev + "-fp8hybrid")
+        for f in src.iterdir():
+            self.write(hybrid / f.name, f.read_text())
+        self.write(hybrid / ".prepared", "")
+        shared = Path(self.cache.parent) / "shared-hybrid.safetensors"
+        shared.write_bytes(b"hybrid-weight")
+        shard = hybrid / "model-00001.safetensors"
+        shard.unlink()
+        shard.symlink_to(shared)
+        data = inspect(self.cache)
+        status = data["snapshots"][0]["hybrid_indexed_shards"]["files"][
+            "model-00001.safetensors"]
+        self.assertTrue(status["p1_indexed_shard_link_compatible"])
+        self.assertTrue(data["wizard_audit"]["hybrid_ready"])
+
+    def test_partial_weight_shard_is_reported_by_name(self):
+        self.complete()
+        self.write(self.repo / "refs/main", self.rev)
+        (self.repo / "snapshots" / self.rev /
+         "model-00001.safetensors").unlink()
+        data = inspect(self.cache)
+        self.assertIn("model-00001.safetensors",
+                      data["snapshots"][0]["source_issues"])
+
+
+if __name__ == "__main__":
+    unittest.main()

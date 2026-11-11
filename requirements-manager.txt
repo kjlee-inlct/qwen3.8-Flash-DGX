@@ -1,0 +1,3 @@
+# CPU-only recipe schema verification; not installed in the serving image by default.
+PyYAML>=6.0,<7
+jsonschema>=4.18,<5

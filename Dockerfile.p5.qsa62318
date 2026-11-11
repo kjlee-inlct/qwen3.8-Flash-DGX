@@ -1,0 +1,21 @@
+# P5/Orcarouter ONLY — isolated vLLM 0.32 QSA compatibility adapter.
+# Upstream fix: vllm-project/vllm PR #62318 / Issue #62308 (2026-10-27).
+# Never patch the original 27B or Flash-Next image. Preserve HF snapshots.
+ARG P5_BASE=blazux-p5-source:explicit-local-override-required
+FROM ${P5_BASE}
+ARG P5_BASE_IMAGE_ID
+RUN test -n "${P5_BASE_IMAGE_ID}" \
+ && case "${P5_BASE_IMAGE_ID}" in sha256:*) ;; *) exit 3 ;; esac
+LABEL blazux.p5.state="SOURCE_CANDIDATE_NOT_QUALIFIED" \
+      blazux.p5.vllm="0.32.0" \
+      blazux.p5.base_image="${P5_BASE_IMAGE_ID}" \
+      blazux.p5.adapter="qwen4exp-qsa-62318-v032-v1" \
+      blazux.p5.upstream_fix="vllm-project/vllm#62318" \
+      blazux.p5.production_release="false"
+ARG SP=/usr/local/lib/python3.12/dist-packages
+COPY src/p5_qsa_quant_backport_v032.py /tmp/p5_qsa_quant_backport_v032.py
+RUN P5_EXPLICIT_QSA62318_IMAGE_BUILD=1 python3 /tmp/p5_qsa_quant_backport_v032.py \
+      --site-packages "${SP}" --apply --json \
+ && rm /tmp/p5_qsa_quant_backport_v032.py
+# Runtime opt-in is solely via pinned P5 recipe and immutable image ID.
+# Do not enable Orcarouter MTP2 or merge this backport into canonical Blazux.

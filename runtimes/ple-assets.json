@@ -1,0 +1,77 @@
+{
+  "schema_version": 2,
+  "title": "Versioned PLE assets: format per model, source pins and independent runtime capability",
+  "assets": {
+    "orcarouter-bf16-ple": {
+      "owner_model": "orcarouter",
+      "role": "PLE_NGRAM_EMBEDDING",
+      "source": {
+        "kind": "PINNED_HF_SNAPSHOT",
+        "repo_id": "orcarouter/Qwen3.8-Flash-Next-Uncensored-NVFP4",
+        "revision": "3a3b63161c0745390e5270179af42e46efc70799"
+      },
+      "reference": {
+        "manifest": "scripts/p5_vendor/compatibility.json",
+        "target": "orca-uncensored",
+        "mode": "direct_bf16"
+      },
+      "layout": {
+        "dtype": "BF16",
+        "tensor_count": 128,
+        "total_rows": 320001536,
+        "width": 160,
+        "split_parts": 128,
+        "layer_id": 1,
+        "weight_scale_present": false,
+        "mmap_bytes": 102400491520
+      },
+      "profiles": [
+        "mtp0",
+        "mtp2"
+      ],
+      "lifecycle": {
+        "managed": true,
+        "source_checkpoint_immutable": true,
+        "cache_preserve": true,
+        "derived_view_separate": true,
+        "delete_requires_separate_approval": true,
+        "runtime_qualified": false,
+        "activation": "NOT_RUN"
+      },
+      "verification": {
+        "method": "PINNED_REFERENCE_HEADER_AUDIT",
+        "sha256_whole_checkpoint": false,
+        "gpu_runtime_verified": false
+      },
+      "format": {
+        "storage_dtype": "BF16",
+        "scale_mode": "NONE",
+        "scale_dtype": null,
+        "scale_block_shape": null,
+        "packing": "ELEMENT_ALIGNED",
+        "loader_qualified": false
+      },
+      "placement": {
+        "table_memory": "DISK_MMAP",
+        "offload_backend": "MODEL_SPECIFIC_SOURCE",
+        "prewarm": false,
+        "tp1_executor_requirement": "VERIFY_ON_TARGET_ENGINE",
+        "validated_on_gpu": false
+      }
+    }
+  },
+  "compatibility": {
+    "model_ple_dtype_independent_from_inference_dtype": true,
+    "format_change_requires_explicit_runtime_requalification": true,
+    "auto_convert_on_switch": false,
+    "auto_reuse_mmap_between_models": false,
+    "independent_inference_dtype_and_kv_cache_dtype": true
+  },
+  "transition_policy": {
+    "release_source_mmap_before_target": true,
+    "verify_gpu_allocation_release": true,
+    "stop_old_before_new": true,
+    "host_port": 8000,
+    "preserve_source_and_rollback_assets": true
+  }
+}

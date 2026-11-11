@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "record_kind": "benchmark_summary",
+  "model_id": "qwen3.8-flash-next",
+  "model_repository": "nvidia/Qwen3.8-Flash-Next-NVFP4",
+  "model_revision": "fc694b54fb0174e0913e6adf86691ef85a4ead47",
+  "runtime": "vllm-0.32",
+  "measurement_time_utc": "2026-11-06T23:30:31Z",
+  "source_evidence_sha256": "f506db4c764306748dea7aa87d50b5d75a77dab846b7e742b9fbe1d6808ef8db",
+  "benchmark_status": "PASS",
+  "execution_status": "PASS",
+  "profile": {
+    "requests": 3,
+    "max_tokens": 64,
+    "seed": 1234,
+    "concurrency": 1
+  },
+  "metrics": {
+    "ttft_p50_sec": 1.384594,
+    "ttft_p95_sec": 1.779602,
+    "latency_p50_sec": 1.72456,
+    "latency_p95_sec": 1.813754,
+    "mean_tokens_per_sec": 37.9527,
+    "total_completion_tokens": 192
+  },
+  "method": "client_sse_e2e_completion_tps",
+  "limitations": [
+    "bounded_three_request_smoke_not_saturation_test"
+  ]
+}

@@ -1,0 +1,28 @@
+# SYNTHETIC CPU TEST ONLY. SHA values do not identify an existing model/image.
+schema_version: 1
+recipe_id: synthetic-fixture
+engine: vllm
+runtime:
+  vllm_version: 0.32.0
+  platform: linux/arm64
+  source_git_sha: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+  image_ref: 'example.invalid/vllm:0.32.0@sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
+  image_digest: 'sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
+model:
+  repo_id: example/fixture
+  revision: 'cccccccccccccccccccccccccccccccccccccccc'
+  architecture: SyntheticTestModel
+  quantization: nvfp4
+  ple: {mode: none}
+  mtp: {enabled: false, num_speculative_tokens: 0}
+service:
+  served_model_name: synthetic-test
+  container_name: synthetic-test
+  port: 18312
+checks:
+  require_exact_revision: true
+  require_ready_health: true
+  allow_launch_without_gpu_approval: false
+lifecycle:
+  protected: true
+  allow_delete_without_approval: false

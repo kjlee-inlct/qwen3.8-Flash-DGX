@@ -1,0 +1,211 @@
+name: Recipe manifest CPU (source-only)
+on:
+  push:
+    paths:
+      - 'schemas/**'
+      - 'handoff/**'
+      - 'docs/P5-*'
+      - 'docs/WIZARD-MANIFEST-*'
+      - 'recipes/**'
+      - 'scripts/manager/**'
+      - 'scripts/temporary/**'
+      - 'tests/test_p1_temporary_cpu.py'
+      - 'tests/test_manager_manifest_cpu.py'
+      - 'tests/test_manifest_registry_cpu.py'
+      - 'runtimes/**'
+      - 'tests/fixtures/**'
+      - 'requirements-manager.txt'
+      - 'flash'
+      - 'profiles/**'
+      - 'scripts/serve.sh'
+      - 'scripts/serve_flash-next.sh'
+      - 'scripts/serve_27b.sh'
+      - 'tests/test_serve_split_cpu.py'
+      - 'wizard/**'
+      - 'wizard.sh'
+      - 'tests/test_wizard_router_cpu.py'
+      - 'tests/test_wizard_quickstart_cpu.py'
+      - 'tests/test_wizard_workflow_cpu.py'
+      - 'tests/test_wizard_roadmap_cpu.py'
+      - 'tests/test_operational_switch_cpu.py'
+      - 'tests/test_operational_executor_cpu.py'
+      - 'tests/test_operational_wizard_cpu.py'
+      - 'tests/test_operational_audit_cpu.py'
+      - 'tests/test_operational_probe_cpu.py'
+      - 'tests/test_operational_acceptance_cpu.py'
+      - 'tests/test_operational_curl_smoke_cpu.py'
+      - 'tests/test_wizard_operator_ux_cpu.py'
+      - 'tests/test_evidence_catalog_cpu.py'
+      - 'tests/test_benchmark_publication_cpu.py'
+      - 'benchmarks/published/**'
+      - 'tests/test_flash_launch.py'
+      - 'tests/test_manager_inventory_cpu.py'
+      - 'tests/test_p1_*_cpu.py'
+      - 'tests/test_p2_*_cpu.py'
+      - 'tests/test_service_manifest_cpu.py'
+      - 'tests/test_service_journal_cpu.py'
+      - 'tests/test_service_health_cpu.py'
+      - 'tests/test_service_status_cpu.py'
+      - 'tests/test_recipe_drift_cpu.py'
+      - 'tests/test_model_lifecycle_cpu.py'
+      - 'tests/test_p3_dg_acceptance_cpu.py'
+      - 'tests/test_flash_recipe_draft_cpu.py'
+      - 'tests/test_flash_host_assets_cpu.py'
+      - 'tests/test_p4_a_inventory_cpu.py'
+      - 'tests/test_p4_bc_dry_run_cpu.py'
+      - 'tests/test_p6_p8_fakedgx_cpu.py'
+      - 'tests/test_benchmark_session_cpu.py'
+      - 'tests/test_model_measurements_cpu.py'
+      - 'scripts/manager/model_measurements.py'
+      - 'scripts/manager/measurement_bench.py'
+      - 'tests/test_mock_benchmark_session_cpu.py'
+      - 'tests/test_mock_transaction_pipeline_cpu.py'
+      - 'tests/test_mock_persistent_contract_cpu.py'
+      - 'tests/test_p5c_p6d_contract_cpu.py'
+      - 'tests/test_p5d_p6e_cpu.py'
+      - 'tests/test_transition_safety_cpu.py'
+      - 'tests/test_integration_contract_cpu.py'
+      - 'tests/test_generic_operations_cpu.py'
+      - 'tests/test_generic_console_cpu.py'
+      - 'tests/test_p5_*_cpu.py'
+      - 'scripts/p5_vendor/**'
+      - 'tests/test_p2_27b_benchmark_cpu.py'
+      - 'tests/test_p3_roundtrip_cpu.py'
+      - 'tests/test_p3_persistent_cpu.py'
+      - 'tests/test_p3_stage_a_operator_cpu.py'
+      - 'tests/test_p3_stage_b_inspect_cpu.py'
+      - 'tests/test_p3_stage_b_operator_cpu.py'
+      - 'tests/test_p3_stage_c_operator_cpu.py'
+      - 'tests/test_installed_models_cpu.py'
+      - 'tests/test_service_transition_preview_cpu.py'
+      - 'tests/test_service_logs_cpu.py'
+      - 'tests/test_script_modes_cpu.py'
+      - '.github/workflows/recipe-manifest-cpu.yml'
+  pull_request:
+    paths:
+      - 'scripts/temporary/**'
+      - 'tests/test_p1_temporary_cpu.py'
+      - 'wizard/**'
+      - 'wizard.sh'
+      - 'tests/test_wizard_router_cpu.py'
+      - 'tests/test_wizard_operator_ux_cpu.py'
+      - 'tests/test_evidence_catalog_cpu.py'
+      - 'tests/test_benchmark_publication_cpu.py'
+      - 'benchmarks/published/**'
+      - 'tests/test_p3_stage_c_operator_cpu.py'
+      - 'tests/test_service_status_cpu.py'
+      - 'schemas/**'
+      - 'handoff/**'
+      - 'docs/P5-*'
+      - 'docs/WIZARD-MANIFEST-*'
+      - 'recipes/**'
+      - 'scripts/manager/**'
+      - 'tests/test_manager_manifest_cpu.py'
+      - 'tests/test_flash_host_assets_cpu.py'
+      - 'tests/test_p4_a_inventory_cpu.py'
+      - 'tests/test_p4_bc_dry_run_cpu.py'
+      - 'tests/fixtures/**'
+      - 'requirements-manager.txt'
+      - '.github/workflows/recipe-manifest-cpu.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  manifest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install CPU-only schema dependencies
+        run: python -m pip install -r requirements-manager.txt
+      - name: Validate manifest unit tests (no Docker, GPU or network runtime)
+        run: |
+          python -m unittest discover -s tests -p 'test_manager_manifest_cpu.py' -v
+          python -m unittest discover -s tests -p 'test_manifest_registry_cpu.py' -v
+          python -m wizard manifest validate --json
+          python -m unittest discover -s tests -p 'test_manager_inventory_cpu.py' -v
+          python -m unittest discover -s tests -p 'test_flash_launch.py' -v
+          python -m unittest discover -s tests -p 'test_script_modes_cpu.py' -v
+          python -m unittest discover -s tests -p 'test_p1_*_cpu.py' -v
+          python -m unittest discover -s tests -p 'test_p2_*_cpu.py' -v
+          python -m unittest discover -s tests -p 'test_p3_roundtrip_cpu.py' -v
+          python -m unittest discover -s tests -p 'test_p3_persistent_cpu.py' -v
+          python -m unittest discover -s tests -p 'test_p3_stage_a_operator_cpu.py' -v
+          python -m unittest discover -s tests -p 'test_p3_stage_b_inspect_cpu.py' -v
+          python -m unittest discover -s tests -p 'test_p3_stage_b_operator_cpu.py' -v
+          python -m unittest discover -s tests -p 'test_p3_stage_c_operator_cpu.py' -v
+          python -m unittest discover -s tests -p 'test_service_manifest_cpu.py' -v
+          python -m unittest discover -s tests -p 'test_service_journal_cpu.py' -v
+          python -m unittest discover -s tests -p 'test_service_health_cpu.py' -v
+          python -m unittest discover -s tests -p 'test_service_status_cpu.py' -v
+          python -m unittest discover -s tests -p 'test_recipe_drift_cpu.py' -v
+          python -m unittest discover -s tests -p 'test_model_lifecycle_cpu.py' -v
+          python -m unittest discover -s tests -p 'test_p3_dg_acceptance_cpu.py' -v
+          python -m unittest discover -s tests -p 'test_flash_recipe_draft_cpu.py' -v
+          python -m unittest discover -s tests -p 'test_flash_host_assets_cpu.py' -v
+          python -m unittest discover -s tests -p 'test_p4_a_inventory_cpu.py' -v
+          bash scripts/temporary/p4-bc-dry-run.sh --fixture-only
+          bash scripts/temporary/p5-one-shot-acceptance.sh --cpu-only --json
+          python -m unittest discover -s tests -p 'test_p5_*_cpu.py' -v
+          python -m unittest discover -s tests -p 'test_p6_p8_fakedgx_cpu.py' -v
+          python -m unittest discover -s tests -p 'test_benchmark_session_cpu.py' -v
+          python -m unittest discover -s tests -p 'test_model_measurements_cpu.py' -v
+          python -m unittest discover -s tests -p 'test_mock_benchmark_session_cpu.py' -v
+          python -m unittest discover -s tests -p 'test_mock_transaction_pipeline_cpu.py' -v
+          python -m unittest discover -s tests -p 'test_mock_persistent_contract_cpu.py' -v
+          python -m unittest discover -s tests -p 'test_p5c_p6d_contract_cpu.py' -v
+          python -m unittest discover -s tests -p 'test_p5d_p6e_cpu.py' -v
+          python -m wizard operations generic journal-v2-preview --from-model orcarouter --to-model 27b --json || test $? -eq 3
+          python -m wizard operations generic operating-gate-review --from-model orcarouter --to-model 27b --json || test $? -eq 3
+          python -m wizard operations generic fake-disk-matrix --summary-only --json
+          python -m wizard operations generic fake-disk-contract --from-model orcarouter --to-model 27b --json
+          python -m wizard operations generic session-matrix --summary-only --json
+          python -m wizard operations generic pipeline-mock --from-model 27b --to-model flash-next --json
+          python -m unittest discover -s tests -p 'test_transition_safety_cpu.py' -v
+          python -m unittest discover -s tests -p 'test_integration_contract_cpu.py' -v
+          python -m unittest discover -s tests -p 'test_generic_operations_cpu.py' -v
+          python -m unittest discover -s tests -p 'test_generic_console_cpu.py' -v
+          python -m wizard operations generic catalog --json
+          python -m wizard operations generic fault-matrix --json
+          python -m scripts.manager.p3_dg_acceptance --plan
+          python -m scripts.manager.p3_dg_acceptance --cpu-only
+          python -m unittest discover -s tests -p 'test_installed_models_cpu.py' -v
+          python -m unittest discover -s tests -p 'test_service_transition_preview_cpu.py' -v
+          python -m unittest discover -s tests -p 'test_service_logs_cpu.py' -v
+          python -m unittest discover -s tests -p 'test_wizard_router_cpu.py' -v
+          python -m unittest discover -s tests -p 'test_wizard_quickstart_cpu.py' -v
+          python -m unittest discover -s tests -p 'test_wizard_workflow_cpu.py' -v
+          python -m unittest discover -s tests -p 'test_wizard_roadmap_cpu.py' -v
+          python -m unittest discover -s tests -p 'test_operational_switch_cpu.py' -v
+          python -m unittest discover -s tests -p 'test_operational_executor_cpu.py' -v
+          python -m unittest discover -s tests -p 'test_operational_wizard_cpu.py' -v
+          python -m unittest discover -s tests -p 'test_operational_audit_cpu.py' -v
+          python -m unittest discover -s tests -p 'test_operational_probe_cpu.py' -v
+          python -m unittest discover -s tests -p 'test_operational_acceptance_cpu.py' -v
+          python -m scripts.manager.operational_audit --json
+          python -m unittest discover -s tests -p 'test_operational_curl_smoke_cpu.py' -v
+          python -m unittest discover -s tests -p 'test_wizard_operator_ux_cpu.py' -v
+          python -m unittest discover -s tests -p 'test_evidence_catalog_cpu.py' -v
+          python -m unittest discover -s tests -p 'test_benchmark_publication_cpu.py' -v
+          python -m wizard roadmap --json
+          python -m wizard workflow 27b --json
+          python -m wizard list --json
+          python -m wizard model list --installed --json
+          python -m wizard p2 status --json
+          python -m wizard model 27b status --inspect-cache --json
+          python -m unittest discover -s tests -p 'test_serve_split_cpu.py' -v
+          bash -n scripts/temporary/operational-switch-acceptance.sh scripts/temporary/operational-27b-curl-smoke.sh scripts/temporary/p3-d-g-acceptance.sh scripts/temporary/p4-bc-dry-run.sh scripts/temporary/p5-one-shot-acceptance.sh
+          bash -n scripts/temporary/p1-post-b-audit.sh flash scripts/serve.sh scripts/serve_flash-next.sh scripts/serve_27b.sh wizard/00-doctor.sh wizard/10-plan.sh wizard/p1.sh wizard.sh scripts/temporary/p1-post-download.sh scripts/temporary/p1-pre-a-readiness.sh scripts/temporary/p3-stage-a-operator.sh scripts/temporary/p3-stage-b-inspect.sh scripts/temporary/p3-stage-b-operator.sh scripts/temporary/p3-stage-c-operator.sh scripts/temporary/verify-published-benchmarks.sh
+      - name: Confirm 27B candidate is not launchable
+        run: |
+          if python -m scripts.manager.manifest validate recipes/qwen38-27b.candidate.yaml; then
+            echo "::error::27B candidate unexpectedly passed"; exit 1
+          fi
+          if python -m scripts.manager.manifest validate recipes/qwen38-27b-native-tools-v1.candidate.yaml; then
+            echo "::error::27B Native Tools V1 candidate unexpectedly passed"; exit 1
+          fi
