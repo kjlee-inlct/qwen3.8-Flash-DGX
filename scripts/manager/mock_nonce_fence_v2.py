@@ -38,6 +38,29 @@ def _root(folder: Path) -> Path:
     return folder
 
 
+def _same_private_root(root: Path, directory_fd: int) -> bool:
+    """Pin the fixture directory to its opened inode, not a later path lookup."""
+    opened, named = os.fstat(directory_fd), os.lstat(root)
+    return (
+        stat.S_ISDIR(opened.st_mode) and stat.S_ISDIR(named.st_mode)
+        and (stat.S_IMODE(opened.st_mode) & 0o077) == 0
+        and opened.st_uid == os.getuid()
+        and (opened.st_dev, opened.st_ino) == (named.st_dev, named.st_ino)
+    )
+
+
+def _open_private_root(root: Path) -> int:
+    flags = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0)
+    directory_fd = os.open(root, flags)
+    try:
+        if not _same_private_root(root, directory_fd):
+            raise ValueError("FAKE_DIRECTORY_IDENTITY_OR_OWNER_CHANGED")
+    except BaseException:
+        os.close(directory_fd)
+        raise
+    return directory_fd
+
+
 def _record(source: str, target: str, source_id: str, target_id: str,
             plan_id: str, nonce: str, *, now_ns: int, expires_ns: int) -> dict:
     names = model_catalog()["models"]
@@ -82,72 +105,91 @@ def _result(status: str, issues: list[str], *, marker_created: bool = False) -> 
 def fake_nonce_claim(folder: Path, source: str, target: str,
                      source_id: str, target_id: str, plan_id: str,
                      nonce: str, *, now_ns: int, expires_ns: int) -> dict:
-    """O_EXCL is atomic across processes on the local fake filesystem.
+    """Fake local O_EXCL reservation; never claims operating authorization.
 
-    A duplicate nonce is rejected globally within this fake ledger even when
-    the pair, Docker IDs or plan differ. A partial marker stays blocked.
-    This is a fixture experiment, NOT an operating cross-process authority.
+    A partial marker stays blocked. Every file operation is anchored to one
+    verified private directory descriptor to prevent path-replacement drift.
     """
     root = _root(folder)
     doc = _record(source, target, source_id, target_id, plan_id,
                   nonce, now_ns=now_ns, expires_ns=expires_ns)
-    path = root / ("fake-nonce-" + nonce + ".json")
+    filename = "fake-nonce-" + nonce + ".json"
     raw = (json.dumps(doc, sort_keys=True, separators=(",", ":")) + "\n").encode()
     if len(raw) > MAX_MARKER_BYTES:
         raise ValueError("FAKE_MARKER_TOO_LARGE")
     flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0)
     try:
-        fd = os.open(path, flags, 0o600)
-    except FileExistsError:
-        return _result("BLOCKED_FAKE_NONCE_REPLAY",
-                       ["FAKE_NONCE_REPLAY_OR_COLLISION"])
-    except OSError:
+        directory_fd = _open_private_root(root)
+    except (OSError, ValueError):
         return _result("BLOCKED_FAKE_NONCE_IO",
-                       ["FAKE_NONCE_MARKER_CREATE_FAILED"])
+                       ["FAKE_DIRECTORY_OPEN_OR_IDENTITY_FAILED"])
     try:
-        with os.fdopen(fd, "wb") as stream:
-            stream.write(raw)
-            stream.flush()
-            os.fsync(stream.fileno())
-        directory_fd = os.open(
-            root, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0)
-            | getattr(os, "O_NOFOLLOW", 0))
         try:
+            fd = os.open(filename, flags, 0o600, dir_fd=directory_fd)
+        except FileExistsError:
+            return _result("BLOCKED_FAKE_NONCE_REPLAY",
+                           ["FAKE_NONCE_REPLAY_OR_COLLISION"])
+        except OSError:
+            return _result("BLOCKED_FAKE_NONCE_IO",
+                           ["FAKE_NONCE_MARKER_CREATE_FAILED"])
+        try:
+            with os.fdopen(fd, "wb") as stream:
+                stream.write(raw)
+                stream.flush()
+                os.fsync(stream.fileno())
             os.fsync(directory_fd)
-        finally:
-            os.close(directory_fd)
-    except OSError:
-        # Do NOT unlink: ambiguous partial/crash state must stop replay.
-        return _result("BLOCKED_FAKE_NONCE_IO",
-                       ["FAKE_NONCE_DURABILITY_UNKNOWN"])
-    return _result("PASS_FAKE_NONCE_MARKER_CREATED", [], marker_created=True)
-
+            if not _same_private_root(root, directory_fd):
+                raise OSError("FAKE_DIRECTORY_CHANGED_AFTER_WRITE")
+        except (OSError, ValueError):
+            # Do NOT unlink: an ambiguous partial marker permanently blocks reuse.
+            return _result("BLOCKED_FAKE_NONCE_IO",
+                           ["FAKE_NONCE_DURABILITY_OR_ROOT_IDENTITY_UNKNOWN"])
+        return _result("PASS_FAKE_NONCE_MARKER_CREATED", [], marker_created=True)
+    finally:
+        os.close(directory_fd)
 
 def fake_nonce_audit(folder: Path, source: str, target: str,
                      source_id: str, target_id: str, plan_id: str,
                      nonce: str, *, now_ns: int, expires_ns: int) -> dict:
-    """Read-back detects tamper/partial/permission errors; never authorizes."""
+    """Fake bounded read-back; never follows a raced symlink or authorizes."""
     root = _root(folder)
     expected = _record(source, target, source_id, target_id, plan_id, nonce,
                        now_ns=now_ns, expires_ns=expires_ns)
-    path = root / ("fake-nonce-" + nonce + ".json")
+    filename = "fake-nonce-" + nonce + ".json"
     try:
-        info = os.lstat(path)
-        if not stat.S_ISREG(info.st_mode) or stat.S_IMODE(info.st_mode) != 0o600:
-            raise ValueError("FAKE_MARKER_NOT_PRIVATE_REGULAR_FILE")
-        if info.st_size > MAX_MARKER_BYTES or info.st_size == 0:
-            raise ValueError("FAKE_MARKER_TRUNCATED_OR_UNBOUNDED")
-        with path.open("rb") as stream:
-            raw = stream.read(MAX_MARKER_BYTES + 1)
-        if len(raw) > MAX_MARKER_BYTES:
-            raise ValueError("FAKE_MARKER_UNBOUNDED")
-        actual = json.loads(raw)
-        if type(actual) is not dict or actual != expected:
-            raise ValueError("FAKE_MARKER_IDENTITY_OR_HASH_MISMATCH")
-    except (OSError, ValueError, TypeError, UnicodeError) as exc:
-        return _result("BLOCKED_FAKE_NONCE_AUDIT", [str(exc)])
-    return _result("PASS_FAKE_NONCE_MARKER_CONSISTENCY", [])
-
+        directory_fd = _open_private_root(root)
+    except (OSError, ValueError):
+        return _result("BLOCKED_FAKE_NONCE_AUDIT",
+                       ["FAKE_DIRECTORY_OPEN_OR_IDENTITY_FAILED"])
+    try:
+        try:
+            flags = (os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
+                     | getattr(os, "O_NONBLOCK", 0))
+            fd = os.open(filename, flags, dir_fd=directory_fd)
+            with os.fdopen(fd, "rb") as stream:
+                info = os.fstat(stream.fileno())
+                if (not stat.S_ISREG(info.st_mode)
+                        or stat.S_IMODE(info.st_mode) != 0o600
+                        or info.st_uid != os.getuid() or info.st_nlink != 1):
+                    raise ValueError("FAKE_MARKER_NOT_PRIVATE_SINGLE_LINK_FILE")
+                if not 0 < info.st_size <= MAX_MARKER_BYTES:
+                    raise ValueError("FAKE_MARKER_TRUNCATED_OR_UNBOUNDED")
+                raw = stream.read(MAX_MARKER_BYTES + 1)
+                after = os.fstat(stream.fileno())
+            named = os.stat(filename, dir_fd=directory_fd, follow_symlinks=False)
+            if ((info.st_dev, info.st_ino) != (named.st_dev, named.st_ino)
+                    or info.st_mtime_ns != after.st_mtime_ns
+                    or info.st_size != after.st_size or after.st_size != len(raw)
+                    or not _same_private_root(root, directory_fd)):
+                raise ValueError("FAKE_MARKER_OR_DIRECTORY_CHANGED_DURING_READ")
+            actual = json.loads(raw)
+            if type(actual) is not dict or actual != expected:
+                raise ValueError("FAKE_MARKER_IDENTITY_OR_HASH_MISMATCH")
+        except (OSError, ValueError, TypeError, UnicodeError) as exc:
+            return _result("BLOCKED_FAKE_NONCE_AUDIT", [str(exc)])
+        return _result("PASS_FAKE_NONCE_MARKER_CONSISTENCY", [])
+    finally:
+        os.close(directory_fd)
 
 def fake_replay_fence_demo(source: str, target: str) -> dict:
     """One isolated 3-check CPU rehearsal; no caller-controlled disk path."""

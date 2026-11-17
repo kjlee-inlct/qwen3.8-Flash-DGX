@@ -18,7 +18,7 @@ PHASE_LABELS = tuple(sorted(x for x in PHASES if x is not None))
 REQUIRED_V2 = frozenset((
     "schema_version", "record_origin", "phase", "source_model",
     "target_model", "source_container_id", "target_container_id",
-    "source_role", "target_role", "plan_id", "event_index",
+    "source_role", "target_role", "plan_id", "nonce", "event_index",
     "legacy_v1_anchor_hash", "previous_hash", "api_host_port",
     "max_active_gpu_models", "live_revalidation_required",
     "approval_authentication_required", "nonce_ledger_required", "event_hash",
@@ -29,7 +29,7 @@ V2_ORIGIN = "UNTRUSTED_V2_IN_MEMORY_PROPOSAL_ONLY"
 def _valid_event_types(event: dict) -> bool:
     """Reject untrusted non-scalar JSON fields without raising TypeError."""
     sha_fields = ("source_container_id", "target_container_id",
-                  "plan_id", "event_hash")
+                  "plan_id", "nonce", "event_hash")
     text_fields = ("record_origin", "phase", "source_model", "target_model",
                    "source_role", "target_role")
     return (
@@ -62,6 +62,7 @@ def _models(source: str, target: str) -> dict:
 
 def draft_v2_event(source: str, target: str, *,
                    source_id: str, target_id: str, plan_id: str,
+                   nonce: str | None = None,
                    legacy_anchor: str | None = None,
                    prior: dict | None = None,
                    phase: str = "OBSERVED") -> dict:
@@ -73,6 +74,14 @@ def draft_v2_event(source: str, target: str, *,
             or (legacy_anchor is not None and
                 (not isinstance(legacy_anchor, str) or not _ID.fullmatch(legacy_anchor)))):
         raise ValueError("V2_PROPOSED_IDENTITY_OR_PLAN_INVALID")
+    # Deterministic nonce is ONLY a synthetic schema fixture. It is not
+    # randomly issued, independently authenticated, or an operating lease.
+    if nonce is None:
+        nonce = _digest({"origin": V2_ORIGIN, "source_model": source,
+                         "target_model": target, "source_id": source_id,
+                         "target_id": target_id, "plan_id": plan_id})
+    if not isinstance(nonce, str) or not _ID.fullmatch(nonce):
+        raise ValueError("V2_PROPOSED_NONCE_INVALID")
     if phase not in PHASE_LABELS:
         raise ValueError("V2_PHASE_UNREGISTERED")
     if prior is not None:
@@ -92,6 +101,7 @@ def draft_v2_event(source: str, target: str, *,
                               or prior.get("source_container_id") != source_id
                               or prior.get("target_container_id") != target_id
                               or prior.get("plan_id") != plan_id
+                              or prior.get("nonce") != nonce
                               or prior.get("legacy_v1_anchor_hash") != legacy_anchor):
         raise ValueError("V2_DRAFT_PREVIOUS_EVENT_DRIFT")
     body = {
@@ -102,7 +112,7 @@ def draft_v2_event(source: str, target: str, *,
         # NO silent promotion of an Orcarouter development trial.
         "source_role": "CANONICAL_REQUIRED",
         "target_role": "CANONICAL_REQUIRED",
-        "plan_id": plan_id,
+        "plan_id": plan_id, "nonce": nonce,
         "event_index": 0 if prior is None else prior["event_index"] + 1,
         "legacy_v1_anchor_hash": legacy_anchor,
         "previous_hash": None if prior is None else prior["event_hash"],
@@ -150,7 +160,8 @@ def audit_v2_draft(events: object) -> dict:
         if (not isinstance(a, str) or not _ID.fullmatch(a)
                 or not isinstance(b, str) or not _ID.fullmatch(b) or a == b
                 or not isinstance(event["plan_id"], str)
-                or not _ID.fullmatch(event["plan_id"])):
+                or not _ID.fullmatch(event["plan_id"])
+                or not _ID.fullmatch(event["nonce"])):
             issues.append("V2_IDS_OR_PLAN_INVALID")
         if (event["source_role"] != "CANONICAL_REQUIRED"
                 or event["target_role"] != "CANONICAL_REQUIRED"):
@@ -160,7 +171,7 @@ def audit_v2_draft(events: object) -> dict:
             issues.append("V2_LEGACY_ANCHOR_INVALID")
         if previous is not None and any(event[k] != previous[k] for k in (
                 "source_model", "target_model", "source_container_id",
-                "target_container_id", "plan_id", "legacy_v1_anchor_hash")):
+                "target_container_id", "plan_id", "nonce", "legacy_v1_anchor_hash")):
             issues.append("V2_JOURNAL_IDENTITY_DRIFT")
         previous = event
     return {
@@ -169,6 +180,7 @@ def audit_v2_draft(events: object) -> dict:
         "status": "PASS_V2_DRAFT_CONSISTENCY" if not issues else "BLOCKED_V2_DRAFT",
         "event_count": len(events), "issues": sorted(set(issues)),
         "durable": False, "executed": False, "approval_accepted": False,
+        "nonce_authentication_verified": False,
         "production_released": False, "resume_eligible": False,
         "live_executor_available": False,
     }

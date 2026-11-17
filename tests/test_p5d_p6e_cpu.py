@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import contextlib
+import hashlib
 import copy
 import io
 import json
@@ -188,6 +189,31 @@ class P6ECPU(unittest.TestCase):
                     draft_v2_event("27b", "flash-next",
                                    source_id="a"*64, target_id="b"*64,
                                    plan_id="c"*64, prior=previous, phase="PLANNED")
+
+    def test_v2_exact_nonce_binding_is_structural_only(self):
+        kwargs = dict(source_id="a" * 64, target_id="b" * 64,
+                      plan_id="c" * 64, nonce="d" * 64)
+        first = draft_v2_event("27b", "flash-next", **kwargs)
+        second = draft_v2_event("27b", "flash-next", **kwargs,
+                                prior=first, phase="PLANNED")
+        self.assertEqual(first["nonce"], "d" * 64)
+        self.assertEqual(audit_v2_draft([first, second])["status"],
+                         "PASS_V2_DRAFT_CONSISTENCY")
+        self.assertFalse(audit_v2_draft([first, second])["nonce_authentication_verified"])
+        with self.assertRaises(ValueError):
+            draft_v2_event("27b", "flash-next", **dict(kwargs, nonce="bad"))
+        with self.assertRaises(ValueError):
+            draft_v2_event("27b", "flash-next",
+                           **dict(kwargs, nonce="e" * 64),
+                           prior=first, phase="PLANNED")
+        changed = dict(second, nonce="e" * 64)
+        body = {k: v for k, v in changed.items() if k != "event_hash"}
+        changed["event_hash"] = hashlib.sha256(
+            json.dumps(body, sort_keys=True, separators=(",", ":")).encode()
+        ).hexdigest()
+        report = audit_v2_draft([first, changed])
+        self.assertEqual(report["status"], "BLOCKED_V2_DRAFT")
+        self.assertIn("V2_JOURNAL_IDENTITY_DRIFT", report["issues"])
 
     def test_v1_boolean_event_count_not_empty(self):
         p = migration_preview("27b", "flash-next",

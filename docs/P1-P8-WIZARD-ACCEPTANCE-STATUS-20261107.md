@@ -1,4 +1,10 @@
-## 2026-11-18 current P5 v2 supersession — P1–P8 integrated acceptance (latest)
+## 2026-11-18 P6-E source safety supersession (newest)
+
+P6-E **source-only** refinement after verified baseline `258372fe046b55a1ccf78718b92ecea5f8365527`: isolate the fake nonce claim/audit to an inode-pinned, owner-checked private directory and no-follow bounded marker reads; reject hardlink/path swap. In-memory Journal v2 proposal now exact-binds a **synthetic** nonce across phases and rejects nonce drift even if a new event hash was recomputed. Neither a synthetic nonce nor a consistent Fake record authenticates an operating approval or enables the real executor. P1–P4 historic DGX acceptance, P5 v3 development trial and partial PID evidence, P7 source-only integration, P8 source-only simulation, and 24/66/48/21 synthetic inventory remain unchanged. Exact-new-HEAD CI is **NOT VERIFIED at authoring time**; never inherit `8b118c8` SUCCESS. No DGX mutation or PR merge.
+
+---
+
+## 2026-11-18 current P5 v2 supersession — P1–P8 integrated acceptance (historical baseline)
 
 **Supersession and provenance:** The historical `qwen4exp-qsa62318-lmhead-v032-v2` adapter was superseded by **v3** (`qwen4exp-qsa62318-lmhead-v032-v3`, resolved `lm_head.weight_scale`). This 2026-11-18 table replaces older **current-status** claims such as P5 entirely `NOT_RUN`, P3-C pending or Flash-Next currently active; it does **not** rewrite historical receipts or reclassify past outcomes. Baseline GitHub branch `feature/recipe-wizard-handoff` at `af49f7be53ca283ced01f0c7ecee2a8014cb58c1` (before this documentation-only commit), Draft/Open/unmerged PR #1. **Last operator-supplied DGX evidence:** 2026-11-12, not a fresh GitHub-side host observation. Latest confirmed older CI: push [43107837772](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/43107837772) / PR [43108072440](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/43108072440) SUCCESS at `8b118c8`; newer code/HEAD CI **NOT VERIFIED** at this update, never inherit old CI results.
 

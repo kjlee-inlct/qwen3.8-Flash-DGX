@@ -126,6 +126,41 @@ class MockNonceFenceV2CPU(unittest.TestCase):
                              "PASS_FAKE_NONCE_MARKER_CONSISTENCY")
             self.assertEqual(len(list(Path(root).iterdir())), 1)
 
+    def test_hardlink_marker_cannot_be_audited_as_unique(self):
+        with tempfile.TemporaryDirectory(prefix=PREFIX) as root:
+            folder = Path(root)
+            self.assertEqual(claim(folder)["status"], "PASS_FAKE_NONCE_MARKER_CREATED")
+            marker = next(folder.iterdir())
+            os.link(marker, folder / "extra-hardlink")
+            self.assertEqual(audit(folder)["status"], "BLOCKED_FAKE_NONCE_AUDIT")
+            self.assertEqual(claim(folder)["status"], "BLOCKED_FAKE_NONCE_REPLAY")
+
+    def test_marker_swapped_to_valid_outside_symlink_during_open_is_blocked(self):
+        with tempfile.TemporaryDirectory(prefix=PREFIX) as root, \\
+             tempfile.TemporaryDirectory(prefix="external-fake-nonce-") as outside:
+            folder = Path(root)
+            claim(folder)
+            marker = next(folder.iterdir())
+            outside_path = Path(outside) / "valid-copy.json"
+            outside_path.write_bytes(marker.read_bytes())
+            original_open = os.open
+            replaced = False
+
+            def swap_before_open(path, flags, *args, **kwargs):
+                nonlocal replaced
+                if path == marker.name and not replaced:
+                    replaced = True
+                    marker.unlink()
+                    marker.symlink_to(outside_path)
+                return original_open(path, flags, *args, **kwargs)
+
+            with patch("scripts.manager.mock_nonce_fence_v2.os.open",
+                       side_effect=swap_before_open):
+                self.assertEqual(audit(folder)["status"], "BLOCKED_FAKE_NONCE_AUDIT")
+            self.assertTrue(replaced)
+            self.assertTrue(marker.is_symlink())
+            self.assertEqual(claim(folder)["status"], "BLOCKED_FAKE_NONCE_REPLAY")
+
     def test_cli_fixture_only_and_non_authorizing(self):
         with patch("subprocess.run", side_effect=AssertionError("NO RUNTIME")), \
              contextlib.redirect_stdout(io.StringIO()) as out:

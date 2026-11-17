@@ -1,5 +1,13 @@
 # P5-D Read-Only Process Ownership / P6-E Generic Journal V2 (2026-11-10)
 
+## 2026-11-18 — P6-E Fake marker inode pinning + nonce-bound synthetic draft (SOURCE ONLY)
+
+Verified baseline `258372fe046b55a1ccf78718b92ecea5f8365527`. Fake-only marker writes are anchored to an open private directory FD with inode/owner rechecks; read-back uses `O_NOFOLLOW`, bounded FD reads, owner/mode/link-count checks and a post-read inode comparison. Simulated hardlinks and marker-to-valid-symlink races must fail closed, not read outside fixtures. The in-memory V2 schema adds a `nonce` field pinned to the exact source/target/model/container/plan chain; callers may pass an explicit 64-hex nonce. The fallback nonce is deterministic and deliberately non-authenticating for test compatibility. Recomputed hashes cannot conceal nonce drift across events. Old synthetic records without this proposed schema field are rejected, not silently migrated. V1 operating Journal remains immutable.
+
+**This is NOT a production operating nonce ledger, authorization issuer, crash-safe distributed transaction, real Docker owner authentication or production release.** Prior P5-D actual 2026-11-12 partial PID evidence and source synthetic scenario counts are unchanged. A new SHA-specific CPU Actions result is needed; previous CI green is historical. No service, inference, asset, operating Journal or PR merge changes.
+
+---
+
 **2026-11-17 GitHub source supersession (verified connector SHA):** `32d54380a0c616949fc1b057c0098695a60e7552` includes P6-E fake-only nonce implementation (`fcd6acc`), an independent two-process CPU contention test (`48384d5`) and push/PR test-file path filter fix (`32d5438`). This handoff-only follow-up advances the documentation commit beyond that source SHA. **New-HEAD CPU CI remains NOT VERIFIED:** Actions run/check-runs were absent when inspected; past green runs belong to older SHA `8b118c8`. Never claim CPU tests have passed until the new workflow run is observed. Actual DGX evidence remains the operator-provided 2026-11-12 P5-D partial PID observation; no GitHub-side DGX run was performed.
 
 ## 2026-11-17 KST — P6-E isolated replay fence contract (SOURCE/FAKE ONLY)

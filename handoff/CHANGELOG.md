@@ -1,3 +1,15 @@
+## 2026-11-18 P6-E source-only safety supersession — inode-pinned Fake nonce and exact V2 draft nonce
+
+**Baseline verified GitHub HEAD:** `258372fe046b55a1ccf78718b92ecea5f8365527` (PR #1 Draft/Open/unmerged; new commit's CI must be checked separately). Strengthened **ephemeral FAKE ONLY** nonce marker claim/audit with private-directory descriptor + inode/owner checks, no-follow bounded marker read, single-link requirement, path-replacement detection and fail-closed ambiguous writes. Added CPU hardlink and symlink-swap fixture tests. The in-memory Journal v2 **proposal** now includes exact `nonce` binding in the phase chain; default nonce derivation is **deterministic synthetic data**, not random freshness or independent approval. Changed nonce with a recomputed hash is rejected as identity drift. Existing CLI defaults remain callable, and the old 24/66/48/21 CPU scenario groups are unchanged.
+
+**Acceptance remains SOURCE/FAKE-DGX only:** No real durable nonce authority, approval authentication, operating Journal writes/migration, Docker/API host activity, service transition, automatic recovery, production release or PR merge. The last operator DGX receipt remains **2026-11-12** Orcarouter v3 DEVELOPMENT_TRIAL :8000, P5-D `BLOCKED_PARTIAL_PROCESS_EVIDENCE` (no host listener PID; NOT evidence of outage). Earlier `8b118c8` CI SUCCESS does **not** validate this change; source CI requires a run tied to the new SHA. vLLM 0.32.0; no SGLang; ONE_ACTIVE_MODEL_ONLY; :8000.
+
+Modified P6-E Fake nonce descriptor-pinned readback and v2 draft nonce-bound hash chain; added race/hardlink and nonce drift tests.
+
+[P1–P8 verified acceptance](../docs/P1-P8-WIZARD-ACCEPTANCE-STATUS-20261107.md) · [P6-E Journal v2 boundary](../docs/P5-D-P6-E-READ-ONLY-PROVENANCE-JOURNAL-V2-20261110.md)
+
+---
+
 ## CURRENT P5 DOCUMENT SUPERSESSION — 2026-11-18 P1–P8 consolidated documentation update
 
 [Full P1–P8 current acceptance matrix](../docs/P1-P8-WIZARD-ACCEPTANCE-STATUS-20261107.md) · [P5-D/P6-E provenance and Journal boundary](../docs/P5-D-P6-E-READ-ONLY-PROVENANCE-JOURNAL-V2-20261110.md). Recorded P1/P2 real backend PASS, P3 A/B/C/G real PASS, P4 A/B/C read-only PASS, P5 Orcarouter v3 MTP0 live API PASS and P5-D real partial PID evidence, P6-A/B/C/D/E source/fake-only readiness, P7 independent integration gap and P8 real recovery/release gap. Historical `qwen4exp-qsa62318-lmhead-v032-v2` is superseded by `qwen4exp-qsa62318-lmhead-v032-v3` (`lm_head.weight_scale` resolved). Preserved 24/66/48/21 separate synthetic counts; last DGX operator evidence 2026-11-12. Prior CI at `8b118c8` green but new source baseline `af49f7b` CI unverified. **Documentation-only:** no code, recipe, runtime service, operating Journal, benchmark, fault injection, asset cleanup, PR merge or authorization change. Preserve vLLM 0.32.0, ONE_ACTIVE_MODEL_ONLY, :8000; no SGLang.
