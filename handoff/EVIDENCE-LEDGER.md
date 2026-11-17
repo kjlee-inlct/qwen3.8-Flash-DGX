@@ -1,3 +1,15 @@
+## 2026-11-18 operator SHA-bound selected CPU receipt and post-receipt source
+
+**Receipt:** operator terminal `git rev-parse HEAD=4fc3aa8e0a0cb3b69c6337b6c34b701578b132cc`, empty `git status --short`; `test_generic_operations_cpu.py` 14 OK, `test_mock_nonce_fence_v2_cpu.py` 10 OK, `test_p5d_p6e_cpu.py` 19 OK; total **43/43 selected CPU unit tests PASS**, no failures shown. Class: `OPERATOR_SUPPLIED_CPU_43_OF_43_PASS_SHA_BOUND_CLEAN_TREE`, not Actions-signed provenance, full repository suite or DGX acceptance.
+
+**CI:** GitHub `/actions/runs?head_sha=4fc3aa8...` returned zero, as did exact-head check-runs and combined statuses. Last returned completed successful Action: `8b118c8` on 2026-11-11. Workflow registration/activation/permissions cannot be independently read via available connector; cause **UNVERIFIED**.
+
+**Post-receipt source commits (not covered by 43):** `29453eda` fake marker JSON/ctime hardening; `81cf2adb` two tests for duplicate keys and injected file/dir fsync faults; `36ca4457` context-manager correction. Expected selected test count now 45; **PENDING execution**, no fabricated pass. All mocks non-authorizing.
+
+[Detailed evidence](../docs/P6-E-CPU-CI-FOLLOWUP-20261118.md). **No actual operations executed, no PR merge or production release.**
+
+---
+
 ## 2026-11-18 P6-E read-only evidence-ingest fence — SOURCE UPDATED / TESTS AND CI PENDING
 
 **Current code scope (supersedes older source descriptions, not older test receipts):** On the Draft PR #1 feature branch, starting GitHub HEAD `4e93c6f9e1c0ef14cc55fab7aae378689828c6f8`, code now pins one read-only regular-file descriptor for injected JSON, verifies inode/size/timestamps, caps read size at 1 MiB, and rejects duplicate nested JSON keys, nonfinite numbers, malformed UTF-8 and excessive nesting. Four new CPU negative tests are added to `tests/test_generic_operations_cpu.py` for tampering/races/CLI fail-closed. **New tests were NOT executed in this session; no new exact-head CI PASS is claimed.** Full design and safe reproduction checklist: [P6-E JSON ingest fence](../docs/P6-E-UNTRUSTED-JSON-INGEST-FENCE-20261118.md).
