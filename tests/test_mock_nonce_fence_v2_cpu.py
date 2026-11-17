@@ -108,8 +108,8 @@ class MockNonceFenceV2CPU(unittest.TestCase):
         # state, not permission to retry, delete, resume, or claim approval.
         original_fsync = os.fsync
         for failing_call in (1, 2):
-            with self.subTest(failing_call=failing_call), \\
-                    tempfile.TemporaryDirectory(prefix=PREFIX) as root:
+            with (self.subTest(failing_call=failing_call),
+                  tempfile.TemporaryDirectory(prefix=PREFIX) as root):
                 folder = Path(root)
                 count = 0
 
