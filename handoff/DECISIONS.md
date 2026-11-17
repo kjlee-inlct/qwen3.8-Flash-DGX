@@ -1,3 +1,18 @@
+## 2026-11-18 P6-E CPU acceptance evidence supersession — SHA-bound operator receipt
+
+**2026-11-18 follow-up provenance correction (operator-supplied terminal evidence):** The operator ran `git rev-parse HEAD` and `git status --short` in `~/Workspace/llm/blazux-orcarouter` and reported HEAD **`3033eda1f46942ab76ef3c87d54e8c5fc65012ce`**, with **no output from `git status --short` (clean tracked/untracked working tree per Git status)**. This binds the previously supplied terminal transcript of `test_mock_nonce_fence_v2_cpu.py` **10/10 OK** and `test_p5d_p6e_cpu.py` **14/14 OK** to the exact checked-out source SHA: **24/24 source-level CPU unit tests PASS, 0 failures**. These are two unittest module counts, **not** the historical P8 24-case Fake-DGX matrix.
+
+**Evidence confidence:** Operator-reported test transcript and subsequent SHA/clean-tree commands, not an independently authenticated CI provenance receipt. GitHub verified `0f97de4b7c1f3d69d5a526c4b9b7774096bd2083` is a **documentation-only direct child** of tested code commit `3033eda1f46942ab76ef3c87d54e8c5fc65012ce`. Hence this observation validates the operator's tested code revision, but does not establish entire workflow success or a run of later docs-only commits. The earlier note `OPERATOR_SUPPLIED_CPU_TWO_MODULES_PASS_SHA_UNBOUND` remains preserved as the *then-current historical classification* and is **superseded** by `OPERATOR_SUPPLIED_CPU_TWO_MODULES_PASS_SHA_BOUND_CLEAN_TREE`. No change to actual P1–P8 DGX acceptance, journal authority, model service, P5 load test, P7 integration, P8 recovery, or production release. GitHub Actions overall CI for the updated branch remains separately unverified.
+
+**Remaining gates:** Full GitHub Actions source-only CPU workflow not verified; live operating journal migration, independently authenticated nonce/approval, service switching and recovery remain blocked. PR #1 stays Draft/Open/Unmerged.
+
+**Safety decision:** Clean-tree local CPU PASS is no authority to execute any production operation or reuse historical approvals.
+
+
+[P1–P8 status](../docs/P1-P8-WIZARD-ACCEPTANCE-STATUS-20261107.md) · [P6-E provenance](../docs/P5-D-P6-E-READ-ONLY-PROVENANCE-JOURNAL-V2-20261110.md)
+
+---
+
 ## 2026-11-18 operator CPU result supersession — 10 + 14 module PASS (SHA unbound)
 
 **2026-11-18 operator-supplied CPU test result (not a GitHub Actions or independently rerun result):** On `inlc@lc-gx10-pc`, workspace `~/Workspace/llm/blazux-orcarouter`, the operator pasted terminal output for `python3 -m unittest discover -s tests -p 'test_mock_nonce_fence_v2_cpu.py' -v`: **10 run, 10 OK, 0 failures** (0.047 s); and `python3 -m unittest discover -s tests -p 'test_p5d_p6e_cpu.py' -v`: **14 run, 14 OK, 0 failures** (0.005 s). Combined **24/24 PASS** for these two modules. Hardlink denial, outside-symlink swap denial, cross-process duplicate claim, nonce/model/plan replay, Journal v2 explicit nonce drift and V1 migration blocking were among the passing checks. **This 24 is a per-file regression count, NOT the historical P8 24-case Fake-DGX scenario matrix.**
