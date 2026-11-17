@@ -76,6 +76,21 @@ class CommonUXCPU(unittest.TestCase):
             self.assertIn(status, output.getvalue())
             self.assertIn("No approval accepted", output.getvalue())
 
+    def test_measurements_menu_option_12_is_reachable(self):
+        with patch.object(console, "_input", side_effect=["12", "0"]), \
+             patch.object(console, "_show_measurement_dashboard") as show, \
+             contextlib.redirect_stdout(io.StringIO()):
+            console._generic_qualification_menu("27b")
+        show.assert_called_once_with("27b")
+
+    def test_nonce_menu_option_13_is_fake_only(self):
+        with patch.object(console, "_input", side_effect=["13", "1", "0"]), \
+             patch("subprocess.run", side_effect=AssertionError("no runtime")), \
+             contextlib.redirect_stdout(io.StringIO()) as out:
+            console._generic_qualification_menu("27b")
+        self.assertIn("PASS_FAKE_NONCE_REPLAY_FENCE_EXPECTATIONS", out.getvalue())
+        self.assertIn("no approval", out.getvalue())
+
     def test_new_registry_model_exposes_only_common_readonly_menu(self):
         registry = {"models": {
             "flash-next": {}, "27b": {}, "orcarouter": {},

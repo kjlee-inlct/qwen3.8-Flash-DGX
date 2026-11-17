@@ -1,5 +1,14 @@
 ## 2026-11-12 — P5-D DGX evidence and P6-E-first development priority
 
+## 2026-11-17 KST — P6-E isolated replay fence contract (SOURCE/FAKE ONLY)
+
+At GitHub source baseline `8b118c8b1ef7`, the generic P6-E review remains non-authorizing. Added `scripts/manager/mock_nonce_fence_v2.py`: isolated, private `blazux-p6e-fake-*` fixtures only, globally unique nonce file via local `O_EXCL`, file/directory `fsync`, tamper/partial marker detection and fail-closed replay across changed model/plan. No operating journal paths, API calls, Docker actions, migration, actual cross-host distributed lock, independent approval, real recovery or DGX acceptance. The P6-D gate continues to return BLOCKED. `./wizard.sh operations generic nonce-fence-mock --from-model orcarouter --to-model 27b --json` runs a CPU-only 4-check demonstration; the model-selected Wizard shows a fake-only option. Fixes model-selected option 12 Measurement menu reachability. New CPU tests are CI-gated; CI outcome is to be verified on this new commit independently. Original 24/66/48/21 synthetic scenario sets are unchanged.
+
+**Latest actual DGX provenance (historical operator receipt, 2026-11-12):** P5-C correlated; P5-D `BLOCKED_PARTIAL_PROCESS_EVIDENCE` with no observed host port 8000 listener PID, despite consistent Docker/GPU PID subsets. This is *not* a service failure, ownership proof, or live acceptance. Orcarouter v3 stays DEVELOPMENT_TRIAL; KV-log capacity values are not loaded benchmark or PLE RSS measurements. No new DGX probe was run by GitHub.
+
+**Next:** independently qualified real operating v2 journal and nonce authority remain unimplemented; no migration/restart/auto-resume. Prioritize P5 loaded resource/benchmark session (fresh operator authorization), P7 independent component checks, P8 real recovery + evidence collection under separate approval. vLLM 0.32.0, no SGLang, ONE_ACTIVE_MODEL_ONLY, :8000, OpenWebUI/Portainer and all caches/images/PLE preserved. PR #1 remains Draft/Open/unmerged.
+
+
 The operator's current DGX read-only transcript, collected at source HEAD
 `5a48e9ca417b939b1cc51b2933c3086472033b6a`, now supersedes earlier
 P5-D **NOT_RUN** statements. Orcarouter v3 service and API were observed

@@ -366,7 +366,8 @@ def main(argv: list[str] | None = None) -> int:
         "session-mock", "session-matrix", "pipeline-mock",
         "fake-disk-contract", "fake-disk-matrix",
         "observation-review", "observation-capture", "operating-gate-review",
-        "ownership-review", "ownership-capture", "journal-v2-preview"))
+        "ownership-review", "ownership-capture", "journal-v2-preview",
+         "nonce-fence-mock"))
     parser.add_argument("--from-model")
     parser.add_argument("--to-model")
     parser.add_argument("--model")
@@ -410,6 +411,11 @@ def main(argv: list[str] | None = None) -> int:
                     bundle.get("docker_top_stdout"),
                     bundle.get("ss_stdout"),
                     bundle.get("gpu_stdout"))
+        elif args.action == "nonce-fence-mock":
+            if not args.from_model or not args.to_model:
+                raise ValueError("EXACT_SOURCE_AND_TARGET_REQUIRED")
+            from scripts.manager.mock_nonce_fence_v2 import fake_replay_fence_demo
+            result = fake_replay_fence_demo(args.from_model, args.to_model)
         elif args.action == "journal-v2-preview":
             if not args.from_model or not args.to_model:
                 raise ValueError("EXACT_SOURCE_AND_TARGET_REQUIRED")
@@ -534,6 +540,7 @@ def main(argv: list[str] | None = None) -> int:
         "PASS_FAKE_P5_SESSION", "PASS_FAKE_P5_FAULT_BLOCKED",
         "PASS_FAKE_PIPELINE_CONTRACT",
         "PASS_FAKE_DISK_CONTRACT", "PASS_FAKE_DISK_FAILURE_DETECTED",
+        "PASS_FAKE_NONCE_REPLAY_FENCE_EXPECTATIONS",
         "SOURCE_OBSERVATIONS_CORRELATED_NOT_LIVE_ACCEPTANCE",
         "OBSERVED_PID_SETS_CONSISTENT_NOT_AUTHORIZED",
         "SOURCE_COMPONENT_FIELDS_CONSISTENT_NOT_LIVE_VERIFIED",

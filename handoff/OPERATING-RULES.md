@@ -1,3 +1,15 @@
+## CURRENT P5 DOCUMENT SUPERSESSION — 2026-11-17 P6-E fake replay fence + Wizard UX fix
+
+**New source work (not DGX acceptance):** From verified GitHub baseline `8b118c8b1ef7079fabe0b4edbc6d8a2860fd98d8` (previous source HEAD superseded), added model-agnostic P6-E isolated fake-disk nonce/replay fencing with `O_EXCL` and `fsync`, tamper/replay/plan-drift CPU tests and model-selected Wizard option 13. Fixed option 12 Measurements being displayed but unreachable. Operating Journal v1/v2 stays unchanged; no durable operating approval, real Journal migration, live executor, automatic restore or release. Source-only CI is tracked per new commit, not presumed PASS. The independent 24/66/48/21 synthetic sets retain their original meanings.
+
+**Actual DGX last operator evidence, 2026-11-12:** Orcarouter v3 `qwen38-orcarouter-qsa62318-lmhead-v3`, adapter `qwen4exp-qsa62318-lmhead-v032-v3` (resolved `lm_head.weight_scale`), :8000 API live in DEVELOPMENT_TRIAL. P5-C source observations correlated; P5-D `BLOCKED_PARTIAL_PROCESS_EVIDENCE` because host :8000 listener PID was not established, though Docker/GPU PID subsets matched. This is an observability limitation, *not* evidence of an outage or a verified GPU/port owner. No fresh DGX mutation/loaded inference performed in this GitHub work.
+
+**P5–P8 status:** P5-B/C and P5-D source implemented, P5-D real partial receipt; P6-A/B/C CPU/Fake-DGX implemented, P6-D fail-closed operating review, P6-E read-only v2 proposal + new fake nonce rehearsal but real durable replay fence unqualified. P7 generic integration contract source-only; P8 actual fault/recovery and measurement completeness unaccepted. Next: P6-E real design qualification under separate authorization, P5 loaded benchmark, P7 independent probes, P8 recovery trials. No model/service/port/cgroup/governor/cache/PLE/Journal change, no PR merge. vLLM 0.32.0, ONE_ACTIVE_MODEL_ONLY, SGLang prohibited.
+
+[2026-11-17 P6-E contract update](../docs/P5-D-P6-E-READ-ONLY-PROVENANCE-JOURNAL-V2-20261110.md) · [Model-agnostic operations](../docs/P5-P8-MODEL-AGNOSTIC-OPERATIONS-20261109.md)
+
+---
+
 ## CURRENT P5 DOCUMENT SUPERSESSION — 2026-11-12 P5-D actual DGX result
 
 **Verified source identity:** operator-run Orcarouter v3 `qwen38-orcarouter-qsa62318-lmhead-v3` (adapter `qwen4exp-qsa62318-lmhead-v032-v3`, previous `lm_head.weight_scale` fix), API :8000, DEVELOPMENT_TRIAL. **This is an operator-provided receipt, not a new GPU/API test by GitHub.**

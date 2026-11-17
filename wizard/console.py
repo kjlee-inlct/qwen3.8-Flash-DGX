@@ -279,7 +279,8 @@ def _generic_qualification_menu(model: str) -> None:
         return
     actions = ("resource", "switch", "faults", "integration",
                "session", "faults-extended", "integration-reconcile",
-               "observation", "ownership", "operating-gate", "journal-v2")
+               "observation", "ownership", "operating-gate", "journal-v2",
+               "measurements", "nonce-fence")
     while True:
         print("\nP5–P8 common model qualification (0 back)")
         print("  1. P5 bounded read-only resource snapshot")
@@ -294,6 +295,7 @@ def _generic_qualification_menu(model: str) -> None:
         print(" 10. P6-D review switch operating gate (always BLOCKED)")
         print(" 11. P6-E review Journal v2 migration (always BLOCKED)")
         print(" 12. Model measurements: memory/profile/current metrics and history (read only)")
+        print(" 13. P6-E isolated Fake-DGX nonce/replay fence (no operating Journal write)")
         picked = _choice(_input("Review (0 back): "), list(actions))
         if picked is None:
             return
@@ -302,6 +304,20 @@ def _generic_qualification_menu(model: str) -> None:
             continue
         if picked == "measurements":
             _show_measurement_dashboard(model)
+        elif picked == "nonce-fence":
+            targets = [name for name in catalog["models"] if name != model]
+            for i, target in enumerate(targets, 1):
+                print(f"  {i}. {target}")
+            chosen = _choice(_input("Fake target (0 back): "), targets)
+            if chosen is None:
+                continue
+            if not chosen:
+                print("Unknown target; nothing executed.")
+                continue
+            from scripts.manager.mock_nonce_fence_v2 import fake_replay_fence_demo
+            report = fake_replay_fence_demo(model, chosen)
+            print("  P6-E Fake nonce/replay fence: " + report["status"])
+            print("  Fake marker only; no approval, live Journal or recovery.")
         elif picked == "resource":
             from scripts.manager.resource_diagnostics import snapshot, admission
             report = snapshot(model=model)
