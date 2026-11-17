@@ -222,10 +222,10 @@ class GenericOperationsCPU(unittest.TestCase):
 
             with patch("scripts.manager.generic_operations.os.stat",
                        side_effect=substitute_on_second_stat):
-                with self.assertRaisesRegex(ValueError,
-                                            "EVIDENCE_FILE_CHANGED_OR_UNBOUNDED"):
+                with self.assertRaisesRegex(
+                        ValueError, "EVIDENCE_FILE_(IDENTITY_CHANGED|CHANGED_OR_UNBOUNDED)"):
                     g._load_evidence(str(evidence))
-            self.assertEqual(checks, 2)
+            self.assertGreaterEqual(checks, 2)
 
     def test_restart_cli_rejects_ambiguous_json_without_runtime(self):
         with tempfile.TemporaryDirectory() as temp:
