@@ -232,7 +232,7 @@ class GenericOperationsCPU(unittest.TestCase):
             evidence = Path(temp) / "untrusted.json"
             raw = b'{"events":[],"events":[],"snapshot":{},"consumed_nonces":[]}'
             evidence.write_bytes(raw)
-            with patch("subprocess.run", side_effect=AssertionError("NO RUNTIME")), \\
+            with patch("subprocess.run", side_effect=AssertionError("NO RUNTIME")), \
                  contextlib.redirect_stdout(io.StringIO()) as out:
                 rc = wizard_main([
                     "operations", "generic", "journal-v2-restart-review",
