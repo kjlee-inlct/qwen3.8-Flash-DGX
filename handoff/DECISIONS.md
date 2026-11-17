@@ -1,3 +1,19 @@
+## 2026-11-18 latest P6-E restart safety contract — SOURCE ONLY / CI PENDING
+
+**2026-11-18 P6-E source-only refinement:** New source commits `b1b48c7beb13d0109e2f3c8b45e948483cfa96e7` and `a1e9be95d953f0eccaaefc279de5e7a5fb75f5f6` introduce `restart_fence_review()`, its read-only Wizard CLI and five new CPU test methods plus a negative CI command. The supplied untrusted V2 event chain is audited without accessing the actual operating Journal; nonterminal phases, snapshot identity drift, nonce reuse reported by supplied evidence, malformed/non-scalar input and hash/plan drift fail closed. Even an internally consistent terminal chain is **ALWAYS BLOCKED** from live resume or automatic recovery. Real nonce ledger, independently authenticated state and approval, actual Docker executor remain UNIMPLEMENTED / UNQUALIFIED.
+
+**CI investigation:** `.github/workflows/recipe-manifest-cpu.yml` exists at `feature/recipe-wizard-handoff`, but fetching that path from default branch `main` returned 404. This is a blocker for `workflow_dispatch` discovery from the default branch; it is not a proven explanation for missing Push/PR workflow runs. No GitHub connection action to dispatch a new run is available; no branch merge or default-branch mutation authorized. **No new-head CI PASS or new CPU test execution is claimed.** Previous operator CPU test **24/24 PASS** remains tightly bound to code SHA `3033eda1f46942ab76ef3c87d54e8c5fc65012ce` with clean working tree; **it does not validate this new functionality**.
+
+**Invariants:** preserve P1/P2 backend, P3 A/B/C/G, P4 read-only real acceptance, P5 Orcarouter v3 trial and P5-D partial PID evidence, P6-A/B/C/D/E previous scope, P7/P8 source-only status and distinct 24/66/48/21 historical scenario totals. No actual DGX service/port/GPU, inference, model switch, operating Journal migration, recovery, caches, PLE assets, PR merge or production release. vLLM 0.32.0, SGLang forbidden, :8000, ONE_ACTIVE_MODEL_ONLY.
+
+
+**Next safe verification:** `python3 -m unittest discover -s tests -p "test_p5d_p6e_cpu.py" -v` and `python3 -m unittest discover -s tests -p "test_mock_nonce_fence_v2_cpu.py" -v`, then `python3 -m wizard operations generic journal-v2-restart-review --from-model 27b --to-model flash-next --json` (exit 3 expected). Record exact checked-out SHA and working-tree status. The new P5-D/P6-E module has five additional test methods (prior 14 → **expected 19** if the unchanged prior 14 still pass), and the existing nonce module has 10; **expected 29 tests total, not an actual PASS**. Obtain a fresh source-only Actions run when the workflow trigger problem is resolved; do not infer actions from workflow YAML alone.
+
+
+[P1–P8 consolidated acceptance](../docs/P1-P8-WIZARD-ACCEPTANCE-STATUS-20261107.md) · [P6-E provenance and V2 boundary](../docs/P5-D-P6-E-READ-ONLY-PROVENANCE-JOURNAL-V2-20261110.md)
+
+---
+
 ## 2026-11-18 P6-E CPU acceptance evidence supersession — SHA-bound operator receipt
 
 **2026-11-18 follow-up provenance correction (operator-supplied terminal evidence):** The operator ran `git rev-parse HEAD` and `git status --short` in `~/Workspace/llm/blazux-orcarouter` and reported HEAD **`3033eda1f46942ab76ef3c87d54e8c5fc65012ce`**, with **no output from `git status --short` (clean tracked/untracked working tree per Git status)**. This binds the previously supplied terminal transcript of `test_mock_nonce_fence_v2_cpu.py` **10/10 OK** and `test_p5d_p6e_cpu.py` **14/14 OK** to the exact checked-out source SHA: **24/24 source-level CPU unit tests PASS, 0 failures**. These are two unittest module counts, **not** the historical P8 24-case Fake-DGX matrix.
