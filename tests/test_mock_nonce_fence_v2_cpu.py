@@ -87,6 +87,49 @@ class MockNonceFenceV2CPU(unittest.TestCase):
             self.assertEqual(audit(folder)["status"], "BLOCKED_FAKE_NONCE_AUDIT")
             os.chmod(marker, 0o600)
 
+    def test_ambiguous_duplicate_json_marker_is_never_audited_as_unique(self):
+        with tempfile.TemporaryDirectory(prefix=PREFIX) as root:
+            folder = Path(root)
+            self.assertEqual(claim(folder)["status"],
+                             "PASS_FAKE_NONCE_MARKER_CREATED")
+            marker = next(folder.iterdir())
+            # Same semantic dict under the permissive JSON decoder, but two
+            # occurrences of schema_version: never permit ambiguous evidence.
+            raw = marker.read_bytes()
+            marker.write_bytes(b'{"schema_version":2,' + raw[1:])
+            report = audit(folder)
+            self.assertEqual(report["status"], "BLOCKED_FAKE_NONCE_AUDIT")
+            self.assertIn("FAKE_MARKER_DUPLICATE_JSON_KEY", report["issues"])
+            self.assertEqual(claim(folder)["status"], "BLOCKED_FAKE_NONCE_REPLAY")
+            self.assertTrue(marker.exists())
+
+    def test_injected_fsync_failure_keeps_nonce_spent_and_never_recovers(self):
+        # Failure at either file fsync or directory fsync is uncertain durable
+        # state, not permission to retry, delete, resume, or claim approval.
+        original_fsync = os.fsync
+        for failing_call in (1, 2):
+            with self.subTest(failing_call=failing_call), \\
+                    tempfile.TemporaryDirectory(prefix=PREFIX) as root:
+                folder = Path(root)
+                count = 0
+
+                def injected_fsync(fd):
+                    nonlocal count
+                    count += 1
+                    if count == failing_call:
+                        raise OSError("INJECTED_FSYNC_FAILURE")
+                    return original_fsync(fd)
+
+                with patch("scripts.manager.mock_nonce_fence_v2.os.fsync",
+                           side_effect=injected_fsync):
+                    result = claim(folder)
+                self.assertEqual(result["status"], "BLOCKED_FAKE_NONCE_IO")
+                self.assertFalse(result["approval_accepted"])
+                self.assertFalse(result["automatic_recovery_authorized"])
+                marker = folder / ("fake-nonce-" + "d" * 64 + ".json")
+                self.assertTrue(marker.exists())
+                self.assertEqual(claim(folder)["status"], "BLOCKED_FAKE_NONCE_REPLAY")
+
     def test_bad_root_expiry_nonce_and_pair_never_write(self):
         with tempfile.TemporaryDirectory(prefix=PREFIX) as root:
             folder = Path(root)
