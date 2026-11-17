@@ -4,7 +4,7 @@
 
 **Acceptance remains SOURCE/FAKE-DGX only:** No real durable nonce authority, approval authentication, operating Journal writes/migration, Docker/API host activity, service transition, automatic recovery, production release or PR merge. The last operator DGX receipt remains **2026-11-12** Orcarouter v3 DEVELOPMENT_TRIAL :8000, P5-D `BLOCKED_PARTIAL_PROCESS_EVIDENCE` (no host listener PID; NOT evidence of outage). Earlier `8b118c8` CI SUCCESS does **not** validate this change; source CI requires a run tied to the new SHA. vLLM 0.32.0; no SGLang; ONE_ACTIVE_MODEL_ONLY; :8000.
 
-[P1–P8 verified acceptance](docs/P1-P8-WIZARD-ACCEPTANCE-STATUS-20261107.md) · [P6-E Journal v2 boundary](docs/P5-D-P6-E-READ-ONLY-PROVENANCE-JOURNAL-V2-20261110.md)
+[P1–P8 verified acceptance](../docs/P1-P8-WIZARD-ACCEPTANCE-STATUS-20261107.md) · [P6-E Journal v2 boundary](../docs/P5-D-P6-E-READ-ONLY-PROVENANCE-JOURNAL-V2-20261110.md)
 
 ---
 
