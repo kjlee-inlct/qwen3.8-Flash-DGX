@@ -136,8 +136,8 @@ class MockNonceFenceV2CPU(unittest.TestCase):
             self.assertEqual(claim(folder)["status"], "BLOCKED_FAKE_NONCE_REPLAY")
 
     def test_marker_swapped_to_valid_outside_symlink_during_open_is_blocked(self):
-        with tempfile.TemporaryDirectory(prefix=PREFIX) as root, \\
-             tempfile.TemporaryDirectory(prefix="external-fake-nonce-") as outside:
+        with (tempfile.TemporaryDirectory(prefix=PREFIX) as root,
+              tempfile.TemporaryDirectory(prefix="external-fake-nonce-") as outside):
             folder = Path(root)
             claim(folder)
             marker = next(folder.iterdir())
