@@ -1,3 +1,13 @@
+## 2026-11-18 continuation: SHA-bound 43 CPU PASS, CI zero-run, new P6-E source pending CPU
+
+The operator transcript binds a **clean working-tree checkout at 4fc3aa8e0a0cb3b69c6337b6c34b701578b132cc** to three selected module results: generic operations **14/14 OK**, fake nonce **10/10 OK**, P5-D/P6-E **19/19 OK** = **43/43 CPU PASS** (operator-reported, not independent CI). GitHub returned zero Actions workflow runs/check runs/statuses for that exact commit. Last returned successful source-only workflow was 2026-11-11 at `8b118c8`; the feature-branch YAML contains matching Push/PR filters, but `main/.github` was absent (404). Repo Actions settings and workflow state are unverified; **root cause undetermined**.
+
+New follow-up commits `29453eda`, `81cf2adb`, `36ca4457` harden **Fake-only** nonce JSON audit and add two fsync/ambiguity CPU tests. **New suite is unexecuted**: expected selected scope is now 14+12+19=45, no claimed 45 PASS. Work remains non-authorizing; no operating journal, DGX, Docker, model, GPU, port, recovery, production or PR merge was touched. See [detailed continuation and CI diagnosis](../docs/P6-E-CPU-CI-FOLLOWUP-20261118.md).
+
+**Current safety classification:** `CPU_REGRESSION_PASS_43_AT_4FC3AA8 / NEW_SOURCE_CPU_PENDING / CI_UNVERIFIED / PRODUCTION_BLOCKED`.
+
+---
+
 ## 2026-11-18 P6-E read-only evidence-ingest fence — SOURCE UPDATED / TESTS AND CI PENDING
 
 **Current code scope (supersedes older source descriptions, not older test receipts):** On the Draft PR #1 feature branch, starting GitHub HEAD `4e93c6f9e1c0ef14cc55fab7aae378689828c6f8`, code now pins one read-only regular-file descriptor for injected JSON, verifies inode/size/timestamps, caps read size at 1 MiB, and rejects duplicate nested JSON keys, nonfinite numbers, malformed UTF-8 and excessive nesting. Four new CPU negative tests are added to `tests/test_generic_operations_cpu.py` for tampering/races/CLI fail-closed. **New tests were NOT executed in this session; no new exact-head CI PASS is claimed.** Full design and safe reproduction checklist: [P6-E JSON ingest fence](../docs/P6-E-UNTRUSTED-JSON-INGEST-FENCE-20261118.md).
