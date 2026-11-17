@@ -5,6 +5,8 @@ import contextlib
 import io
 import json
 import os
+import subprocess
+import sys
 from pathlib import Path
 import tempfile
 import unittest
@@ -96,6 +98,33 @@ class MockNonceFenceV2CPU(unittest.TestCase):
             self.assertEqual(list(folder.iterdir()), [])
             with self.assertRaises(ValueError):
                 claim(folder.parent)
+
+    def test_two_independent_python_processes_cannot_claim_same_nonce(self):
+        # Real CPU subprocess race on a disposable fixture, NEVER a DGX/operating lock.
+        script = (
+            "import json,sys;from pathlib import Path;"
+            "from scripts.manager.mock_nonce_fence_v2 import fake_nonce_claim;"
+            "print(json.dumps(fake_nonce_claim(Path(sys.argv[1]),"
+            "'27b','flash-next','a'*64,'b'*64,'c'*64,'d'*64,"
+            "now_ns=100,expires_ns=200)))"
+        )
+        with tempfile.TemporaryDirectory(prefix=PREFIX) as root:
+            children = [
+                subprocess.Popen([sys.executable, "-c", script, root],
+                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                 text=True)
+                for _ in range(2)
+            ]
+            statuses = []
+            for child in children:
+                stdout, stderr = child.communicate(timeout=15)
+                self.assertEqual(child.returncode, 0, stderr)
+                statuses.append(json.loads(stdout)["status"])
+            self.assertEqual(statuses.count("PASS_FAKE_NONCE_MARKER_CREATED"), 1)
+            self.assertEqual(statuses.count("BLOCKED_FAKE_NONCE_REPLAY"), 1)
+            self.assertEqual(audit(Path(root))["status"],
+                             "PASS_FAKE_NONCE_MARKER_CONSISTENCY")
+            self.assertEqual(len(list(Path(root).iterdir())), 1)
 
     def test_cli_fixture_only_and_non_authorizing(self):
         with patch("subprocess.run", side_effect=AssertionError("NO RUNTIME")), \
