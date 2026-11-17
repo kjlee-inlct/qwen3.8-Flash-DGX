@@ -1,3 +1,15 @@
+## 2026-11-18 operator CPU result supersession — 10 + 14 module PASS (SHA unbound)
+
+**2026-11-18 operator-supplied CPU test result (not a GitHub Actions or independently rerun result):** On `inlc@lc-gx10-pc`, workspace `~/Workspace/llm/blazux-orcarouter`, the operator pasted terminal output for `python3 -m unittest discover -s tests -p 'test_mock_nonce_fence_v2_cpu.py' -v`: **10 run, 10 OK, 0 failures** (0.047 s); and `python3 -m unittest discover -s tests -p 'test_p5d_p6e_cpu.py' -v`: **14 run, 14 OK, 0 failures** (0.005 s). Combined **24/24 PASS** for these two modules. Hardlink denial, outside-symlink swap denial, cross-process duplicate claim, nonce/model/plan replay, Journal v2 explicit nonce drift and V1 migration blocking were among the passing checks. **This 24 is a per-file regression count, NOT the historical P8 24-case Fake-DGX scenario matrix.**
+
+**Evidence provenance:** user/operator-provided terminal transcript; precise Git HEAD, working-tree cleanliness and remote synchronization **not contained in pasted output**. The repository code branch was observed at `3033eda1f46942ab76ef3c87d54e8c5fc65012ce` immediately before this documentation-only change, but this does **not establish** that the operator ran the exact SHA or a clean tree. No independently authenticated run receipt, hash of terminal transcript, full workflow CI run, DGX GPU/inference/transition, operating Journal write or actual recovery has been established. Classification: `OPERATOR_SUPPLIED_CPU_TWO_MODULES_PASS_SHA_UNBOUND`; source qualification for those modules only, **not Production/Operating acceptance**. Exact-head GitHub Actions for `3033eda1f46942ab76ef3c87d54e8c5fc65012ce`: no run/check observed in this session; older `8b118c8` SUCCESS remains historical. Next request: `git rev-parse HEAD`, `git status --short` from the testing workspace, plus fresh source-only CPU workflow CI when available.
+
+**P6-E current classification:** newly reported CPU module-level PASS with source SHA unbound; still no real operating nonce authority or executor qualification.
+
+[P1–P8 matrix](../docs/P1-P8-WIZARD-ACCEPTANCE-STATUS-20261107.md) · [P6-E provenance](../docs/P5-D-P6-E-READ-ONLY-PROVENANCE-JOURNAL-V2-20261110.md)
+
+---
+
 ## 2026-11-18 P6-E source-only safety supersession — inode-pinned Fake nonce and exact V2 draft nonce
 
 **Baseline verified GitHub HEAD:** `258372fe046b55a1ccf78718b92ecea5f8365527` (PR #1 Draft/Open/unmerged; new commit's CI must be checked separately). Strengthened **ephemeral FAKE ONLY** nonce marker claim/audit with private-directory descriptor + inode/owner checks, no-follow bounded marker read, single-link requirement, path-replacement detection and fail-closed ambiguous writes. Added CPU hardlink and symlink-swap fixture tests. The in-memory Journal v2 **proposal** now includes exact `nonce` binding in the phase chain; default nonce derivation is **deterministic synthetic data**, not random freshness or independent approval. Changed nonce with a recomputed hash is rejected as identity drift. Existing CLI defaults remain callable, and the old 24/66/48/21 CPU scenario groups are unchanged.

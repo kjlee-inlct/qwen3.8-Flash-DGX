@@ -1,5 +1,16 @@
 # P5-D Read-Only Process Ownership / P6-E Generic Journal V2 (2026-11-10)
 
+## 2026-11-18 operator-provided CPU regression evidence (SHA unbound)
+
+**2026-11-18 operator-supplied CPU test result (not a GitHub Actions or independently rerun result):** On `inlc@lc-gx10-pc`, workspace `~/Workspace/llm/blazux-orcarouter`, the operator pasted terminal output for `python3 -m unittest discover -s tests -p 'test_mock_nonce_fence_v2_cpu.py' -v`: **10 run, 10 OK, 0 failures** (0.047 s); and `python3 -m unittest discover -s tests -p 'test_p5d_p6e_cpu.py' -v`: **14 run, 14 OK, 0 failures** (0.005 s). Combined **24/24 PASS** for these two modules. Hardlink denial, outside-symlink swap denial, cross-process duplicate claim, nonce/model/plan replay, Journal v2 explicit nonce drift and V1 migration blocking were among the passing checks. **This 24 is a per-file regression count, NOT the historical P8 24-case Fake-DGX scenario matrix.**
+
+**Evidence provenance:** user/operator-provided terminal transcript; precise Git HEAD, working-tree cleanliness and remote synchronization **not contained in pasted output**. The repository code branch was observed at `3033eda1f46942ab76ef3c87d54e8c5fc65012ce` immediately before this documentation-only change, but this does **not establish** that the operator ran the exact SHA or a clean tree. No independently authenticated run receipt, hash of terminal transcript, full workflow CI run, DGX GPU/inference/transition, operating Journal write or actual recovery has been established. Classification: `OPERATOR_SUPPLIED_CPU_TWO_MODULES_PASS_SHA_UNBOUND`; source qualification for those modules only, **not Production/Operating acceptance**. Exact-head GitHub Actions for `3033eda1f46942ab76ef3c87d54e8c5fc65012ce`: no run/check observed in this session; older `8b118c8` SUCCESS remains historical. Next request: `git rev-parse HEAD`, `git status --short` from the testing workspace, plus fresh source-only CPU workflow CI when available.
+
+No stage-level P1–P8 real DGX acceptance or prior 24/66/48/21 synthetic scenario count changes. P6-E source gate remains non-authorizing. The operator's CPU module results are recorded, without asserting GitHub Actions or verified source-tree binding.
+
+---
+
+
 ## 2026-11-18 — P6-E Fake marker inode pinning + nonce-bound synthetic draft (SOURCE ONLY)
 
 Verified baseline `258372fe046b55a1ccf78718b92ecea5f8365527`. Fake-only marker writes are anchored to an open private directory FD with inode/owner rechecks; read-back uses `O_NOFOLLOW`, bounded FD reads, owner/mode/link-count checks and a post-read inode comparison. Simulated hardlinks and marker-to-valid-symlink races must fail closed, not read outside fixtures. The in-memory V2 schema adds a `nonce` field pinned to the exact source/target/model/container/plan chain; callers may pass an explicit 64-hex nonce. The fallback nonce is deterministic and deliberately non-authenticating for test compatibility. Recomputed hashes cannot conceal nonce drift across events. Old synthetic records without this proposed schema field are rejected, not silently migrated. V1 operating Journal remains immutable.
