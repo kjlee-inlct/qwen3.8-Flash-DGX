@@ -4,6 +4,7 @@ from __future__ import annotations
 import contextlib
 import io
 import json
+import os
 import tempfile
 from pathlib import Path
 import unittest
@@ -170,6 +171,81 @@ class GenericOperationsCPU(unittest.TestCase):
             link.symlink_to(file)
             with self.assertRaises(ValueError):
                 g._load_evidence(str(link))
+
+    def test_evidence_rejects_duplicate_keys_nonfinite_and_invalid_utf8(self):
+        with tempfile.TemporaryDirectory() as temp:
+            evidence = Path(temp) / "untrusted.json"
+            for raw in (
+                b'{"nonce":"a","nonce":"b"}',
+                b'{"snapshot":{"plan_id":"a","plan_id":"b"}}',
+                b'{"value":NaN}', b'{"value":Infinity}',
+                b'{"value":-Infinity}', bytes([0xff]),
+            ):
+                with self.subTest(raw=raw):
+                    evidence.write_bytes(raw)
+                    with self.assertRaises(ValueError):
+                        g._load_evidence(str(evidence))
+
+    def test_evidence_rejects_unbounded_deep_and_non_regular_inputs(self):
+        with tempfile.TemporaryDirectory() as temp:
+            evidence = Path(temp) / "untrusted.json"
+            evidence.write_bytes(b"x" * (1024 * 1024 + 1))
+            with self.assertRaises(ValueError):
+                g._load_evidence(str(evidence))
+            evidence.write_text('{"nested":' + "[" * 1500 + "0" + "]" * 1500 + "}")
+            with self.assertRaises(ValueError):
+                g._load_evidence(str(evidence))
+            if hasattr(os, "mkfifo"):
+                fifo = Path(temp) / "untrusted.fifo"
+                os.mkfifo(fifo)
+                with self.assertRaises(ValueError):
+                    g._load_evidence(str(fifo))
+
+    def test_evidence_detects_path_replacement_after_descriptor_open(self):
+        with tempfile.TemporaryDirectory() as temp:
+            evidence = Path(temp) / "untrusted.json"
+            replacement = Path(temp) / "replacement.json"
+            old = Path(temp) / "old.json"
+            evidence.write_text('{"model":"27b"}')
+            replacement.write_text('{"model":"orcarouter"}')
+            original_stat = os.stat
+            checks = 0
+
+            def substitute_on_second_stat(path, *args, **kwargs):
+                nonlocal checks
+                if str(path) == str(evidence) and kwargs.get("follow_symlinks") is False:
+                    checks += 1
+                    if checks == 2:
+                        evidence.replace(old)
+                        replacement.replace(evidence)
+                return original_stat(path, *args, **kwargs)
+
+            with patch("scripts.manager.generic_operations.os.stat",
+                       side_effect=substitute_on_second_stat):
+                with self.assertRaisesRegex(ValueError,
+                                            "EVIDENCE_FILE_CHANGED_OR_UNBOUNDED"):
+                    g._load_evidence(str(evidence))
+            self.assertEqual(checks, 2)
+
+    def test_restart_cli_rejects_ambiguous_json_without_runtime(self):
+        with tempfile.TemporaryDirectory() as temp:
+            evidence = Path(temp) / "untrusted.json"
+            raw = b'{"events":[],"events":[],"snapshot":{},"consumed_nonces":[]}'
+            evidence.write_bytes(raw)
+            with patch("subprocess.run", side_effect=AssertionError("NO RUNTIME")), \\
+                 contextlib.redirect_stdout(io.StringIO()) as out:
+                rc = wizard_main([
+                    "operations", "generic", "journal-v2-restart-review",
+                    "--from-model", "27b", "--to-model", "flash-next",
+                    "--v2-restart-evidence", str(evidence), "--json"])
+            self.assertEqual(rc, 3)
+            doc = json.loads(out.getvalue())
+            self.assertEqual(doc["status"], "BLOCKED")
+            self.assertFalse(doc["executed"])
+            self.assertFalse(doc["operations_enabled"])
+            self.assertIn("EVIDENCE_DUPLICATE_JSON_KEY:events", doc["issues"])
+
+
 
 
 if __name__ == "__main__":
