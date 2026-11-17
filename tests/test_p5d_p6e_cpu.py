@@ -16,7 +16,8 @@ from scripts.manager.generic_operations import model_catalog
 from scripts.manager.process_ownership import (
     ownership_capture, ownership_review, _parse_ss, _parse_gpu, _parse_top)
 from scripts.manager.generic_journal_v2 import (
-    draft_v2_event, audit_v2_draft, migration_preview, REQUIRED_V2)
+    draft_v2_event, audit_v2_draft, migration_preview, restart_fence_review,
+    REQUIRED_V2)
 from wizard.main import main as wizard_main
 
 
@@ -214,6 +215,93 @@ class P6ECPU(unittest.TestCase):
         report = audit_v2_draft([first, changed])
         self.assertEqual(report["status"], "BLOCKED_V2_DRAFT")
         self.assertIn("V2_JOURNAL_IDENTITY_DRIFT", report["issues"])
+
+    def _restart_bundle(self, source="27b", target="flash-next", closed=True):
+        args = dict(source_id="a" * 64, target_id="b" * 64,
+                    plan_id="c" * 64, nonce="d" * 64)
+        first = draft_v2_event(source, target, **args)
+        second = draft_v2_event(source, target, **args,
+                                prior=first, phase="PLANNED")
+        last = (draft_v2_event(source, target, **args, prior=second,
+                               phase="CANCELLED") if closed else second)
+        fields = ("schema_version", "phase", "event_hash", "source_model",
+                  "target_model", "source_container_id", "target_container_id",
+                  "plan_id", "nonce")
+        return {"events": [first, second, last] if closed else [first, second],
+                "snapshot": {key: last[key] for key in fields},
+                "consumed_nonces": []}
+
+    def test_restart_review_closed_never_authorizes_each_registered_pair(self):
+        for src in model_catalog()["models"]:
+            for dst in model_catalog()["models"]:
+                if src == dst:
+                    continue
+                with self.subTest(src=src, dst=dst):
+                    result = restart_fence_review(
+                        src, dst, self._restart_bundle(src, dst))
+                    self.assertTrue(result["structural_fields_consistent"])
+                    self.assertEqual(result["status"],
+                                     "BLOCKED_V2_RESTART_NOT_AUTHORIZED")
+                    for flag in ("executed", "approval_accepted", "resume_eligible",
+                                 "automatic_recovery_authorized", "production_released",
+                                 "v1_journal_modified", "v2_journal_written"):
+                        self.assertFalse(result[flag])
+
+    def test_restart_review_incomplete_transition_and_snapshot_drift(self):
+        bundle = self._restart_bundle(closed=False)
+        result = restart_fence_review("27b", "flash-next", bundle)
+        self.assertIn("V2_RESTART_UNFINISHED_TRANSITION_FREEZE", result["issues"])
+        bundle["snapshot"] = None
+        result = restart_fence_review("27b", "flash-next", bundle)
+        self.assertIn("V2_RESTART_SNAPSHOT_SCHEMA_INVALID", result["issues"])
+        bundle = self._restart_bundle()
+        bundle["snapshot"]["nonce"] = "e" * 64
+        result = restart_fence_review("27b", "flash-next", bundle)
+        self.assertIn("V2_RESTART_SNAPSHOT_EVENT_DRIFT", result["issues"])
+
+    def test_restart_review_nonce_replay_and_rehashed_plan_change(self):
+        bundle = self._restart_bundle()
+        bundle["consumed_nonces"] = ["d" * 64, "d" * 64]
+        result = restart_fence_review("27b", "flash-next", bundle)
+        self.assertIn("V2_RESTART_NONCE_REPLAY_INDICATED", result["issues"])
+        self.assertIn("V2_RESTART_DUPLICATE_NONCE_IN_HISTORY", result["issues"])
+        bundle = self._restart_bundle()
+        bundle["events"][-1]["plan_id"] = "e" * 64
+        body = {key: value for key, value in bundle["events"][-1].items()
+                if key != "event_hash"}
+        bundle["events"][-1]["event_hash"] = hashlib.sha256(
+            json.dumps(body, sort_keys=True, separators=(",", ":")).encode()
+        ).hexdigest()
+        result = restart_fence_review("27b", "flash-next", bundle)
+        self.assertIn("V2_RESTART_JOURNAL_UNTRUSTED_OR_CORRUPT", result["issues"])
+
+    def test_restart_review_invalid_bundle_and_history_fail_closed(self):
+        for obj in (None, [], {}, {"events": [], "snapshot": {},
+                                   "consumed_nonces": [], "approved": True}):
+            result = restart_fence_review("27b", "flash-next", obj)
+            self.assertIn("V2_RESTART_BUNDLE_SCHEMA_INVALID", result["issues"])
+        for history in (["bad"], [True], ["a" * 64] * 129):
+            bundle = self._restart_bundle()
+            bundle["consumed_nonces"] = history
+            result = restart_fence_review("27b", "flash-next", bundle)
+            self.assertIn("V2_RESTART_NONCE_HISTORY_SCHEMA_INVALID",
+                          result["issues"])
+
+    def test_restart_review_cli_blocks_with_injected_only_json(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "restart-untrusted.json"
+            path.write_text(json.dumps(self._restart_bundle()), encoding="utf-8")
+            with contextlib.redirect_stdout(io.StringIO()) as out, patch(
+                    "subprocess.run", side_effect=AssertionError("NO RUNTIME")):
+                code = wizard_main([
+                    "operations", "generic", "journal-v2-restart-review",
+                    "--from-model", "27b", "--to-model", "flash-next",
+                    "--v2-restart-evidence", str(path), "--json"])
+            self.assertEqual(code, 3)
+            doc = json.loads(out.getvalue())
+            self.assertEqual(doc["status"], "BLOCKED_V2_RESTART_NOT_AUTHORIZED")
+            self.assertFalse(doc["v2_journal_written"])
+            self.assertFalse(doc["automatic_recovery_authorized"])
 
     def test_v1_boolean_event_count_not_empty(self):
         p = migration_preview("27b", "flash-next",

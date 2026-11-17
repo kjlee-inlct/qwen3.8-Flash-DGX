@@ -164,6 +164,7 @@ jobs:
           python -m wizard operations generic nonce-fence-mock --from-model orcarouter --to-model 27b --json
           python -m unittest discover -s tests -p 'test_p5c_p6d_contract_cpu.py' -v
           python -m unittest discover -s tests -p 'test_p5d_p6e_cpu.py' -v
+          python -m wizard operations generic journal-v2-restart-review --from-model orcarouter --to-model 27b --json || test $? -eq 3
           python -m wizard operations generic journal-v2-preview --from-model orcarouter --to-model 27b --json || test $? -eq 3
           python -m wizard operations generic operating-gate-review --from-model orcarouter --to-model 27b --json || test $? -eq 3
           python -m wizard operations generic fake-disk-matrix --summary-only --json
