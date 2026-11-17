@@ -1,3 +1,15 @@
+## 2026-11-18 P6-E operator CPU result supersession — 29/29 PASS, RC0, SHA unbound
+
+**2026-11-18 P6-E operator CPU test PASS supersession (new receipt):** The operator supplied final output for `test_mock_nonce_fence_v2_cpu.py`: `Ran 10 tests in 0.051s`, `OK`, `NONCE_RC=0`; and `test_p5d_p6e_cpu.py`: `Ran 19 tests in 0.012s`, `OK`, `P6E_RC=0`. **29/29 CPU unittest methods PASS, 0 failures** with explicitly reported zero process exit codes. This **supersedes the prior `FINAL_OK_NOT_SHOWN` status**; the earlier partial terminal receipt is preserved historically. Source code at upstream `beba71925214bf10f42adeb8813a96eca4499f06` contained the five new restart tests, and `0a732fc3bdb8786dfcef1b59938bfbe0de3206e3` is the subsequent docs-only evidence update. However, no new `git rev-parse HEAD` / `git status --short` accompanied the operator's latest transcript. Accordingly **the exact test checkout SHA and clean-tree condition remain unverified**; record evidence class `OPERATOR_SUPPLIED_P6E_29_OF_29_PASS_RC0_SHA_UNBOUND`, never `GITHUB_ACTIONS_VERIFIED`.
+
+**Read-only restart CLI is independently documented in the immediately preceding operator JSON:** `BLOCKED_V2_RESTART_NOT_AUTHORIZED`; `approval_accepted=false`, `executed=false`, `automatic_recovery_authorized=false`, `resume_eligible=false`, `v1_journal_modified=false`, `v2_journal_written=false`. Without a supplied evidence bundle, `V2_RESTART_BUNDLE_SCHEMA_INVALID` is expected fail-closed behavior, not a runtime service fault or journal damage.
+
+**Unchanged acceptance gates:** source-level P6-E CPU tests PASS (operator-reported); full exact-HEAD GitHub Actions workflow and independent execution unverified; real durable operating Journal/nonce authority, independent downtime approval, P5 loaded inference, P7 independent integration, P8 actual fault/restore and production release remain unaccepted. Preserve historical distinct 24/66/48/21 Fake-DGX matrices, vLLM 0.32.0, ONE_ACTIVE_MODEL_ONLY, :8000, no SGLang. No DGX operational changes, no PR merge.
+
+[P1–P8 stage status](../docs/P1-P8-WIZARD-ACCEPTANCE-STATUS-20261107.md) · [P6-E evidence contract](../docs/P5-D-P6-E-READ-ONLY-PROVENANCE-JOURNAL-V2-20261110.md)
+
+---
+
 ## 2026-11-18 P6-E operator follow-up — 10 + 19 tests reported, restart fail-closed
 
 **2026-11-18 operator-provided follow-up, new P6-E restart review:** The user supplied snippets `Ran 10 tests in 0.061s` for `test_mock_nonce_fence_v2_cpu.py`, `Ran 19 tests in 0.012s` for `test_p5d_p6e_cpu.py`, and JSON from `journal-v2-restart-review` for source model `orcarouter` → target `27b`. This is **29 tests reported as executed**, but the supplied snippets **omit `OK`, any final shell exit codes, and the checkout SHA / `git status`**: classify as `OPERATOR_SUPPLIED_P6E_29_TESTS_REPORTED_SHA_UNBOUND_FINAL_OK_NOT_SHOWN` rather than a fully authenticated 29/29 CI PASS. The prior independently SHA-bound operator receipt for 10+14 remains valid at `3033eda1`, not reused as proof of the new 19-test revision.
