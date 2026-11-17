@@ -1,3 +1,11 @@
+## CURRENT P5 DOCUMENT SUPERSESSION — 2026-11-18 P1–P8 next-session entry
+
+**First read:** [P1–P8 consolidated acceptance matrix](../docs/P1-P8-WIZARD-ACCEPTANCE-STATUS-20261107.md) and [P5-D/P6-E actual evidence and Journal v2 limitation](../docs/P5-D-P6-E-READ-ONLY-PROVENANCE-JOURNAL-V2-20261110.md), followed by the canonical eight handoffs. The historical `qwen4exp-qsa62318-lmhead-v032-v2` adapter is obsolete; v3 `qwen4exp-qsa62318-lmhead-v032-v3` fixes `lm_head.weight_scale`.
+
+**Do not restart accomplished work:** P1/P2 actual backend PASS, P3 A/B/C/G actual transfer PASS, P4 A/B/C actual read-only PASS, P5 Orcarouter MTP0 text/API actual PASS, P5-C/D actual read-only observation (D evidence partial), P6-A/B/C/D/E source-only contracts. Source-only synthetic groups 24/66/48/21 are independent. Last operator live receipt 2026-11-12 Orcarouter v3 DEVELOPMENT_TRIAL :8000; P5-D lacks listener PID and is **not** proof of outage. GitHub source baseline before this docs update `af49f7b`; latest source CI **NOT VERIFIED**, older `8b118c8` PASS only. Next safe work: fresh HEAD/PR/CI check; P6-E operating Journal/nonce design and CPU tests; then P5 loaded session, P7 independent integration, P8 actual fault/recovery only after **separate explicit operator approvals**. Maintain vLLM 0.32.0, SINGLE ACTIVE MODEL, :8000, no SGLang, untouched asset caches and Draft PR #1; no merge or production promotion.
+
+---
+
 ## CURRENT P5 DOCUMENT SUPERSESSION — 2026-11-17 P6-E fake replay fence + Wizard UX fix
 
 **2026-11-17 GitHub source supersession (verified connector SHA):** `32d54380a0c616949fc1b057c0098695a60e7552` includes P6-E fake-only nonce implementation (`fcd6acc`), an independent two-process CPU contention test (`48384d5`) and push/PR test-file path filter fix (`32d5438`). This handoff-only follow-up advances the documentation commit beyond that source SHA. **New-HEAD CPU CI remains NOT VERIFIED:** Actions run/check-runs were absent when inspected; past green runs belong to older SHA `8b118c8`. Never claim CPU tests have passed until the new workflow run is observed. Actual DGX evidence remains the operator-provided 2026-11-12 P5-D partial PID observation; no GitHub-side DGX run was performed.

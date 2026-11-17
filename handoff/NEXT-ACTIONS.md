@@ -1,3 +1,11 @@
+## CURRENT P5 DOCUMENT SUPERSESSION — 2026-11-18 P1–P8 next actions
+
+See [P1–P8 verified status and blockers](../docs/P1-P8-WIZARD-ACCEPTANCE-STATUS-20261107.md) and [P5-D/P6-E evidence and Journal contracts](../docs/P5-D-P6-E-READ-ONLY-PROVENANCE-JOURNAL-V2-20261110.md). Orcarouter `qwen4exp-qsa62318-lmhead-v032-v3` (`lm_head.weight_scale` resolved) replaces historic `qwen4exp-qsa62318-lmhead-v032-v2`.
+
+**Do not create new TODOs for completed P1/P2 DGX backend, P3 A/B/C/G, P4 A/B/C read-only, P5 v3 MTP0 API, P5-C correlation, P5-D actual partial capture or P6-A/B/C/D/E source work.** Execute next in this order: (1) verify fresh HEAD source CI; (2) P6-E real-design qualification for durable nonce/replay fencing, independent approval and atomic Journal/identity gate **without** touching operating Journal or launching a live executor; (3) under **new separate inference approval**, P5 synchronized loaded resource+benchmark/PLE RSS; (4) P7 independent Proxy/Gateway/Storage/OpenWebUI evidence; (5) P8 under **new separate fault/downtime approval**, live recovery and operator Go/No-Go. Preserve original 24/66/48/21 synthetic categories as different tests. Real port/GPU exclusivity remains unknown; P5-D `BLOCKED_PARTIAL_PROCESS_EVIDENCE` is not a service incident. No unapproved operations or PR merge. Model policy: :8000 / ONE_ACTIVE_MODEL_ONLY / vLLM 0.32.0 / no SGLang.
+
+---
+
 ## CURRENT P5 DOCUMENT SUPERSESSION — 2026-11-17 P6-E fake replay fence + Wizard UX fix
 
 **2026-11-17 GitHub source supersession (verified connector SHA):** `32d54380a0c616949fc1b057c0098695a60e7552` includes P6-E fake-only nonce implementation (`fcd6acc`), an independent two-process CPU contention test (`48384d5`) and push/PR test-file path filter fix (`32d5438`). This handoff-only follow-up advances the documentation commit beyond that source SHA. **New-HEAD CPU CI remains NOT VERIFIED:** Actions run/check-runs were absent when inspected; past green runs belong to older SHA `8b118c8`. Never claim CPU tests have passed until the new workflow run is observed. Actual DGX evidence remains the operator-provided 2026-11-12 P5-D partial PID observation; no GitHub-side DGX run was performed.

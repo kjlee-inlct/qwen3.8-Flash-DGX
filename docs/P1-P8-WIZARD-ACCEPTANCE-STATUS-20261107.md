@@ -1,3 +1,40 @@
+## 2026-11-18 current P5 v2 supersession — P1–P8 integrated acceptance (latest)
+
+**Supersession and provenance:** The historical \`qwen4exp-qsa62318-lmhead-v032-v2\` adapter was superseded by **v3** (\`qwen4exp-qsa62318-lmhead-v032-v3\`, resolved \`lm_head.weight_scale\`). This 2026-11-18 table replaces older **current-status** claims such as P5 entirely \`NOT_RUN\`, P3-C pending or Flash-Next currently active; it does **not** rewrite historical receipts or reclassify past outcomes. Baseline GitHub branch \`feature/recipe-wizard-handoff\` at \`af49f7be53ca283ced01f0c7ecee2a8014cb58c1\` (before this documentation-only commit), Draft/Open/unmerged PR #1. **Last operator-supplied DGX evidence:** 2026-11-12, not a fresh GitHub-side host observation. Latest confirmed older CI: push [43107837772](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/43107837772) / PR [43108072440](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/43108072440) SUCCESS at \`8b118c8\`; newer code/HEAD CI **NOT VERIFIED** at this update, never inherit old CI results.
+
+| Phase | Source / Wizard implementation | Actual DGX evidence / acceptance level | Remaining / explicitly NOT accepted |
+| --- | --- | --- | --- |
+| **P1 — NVIDIA Flash-Next** | Pinned recipe, install/serve, verify, bounded benchmark backend and source tests implemented | **REAL DGX BACKEND PASS:** completion/chat, Tools/Vision, benchmarks and post-P3-B re-verification | Model-first full lifecycle menu and repeated operator UX acceptance still separate; do not re-run prior P1 validation just for status |
+| **P2 — NVIDIA 27B** | Pinned runtime recipe, download/serve, benchmark and management backend implemented | **REAL DGX BACKEND PASS:** pinned assets, GPU/API and 3-run bounded benchmark; historical trial restore verified | Ordinary unified Wizard end-to-end UX acceptance remains distinct from backend success |
+| **P3 — Flash ↔ 27B** | Guarded A/B/C transfer backend; D/E host inspection and F CPU/Fake-DGX closeout; generic lifecycle source remains separately gated | **REAL DGX A/B/C/G PASS/CLOSED**, D read-only evidence; E host-asset metadata and F CPU accepted in their own scopes | Repeated generic all-model transition, new approval/nonce/Journal, integrated cancel/recovery UI, live reinstall and automatic rollback **NOT RELEASED**; historical A/B/C stages must not be replayed |
+| **P4 — Storage** | Read-only capacity inventory, candidate review and safe dry-run implemented | **REAL DGX P4-A inventory PASS** and **P4-B/C read-only dry-run PASS/CLOSED** | Actual P4 asset deletion not executed or generally authorized. Historical separately approved P5 failed-trial-container cleanup is a different, narrowly scoped event |
+| **P5 — Orcarouter / observations** | vLLM 0.32.0 BF16PLE v3 adapter; MTP0 trial; P5-B synthetic benchmark/session, P5-C service/resource correlation, P5-D bounded PID/host evidence; measurements Workspace and opt-in bounded benchmark code | **REAL DGX PARTIAL:** Orcarouter v3 MTP0 text/API \`PASS_LIVE_INFERENCE\` (DEVELOPMENT_TRIAL), idle-only resources; P5-C correlated; P5-D actually run 2026-11-12 and **\`BLOCKED_PARTIAL_PROCESS_EVIDENCE\`** (no host :8000 listener PID; Docker/GPU PID subset consistent). Not a service failure | Loaded synchronized resource/benchmark session, TTFT/TPS/long-context/PLE-specific RSS, Tools/Vision, MTP2, resource thresholds, authenticated port/GPU ownership, canonical promotion **NOT QUALIFIED** |
+| **P6 — Generic transaction / Journal** | A in-memory transactions, B distinct source/target Docker ID binding, C fake-disk fsync/snapshot contract, D always-blocked operating gate, E read-only v2 proposal + separate ephemeral \`O_EXCL\`/fsync fake nonce-replay test; Wizard read-only/fixture menu | **SOURCE / FAKE-DGX only** (not real source↔target switch). P6-D \`BLOCKED_LIVE_EXECUTOR_NOT_QUALIFIED\`; P6-E \`BLOCKED_V2_MIGRATION_NOT_AUTHORIZED\` | Independently authenticated fresh approval, durable **operating** nonce/replay fence, atomic live identity/Journal gate, qualified generic executor, actual bidirectional transfer and recovery **NOT IMPLEMENTED/NOT ACCEPTED** |
+| **P7 — Integration** | Model-bound source-only service/proxy/gateway/storage reconciliation and Wizard review paths | **SOURCE CONTRACT ONLY**; self-reported component PASS is not independent real verification | Independently measured Proxy/Gateway/Storage/OpenWebUI state, exact model/API/port continuity, deployment acceptance and release **NOT VERIFIED** |
+| **P8 — Fault/recovery/final release** | Existing generic fault matrices, fake transaction/restore invariants, recovery/signoff source gates | **FAKE-DGX/CPU ONLY**; no deliberate real faults, automatic restoration or final operator Go/No-Go | Approved live fault injection, crash/journal reconciliation, recovery/rollback outcome, evidence completeness, real operating signoff and production release **NOT RUN** |
+
+### Distinct synthetic CPU scenarios — do not conflate with live DGX
+- **24**: registered 3 models × 6 directed pairs × 4 baseline Fake-DGX fault types.
+- **66**: 6 directed pairs × 11 extended in-memory transition fault types.
+- **48**: 6 directed pairs × 8 fake-disk persistence/fault types.
+- **21**: 3 registered models × 7 mock benchmark/resource-session scenarios.
+- P6-E ephemeral fake nonce/replay regression and two-process local contention are **additional** source-only checks, not additions to those historical matrix counts, and not independent operating approval.
+
+### Current evidence and safety boundary
+- The last operator-observed DGX runtime is **Orcarouter v3** \`qwen38-orcarouter-qsa62318-lmhead-v3\`, \`DEVELOPMENT_TRIAL\` on host \`:8000\`; served ID \`qwen3.8-flash-next-orca-uncensored-bf16\`. This is **last observed**, not a statement that GitHub independently queried its live state now.
+- On P5-D, \`docker_identity_match=true\`, \`gpu_pid_subset_of_container=true\`, host-port listener PID set empty, \`port_process_ownership_verified=false\` and \`gpu_exclusivity_verified=false\`. \`BLOCKED_PARTIAL_PROCESS_EVIDENCE\` / exit code 3 is an evidence-admission outcome, **not an inferred service outage**.
+- Keep **Blazux vLLM 0.32.0**, **no SGLang**, **ONE_ACTIVE_MODEL_ONLY**, **:8000**; preserve running/stopped containers, OpenWebUI/Portainer, HF/model/PLE caches, Docker images, private receipts, operating Journal and every past signoff. No unauthorized inference load, service interruption, model switch, GPU/CPU/cgroup actuation, deletion, journal migration, fault injection, PR merge or production promotion.
+
+### Next safe order and acceptance rule
+1. Verify **new HEAD CPU GitHub Actions** (not observed as of this section); source-only CI can establish repository regression status, never real DGX acceptance.
+2. Qualify P6-E operating **design and CPU/Fake-DGX** contracts (durable nonce fence, independent approval authentication, atomic current-state/Journal binding) before enabling any real executor; current preview remains blocked.
+3. Obtain fresh, specific operator approval separately before any P5 **loaded inference benchmark**, then correlate resource samples, Docker/API identity and workload in a verifiable session.
+4. Perform independent P7 proxy/gateway/storage evidence qualification, then only with separately scoped approval undertake P8 real fault/restore/Go-No-Go and measurement-completeness acceptance.
+
+The full historical per-stage results below remain evidence, not a current-state operator instruction. See [P5–P8 common contract](P5-P8-MODEL-AGNOSTIC-OPERATIONS-20261109.md) and [P5-D/P6-E actual evidence and Journal boundary](P5-D-P6-E-READ-ONLY-PROVENANCE-JOURNAL-V2-20261110.md).
+
+---
+
 ## 2026-11-09 current P5 v2 supersession — archived adapter compatibility marker
 
 Historical adapter `qwen4exp-qsa62318-lmhead-v032-v2` was superseded by v3, which resolved `lm_head.weight_scale`; neither legacy adapter nor source-only P5–P8 updates grant production release. Latest 10:15 KST operator idle observation and common source status appear below.

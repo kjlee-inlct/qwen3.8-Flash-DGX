@@ -1,3 +1,13 @@
+## CURRENT P5 DOCUMENT SUPERSESSION — 2026-11-18 P1–P8 acceptance overview
+
+**Start here:** [P1–P8 consolidated current-status table](../docs/P1-P8-WIZARD-ACCEPTANCE-STATUS-20261107.md) and [P5-D/P6-E provenance / Journal boundary](../docs/P5-D-P6-E-READ-ONLY-PROVENANCE-JOURNAL-V2-20261110.md). The historical `qwen4exp-qsa62318-lmhead-v032-v2` adapter was superseded by `qwen4exp-qsa62318-lmhead-v032-v3` (`lm_head.weight_scale` fixed). Read dated supersessions, not old `NOT_RUN` notes, as the current source of truth.
+
+**Summary:** P1/P2 verified DGX backend PASS; P3 historical A/B/C/G real PASS, but repeated generic switch/restore not released; P4-A and B/C real read-only PASS, P4 deletion not authorized; P5 Orcarouter v3 MTP0 text/API real PASS under DEVELOPMENT_TRIAL, P5-D actual DGX partial process evidence without confirmed :8000 listener PID (not an outage); P6-A/B/C/D/E source+fake with operating Journal/approval/executor unqualified; P7 independent service/proxy/gateway/storage and P8 live fault/recovery/production signoff not accepted. Separate synthetic matrices are 24/66/48/21 cases.
+
+**GitHub source baseline before this docs-only update:** `af49f7be53ca283ced01f0c7ecee2a8014cb58c1`, PR #1 Draft/Open/Unmerged. Latest verified older CI was `8b118c8` success; new-HEAD CPU CI unverified. Last actual DGX operator receipt 2026-11-12, no new live testing. Preserve vLLM 0.32.0, port 8000, ONE_ACTIVE_MODEL_ONLY, all assets; no SGLang, no unapproved service changes, no PR merge.
+
+---
+
 ## CURRENT P5 DOCUMENT SUPERSESSION — 2026-11-17 P6-E fake replay fence + Wizard UX fix
 
 **2026-11-17 GitHub source supersession (verified connector SHA):** `32d54380a0c616949fc1b057c0098695a60e7552` includes P6-E fake-only nonce implementation (`fcd6acc`), an independent two-process CPU contention test (`48384d5`) and push/PR test-file path filter fix (`32d5438`). This handoff-only follow-up advances the documentation commit beyond that source SHA. **New-HEAD CPU CI remains NOT VERIFIED:** Actions run/check-runs were absent when inspected; past green runs belong to older SHA `8b118c8`. Never claim CPU tests have passed until the new workflow run is observed. Actual DGX evidence remains the operator-provided 2026-11-12 P5-D partial PID observation; no GitHub-side DGX run was performed.

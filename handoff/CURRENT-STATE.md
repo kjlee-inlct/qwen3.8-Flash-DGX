@@ -1,3 +1,21 @@
+## CURRENT P5 DOCUMENT SUPERSESSION — 2026-11-18 P1–P8 stage status
+
+**Canonical table:** [P1–P8 consolidated acceptance](../docs/P1-P8-WIZARD-ACCEPTANCE-STATUS-20261107.md); [P5-D/P6-E evidence boundary](../docs/P5-D-P6-E-READ-ONLY-PROVENANCE-JOURNAL-V2-20261110.md). Historical `qwen4exp-qsa62318-lmhead-v032-v2` was replaced by `qwen4exp-qsa62318-lmhead-v032-v3` after the `lm_head.weight_scale` fix.
+
+| P1–P8 | Verified completion boundary | Unaccepted boundary |
+| --- | --- | --- |
+| P1/P2 | Actual pinned-model DGX backend/API and bounded benchmark PASS | Full model-first Wizard UX |
+| P3 | Historical real A/B/C/G PASS; D read-only, E host asset metadata, F CPU in own scopes | Repeatable generic cross-model switch/rollback/live reinstall |
+| P4 | Actual P4-A inventory and P4-B/C read-only dry-run PASS | Actual P4 resource deletion |
+| P5 | Orcarouter v3 MTP0 text API and idle measures observed; P5-C correlated; P5-D actual partial PID receipt | Loaded session, PLE RSS, MTP2, Tools/Vision, independent GPU/port ownership, release |
+| P6 | A/B/C in-memory/fake disk; D always-blocked gate; E schema preview + isolated fake nonce test | Real durable journal/nonce authentication, approval, executor, bidirectional switch |
+| P7 | Source-only 4-component reconciliation | Independent integration observations and production gateway acceptance |
+| P8 | 24 baseline, 66 extended, 48 fake disk, 21 mock session **distinct** cases | Real fault injection, restore, measurement completeness and final Go/No-Go |
+
+**Last operator-provided DGX evidence is 2026-11-12:** Orcarouter v3 DEVELOPMENT_TRIAL :8000, P5-D `BLOCKED_PARTIAL_PROCESS_EVIDENCE` due to missing host listener PID; not service failure. **Source baseline:** `af49f7b` before this docs-only commit; prior CI PASS `8b118c8` does not validate recent new code. Keep PR #1 Draft; vLLM 0.32.0, no SGLang, ONE_ACTIVE_MODEL_ONLY, all assets/evidence preserved; actual DGX operator approval remains mandatory for changes.
+
+---
+
 ## CURRENT P5 DOCUMENT SUPERSESSION — 2026-11-17 P6-E fake replay fence + Wizard UX fix
 
 **2026-11-17 GitHub source supersession (verified connector SHA):** `32d54380a0c616949fc1b057c0098695a60e7552` includes P6-E fake-only nonce implementation (`fcd6acc`), an independent two-process CPU contention test (`48384d5`) and push/PR test-file path filter fix (`32d5438`). This handoff-only follow-up advances the documentation commit beyond that source SHA. **New-HEAD CPU CI remains NOT VERIFIED:** Actions run/check-runs were absent when inspected; past green runs belong to older SHA `8b118c8`. Never claim CPU tests have passed until the new workflow run is observed. Actual DGX evidence remains the operator-provided 2026-11-12 P5-D partial PID observation; no GitHub-side DGX run was performed.
