@@ -367,7 +367,7 @@ def main(argv: list[str] | None = None) -> int:
         "fake-disk-contract", "fake-disk-matrix",
         "observation-review", "observation-capture", "operating-gate-review",
         "ownership-review", "ownership-capture", "journal-v2-preview",
-         "nonce-fence-mock"))
+         "nonce-fence-mock", "journal-v2-restart-review"))
     parser.add_argument("--from-model")
     parser.add_argument("--to-model")
     parser.add_argument("--model")
@@ -381,6 +381,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--ownership-evidence")
     parser.add_argument("--service-evidence")
     parser.add_argument("--operating-journal-evidence")
+    parser.add_argument("--v2-restart-evidence")
     parser.add_argument("--approval-evidence")
     parser.add_argument("--source-container-id")
     parser.add_argument("--target-container-id")
@@ -416,6 +417,13 @@ def main(argv: list[str] | None = None) -> int:
                 raise ValueError("EXACT_SOURCE_AND_TARGET_REQUIRED")
             from scripts.manager.mock_nonce_fence_v2 import fake_replay_fence_demo
             result = fake_replay_fence_demo(args.from_model, args.to_model)
+        elif args.action == "journal-v2-restart-review":
+            if not args.from_model or not args.to_model:
+                raise ValueError("EXACT_SOURCE_AND_TARGET_REQUIRED")
+            from scripts.manager.generic_journal_v2 import restart_fence_review
+            result = restart_fence_review(
+                args.from_model, args.to_model,
+                _load_evidence(args.v2_restart_evidence))
         elif args.action == "journal-v2-preview":
             if not args.from_model or not args.to_model:
                 raise ValueError("EXACT_SOURCE_AND_TARGET_REQUIRED")

@@ -230,3 +230,79 @@ def migration_preview(source: str, target: str, audit: dict | None) -> dict:
         "executed": False, "approval_accepted": False,
         "production_released": False, "resume_eligible": False,
     }
+
+
+# Source-only restart gate; no filesystem, executor or operating Journal access.
+RESTART_SNAPSHOT_FIELDS = frozenset((
+    "schema_version", "phase", "event_hash", "source_model", "target_model",
+    "source_container_id", "target_container_id", "plan_id", "nonce",
+))
+CLOSED_FOR_STRUCTURAL_REVIEW = frozenset(("COMMITTED", "RESTORED", "CANCELLED"))
+
+
+def restart_fence_review(source: str, target: str, evidence: object) -> dict:
+    """Review supplied, UNTRUSTED V2 draft JSON without granting authority.
+
+    A correct in-memory hash chain and matching supplied snapshot cannot prove
+    live Docker ownership, an independent nonce ledger or operator approval.
+    """
+    _models(source, target)
+    issues = []
+    final_phase = None
+    structural = False
+    if type(evidence) is not dict or frozenset(evidence) != frozenset((
+            "events", "snapshot", "consumed_nonces")):
+        issues.append("V2_RESTART_BUNDLE_SCHEMA_INVALID")
+    else:
+        events = evidence["events"]
+        audit = audit_v2_draft(events)
+        if audit["status"] != "PASS_V2_DRAFT_CONSISTENCY":
+            issues.extend(audit["issues"])
+            issues.append("V2_RESTART_JOURNAL_UNTRUSTED_OR_CORRUPT")
+        else:
+            last = events[-1]
+            final_phase = last["phase"]
+            if last["source_model"] != source or last["target_model"] != target:
+                issues.append("V2_RESTART_MODEL_PAIR_DRIFT")
+            if final_phase not in CLOSED_FOR_STRUCTURAL_REVIEW:
+                issues.append("V2_RESTART_UNFINISHED_TRANSITION_FREEZE")
+            snapshot = evidence["snapshot"]
+            if (type(snapshot) is not dict
+                    or frozenset(snapshot) != RESTART_SNAPSHOT_FIELDS
+                    or type(snapshot.get("schema_version")) is not int
+                    or snapshot["schema_version"] != 2
+                    or any(type(snapshot.get(k)) is not str for k in
+                           RESTART_SNAPSHOT_FIELDS - {"schema_version"})):
+                issues.append("V2_RESTART_SNAPSHOT_SCHEMA_INVALID")
+            elif any(snapshot[k] != last[k] for k in RESTART_SNAPSHOT_FIELDS):
+                issues.append("V2_RESTART_SNAPSHOT_EVENT_DRIFT")
+            consumed = evidence["consumed_nonces"]
+            if (type(consumed) is not list or len(consumed) > 128
+                    or any(type(n) is not str or not _ID.fullmatch(n)
+                           for n in consumed)):
+                issues.append("V2_RESTART_NONCE_HISTORY_SCHEMA_INVALID")
+            else:
+                if len(consumed) != len(set(consumed)):
+                    issues.append("V2_RESTART_DUPLICATE_NONCE_IN_HISTORY")
+                if last["nonce"] in consumed:
+                    issues.append("V2_RESTART_NONCE_REPLAY_INDICATED")
+            structural = not issues
+    return {
+        "schema_version": 2, "stage": "p6",
+        "action": "journal-v2-restart-review",
+        "scope": "UNTRUSTED_V2_DRAFT_NOT_OPERATING_AUTHORITY",
+        "status": "BLOCKED_V2_RESTART_NOT_AUTHORIZED",
+        "source_model": source, "target_model": target,
+        "last_phase": final_phase, "structural_fields_consistent": structural,
+        "issues": sorted(set(issues + [
+            "V2_JOURNAL_AND_SNAPSHOT_NOT_INDEPENDENTLY_AUTHENTICATED",
+            "V2_REAL_NONCE_REPLAY_HISTORY_UNVERIFIED",
+            "V2_LIVE_DOCKER_API_PORT_GPU_STATE_UNVERIFIED",
+            "V2_OPERATOR_APPROVAL_AND_EXECUTOR_UNQUALIFIED",
+        ])),
+        "v1_journal_modified": False, "v2_journal_written": False,
+        "executed": False, "approval_accepted": False,
+        "operations_enabled": False, "resume_eligible": False,
+        "automatic_recovery_authorized": False,
+        "production_released": False, "real_dgx_verified": False,
+    }
