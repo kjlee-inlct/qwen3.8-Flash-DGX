@@ -1,3 +1,13 @@
+## 2026-11-18 next verification after 43-test receipt / fake-only code hardening
+
+1. On the development checkout, `git pull --ff-only`, capture `git rev-parse HEAD` and `git status --short`, then run `test_generic_operations_cpu.py`, `test_mock_nonce_fence_v2_cpu.py`, and `test_p5d_p6e_cpu.py` with verbose `unittest`. Expected tests **14 + 12 + 19 = 45**, but **not yet run at the new source HEAD**. Record all `OK`, exact RC and SHA. Previous `4fc3aa8` operator-selected 43/43 PASS remains historical and SHA-bound.
+2. Investigate GitHub Actions repository/workflow enablement, permissions, Push/PR triggering token and non-default-branch workflow registration. `4fc3aa8` had zero runs/checks; most recent returned success was `8b118c8` (2026-11-11). Workflow exists on feature branch with matching filters but not on `main`; this alone does not explain missing Push/PR. **Do not merge PR #1, mutate main or enable a live workflow as a diagnostic.**
+3. Continue independent evidence authority, durable Journal crash-consistency fault injection, global Nonce replay fence and independently verified scoped approval as **Fake-DGX/source-only contracts**. Never promote injected JSON/unauthenticated hash checks to real acceptance. Keep P5 loaded trial, P7 live integration and P8 actual recovery blocked.
+
+[Operator CPU receipt, CI diagnosis, fake replay changes and runbook](../docs/P6-E-CPU-CI-FOLLOWUP-20261118.md)
+
+---
+
 ## 2026-11-18 P6-E read-only evidence-ingest fence — SOURCE UPDATED / TESTS AND CI PENDING
 
 **Current code scope (supersedes older source descriptions, not older test receipts):** On the Draft PR #1 feature branch, starting GitHub HEAD `4e93c6f9e1c0ef14cc55fab7aae378689828c6f8`, code now pins one read-only regular-file descriptor for injected JSON, verifies inode/size/timestamps, caps read size at 1 MiB, and rejects duplicate nested JSON keys, nonfinite numbers, malformed UTF-8 and excessive nesting. Four new CPU negative tests are added to `tests/test_generic_operations_cpu.py` for tampering/races/CLI fail-closed. **New tests were NOT executed in this session; no new exact-head CI PASS is claimed.** Full design and safe reproduction checklist: [P6-E JSON ingest fence](../docs/P6-E-UNTRUSTED-JSON-INGEST-FENCE-20261118.md).
