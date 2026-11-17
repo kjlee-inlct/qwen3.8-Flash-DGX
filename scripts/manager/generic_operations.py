@@ -375,6 +375,16 @@ def _load_evidence(path: str | None) -> dict | None:
         raise ValueError("EVIDENCE_JSON_ENCODING_OR_DEPTH_INVALID") from error
     if type(document) is not dict:
         raise ValueError("EVIDENCE_MUST_BE_JSON_OBJECT")
+    # json.loads can accept deeply nested arrays even without RecursionError
+    # on some Python builds. Bound semantic depth for every injected bundle.
+    pending = [(document, 0)]
+    while pending:
+        value, depth = pending.pop()
+        if type(value) in (dict, list):
+            if depth >= 64:
+                raise ValueError("EVIDENCE_JSON_NESTING_EXCESSIVE")
+            children = value.values() if type(value) is dict else value
+            pending.extend((child, depth + 1) for child in children)
     return document
 
 
