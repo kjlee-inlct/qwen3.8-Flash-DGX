@@ -9,6 +9,8 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
+import stat
 import math
 from pathlib import Path
 import re
@@ -313,16 +315,65 @@ def integration_review(model: str, components: dict | None, *,
     }
 
 
+def _reject_duplicate_evidence_keys(pairs: list[tuple[str, Any]]) -> dict:
+    """Do not silently choose the last of two conflicting evidence fields."""
+    result = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError("EVIDENCE_DUPLICATE_JSON_KEY:" + key)
+        result[key] = value
+    return result
+
+
+def _reject_nonfinite_evidence(value: str) -> None:
+    raise ValueError("EVIDENCE_NONFINITE_JSON_NUMBER:" + value)
+
+
 def _load_evidence(path: str | None) -> dict | None:
+    """Bound and pin a supplied read-only JSON input; never authenticate it.
+
+    All evidence is still UNTRUSTED even if it passes these syntactic checks.
+    A single opened regular-file descriptor, bounded read, and before/after
+    identity check prevent symlink/path swaps and unbounded file growth from
+    silently changing the bytes reviewed.
+    """
     if path is None:
         return None
     candidate = Path(path)
     if not candidate.is_absolute() or candidate.is_symlink():
         raise ValueError("EVIDENCE_PATH_MUST_BE_ABSOLUTE_REGULAR_FILE")
-    if not candidate.is_file() or candidate.stat().st_size > 1024 * 1024:
-        raise ValueError("EVIDENCE_FILE_MISSING_OR_TOO_LARGE")
-    document = json.loads(candidate.read_text(encoding="utf-8"))
-    if not isinstance(document, dict):
+    if not hasattr(os, "O_NOFOLLOW"):
+        raise ValueError("EVIDENCE_NOFOLLOW_NOT_SUPPORTED")
+    limit = 1024 * 1024
+    flags = os.O_RDONLY | os.O_NOFOLLOW | getattr(os, "O_NONBLOCK", 0)
+    with os.fdopen(os.open(candidate, flags), "rb") as stream:
+        before = os.fstat(stream.fileno())
+        if not stat.S_ISREG(before.st_mode) or not 0 < before.st_size <= limit:
+            raise ValueError("EVIDENCE_FILE_MISSING_OR_TOO_LARGE")
+        named = os.stat(candidate, follow_symlinks=False)
+        if (not stat.S_ISREG(named.st_mode)
+                or (before.st_dev, before.st_ino) != (named.st_dev, named.st_ino)):
+            raise ValueError("EVIDENCE_FILE_IDENTITY_CHANGED")
+        raw = stream.read(limit + 1)
+        after = os.fstat(stream.fileno())
+        named_after = os.stat(candidate, follow_symlinks=False)
+        if (not 0 < len(raw) <= limit
+                or before.st_size != len(raw)
+                or (before.st_dev, before.st_ino) != (after.st_dev, after.st_ino)
+                or (before.st_dev, before.st_ino) !=
+                (named_after.st_dev, named_after.st_ino)
+                or before.st_size != after.st_size
+                or before.st_mtime_ns != after.st_mtime_ns
+                or before.st_ctime_ns != after.st_ctime_ns):
+            raise ValueError("EVIDENCE_FILE_CHANGED_OR_UNBOUNDED")
+    try:
+        document = json.loads(
+            raw.decode("utf-8"),
+            object_pairs_hook=_reject_duplicate_evidence_keys,
+            parse_constant=_reject_nonfinite_evidence)
+    except (UnicodeError, RecursionError) as error:
+        raise ValueError("EVIDENCE_JSON_ENCODING_OR_DEPTH_INVALID") from error
+    if type(document) is not dict:
         raise ValueError("EVIDENCE_MUST_BE_JSON_OBJECT")
     return document
 
