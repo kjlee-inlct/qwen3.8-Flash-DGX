@@ -1,5 +1,19 @@
 # P3–P5 one-turn scoped closeout and remaining operational acceptance (2026-11-18)
 
+## 2026-11-18 source-only follow-up — NAT publishing and PLE smaps attribution (not DGX verified)
+
+**GitHub source changes (Draft PR #1, not merged):** `scripts/manager/p5_readonly_attribution.py` adds an isolated, non-mutating Docker `HostConfig.PortBindings` ↔ `NetworkSettings.Ports` port-8000 declaration reviewer and a pure per-PID `/proc/<pid>/smaps` file-mapping RSS/PSS parser. `process_ownership.ownership_review` now includes `port_publication`; when both Docker declarations contradict it adds `DOCKER_PUBLISHED_8000_DECLARATION_MISMATCH`. These fields **do not** authorize a host-port owner, NAT datapath, GPU exclusivity, service release, restart or any P6 transition. A matching bridge declaration is only `DOCKER_DECLARATION_CONSISTENT_NOT_HOST_VERIFIED`; an absent host listener still yields the existing `PORT_8000_HOST_LISTENER_PID_UNAVAILABLE_OR_NAT` and RC3.
+
+The PLE helper is **source-only**: it parses exact caller-supplied file paths for *one* process and reports `mapped_rss_bytes` / `mapped_pss_bytes`, while retaining `checkpoint_paths_authenticated=false`, `pid_container_membership_authenticated=false` and `ple_unique_resident_bytes=null`. It does **not** read live smaps or authenticate raw text provenance, checkpoint revisions, Docker namespace identity, mapping file inode, all workers or unique physical residency. It must not populate the existing `ple_resident_bytes` metric. A bounded read-only capture with exact pinned paths, independent PID/Docker identity before/after and multi-worker coverage still needs separate design/verification.
+
+**CPU evidence:** seven synthetic tests in `tests/test_p5_readonly_attribution_cpu.py` passed in an isolated local Python module copy; Git blob SHA matches the committed helper/test bytes. This is **not** repository-wide regression, GitHub Actions CI, or DGX execution. Exact repo test and CI remain pending. No new 256-output-token inference receipt was available to this GitHub session; check `./wizard.sh operations measurements history --model orcarouter --json` **read-only** on DGX before any consideration of the previously approved single-use live benchmark. Do not auto-rerun.
+
+**CI investigation:** one CPU workflow file exists on the feature branch, path filters include `handoff/**`, `scripts/manager/**` and `tests/test_p5_*_cpu.py`; default `main` did not expose `.github/workflows` via the contents API. The repository Actions runs feed still ended with the historical 2026-11-11 SHA `8b118c8`, and the investigated prior HEAD `c1bd76b` had zero runs/check-status entries. This is a **possible workflow registration/default-branch blocker**, not a verified causal diagnosis or CI PASS. Do not change `main`, merge PR #1 or enable production just to force CI.
+
+**Carry-forward status:** `P5_D_NAT_DECLARATION_SOURCE_ONLY` / `PLE_SMAPS_PARSER_SOURCE_ONLY` / `P5_MTP0_256_EVIDENCE_PENDING` / `CI_UNVERIFIED` / `PRODUCTION_BLOCKED`.
+
+---
+
 ## 2026-11-18 12:13Z operator P5-D ownership, inventory and idle resource receipts — executed read-only
 
 **Latest operator-host evidence** (supersedes only "P5-D follow-up read-only pending" and does **not** imply the separate approved 256-token inference was run): the user executed `ownership-capture --model orcarouter --json`, `measurements inventory --model orcarouter --summary-only --json`, and `resources snapshot --model orcarouter --summary-only --json` at the existing DGX. The inventory receipt bound to git SHA `7509a4ec095005418d9974bac07542be7def884e` and timestamp `2026-11-18T12:13:12.345679+00:00`; the idle resource snapshot is `2026-11-18T12:13:14.332388+00:00`. These are user-shared stdout receipts, **not** cryptographically independent acceptance.
