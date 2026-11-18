@@ -66,11 +66,67 @@ class P3P5CloseoutCPU(unittest.TestCase):
         out = c.collect("read-only", runner=fake)
         self.assertEqual(out["status"], "READ_ONLY_COLLECTED_NOT_RELEASED")
         self.assertEqual(len(out["tasks"]), 5)
-        self.assertTrue(out["tasks"][2]["accepted"])
+        self.assertTrue(out["tasks"][2]["collected"])
+        self.assertFalse(out["tasks"][2]["accepted"])
+        self.assertTrue(out["tasks"][2]["expected_non_authorizing_plan"])
+        self.assertEqual(out["tasks"][2]["result"], "BLOCKED_RECEIPT")
         self.assertEqual(out["tasks"][2]["returncode"], 3)
         self.assertEqual(out["tasks"][2]["summary"]["status"], "BLOCKED")
         self.assertFalse(out["inference_executed"])
         self.assertFalse(out["operating_journal_written"])
+
+    def test_readonly_real_blockers_have_valid_receipts_not_false_pass(self):
+        def blocked(cmd, **kw):
+            if "p3_dg_acceptance" in cmd:
+                return subprocess.CompletedProcess(cmd, 3, json.dumps({
+                    "status": "BLOCKED", "blocked_stages": ["P3-D", "P3-G"],
+                    "stages": {"P3-D": {"status": "BLOCKED", "issues": ["NO_HOST_PID"]},
+                               "P3-G": {"status": "BLOCKED", "issues": ["PREVIEW_BLOCKED"]}}
+                }), "")
+            if "p4_bc_dry_run" in cmd:
+                return subprocess.CompletedProcess(cmd, 3, json.dumps({
+                    "status": "READ_ONLY_DRY_RUN_BLOCKED",
+                    "candidate_review": {"status": "BLOCKED", "issues": ["P4_A_UNAVAILABLE"]},
+                    "cleanup_rehearsal": {"status": "BLOCKED", "issues": []},
+                }), "")
+            if "model_measurements" in cmd and "inventory" in cmd:
+                return subprocess.CompletedProcess(cmd, 0, json.dumps({
+                    "status": "READ_ONLY_PARTIAL", "action": "inventory"}), "")
+            return fake(cmd, **kw)
+        out = c.collect("read-only", runner=blocked)
+        self.assertEqual(out["status"], "READ_ONLY_COLLECTED_WITH_GAPS")
+        self.assertEqual(out["receipts_collected"], 5)
+        self.assertTrue(out["read_only_all_receipts_collected"])
+        for t in out["tasks"][:2]:
+            self.assertEqual(t["result"], "BLOCKED_RECEIPT")
+            self.assertTrue(t["collected"])
+            self.assertFalse(t["accepted"])
+        self.assertIn("P3-D", out["tasks"][0]["summary"]["stages"])
+        self.assertEqual(out["tasks"][1]["summary"]["candidate_review"]["issues"],
+                         ["P4_A_UNAVAILABLE"])
+        self.assertFalse(out["production_released"])
+
+    def test_p5_cpu_failure_exposes_structured_parser_diagnostic_without_raw_log(self):
+        def failed(cmd, **kw):
+            if "p5_orcarouter" in cmd and "--cpu-only" in cmd:
+                return subprocess.CompletedProcess(cmd, 3, json.dumps({
+                    "status": "FAIL", "issues": ["P5_CPU_TESTS_FAILED"],
+                    "stages": [{"gate": "cpu_fake_dgx", "status": "FAIL",
+                                "exit_code": 0, "test_summary": "Ran 91 tests in 1.3s",
+                                "test_cases": [{"case": "test_good", "status": "PASS"},
+                                               {"case": "test_bad", "status": "FAIL"}],
+                                "failure_details": "secret private log must never escape"}]}), "")
+            return fake(cmd, **kw)
+        out = c.collect("cpu-only", runner=failed)
+        self.assertEqual(out["status"], "INCOMPLETE_OR_BLOCKED")
+        p5 = next(x for x in out["tasks"] if x["task"] == "p5_source_cpu")
+        self.assertTrue(p5["collected"])
+        self.assertFalse(p5["accepted"])
+        self.assertEqual(p5["result"], "BLOCKED_RECEIPT")
+        self.assertEqual(p5["summary"]["cpu_suite"]["failed_cases"], ["test_bad"])
+        self.assertEqual(p5["summary"]["cpu_suite"]["parsed_case_count"], 2)
+        self.assertTrue(p5["summary"]["cpu_suite"]["failure_detail_available_in_direct_p5_output"])
+        self.assertNotIn("secret private", json.dumps(out))
 
     def test_only_allowlisted_readonly_commands_and_hashes_opt_in(self):
         plain = c.tasks_for("read-only")
@@ -102,6 +158,7 @@ class P3P5CloseoutCPU(unittest.TestCase):
         err = c._execute(task, runner=lambda cmd, **kw:
                          subprocess.CompletedProcess(cmd, 2, '{"status":"PASS"}', ""))
         self.assertFalse(err["accepted"])
+        self.assertFalse(err["collected"])
 
     def test_cli_rejects_unapproved_modes(self):
         with contextlib.redirect_stderr(io.StringIO()):
