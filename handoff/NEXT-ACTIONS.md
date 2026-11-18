@@ -1,3 +1,14 @@
+## 2026-11-19 KST — P5 256-token plan validated, execution remains separately gated
+
+- [x] Operator clean DGX source HEAD `17ebc7f7ba2dcfc27c6dca265952dc99cb85e3ee`; `git status --porcelain` empty. Earlier 65 targeted CPU PASS belongs to the operator receipt but its original stdout did not print the tested HEAD.
+- [x] `service manager status`: `LIVE_P5_TRIAL_API_VERIFIED`, correct existing Orcarouter development trial, Served ID `qwen3.8-flash-next-orca-uncensored-bf16`, :8000, issues=[]; not production and not GPU/port owner attestation. Published Docker port and image observed, full current Docker container ID not included in this status output.
+- [x] `benchmark-plan --contexts-k 1,4 --max-output-tokens 256`: `PLAN_ONLY_ACK_REQUIRED`, concurrency=1, repeat=1, **no inference**; matches prior one-shot authorization.
+- [ ] Confirm no unsaved or external 256-token attempt already consumed the approval. Local history had only older 128-token benchmark and inventory; absence of a saved record is not a proof of no prior execution.
+- [ ] If still authorized, perform **one** explicitly acknowledged `benchmark-execute` on the same already-active MTP0 with fresh exact model/API/64-char Docker ID gates, `--save --summary-only --json`, no auto-retry. Capture TTFT, TTFC, Reasoning-only vs visible content, post-first-token TPS, actual token usage, E2E, finish reason and private receipt. Do not infer performance metrics for the prior 128-token run.
+- [ ] Keep new-head Actions and independent P5-D NAT/PLE RSS, P6-E/P7/P8 production gates blocked. Avoid model switch, Docker change, operating Journal mutation and PR merge. Latest scoped details: [P3-P5 closeout](../docs/P3-P5-ONE-TURN-CLOSEOUT-20261118.md).
+
+---
+
 ## 2026-11-19 KST — targeted CPU complete, exact SHA and 256-token live status pending
 
 - [x] Operator ran four targeted CPU suites: P5 NAT/PLE **7**, P5-D/P6-E **19**, resource diagnostics **16**, SSE measurements **23**, **all 65 PASS**, RC0 each.
