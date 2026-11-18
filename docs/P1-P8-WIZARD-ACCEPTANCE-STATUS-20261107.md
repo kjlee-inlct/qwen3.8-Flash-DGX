@@ -1,3 +1,12 @@
+## 2026-11-19 KST — P5 256-token live SSE measurement completed, visible TTFC still blocked
+
+- Actual approved DGX MTP0 1K/4K `benchmark-execute` **executed** at exact clean source `17ebc7f7ba2dcfc27c6dca265952dc99cb85e3ee`. Two of two cases `MEASURED_REASONING_ONLY`: 1K `TTFT=0.52965s` and `TPS=22.405`; 4K `TTFT=1.70999s` and `TPS=22.604`. Server usage 256 output tokens each, both streams complete, `delta.reasoning` observed. Saved local measurement receipt, Docker ID continuous.
+- Both `TTFC=null`, `visible_characters=0`, `finish_reason=length`; consequently **visible-answer latency not measured** and runtime/performance remains `COLLECTED_UNQUALIFIED`, not production-qualified. Historical 128-token run remains unchanged.
+- Prior explicit one-shot approval is **consumed**. No further inference, retries, increased output caps, MTP2, switching or release without new approval.
+- P1–P4 historical scoped results maintained. P5 NAT host process, PLE residency, GPU exclusivity and current GitHub Actions CI remain unqualified; P6/P7/P8 operational release blocked. PR #1 Draft/Open/Unmerged. See [scoped closeout](P3-P5-ONE-TURN-CLOSEOUT-20261118.md).
+
+---
+
 ## 2026-11-19 KST P5 targeted CPU update — SHA unbound, CI/live gaps remain
 
 - Operator-supplied DGX stdout **65/65 targeted CPU tests PASS** in four groups (P5 NAT/PLE 7; P5-D/P6-E 19; P5 resources 16; P5 measurements/SSE 23), all exit code zero. The pasted log does not show git HEAD/clean status: **cannot pin PASS to an exact new HEAD**. This is not entire-repository regression, GitHub Actions CI or GPU qualification.
