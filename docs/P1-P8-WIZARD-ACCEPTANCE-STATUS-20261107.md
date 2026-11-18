@@ -1,3 +1,11 @@
+## 2026-11-19 KST — uploaded full P5 resource JSON REVIEWED (supersedes resource-review pending)
+
+Reviewed original `orcarouter--20261118T214659097604Z--86b3752c0029.json`: 4 snapshots spanning **42.008s** and `OBSERVED_INTERVAL`, stable Docker ID at clean trial SHA `bc0a9ea`, prior nonthinking 3/3 TTFC/TPS recorded separately. Sampled GPU utilization **0→66→74→75%**, GPU power **9.86→20.43→20.98→21.22W**, GPU temperature **34→38→40→41°C**; peak *observed system zone* 46.6°C. Host CPU busy **5.11%**. Host minimum MemAvailable **28.729GiB**; host used swap stable **1.307GiB** and **zero swap-in/swap-out** observed, memory PSI some avg10 **0%**, cgroup high/max/oom/kill event deltas all zero. Container cgroup `memory.current` **22.914→22.581GiB**, file cache `file` **17.863→17.525GiB**, anon near **4.60GiB**. Cgroup major-fault count rose **2004** in first measured segment only, with `workingset_refault_file_delta=0`. NVMe mean read/write over the window **195401 / 316600 bytes/s** from host cumulative counters, not PLE-specific. Docker CLI `MemUsage~7.18GiB` uses different accounting from cgroup `memory.current~22.58GiB`; do not merge or call either VRAM. `PLE-specific RSS=null` and `smaps_rollup=null`, no independent port/NAT process, GPU exclusivity or throttling proof. Four GPU values are **after-case point samples**, not in-flight peak utilization. Production and CI remain blocked.
+
+[Full resource review](../docs/P5-VISIBLE-GPU-ONE-SHOT-20261119.md).
+
+---
+
 ## 2026-11-19 06:46 KST — P5 visible-answer TTFC measured 1K/4K/7K (latest supersession)
 
 **New real DGX outcome, user-supplied stdout at clean SHA `bc0a9ea2346b85fa9f8e6ef132b765078b6385db`:** P5 visible-output 1K/4K/7K 256-token request-local `enable_thinking=false` one-shot **3/3 `MEASURED_VISIBLE`**; TTFT=TTFC **0.52051 / 1.59565 / 2.80664 s**, post-first TPS **21.961 / 22.943 / 22.948**, E2E **12.13219 / 12.71006 / 13.91874 s**. All SSE usage and visible deltas observed; reasoning deltas zero; Docker ID continuous. Selected CPU 8/8 + 23/23 = **31/31 PASS** at the guarded source checkout. `COLLECTED_UNQUALIFIED`; `finish_reason=length` all 3, so full answer completion and real runtime release not established. Saved private receipt and exclusive consumed marker; **do not rerun without another explicit approval**.
