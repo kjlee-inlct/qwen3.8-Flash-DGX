@@ -91,8 +91,9 @@ def _iptables_nat(ips, raw):
         return {"status": "UNAVAILABLE", "matching_rule_found": False}
     matches = []
     for line in raw.splitlines():
-        if (line.startswith("-A ") and "--dport 8000" in line
-                and ("-j DNAT" in line or "-j DNAT " in line)):
+        if (line.startswith("-A ") and
+                re.search(r"--dport\s+8000(?:\s|$)", line) and
+                re.search(r"-j\s+DNAT(?:\s|$)", line)):
             for ip in ips:
                 if re.search(r"--to-destination\s+" + re.escape(ip) + r":8000(?:\s|$)", line):
                     matches.append(ip)
@@ -462,6 +463,8 @@ def _collect(*, capture_ownership=ownership_capture, run_command=_cmd,
         issues.append("MODEL_CACHE_MAPPING_CANDIDATES_NOT_OBSERVED")
     if not fully_statted:
         issues.append("MAPPING_FILE_INODE_COVERAGE_INCOMPLETE")
+    if pinned_matched_count == 0:
+        issues.append("PINNED_SNAPSHOT_MAPPED_INODE_NOT_FOUND")
     if not ports["matched_docker_host_pids"]:
         issues.append("CONTAINER_SOCKET_OWNER_FD_UNVERIFIED")
     if publication["status"] != "DOCKER_DECLARATION_CONSISTENT_NOT_HOST_VERIFIED":
@@ -470,6 +473,7 @@ def _collect(*, capture_ownership=ownership_capture, run_command=_cmd,
     # proof that the kernel actually used a particular host NAT datapath.
     correlated = (continuous and pid_identity_continuous and api_match
                   and bool(ports["matched_docker_host_pids"])
+                  and pinned_matched_count > 0
                   and fully_statted and all_pids_accessible
                   and publication["docker_port_declarations_consistent"])
     return {
