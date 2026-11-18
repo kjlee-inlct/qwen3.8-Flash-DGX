@@ -1,3 +1,9 @@
+## 2026-11-18 Actions settings — operator read-only evidence
+
+Operator supplied `gh api repos/kjlee-inlct/qwen3.8-Flash-DGX/actions/workflows/406361282` returning `state=active`, path `.github/workflows/recipe-manifest-cpu.yml`, and `gh api repos/kjlee-inlct/qwen3.8-Flash-DGX/actions/permissions` returning `enabled=true`, `allowed_actions=all`. **CONFIRMED current settings; NOT_OBSERVED historical policy or push credential.** GitHub connector latest run count remains **1640**. No same-head CI acceptance yet. [Full receipt](../docs/GITHUB-ACTIONS-NO-RUN-INVESTIGATION-20261118.md).
+
+---
+
 ## 2026-11-18 Github Actions no-run API investigation
 
 **Observed API:** repository Actions `total_count=1640`, newest run 2026-11-11 at `8b118c8` (push `43107837772`, PR `43108072440`, both success). Current feature head at review `a47a36a0be2d340e642544692e3666e6f11ac784` is **44 commits ahead** and had `actions/runs?head_sha` count **0**, `check-runs` count **0**, statuses empty. First missing `fcd6accc` also had 0 SHA-specific workflow runs; first missing workflow diff contains two added fake-only CPU commands with no removed trigger. PR #1 mergeable=true. Paths and commit messages do not explain zero runs. Connector blocks `/actions/workflows` and `/actions/permissions` independently of GitHub configuration; **workflow activation and account policy are NOT_OBSERVED**.
