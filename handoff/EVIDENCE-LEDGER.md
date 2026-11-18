@@ -1,3 +1,13 @@
+## 2026-11-18 Github Actions no-run API investigation
+
+**Observed API:** repository Actions `total_count=1640`, newest run 2026-11-11 at `8b118c8` (push `43107837772`, PR `43108072440`, both success). Current feature head at review `a47a36a0be2d340e642544692e3666e6f11ac784` is **44 commits ahead** and had `actions/runs?head_sha` count **0**, `check-runs` count **0**, statuses empty. First missing `fcd6accc` also had 0 SHA-specific workflow runs; first missing workflow diff contains two added fake-only CPU commands with no removed trigger. PR #1 mergeable=true. Paths and commit messages do not explain zero runs. Connector blocks `/actions/workflows` and `/actions/permissions` independently of GitHub configuration; **workflow activation and account policy are NOT_OBSERVED**.
+
+**Evidence class:** `GITHUB_ACTIONS_ZERO_RUN_INVESTIGATION_20261118`. **Not** `ACTIONS_DISABLED_CONFIRMED`, not CI FAIL, not source test FAIL, and not authenticated CI PASS. The operator CPU 45/45 PASS at `2f5240d` remains a separate SHA-bound evidence receipt.
+
+[Detailed investigation and read-only owner/admin commands](../docs/GITHUB-ACTIONS-NO-RUN-INVESTIGATION-20261118.md). No Actions dispatch, setting edits, default-branch merge or production effects.
+
+---
+
 ## 2026-11-18 new-HEAD operator CPU receipt — 45/45 PASS RC0, CI not verified
 
 - **Tested source HEAD:** `2f5240d3a5652ce44af51b4b323b0d8d88a105bd` on `feature/recipe-wizard-handoff`; fast-forward observed `4fc3aa8..2f5240d`; `git status --short` empty **before** test commands (post-test status not shown).
