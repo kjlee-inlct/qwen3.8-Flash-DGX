@@ -1,3 +1,11 @@
+## 2026-11-18 — P3–P5 scoped consolidation (source-only; no live operation)
+
+Added `scripts/manager/p3_p5_closeout.py`: fixed non-mutating `--plan`, `--cpu-only`, `--read-only` source/DGX observation collection; optional separately selected heavy P5 asset read hashing; no inference/service switch/cleanup/operating Journal/recovery path. Added 9 source CPU tests in `tests/test_p3_p5_closeout_cpu.py` and included them in Push/PR workflow filters and CPU suite. No new-head CPU/CI run has been observed, no production acceptance asserted.
+
+P3 A/B/C/G real historical PASS preserved; E/F handoff scoped; Flash canonical reinstall deferred P8. P4 A/B/C read-only accepted, live deletion remains optional/unapproved. P5 v3 MTP0 DEVELOPMENT_TRIAL; loaded benchmark + independent ownership + MTP2 remain pending. [Evidence-scoped disposition](../docs/P3-P5-ONE-TURN-CLOSEOUT-20261118.md).
+
+---
+
 ## 2026-11-18 P6-E read-only evidence-ingest fence — SOURCE UPDATED / TESTS AND CI PENDING
 
 **Current code scope (supersedes older source descriptions, not older test receipts):** On the Draft PR #1 feature branch, starting GitHub HEAD `4e93c6f9e1c0ef14cc55fab7aae378689828c6f8`, code now pins one read-only regular-file descriptor for injected JSON, verifies inode/size/timestamps, caps read size at 1 MiB, and rejects duplicate nested JSON keys, nonfinite numbers, malformed UTF-8 and excessive nesting. Four new CPU negative tests are added to `tests/test_generic_operations_cpu.py` for tampering/races/CLI fail-closed. **New tests were NOT executed in this session; no new exact-head CI PASS is claimed.** Full design and safe reproduction checklist: [P6-E JSON ingest fence](../docs/P6-E-UNTRUSTED-JSON-INGEST-FENCE-20261118.md).
