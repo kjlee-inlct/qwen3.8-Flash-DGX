@@ -1,3 +1,13 @@
+## 2026-11-18 P3–P5: resolve P5 actual CPU failure and current read-only blockers
+
+1. At clean new source HEAD, run `python3 -B -m unittest discover -s tests -p 'test_p5_document_integrity_cpu.py' -v` and `python3 -B -m unittest discover -s tests -p 'test_p5_*_cpu.py' -v`; record `Ran N`, test method failures, `OK`/failure and shell RC. Static proof already shows the old frozen document equality test necessarily failed on `9a79c8`, but other P5 failures cannot be excluded without the raw inner report.
+2. Rerun `python3 -B -m scripts.manager.p3_p5_closeout --cpu-only --json`; require actual task PASS for P5 before claiming `CPU_SELECTED_PASS_NOT_CI`. Source-only CI remains independently `UNVERIFIED` due existing GitHub Actions no-run.
+3. Rerun `python3 -B -m scripts.manager.p3_p5_closeout --read-only --json` and examine nested P3 D/G and P4 review/rehearsal issues. `READ_ONLY_COLLECTED_WITH_GAPS` RC3 is expected until these current read-only gates are actually qualified; never mask a BLOCKED outcome or treat expected P5 GPU-plan denial as service failure.
+4. Preserve P3 historical switches and P4 historical read-only acceptances. P5 loaded benchmark, PLE RSS, independently authenticated GPU/port process ownership and MTP2 remain separate operator-approved work; do not run them as part of diagnostics. P8 retains real Flash reinstall and all recovery.
+5. Keep Draft PR unmerged and no Docker/runtime/operating Journal mutation. [Latest verified and pending gates](../docs/P3-P5-ONE-TURN-CLOSEOUT-20261118.md).
+
+---
+
 ## 2026-11-18 P3–P5 one-turn source integration — remaining verified steps
 
 1. **P3/P4 historical results stay closed in scoped sense.** Do not replay A/B/C/G actual model transfers or delete Flash/27B/Orcarouter HF assets. P3 canonical Flash reinstall/general production adapter is P8-gated; P4 destructive cleanup is optional and requires fresh capacity evidence plus exact separate approval.
