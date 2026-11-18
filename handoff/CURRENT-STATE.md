@@ -1,3 +1,13 @@
+## 2026-11-18 latest P3–P5 operator 8b8f5a0 follow-up: two CPU fixture failures repaired in source only
+
+Clean operator source `8b8f5a0132e8b1f27f9ec4b1cd53c5e82c7f1aea`: P5 doc 5/6 PASS RC1, total P5 149/150 PASS RC1, P3-P5 collector tests 5/11 PASS RC1. The P5 failing test is frozen document inventory contaminated by ten local/private `reports/transitions/flash-next--to--27b/*.json` P3 operator receipts; no report removal authorized. The six integration mock fails are caused by matching bare vs fully qualified `scripts.manager.p3_dg_acceptance` subprocess list entries. Code fix uses Git index tracked-file inventory, retains frozen 169+known incremental document validation, adds isolated untracked-file/unsafe-path CPU tests, and corrects fake runner module-name matching. **None of these fixes have new-HEAD CPU/CI PASS evidence yet.**
+
+Read-only operator `READ_ONLY_COLLECTED_WITH_GAPS` RC3, all five receipts collected, was correctly fail-closed: P3-D current API/Docker/GPU/port attribution unverified, P3-G active source unsupported/unknown, P4-A current inventory partial, P3-E Flash reinstall not qualified, P5 source plan expected blocked and P5 inventory partial. Historical P3 A/B/C/G and P4 read-only accepted receipts remain intact. No sign of model service malfunction from these source-only blockers. Full evidence: [P3–P5 latest test audit](../docs/P3-P5-ONE-TURN-CLOSEOUT-20261118.md).
+
+`NEW_SOURCE_CPU_PENDING / CI_UNVERIFIED / PRODUCTION_BLOCKED`; no operational DGX changes or PR merge.
+
+---
+
 ## 2026-11-18 P3–P5 operator integration receipts and corrections — NOT PASSED
 
 Clean operator checkout `9a79c8df4240c99836b0b0cf54ec3a88003686c6`: combined `--cpu-only` returned `INCOMPLETE_OR_BLOCKED` RC3; P3 CPU PASS, P4-A 9 PASS, P4-B/C 13 PASS, P5 source CPU **FAIL RC3** `P5_CPU_TESTS_FAILED`, P5 measurements 18 PASS and session 8 PASS. Combined `--read-only` returned RC3; P3-D and P3-G BLOCKED, P4-A/B+C dry-run BLOCKED, P5 source plan expected BLOCKED, model inventory READ_ONLY_PARTIAL, benchmark plan only. No service failure or previous historical acceptance reversal is inferred.
