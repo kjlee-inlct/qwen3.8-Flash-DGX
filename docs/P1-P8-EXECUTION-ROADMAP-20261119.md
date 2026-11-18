@@ -1,5 +1,13 @@
 # Blazux DGX Spark — P1–P8 execution roadmap (2026-11-19 KST)
 
+## 2026-11-19 KST — uploaded full P5 resource JSON REVIEWED (supersedes resource-review pending)
+
+Reviewed original `orcarouter--20261118T214659097604Z--86b3752c0029.json`: 4 snapshots spanning **42.008s** and `OBSERVED_INTERVAL`, stable Docker ID at clean trial SHA `bc0a9ea`, prior nonthinking 3/3 TTFC/TPS recorded separately. Sampled GPU utilization **0→66→74→75%**, GPU power **9.86→20.43→20.98→21.22W**, GPU temperature **34→38→40→41°C**; peak *observed system zone* 46.6°C. Host CPU busy **5.11%**. Host minimum MemAvailable **28.729GiB**; host used swap stable **1.307GiB** and **zero swap-in/swap-out** observed, memory PSI some avg10 **0%**, cgroup high/max/oom/kill event deltas all zero. Container cgroup `memory.current` **22.914→22.581GiB**, file cache `file` **17.863→17.525GiB**, anon near **4.60GiB**. Cgroup major-fault count rose **2004** in first measured segment only, with `workingset_refault_file_delta=0`. NVMe mean read/write over the window **195401 / 316600 bytes/s** from host cumulative counters, not PLE-specific. Docker CLI `MemUsage~7.18GiB` uses different accounting from cgroup `memory.current~22.58GiB`; do not merge or call either VRAM. `PLE-specific RSS=null` and `smaps_rollup=null`, no independent port/NAT process, GPU exclusivity or throttling proof. Four GPU values are **after-case point samples**, not in-flight peak utilization. Production and CI remain blocked.
+
+[Full resource review](../docs/P5-VISIBLE-GPU-ONE-SHOT-20261119.md).
+
+---
+
 ## Current update: P5 visible measurement COMPLETE (2026-11-19 06:46 KST (2026-11-18 21:46 UTC))
 
 **M1 P5 visible TTFC is now observed (scope-limited)**: operator ran the separate authorized one-shot, 1K/4K/7K `MEASURED_VISIBLE` 3/3, TTFC=TTFT 0.52051/1.59565/2.80664 seconds and post-first TPS 21.961/22.943/22.948. 31 selected CPU tests PASS on clean source SHA `bc0a9ea2346b85fa9f8e6ef132b765078b6385db`. All three completions ended with `finish_reason=length`; accuracy/task completion and production qualification are unverified. One-shot approval is **consumed**: no replay. M1 next target is **read-only resource receipt review, then independently grounded PLE RSS and NAT/GPU ownership**. M0 CI remains unverified; M2 P6-E, M3 P7, M4 P8 remain approval-gated. [Detailed measurement](P5-VISIBLE-GPU-ONE-SHOT-20261119.md).
