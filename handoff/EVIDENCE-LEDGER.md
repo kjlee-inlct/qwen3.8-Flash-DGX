@@ -1,3 +1,11 @@
+## 2026-11-18 verified operator 8b8f5a0 transcript and source-only fixture repair
+
+**Operator-supplied, clean checkout:** `8b8f5a0132e8b1f27f9ec4b1cd53c5e82c7f1aea`. P5 docs `5/6 PASS`, P5 all CPU `149/150 PASS`, closeout fake CPU `5/11 PASS` (six fixture errors), combined CPU RC3; read-only `READ_ONLY_COLLECTED_WITH_GAPS` RC3 and all 5 receipts collected. Exact failures: ten **local non-tracked** historical P3 transition JSON receipts incorrectly included by `ROOT.rglob` source inventory, and P3-P5 fake CLI matcher looked for bare instead of full `scripts.manager.p3_dg_acceptance` argument. Read-only receipt shows P3-D/G blockers and P4-A snapshot partial; not proof of active service outage. Source changed to Git-tracked inventory + exact fake command matching, with negative tests; **post-fix tests not yet run**, CI still unavailable.
+
+Full read-only stage reasons and chronology: [P3-P5 closeout](../docs/P3-P5-ONE-TURN-CLOSEOUT-20261118.md). Preserve P3 private JSON receipts, caches, models, :8000, operating Journal.
+
+---
+
 ## 2026-11-18 operator P3–P5 integration result at exact source SHA 9a79c8
 
 **Provenance:** operator pasted full JSON for combined CPU and read-only runs with `source_head=9a79c8df4240c99836b0b0cf54ec3a88003686c6`, `clean_before_run=true`. **CPU:** P3 CPU 0, P4-A 9 PASS, P4-B/C 13 PASS, **P5 source FAIL RC3**, measurements 18 PASS, session 8 PASS, aggregate RC3. **Read-only:** P3-D/G BLOCKED; P4-A/B+C `READ_ONLY_DRY_RUN_BLOCKED` RC3; P5 plan BLOCKED (expected safety), inventory partial, benchmark plan only; aggregate RC3. Evidence class `OPERATOR_SHA_BOUND_P3P5_CPU_PARTIAL_AND_READONLY_BLOCKED`. Not CI and not proof of real service failure.
