@@ -1,3 +1,15 @@
+## 2026-11-18 P3–P5 latest — CPU-only recheck first, no historical report deletion
+
+- [x] Read operator terminal at clean `8b8f5a0`: P5 149/150 CPU, doc 5/6, closeout 5/11 with precisely identified test-harness issues. All 5 read-only receipts collected, with P3-D/G and P4-A incomplete, not production acceptance.
+- [x] Fix document inventory to audit **Git-tracked source only**, never local `reports/transitions` artifacts; preserve frozen 169+known incremental sources. Fix fake full module name matcher. Add two new CPU tests for tracked/untracked and unsafe paths. **Do not delete the ten P3 operator JSON receipts**.
+- [ ] At a new clean checkout: run direct P5 docs, all P5 CPU, closeout CPU, then combined P3-P5 CPU; record full SHA, counts, RC0/RC3, status and clean tree. No post-fix PASS currently recorded.
+- [ ] P3-D/G and P4-B/C READ_ONLY_WITH_GAPS need separate current-hardware investigation only if the operator wants new operating acceptance. Under Orcarouter development runtime, do not reuse 27B↔Flash P3-only service gates as authorization to switch or modify :8000. P4-A `READ_ONLY_INVENTORY_PARTIAL` needs fresh bounded read-only root/capacity diagnosis; do not infer deletion is needed.
+- [ ] CI Actions still no-run; keep PR #1 Draft and unmerged; P5 loaded benchmark, PLE RSS, GPU/port ownership, MTP2 and P8 fresh reinstall/recovery must remain separately operator-approved.
+
+[Detailed latest evidence](../docs/P3-P5-ONE-TURN-CLOSEOUT-20261118.md)
+
+---
+
 ## 2026-11-18 P3–P5: resolve P5 actual CPU failure and current read-only blockers
 
 1. At clean new source HEAD, run `python3 -B -m unittest discover -s tests -p 'test_p5_document_integrity_cpu.py' -v` and `python3 -B -m unittest discover -s tests -p 'test_p5_*_cpu.py' -v`; record `Ran N`, test method failures, `OK`/failure and shell RC. Static proof already shows the old frozen document equality test necessarily failed on `9a79c8`, but other P5 failures cannot be excluded without the raw inner report.
