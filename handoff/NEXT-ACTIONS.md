@@ -1,3 +1,13 @@
+## 2026-11-19 KST — P5 original resource JSON REVIEWED; no more GPU inference
+
+- [x] Received and parsed original `orcarouter--20261118T214659097604Z--86b3752c0029.json` (4 sequential resource snapshots, 42.008s, `OBSERVED_INTERVAL`), not just compact stdout. Extracted observed GPU utilization/power/temps, host available/cgroup current/file/anon, CPU busy, vmstat/cgroup major faults, PSI, swap events and NVMe rates. No observed cgroup OOM, memory PSI or swap I/O; **2004 cgroup major faults** in first segment; no source supports PLE unique RSS or verified model-specific NVMe reads.
+- [x] P5 loaded metrics completeness: TTFT/TTFC and post-first TPS obtained under request-local no-thinking 1K/4K/7K; receipt review is complete **for fields included**. No approved GPU rerun or new context load.
+- [ ] P5-D read-only provenance improvement for exact pinned PLE mmap file/inode, container PID and all workers (distinguish mapping RSS/PSS from unique resident memory). Independently qualify or retain blocked NAT :8000 host listener/PID and GPU exclusivity.
+- [ ] CI no-run investigation, P6-E independently authenticated operating approval/nonce/Journal crash consistency, P7 independent service integration, P8 separately authorized fault/restore release.
+- [ ] Keep P1–P4 historical receipts, current Orcarouter service, :8000, HF cache, vLLM 0.32.0, no SGLang, ONE_ACTIVE_MODEL_ONLY, Draft PR #1 unmerged.
+
+---
+
 ## 2026-11-19 06:46 KST — P5 visible TTFC GPU scope DONE; next work is read-only resource review
 
 - [x] Operator pulled clean `bc0a9ea2346b85fa9f8e6ef132b765078b6385db` and ran P5 visible safety CPU **8/8 PASS**, existing measurement CPU **23/23 PASS**.
