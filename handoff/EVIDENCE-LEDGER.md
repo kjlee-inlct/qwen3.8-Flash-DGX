@@ -1,3 +1,9 @@
+## 2026-11-18 explicit subsequent operator approval (authorization, not an execution receipt)
+
+Operator's **"진행 승인"** after 7509a4e CPU 23/23 and 6/6 selected combined PASS authorizes precisely one additional **already-active Orcarouter v3 MTP0** 1K/4K synthetic inference benchmark at output cap 256, concurrency 1, plus read-only P5-D `ownership-capture`, resource inventory and snapshot. The prior 1K/4K 128-token benchmark has already consumed its own earlier approval. **No actual new DGX run is yet observed**, and the fresh approval is not a standing retry, MTP2, GPU launch, Docker, deletion, Journal, recovery or merge license. Source-safe one-shot operator commands preserved in [P3-P5 closeout](../docs/P3-P5-ONE-TURN-CLOSEOUT-20261118.md). `APPROVED_NOT_EXECUTED / LIVE_PROVENANCE_UNVERIFIED / PRODUCTION_BLOCKED`.
+
+---
+
 ## 2026-11-18 10:27Z actual P5 MTP0 inference receipt — partial performance observation
 
 Operator supplied full 1K/4K/8K single-pass `benchmark-execute` JSON at `2cb426f8346024267f3b361fe23cc0eaa477964b`, active Orcarouter v3 Docker ID `9c49950015a845357e90fabe74946565d41069362c083fe7982f54caa2b3beac`, SSE measured **1K 1072/128 tokens in 6.45791s**, **4K 4132/128 in 7.49535s**, 8K `SKIPPED_ACTIVE_CONTEXT_LIMIT`; all observed `TTFT/TTFC/TPS=null`, `visible_characters=0`, `finish_reason=length`, SSE usage known. `COLLECTED_UNQUALIFIED`; `benchmark_verified=false`; one bounded inference run did execute with ACK and no reported service mutation. Before/after GPU use 0%→71%, cgroup memory current 22.871→22.899 GiB, OOM and OOM-kill count 0 at both samples; PLE RSS unknown. Evidence file basename `orcarouter--20261118T102750567863Z--aa19648b06f8.json` on operator host; never assert it's an independently certified evidence bundle.
