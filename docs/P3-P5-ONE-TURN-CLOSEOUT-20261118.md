@@ -1,5 +1,34 @@
 # P3–P5 one-turn scoped closeout and remaining operational acceptance (2026-11-18)
 
+## 2026-11-18 operator-approved Orcarouter MTP0 loaded benchmark — measured usage, SSE timing defect
+
+**Operator-supplied actual DGX execution** at `2cb426f8346024267f3b361fe23cc0eaa477964b` (repository document/source HEAD at observation), UTC **2026-11-18 10:27:35–10:27:50**, in existing `qwen38-orcarouter-qsa62318-lmhead-v3` container ID `9c49950015a845357e90fabe74946565d41069362c083fe7982f54caa2b3beac`, image `sha256:088d8b7171d2fb1a54120727334c445991096e5ee4e684c5598d672d872d79d4`, host PID reported `4016083`. Preflight `P5_BENCHMARK_PREFLIGHT_PASS` and `benchmark-plan` returned `PLAN_ONLY_ACK_REQUIRED`. The operator then used the **explicit inference-only ACK** and `--save` for **one 1K/4K/8K bounded set, concurrency=1, repeat=1, output cap=128, active service only**. The benchmark JSON reports `inference_executed=true`, `service_mutated=false`, `container_id_continuous=true`, `status=COLLECTED_UNQUALIFIED`, `benchmark_verified=false`, `production_released=false`. A private local evidence receipt was created: `orcarouter--20261118T102750567863Z--aa19648b06f8.json` under the user model-measurements state directory. Operator terminal's ending `P5_BENCHMARK_RC=0+` has an extraneous pasted `+`, so treat it as a shell-log formatting anomaly, not a separate numeric result. Do not claim independent cryptographic proof from operator-supplied JSON.
+
+### Actual bounded observations — **not full performance acceptance**
+
+| Target | Tokenizer prompt | SSE prompt usage | SSE completion | End-to-end | TTFT | TTFC | after-first TPS | Result |
+| --- | ---: | ---: | ---: | ---: | --- | --- | --- | --- |
+| 1K | 1021 | 1072 | 128 | **6.45791 s** | `null` | `null` | `null` | `MEASURED` / SSE DONE |
+| 4K | 4081 | 4132 | 128 | **7.49535 s** | `null` | `null` | `null` | `MEASURED` / SSE DONE |
+| 8K | — | — | — | — | — | — | — | `SKIPPED_ACTIVE_CONTEXT_LIMIT` |
+
+Active API advertised `max_model_len=8192`; requested 8192 input tokens +128 output budget exceeds that bound, so skipping 8K is **expected, not a failing inference**. Both completed cases have `finish_reason=length`, `visible_characters=0`, `stream_done_observed=true`, and complete server usage. **Neither case establishes TTFT, TTFC or true post-first generation TPS**. Dividing completion count by total time is an end-to-end rate, NOT this metric; do not substitute it.
+
+Two bounded before/after read-only resource snapshots (not a continuous interval or peak) reported: GPU utilization **0% to 71%**, GPU temperature **34 to 39 °C**, GPU power **9.87 to 20.41 W**; cgroup `memory.current` **24,557,510,656 to 24,587,689,984 B** (approximately 22.871 to 22.899 GiB, +28.8 MiB), host available memory approximately **29.779 to 29.796 GiB**; cgroup `memory.events.oom=0` and `oom_kill=0` at both snapshots; container swap `0` and host swap unchanged. These samples do **not** certify zero OOM through all unsampled intervals, peak memory, or exclusive GPU allocation. `ple_declared_mmap_bytes=102400491520` (**95.37 GiB declared file mapping**) is **not** PLE RSS or actually-resident GPU memory; `ple_specific_resident_bytes=null`, process RSS/PSS and GPU UMA memory used were `null`, independent port owner proof remains unresolved.
+
+### Root cause strongly indicated by exact vLLM 0.32.0 API contract
+
+The **existing source** `scripts/manager/measurement_bench.py::_stream_chat` reads `delta.reasoning_content` and `delta.content`, but the **official vLLM v0.32.0 reasoning streaming API** documents `delta.reasoning` for thinking tokens: https://docs.vllm.ai/en/v0.32.0/features/reasoning_outputs/ . This precise field mismatch can yield `TTFT=null` and `TPS=null` with nonzero `completion_tokens` if all streamed tokens are reasoning. The captured log does NOT contain individual SSE chunks, so precise per-chunk cause is **high-confidence hypothesis, not independently observed live proof**. Separately, both cases exhausted the output cap with `finish_reason=length`; **TTFC may legitimately remain null** if no visible answer content was generated even after parsing is fixed.
+
+**Post-observation SOURCE ONLY patch, no additional live inference:** the metrics parser now supports vLLM `delta.reasoning` plus legacy `delta.reasoning_content`, counts reasoning delta events/chars but never saves content, and includes bounded `stream_metrics_quality` with reasoning-only vs usage-only classifications. Its post-first TPS excludes the first generated token from the numerator; server completion usage includes reasoning tokens. Benchmark cases may now be `MEASURED_REASONING_ONLY` or `INCOMPLETE_METRICS`, rather than treating an SSE usage-only record as complete by default. Summary counts report TTFT/TTFC/TPS availability and reasoning-only cases, without promoting benchmark verification, runtime release, model switching or operation privileges. Added targeted source-only tests to `tests/test_model_measurements_cpu.py` for 0.32 reasoning-only, mixed reasoning/content, usage-only missing deltas, and evidence summary classification.
+
+**The SOURCE PATCH and NEW CPU tests have not yet been executed on DGX or in GitHub Actions.** Historical P5 152/152 source PASS is bound to **`8ec6bc2`**, before this new benchmark parser patch. The exact benchmark was executed at **`2cb426f`**, also before this patch; its `null` timings must not be silently backfilled. GitHub Actions issue remains unqualified and PR #1 stays Draft/Open. Do not rerun inference automatically: the operator's preceding one-shot approval was for the completed bounded trial only. A fresh, separately scoped operator authorization is needed for another loaded test (and any larger token cap such as 256); no model stop/switch, deletion, Journal, auto-recovery or PR merge is authorized.
+
+**Current status:** `P5_MTP0_LIVE_INFERENCE_EXECUTED_2_OF_3 / SSE_TIMINGS_NOT_OBSERVED / P5_SSE_032_SOURCE_FIX_CPU_PENDING / P5_D_OWNERSHIP_AND_PLE_RSS_PENDING / CI_UNVERIFIED / PRODUCTION_BLOCKED`.
+
+---
+
+
 ## 2026-11-18 P3–P5 operator CPU follow-up — 8ec6bc2, selected scope PASS
 
 **Latest SHA-bound operator execution receipt (supersedes prior 8b8f5a0 failures and "new-source CPU pending" statements, not the CI gate):** `git pull --ff-only` advanced the operator's local development checkout to **`8ec6bc2f148cf77bf0ed6e9ce0d54a91d1baf569`**; `git status --short` returned no tracked/untracked changes. The operator subsequently ran all four approved source-only commands:
