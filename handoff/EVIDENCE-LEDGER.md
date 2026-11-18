@@ -1,3 +1,11 @@
+## 2026-11-18 10:27Z actual P5 MTP0 inference receipt — partial performance observation
+
+Operator supplied full 1K/4K/8K single-pass `benchmark-execute` JSON at `2cb426f8346024267f3b361fe23cc0eaa477964b`, active Orcarouter v3 Docker ID `9c49950015a845357e90fabe74946565d41069362c083fe7982f54caa2b3beac`, SSE measured **1K 1072/128 tokens in 6.45791s**, **4K 4132/128 in 7.49535s**, 8K `SKIPPED_ACTIVE_CONTEXT_LIMIT`; all observed `TTFT/TTFC/TPS=null`, `visible_characters=0`, `finish_reason=length`, SSE usage known. `COLLECTED_UNQUALIFIED`; `benchmark_verified=false`; one bounded inference run did execute with ACK and no reported service mutation. Before/after GPU use 0%→71%, cgroup memory current 22.871→22.899 GiB, OOM and OOM-kill count 0 at both samples; PLE RSS unknown. Evidence file basename `orcarouter--20261118T102750567863Z--aa19648b06f8.json` on operator host; never assert it's an independently certified evidence bundle.
+
+vLLM v0.32.0 documents streaming `delta.reasoning` while source parser had only `delta.reasoning_content`; new parser now reads both and tags reasoning-only, usage-only output (new tests pending). SSE raw token stream unavailable; no retroactive TTFT/TPS. The prior benchmark completed the single approved inference window; **new load/inference requires separate approval**. Latest source code has not been CPU/CI tested. [Full P5 evidence](../docs/P3-P5-ONE-TURN-CLOSEOUT-20261118.md).
+
+---
+
 ## 2026-11-18 P3–P5 operator selected CPU PASS — clean 8ec6bc2
 
 Operator terminal report explicitly bound to clean `8ec6bc2f148cf77bf0ed6e9ce0d54a91d1baf569`: `test_p5_document_integrity_cpu` **8/8 PASS RC0**; `test_p3_p5_closeout_cpu` **11/11 PASS RC0**; all `test_p5_*_cpu` **152/152 PASS RC0**. Aggregator `--cpu-only`: `CPU_SELECTED_PASS_NOT_CI` **RC0**, `source_cpu_selected_pass=true`, all six tasks collected/accepted, P3 CPU PASS, P4-A 9 PASS, P4-B/C 13 PASS, P5 source CPU 152 PASS, P5 measurement 18 PASS, P5 session 8 PASS. This supersedes the earlier exact source failure at `8b8f5a0`; totals are **overlapping groups** and not 152+8+11 distinct P5 test methods. Evidence class **OPERATOR_SHA_BOUND_SELECTED_P3_P4_P5_CPU_PASS_RC0**, not Github Actions CI or real loaded DGX acceptance.
