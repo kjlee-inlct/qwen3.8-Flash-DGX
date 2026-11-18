@@ -1,5 +1,25 @@
 # P3–P5 one-turn scoped closeout and remaining operational acceptance (2026-11-18)
 
+## 2026-11-18 P3–P5 operator CPU follow-up — 8ec6bc2, selected scope PASS
+
+**Latest SHA-bound operator execution receipt (supersedes prior 8b8f5a0 failures and "new-source CPU pending" statements, not the CI gate):** `git pull --ff-only` advanced the operator's local development checkout to **`8ec6bc2f148cf77bf0ed6e9ce0d54a91d1baf569`**; `git status --short` returned no tracked/untracked changes. The operator subsequently ran all four approved source-only commands:
+
+| Command | Operator result | Process RC |
+| --- | --- | --- |
+| `python3 -B -m unittest discover -s tests -p 'test_p5_document_integrity_cpu.py' -v` | **8/8 PASS** | `P5_DOC_RC=0` |
+| `python3 -B -m unittest discover -s tests -p 'test_p3_p5_closeout_cpu.py' -v` | **11/11 PASS** | `CLOSEOUT_TEST_RC=0` |
+| `python3 -B -m unittest discover -s tests -p 'test_p5_*_cpu.py' -v` | **152/152 PASS** | `P5_CPU_RC=0` |
+| `python3 -B -m scripts.manager.p3_p5_closeout --cpu-only --json` | `CPU_SELECTED_PASS_NOT_CI`, **six of six tasks `accepted=true`**, `receipts_collected=6` | `P3_P5_CPU_RC=0` |
+
+The combined source CPU receipt independently reports `source_head=8ec6bc2f148cf77bf0ed6e9ce0d54a91d1baf569`, `clean_before_run=true`, `source_cpu_selected_pass=true`, P3-D~G CPU contract `CPU_ONLY_SOURCE_PASS_NOT_DGX`, P4-A **9/9 PASS**, P4-B/C **13/13 PASS**, P5 source CPU **152/152 PASS** (inner unittest RC0, `failed_cases=[]`), P5 model measurements **18/18 PASS**, P5 benchmark session **8/8 PASS**. The directly executed 8-document and 11-closeout tests are **part of the wider source verification scope** and must not be presented as disjoint additional tests. Earlier test harness faults (local historical P3 reports incorrectly included in document inventory; fully qualified module names not recognized by fake subprocess runner) are now **resolved at the tested SHA**. The ten private P3 operating report JSON files have not been deleted or modified.
+
+**Acceptance boundary:** This is **operator-supplied, clean SHA-bound CPU/Fake-DGX selected-scope PASS**, not GitHub Actions or independently authenticated real DGX production acceptance. The receipt still has `actual_p3_p4_p5_complete=false`, `ci_verified=false`, `production_released=false`, `operations_enabled=false`, `inference_executed=false`, `real_model_switch_executed=false`, `live_deletion_executed=false`, and `operating_journal_written=false`. Existing historical P3 A/B/C/G live switch and P4-A/B/C read-only receipts retain their original dated scope. The earlier `--read-only` collection at **8b8f5a0** returned **5/5 collected** but `READ_ONLY_COLLECTED_WITH_GAPS`, `RC=3`: P3-D/G process/API/port ownership and canonical Flash reinstall not qualified, current P4-A inventory partial, P5 inventory partial and P5 GPU plan intentionally blocked. **No updated read-only run was supplied** in this latest transcript. P5 loaded TTFT/TTFC/TPS, validated benchmark resource interval, PLE file-specific residency, independent GPU/host port owner proof, MTP2 and production promotion remain pending separate approval and evidence.
+
+GitHub Actions still reports **1640 runs**, latest successful workflow run tied to 2026-11-11 SHA `8b118c8`. Current source SHA has **no CI success receipt**, and PR #1 remains Draft/Open/unmerged. Documentation-only follow-up commits do not retroactively make the tested SHA's selected CPU receipt a CI run, nor does the latest test result cover those future commits. **Decision:** `P3_P4_P5_SELECTED_CPU_PASS_AT_8EC6BC2 / HISTORIC_P3_SWITCH_CLOSED / HISTORIC_P4_READONLY_CLOSED / CURRENT_READONLY_GAPS / P5_LIVE_ACCEPTANCE_PENDING / CI_UNVERIFIED / PRODUCTION_BLOCKED`.
+
+---
+
+
 ## 2026-11-18 operator exact-SHA regression: 8b8f5a0, localized two test-harness bugs
 
 **Operator-supplied terminal receipt** at `8b8f5a0132e8b1f27f9ec4b1cd53c5e82c7f1aea`; `git pull --ff-only` fast-forwarded from `9a79c8d` and `git status --short` showed no changes.
