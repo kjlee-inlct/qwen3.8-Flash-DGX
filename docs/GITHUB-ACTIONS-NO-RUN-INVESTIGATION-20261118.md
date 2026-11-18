@@ -1,5 +1,38 @@
 # GitHub Actions zero-run investigation — P6-E source-only CI (2026-11-18)
 
+## 2026-11-18 operator Git Push 93473ed: zero Actions, Nov 11 incident correlation
+
+### Reproducible feature-branch trigger probe (operator-run; source-only)
+
+The operator ran `git pull --ff-only`, then locally created and committed `handoff/CI-PUSH-TRIGGER-PROBE-20261118.md` and successfully pushed to `https://github.com/kjlee-inlct/qwen3.8-Flash-DGX.git`. GitHub REST independently confirmed:
+
+- **Probe SHA** `93473eda06769614ef259a1ab6acdc6e9db13b4b`, message `ci: probe human git push trigger`, commit timestamp `2026-11-18T02:37:58Z`.
+- Change is **one new file with two lines in `handoff/**`**, which is an existing `on.push.paths` filter match; Push/PR branch restrictions are absent.
+- PR #1 head moved to `93473ed`, Draft/Open, `mergeable=true`.
+- At the operator's first immediate check and subsequent connector readback, repository Actions runs remained **1640**, **zero workflow runs for probe SHA**, **zero check runs**, empty combined statuses. Remote accepted the Push; absence of any run is not evidence of failing CPU tests.
+- This rules out **connector-only commit creation as a sufficient explanation**. However, the actual credential backing the local HTTPS Git Push was **not inspected**; author/committer identity alone is insufficient to establish a PAT, SSH key, GitHub App token, or other event authorization. Avoid asserting that `GITHUB_TOKEN` was definitely or definitely not involved.
+
+### Four orphaned pre-incident Actions records, independently confirmed
+
+Run `43096807109` (Push 20:34:00 UTC), `43096812698` (PR 20:34:04), `43097090510` (Push 20:36:50), and `43097097266` (PR 20:36:53) all date to **2026-11-11**, and **each remains `queued`, `conclusion=null`, `run_attempt=1`, no timestamp advancement and `GET /jobs` reports `total_count=0`**. They belong to workflow `406361282`.
+
+GitHub officially reported an incident affecting **Webhooks, Actions, Pages, Copilot** from **2026-11-11 20:48 to 21:21 UTC**, later marking the queue backlog processed: https://www.githubstatus.com/incidents/dvy0t3mvh1lg . The four repository records are **~12–14 minutes before the published start**. Similar `queued`+zero-jobs records beginning **20:25–20:41 UTC** and failing cancellation were reported by other users: https://github.com/orgs/community/discussions/212794 . Some participants quoted purported support advice that incomplete run state survived the incident; **those statements are third-party reports, not a support diagnosis of this repository**. The previously successful Push+PR at 21:59/22:00 UTC additionally proves the repository has run workflows after the incident's recorded recovery.
+
+**Evidence-based interpretation:** `ORPHANED_QUEUED_JOBS_ZERO` is **observed** for these four run IDs; `NOV11_PLATFORM_INCIDENT_TEMPORAL_CORRELATION` is **strong but not causally verified**; why newer events through **2026-11-18** do not create fresh runs remains an **independent unresolved issue**. A queue or runner outage normally does not explain lack of run creation by itself; do not equate the two symptoms.
+
+### Priority diagnosis and safe escalation
+
+1. **Stop repeated source-only trigger probes** now that a matching-path ordinary `git push` reproduces no-run. Do not remove/rewrite the 4 orphaned runs or modify workflow settings without an approved recovery plan.
+2. Review the repository Actions UI and account notices for event-processing warnings, execution restrictions, usage/billing limits, or security enforcement. `state=active`, `enabled=true`, `allowed_actions=all` have already been confirmed for workflow/repository but may not reveal backend enforcement. Recheck `gh run list` after the propagation period; never call the initial immediate response a permanent absence without subsequent checks.
+3. For GitHub Support, supply `kjlee-inlct/qwen3.8-Flash-DGX`, workflow ID `406361282`, four orphaned run IDs and their `queued`+zero-jobs snapshots, official incident `dvy0t3mvh1lg`, last successes `43107837772` and `43108072440`, missing Push SHA `93473ed` and the relevant created timestamps, enabled policy JSON, and the matching `handoff/**` filter. Request *both* orphaned run/check-suite reconciliation **and** investigation of new Push/PR event processing. Do not supply secrets.
+4. Avoid unconditional `workflow_dispatch` advice: the workflow YAML is **absent from default branch `main`**, so dispatch preconditions do not hold. `main` last changed 2026-11-02, before the 2026-11-11 feature-branch PR/Push successes, reinforcing that this absence alone does not explain the recent stopping of both trigger types.
+5. CI remains `UNVERIFIED` until a real run is created for an exact current source HEAD and logs/conclusion are verified. Keep P6-E source CPU **45/45 PASS only at tested `2f5240d`**; no production authorization.
+
+**Updated classification:** `ACTIONS_ACTIVE / ACTIONS_ENABLED / GIT_PUSH_NO_RUN_REPRODUCED / FOUR_QUEUED_ZERO_JOBS / INCIDENT_CORRELATED_NOT_PROVEN / CI_UNVERIFIED / PRODUCTION_BLOCKED`.
+
+---
+
+
 ## 2026-11-18 operator Actions authority readback: active/enabled/all
 
 The operator executed these **read-only** GitHub CLI API calls on `lc-gx10-pc` on 2026-11-18 and pasted their JSON responses:
