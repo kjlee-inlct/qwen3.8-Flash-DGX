@@ -1,3 +1,11 @@
+## 2026-11-18 P3–P5 staged closeout, source-only implementation and non-acceptance boundaries
+
+**Existing receipts, not rerun:** P3 A/B/C/G authorized one-off real transfers PASS, D GPU/host-port read-only PASS, E Flash host metadata inspected, F 168-source CPU operator receipt; **not** qualified Flash reinstall/production lifecycle. P4-A inventory and P4-B/C combined dry-run real DGX PASS within observation-only scope; reviewed 9 resources, **0 cleanup approvals**. P5 Orcarouter v3 MTP0 text/API actual DEVELOPMENT_TRIAL, C correlated, D `BLOCKED_PARTIAL_PROCESS_EVIDENCE` (not service down); loaded TTFT/TPS, actual PLE RSS and MTP2 NOT VERIFIED.
+
+**New code not executed:** `scripts/manager/p3_p5_closeout.py` (one-shot, fixed allowlisted commands, source CPU and read-only only), `tests/test_p3_p5_closeout_cpu.py` (9 newly defined tests), workflow inclusion on Push/PR. Evidence `P3_P5_SOURCE_UPDATED_CPU_AND_CI_PENDING`. No fabricated CPU PASS; existing P6-E 45/45 receipt is unrelated to these new files. [Complete boundaries and reproduction](../docs/P3-P5-ONE-TURN-CLOSEOUT-20261118.md).
+
+---
+
 ## 2026-11-18 explicit operator Push probe and stale Actions incident correlation
 
 **Probe:** local `git push` accepted `93473eda06769614ef259a1ab6acdc6e9db13b4b` (new `handoff/CI-PUSH-TRIGGER-PROBE-20261118.md`, two lines). PR HEAD followed. Repository run count remains 1640; exact SHA Actions runs 0, check-runs 0. Local push's actual credential type not observed; class `OPERATOR_GIT_PUSH_SHA_MATCHING_PATH_NO_ACTIONS_RUN`, **not** CI failure.
