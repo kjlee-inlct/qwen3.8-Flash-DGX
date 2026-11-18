@@ -1,3 +1,15 @@
+## 2026-11-19 KST — targeted CPU complete, exact SHA and 256-token live status pending
+
+- [x] Operator ran four targeted CPU suites: P5 NAT/PLE **7**, P5-D/P6-E **19**, resource diagnostics **16**, SSE measurements **23**, **all 65 PASS**, RC0 each.
+- [x] Operator ran read-only local measurement history: `READ_ONLY_HISTORY`, `count=2`, previous **128-token** benchmark and inventory only; **no 256-token saved receipt**. This is not proof an unsaved test never ran.
+- [ ] Record fresh exact `git rev-parse HEAD` and `git status --porcelain`; link 65 CPU PASS to the actual clean SHA (provided stdout omits both). If a new commit was pulled since test, repeat targeted CPU at the new clean SHA.
+- [ ] Investigate why GitHub Actions has no runs/checks at new feature SHA. Do not assume path filter or main-workflow absence is sole root cause, and do not merge Draft PR #1 as a workaround.
+- [ ] Before any approved single-use **1K/4K, 256 maximum output tokens** MTP0 inference, check for unsaved/elsewhere execution evidence and fresh current service/API/Docker identity. Do not automatically invoke it or retry.
+- [ ] P5-D NAT host-port process attribution and exact pinned-path/multi-worker PLE smaps residency still need bounded read-only host evidence; pure parser/inspect declarations are not operational proof.
+- [ ] P6-E persistent Journal/Nonce/Executor, P7 independent deployment, P8 recovery acceptance, and production remain blocked.
+
+---
+
 ## 2026-11-18 next P5-D/CI work after source-only NAT and smaps helper
 
 - [x] GitHub feature-branch `port_publication` read-only diagnosis, conservative one-PID PLE smaps parser and 7 synthetic CPU fixtures committed; local **7/7 PASS only**. Preserve prior Docker PID subset and P3/P4 acceptance evidence.
