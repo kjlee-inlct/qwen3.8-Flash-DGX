@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import re
 
-_MAP = re.compile(r"^[0-9a-fA-F]+-[0-9a-fA-F]+\s+[-rwxps]{4}\s+[0-9a-fA-F]+\s+\S+\s+\d+\s+(.+)$")
+_MAP = re.compile(r"^[0-9a-fA-F]+-[0-9a-fA-F]+\s+[-rwxps]{4}\s+[0-9a-fA-F]+\s+\S+\s+\d+(?:\s+(.*))?$")
 _KB = re.compile(r"^(Rss|Pss|Size):\s+(\d+)\s+kB$")
 
 
@@ -125,7 +125,7 @@ def review_ple_smaps(raw: object, expected_paths: object, *, pid: object,
         header = _MAP.fullmatch(line)
         if header:
             finish()
-            current, fields = header.group(1), {}
+            current, fields = header.group(1) or "", {}
             continue
         pair = _KB.fullmatch(line)
         if pair and current is not None:
