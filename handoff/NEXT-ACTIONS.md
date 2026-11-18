@@ -1,3 +1,15 @@
+## 2026-11-18 P3–P5 CPU workstream closed at 8ec6bc2; next priorities
+
+- [x] P5 document integrity **8/8 PASS**, P3–P5 closeout **11/11 PASS**, all P5 CPU **152/152 PASS**, all shell RC0; operator clean SHA `8ec6bc2f148cf77bf0ed6e9ce0d54a91d1baf569` retained with `CPU_SELECTED_PASS_NOT_CI` and combined 6/6 accepted tasks. The previous P5 inventory/fake runner source regressions are resolved. Do **not** rerun the same CPU tests only for duplicate evidence without changed source.
+- [ ] **CI independently pending:** Actions workflow ID 406361282 active, repository enabled but new Push/PR run creation still missing (1640 total, last Nov 11). Investigate via GitHub Support and preserve Draft PR #1; no merge or production release without exact-code acceptance.
+- [ ] **P3/P4 historic acceptance preserved:** do not replay real P3 transfers or delete P4 assets. Current P3-D/G and P4-A read-only snapshot gaps were observed at 8b8f5a0; a new read-only probe is a distinct optional current-state task, not required to recognize historical scoped PASS. P3 canonical Flash reinstall/automated recovery remains P8-gated.
+- [ ] **P5 operating acceptance:** only after explicit separate inference-only operator consent, already-active model identity confirmation and load budget, collect bounded actual TTFT/TTFC/TPS plus independently observed resource-session interval. Resolve P5-D host port PID/Docker/GPU ownership limitations without falsely treating Docker NAT as a service outage; do not infer PLE RSS from logs, and keep MTP2/production release gated.
+- [ ] **P6-E/P7/P8** independent evidence contract, integrated ownership, crash-consistent Journal and recovery adoption remain separately gated; nothing in the selected P3-P5 CPU PASS authorizes operating Journal mutation, Docker action, :8000 change or PR merge.
+
+[Latest combined evidence](../docs/P3-P5-ONE-TURN-CLOSEOUT-20261118.md)
+
+---
+
 ## 2026-11-18 P3–P5 latest — CPU-only recheck first, no historical report deletion
 
 - [x] Read operator terminal at clean `8b8f5a0`: P5 149/150 CPU, doc 5/6, closeout 5/11 with precisely identified test-harness issues. All 5 read-only receipts collected, with P3-D/G and P4-A incomplete, not production acceptance.
