@@ -1,3 +1,16 @@
+## 2026-11-18 after approved P5 MTP0 loaded benchmark — next gates (do not rerun live automatically)
+
+- [x] Operator used one-shot explicit inference-only approval for already-active Orcarouter MTP0 (no stop/switch), 1K and 4K prompts / 128 server-reported completion tokens each, end-to-end 6.458s/7.495s; 8K skipped under active max_model_len=8192. Exact report `COLLECTED_UNQUALIFIED` and saved; performance acceptance **NOT VERIFIED** because TTFT, TTFC, post-first TPS all null.
+- [x] Pin source defect to vLLM 0.32.0 documented `delta.reasoning` vs existing `delta.reasoning_content`; source patch now handles both, reports reasoning-only/usage-only and summaries without actual content or tokens in evidence. Raw SSE chunks were not captured, so causal hypothesis remains to be verified by an independent new bounded measurement.
+- [ ] **CPU-only FIRST:** at fresh clean source SHA run `python3 -B -m unittest discover -s tests -p 'test_model_measurements_cpu.py' -v`, then optionally `python3 -B -m scripts.manager.p3_p5_closeout --cpu-only --json`; record exact SHA, 23 measurement tests, inner P5 source CPU count, RC0. **Do not run benchmark-execute during this check**.
+- [ ] CI GitHub Actions remains no-run/unverified; keep PR #1 Draft. Neither source-only patch nor past operator CPU PASS establishes exact-new-HEAD CI.
+- [ ] Only with **new explicit scoped approval** repeat bounded loaded measurement to confirm TTFT/TPS, and with distinct authorization use higher output-token cap (e.g. 256) if visible-content TTFC is required; do not exceed verified active model budget. Do not run benchmark replay, launch/switch/stop, Journal, recovery or cache deletion without applicable approval.
+- [ ] P5-D independent port/GPU ownership, per-PLE RSS (declared ~95.37 GiB mmap is NOT resident), continuous resource interval and MTP2 qualification remain unaccepted. P3/P4 historical limited acceptance preserved.
+
+[Full evidence and source-only remedy](../docs/P3-P5-ONE-TURN-CLOSEOUT-20261118.md).
+
+---
+
 ## 2026-11-18 P3–P5 CPU workstream closed at 8ec6bc2; next priorities
 
 - [x] P5 document integrity **8/8 PASS**, P3–P5 closeout **11/11 PASS**, all P5 CPU **152/152 PASS**, all shell RC0; operator clean SHA `8ec6bc2f148cf77bf0ed6e9ce0d54a91d1baf569` retained with `CPU_SELECTED_PASS_NOT_CI` and combined 6/6 accepted tasks. The previous P5 inventory/fake runner source regressions are resolved. Do **not** rerun the same CPU tests only for duplicate evidence without changed source.
