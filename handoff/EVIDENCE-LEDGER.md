@@ -1,3 +1,14 @@
+## 2026-11-18 new-HEAD operator CPU receipt — 45/45 PASS RC0, CI not verified
+
+- **Tested source HEAD:** `2f5240d3a5652ce44af51b4b323b0d8d88a105bd` on `feature/recipe-wizard-handoff`; fast-forward observed `4fc3aa8..2f5240d`; `git status --short` empty **before** test commands (post-test status not shown).
+- **Selected test evidence:** `test_generic_operations_cpu.py` **14 PASS / GENERIC_RC=0**; `test_mock_nonce_fence_v2_cpu.py` **12 PASS / NONCE_RC=0**; `test_p5d_p6e_cpu.py` **19 PASS / P6E_RC=0**. Each prints unittest `OK`, overall **45/45 PASS**.
+- **Class:** `OPERATOR_SUPPLIED_CPU_45_OF_45_PASS_RC0_SHA_BOUND_CLEAN_TREE`. Supersedes `OPERATOR_SUPPLIED_CPU_43_OF_43_PASS_SHA_BOUND_CLEAN_TREE` for this **selected newer SHA only**. The former receipt at `4fc3aa8` is retained as history. No claim of authenticated runner provenance, full suite, GitHub Actions PASS, real runtime acceptance or release.
+- **Gates still blocked:** `CI_UNVERIFIED / PRODUCTION_BLOCKED`; real Journal/crash consistency, independently authorized nonce/approval verification, Docker/API/GPU ownership, recovery and P5/P7/P8 live acceptance remain unproven. No operating Journal change, service/model transition, automatic recovery or PR merge.
+
+[Full SHA-bound terminal receipt summary and CI follow-up](../docs/P6-E-CPU-CI-FOLLOWUP-20261118.md).
+
+---
+
 ## 2026-11-18 operator SHA-bound selected CPU receipt and post-receipt source
 
 **Receipt:** operator terminal `git rev-parse HEAD=4fc3aa8e0a0cb3b69c6337b6c34b701578b132cc`, empty `git status --short`; `test_generic_operations_cpu.py` 14 OK, `test_mock_nonce_fence_v2_cpu.py` 10 OK, `test_p5d_p6e_cpu.py` 19 OK; total **43/43 selected CPU unit tests PASS**, no failures shown. Class: `OPERATOR_SUPPLIED_CPU_43_OF_43_PASS_SHA_BOUND_CLEAN_TREE`, not Actions-signed provenance, full repository suite or DGX acceptance.
