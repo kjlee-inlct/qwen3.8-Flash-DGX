@@ -1,5 +1,26 @@
 # P6-E CPU receipt, Actions trigger diagnosis and fake replay hardening (2026-11-18)
 
+## 2026-11-18 update — new-HEAD selected CPU regression 45/45 PASS (operator receipt)
+
+**Superseding selected-CPU result:** The operator supplied a complete terminal transcript after `git pull --ff-only`, showing fast-forward `4fc3aa8..2f5240d`, `git rev-parse HEAD = 2f5240d3a5652ce44af51b4b323b0d8d88a105bd`, and **empty `git status --short` before running the tests**. The following selected CPU modules were executed on that checkout:
+
+| Test command pattern | Tests | unittest summary | Shell exit |
+| --- | ---: | --- | --- |
+| `test_generic_operations_cpu.py` | 14 | `Ran 14 tests`, `OK` | `GENERIC_RC=0` |
+| `test_mock_nonce_fence_v2_cpu.py` | 12 | `Ran 12 tests`, `OK` | `NONCE_RC=0` |
+| `test_p5d_p6e_cpu.py` | 19 | `Ran 19 tests`, `OK` | `P6E_RC=0` |
+| **Selected total** | **45/45 PASS** | **0 reported failures/errors** | **All three RC=0** |
+
+Evidence class: `OPERATOR_SUPPLIED_CPU_45_OF_45_PASS_RC0_SHA_BOUND_CLEAN_TREE`. **This is a SHA-bound operator-supplied terminal receipt, not independently authenticated GitHub Actions or the full repository suite.** Empty `git status --short` establishes the checkout was clean *before* testing; the transcript does not show a second status check afterwards. The earlier **43/43** receipt at `4fc3aa8` remains historical and is superseded for the **selected CPU regression state** by this exact `2f5240d` observation. Subsequent docs-only commits do not constitute a new independent test run.
+
+**Current decision:** `SOURCE_UPDATED / CPU_REGRESSION_PASS_NEW_HEAD / CI_UNVERIFIED / PRODUCTION_BLOCKED`.
+
+**CI still open:** No same-HEAD GitHub Actions PASS has been established by this operator transcript; existing zero-run/trigger diagnosis below remains an unresolved investigation, not proof of a CI job failure. Inspect Actions enablement, policy, triggering actor, branch workflow registration and exact commit checks separately.
+
+**Safety boundary:** CPU/Fake-DGX and source-only evidence cannot approve an executor, independent evidence authority, real persistent Journal v2 migration or nonce replay fence, automatic recovery, or production release. No real DGX service change, model switch, operating Journal mutation, automatic recovery or PR merge was performed as part of this documentation update.
+
+---
+
 ## Scope and immovable safety boundary
 
 Repository `kjlee-inlct/qwen3.8-Flash-DGX`, branch `feature/recipe-wizard-handoff`, Draft/Open PR #1. This review and follow-up affect only source, tests and handoff documentation. No Docker command, real DGX service switch, inference run, GPU/port reallocation, operating Journal mutation, durable production nonce, authorization, automatic recovery or PR merge was performed. vLLM 0.32.0 / ONE_ACTIVE_MODEL_ONLY / port 8000 / no SGLang remain unchanged.
