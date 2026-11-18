@@ -1,3 +1,16 @@
+## 2026-11-18 Actions no-run investigation — authority checks required
+
+1. **Owner/admin READ ONLY:** obtain `gh api repos/kjlee-inlct/qwen3.8-Flash-DGX/actions/workflows/406361282` (`state`) and `.../actions/permissions` (`enabled,allowed_actions`), along with Actions UI banners/settings. Distinguish disabled workflow, disabled repo, GitHub-controlled account restrictions and unsupported read permission.
+2. **If enabled+active:** identify the credential and application that generated post-2026-11-11 commits and compare GitHub event delivery. A commit author or committer of `kjlee-inlct` does **not** establish the push token. Do not assert workflow `GITHUB_TOKEN` suppression without provenance. PR mergeable=true, no skipped messages or mismatched paths were found.
+3. **No premature workaround:** do not merge PR #1 to main, change default branch, toggle Actions settings, weaken workflow filters or invoke a live executor. Only a separately authorized harmless human-token Push/PR trigger may be used after reviewing the authority evidence.
+4. **Acceptance:** CI stays `UNVERIFIED` until a source-only Actions job for an exact HEAD actually exists and its steps/tests/conclusion are reviewed. Preserve historical operator CPU 45/45 PASS at `2f5240d`; P5/P7/P8 live trials and production remain blocked.
+
+[Full diagnosis and safe CLI runbook](../docs/GITHUB-ACTIONS-NO-RUN-INVESTIGATION-20261118.md).
+
+<!-- GITHUB_ACTIONS_ZERO_RUN_INVESTIGATION_20261118 -->
+
+---
+
 ## 2026-11-18 follow-up after exact-HEAD 45/45 CPU PASS
 
 1. **CPU action closed for tested SHA:** operator log confirms `2f5240d3a5652ce44af51b4b323b0d8d88a105bd` and selected **14 + 12 + 19 = 45/45 PASS**, `GENERIC_RC=0`, `NONCE_RC=0`, `P6E_RC=0` (working tree was clean before the run). Preserve raw console receipt and code SHA. If new source/test commits are added, require fresh SHA-bound CPU regression; do not inherit the 45/45 result.
