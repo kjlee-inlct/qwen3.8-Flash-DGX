@@ -141,7 +141,8 @@ class OneShotSafetyCPU(unittest.TestCase):
         self.assertEqual(requests[1]["chat_template_kwargs"], {"enable_thinking": False})
         self.assertIsNotNone(a["ttfc_seconds"])
         self.assertIsNotNone(b["ttfc_seconds"])
-        self.assertNotIn("prompt", json.dumps(b))
+        self.assertNotIn('"messages"', json.dumps(b))
+        self.assertNotIn('"content"', json.dumps(b))
 
     def test_invalid_thinking_flag_blocked_without_network(self):
         with self.assertRaises(ValueError):
