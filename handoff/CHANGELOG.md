@@ -1,3 +1,9 @@
+## 2026-11-19 KST — request-local nonthinking SSE / guarded one-shot P5 visible benchmark (SOURCE ONLY)
+
+Added request-scoped Qwen thinking override to SSE streaming without modifying default code path. Added P5 one-shot visible TTFC/TPS run with 1K/4K/7K context, max 256 generated tokens per request, exact live identity gates, private no-replay claim, no automatic retries, and sequential resource measurements; eight CPU fixtures committed and new runbook/current P1–P8 roadmap created. This source addition was **not executed on real DGX or marked CI PASS** by the assistant; operator approval was GPU inference only and no service or PR merge was performed.
+
+---
+
 ## 2026-11-19 KST — operator one-shot P5 MTP0 SSE measurement receipt (documentation only)
 
 User provided completed bounded inference stdout at clean DGX source SHA `17ebc7f7ba2dcfc27c6dca265952dc99cb85e3ee`. Two 256-token MTP0 cases returned `MEASURED_REASONING_ONLY`, `COLLECTED_UNQUALIFIED`; 1K TTFT 0.52965s / TPS 22.405; 4K TTFT 1.70999s / TPS 22.604; TTFC null in both, `finish_reason=length`. Result saved to private DGX measurement receipt. Source parser `delta.reasoning` works on this live stream; visible-answer measurement and production acceptance remain pending. The one-shot approval has been consumed. This GitHub update changes documentation only; no assistant-run inference or Docker/service/operating Journal mutation.
