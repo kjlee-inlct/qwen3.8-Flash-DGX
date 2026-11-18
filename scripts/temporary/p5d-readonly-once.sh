@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # P5-D READ-ONLY one-turn operator audit; no inference, Docker writes or sudo.
 set -euo pipefail
-ROOT="$(cd "$(dirname "\${BASH_SOURCE[0]}")/../.." && pwd)"
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$ROOT"
 
 HEAD="$(git rev-parse HEAD)"
