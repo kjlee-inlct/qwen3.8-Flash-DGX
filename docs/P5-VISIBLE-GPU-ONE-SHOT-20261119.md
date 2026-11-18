@@ -1,5 +1,36 @@
 # P5 Orcarouter MTP0 — one-shot visible-TTFC GPU measurement (2026-11-19)
 
+## 2026-11-19 06:46 KST — visible-output MTP0 1K/4K/7K GPU ONE-SHOT EXECUTED, 3/3 measured
+
+**Supersession:** the prior 'GPU one-shot SOURCE READY / EXECUTION PENDING' was resolved by an **operator-supplied actual DGX transcript**. At Git SHA `bc0a9ea2346b85fa9f8e6ef132b765078b6385db`, operator completed an exact-head fast-forward pull (17ebc7f..bc0a9ea), clean-worktree guards and two CPU suites: `test_p5_visible_once_cpu.py` **8/8 PASS**, `test_model_measurements_cpu.py` **23/23 PASS**, 31/31 selected CPU tests. The one-shot real workload ran with `chat_template_kwargs.enable_thinking=false`; the transcript ends with `P5_VISIBLE_ONESHOT_COMMAND_COMPLETED`. Source-bound reported Git SHA is `bc0a9ea2346b85fa9f8e6ef132b765078b6385db`.
+
+**Runtime:** existing Orcarouter MTP0 `qwen38-orcarouter-qsa62318-lmhead-v3`, Docker ID `9c49950015a845357e90fabe74946565d41069362c083fe7982f54caa2b3beac`, image `sha256:088d8b7171d2fb1a54120727334c445991096e5ee4e684c5598d672d872d79d4`; active max context 8192. **`container_id_continuous=true`, `service_mutated=false`, `production_released=false`.** The source code imposed 1K/4K/7K contexts, 256 output tokens each, concurrency 1 and zero auto-retry.
+
+| Actual metric | 1K | 4K | 7K |
+| --- | ---: | ---: | ---: |
+| Tokenizer-input tokens | 995 | 4055 | 7105 |
+| Server prompt tokens | 1007 | 4067 | 7117 |
+| Server completion tokens | 256 | 256 | 256 |
+| TTFT seconds | 0.52051 | 1.59565 | 2.80664 |
+| TTFC seconds | **0.52051** | **1.59565** | **2.80664** |
+| Post-first-token usage-derived TPS | 21.961 | 22.943 | 22.948 |
+| End-to-end seconds | 12.13219 | 12.71006 | 13.91874 |
+| Visible characters | 256 | 256 | 256 |
+| Reasoning delta events / chars | 0 / 0 | 0 / 0 | 0 / 0 |
+| Stream quality | VISIBLE_CONTENT_AND_USAGE_OBSERVED | VISIBLE_CONTENT_AND_USAGE_OBSERVED | VISIBLE_CONTENT_AND_USAGE_OBSERVED |
+| Case status | MEASURED_VISIBLE | MEASURED_VISIBLE | MEASURED_VISIBLE |
+| Finish reason | length | length | length |
+
+Summary: `status=COLLECTED_UNQUALIFIED`, `requested_cases=3`, `visible_measured_cases=3`, `ttfc_observed_cases=3`, `tps_observed_cases=3`, `stop_issue=null`, `inference_executed=true`. This establishes the **limited live observation** of TTFC/TTFT and usage-based TPS with request-local thinking disabled. It does **not** demonstrate semantic answer correctness, full task completion, statistical throughput quality, high-concurrency/long-context endurance, or vLLM/PLE engine/runtime release qualification. `finish_reason=length` means each result hit the 256-token budget; no normal answer completion was shown.
+
+**Private evidence** (operator host path, not independently fetched or validated by GitHub): `/home/inlc/.local/state/blazux-wizard/model-measurements/orcarouter--20261118T214659097604Z--86b3752c0029.json`. Private consumed-on-attempt marker `/home/inlc/.local/state/blazux-wizard/model-measurements/p5-visible-mtp0-v1--9c49950015a845357e90fabe.claim`. **The one-shot approval has been used and must not be replayed** even if later inspection finds a gap. The printed compact JSON omits the private receipt's full per-sample resource snapshots and interval, so numerical pre/post GPU, CPU, memory/cgroup, NVMe, PLE RSS or throttle conclusions **cannot** be made from this transcript alone. A separate **read-only** summary of the already-saved receipt may close the observational resource-metrics gap without additional GPU inference.
+
+**Remaining acceptance gates:** GitHub Actions latest SHA CI absent; P5-D NAT/host-port PID ownership and independent GPU exclusivity unverified; PLE resident/physical unique RSS and pinned inode/worker coverage unverified; full resource/workload correlation review pending; Orcarouter adapter runtime qualifying, Tools/Vision/MTP2 and sustained performance pending; P6 operating Journal v2/nonce/executor, P7 independent integration, P8 fault/recovery and production release remain **BLOCKED**. Previous 1K/4K default-thinking 256-token results are preserved separately and must not be blended with this different workload as a controlled A/B speed comparison.
+
+**Current classification:** `P5_VISIBLE_TTFT_TTFC_TPS_LIVE_3_OF_3_MEASURED / P5_ONE_SHOT_CONSUMED / P5_RESOURCE_FULL_RECEIPT_REVIEW_PENDING / P5_D_NAT_PLE_UNVERIFIED / CI_UNVERIFIED / PRODUCTION_BLOCKED`.
+
+---
+
 ## Operator approval and bound
 
 The operator explicitly approved **GPU use for P5 measurement** in the conversation on 2026-11-19 KST. This is *not* approval to switch or restart models, change Docker/cgroups, delete files, alter the operating Journal, execute fault injection or merge the Draft PR. The exact one-shot plan introduced for that permission is:
