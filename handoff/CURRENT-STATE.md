@@ -1,3 +1,13 @@
+## 2026-11-18 P5-D NAT/PLE code-only supersession — no live qualification
+
+- Feature branch adds `scripts/manager/p5_readonly_attribution.py`, integrates its `port_publication` diagnosis into `process_ownership.py`, and adds `tests/test_p5_readonly_attribution_cpu.py`. Port publishing is configuration evidence only; host listener, NAT datapath, GPU exclusivity and process ownership remain **unverified**. P5-D historical DGX RC3 still represents partial observation, not a service failure.
+- Per-PID exact-path smaps RSS/PSS parsing is pure source-only; the repository has **not** captured authenticated PLE-file residency or all worker PIDs. `ple_resident_bytes=null` remains correct.
+- Isolated local synthetic CPU **7/7 PASS** (committed helper/test Git blobs matched). Full repository regression and Actions at this new HEAD **NOT VERIFIED**; no DGX reads, inferred memory values, benchmark inference or service/Journals mutated by this source work.
+- Default `main` did not expose `.github/workflows` on contents query, despite the feature-branch CPU workflow being present; treat this as a CI investigation clue only. PR #1 remains Draft/Open/Unmerged.
+- Approved single-use MTP0 256-token result is **not received**. DGX local `measurements history` must be inspected read-only before deciding whether the approval was consumed. Production and automatic recovery remain blocked. See [dated P3-P5 closeout](../docs/P3-P5-ONE-TURN-CLOSEOUT-20261118.md).
+
+---
+
 ## 2026-11-18 P5-D operator read-only observation — executed; port and PLE RSS still blocked
 
 Operator submitted full DGX stdout for 2026-11-18 12:13Z read-only `ownership-capture`, measurement inventory, and resource snapshot: P5-D `BLOCKED_PARTIAL_PROCESS_EVIDENCE`, `RC3`, **only** `PORT_8000_HOST_LISTENER_PID_UNAVAILABLE_OR_NAT`; Docker full ID `9c49950015a845357e90fabe74946565d41069362c083fe7982f54caa2b3beac`, `docker_identity_match=true`; GPU PID 4016530 within Docker host PID set {4016083,4016529,4016530}. Missing host :8000 listener PID and sequential probes mean port and GPU ownership **NOT** verified, not a service failure. Inventory `READ_ONLY_PARTIAL RC0`: runtime BF16, max-model-len 8192, KV available 9.83 GiB, KV capacity 197,352 tokens from logs; PLE mmap declared 95.37 GiB **NOT RSS**, process RSS/PSS null. Resource single idle snapshot `OBSERVED_PARTIAL RC0`, 0% GPU utilization, 35°C, cgroup current ~22.9 GiB and prior high-water ~37.03 GiB. The 256-token MTP0 timing remeasurement is **not present in these logs**, so TTFT/TTFC/TPS remain pending live evidence. Historic P3/P4 and P5 CPU tested SHA 7509a4e unchanged; CI not verified. [Full latest evidence](../docs/P3-P5-ONE-TURN-CLOSEOUT-20261118.md).
