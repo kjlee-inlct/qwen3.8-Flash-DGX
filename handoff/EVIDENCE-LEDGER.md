@@ -1,3 +1,17 @@
+## 2026-11-19 KST — operator live preflight and 1K/4K 256-token PLAN, NO inference
+
+Operator provided a fresh DGX shell transcript at local HEAD `17ebc7f7ba2dcfc27c6dca265952dc99cb85e3ee` with **empty `git status --porcelain`**. This is a clean source-tree observation made **after** the 65 targeted CPU test transcript; earlier CPU stdout itself lacked SHA, so do not retrospectively assert exact test-SHA cryptographic binding.
+
+`./wizard.sh service manager status --json` returned `LIVE_P5_TRIAL_API_VERIFIED`, `API_IDENTITY_CONFIRMED`, `observed_model=orcarouter`, `runtime_role=DEVELOPMENT_TRIAL`, `p5_development_trial=true`, `expected_served_id=qwen3.8-flash-next-orca-uncensored-bf16`, `host_port=8000`, and `issues=[]`. Active container `qwen38-orcarouter-qsa62318-lmhead-v3` published `0.0.0.0:8000->8000/tcp` / `[::]:8000`, image `sha256:088d8b7171d2fb1a54120727334c445991096e5ee4e684c5598d672d872d79d4`, status `Up 10 days`. The status output **does not expose the fresh full Docker container ID**, and reports `gpu_exclusivity_verified=false`, `port_process_ownership_verified=false`, `operations_enabled=false`, `production_released=false`. Manifest validation PASS is declarative, `runtime_qualified=false`, not a release approval.
+
+Read-only `./wizard.sh operations measurements benchmark-plan --model orcarouter --contexts-k 1,4 --max-output-tokens 256 --json` returned `PLAN_ONLY_ACK_REQUIRED`, concurrency 1, repeat 1, contexts [1,4], output cap 256, no inference, no mutation. This **matches the prior narrowly approved one-shot active MTP0 trial**. The previous `measurements history` contained only the 128-token old benchmark plus inventory, not a saved 256-token result, but unsaved attempts remain possible. Before any execution, an operator must establish that no other attempt used the one-shot approval and revalidate exact live ID/API/Docker from the active host. Only `benchmark-execute` with the exact `I_ACCEPT_ACTIVE_MODEL_INFERENCE` ack causes a bounded real inference workload, not `benchmark-plan`. Do not auto-retry or change the live service.
+
+The GitHub feature branch advanced by documentation to `69a6c156ad2b88966c19bda72661bd1a0e208f05` before this update; local DGX source remains the earlier clean `17ebc7f`. There is no need to force a docs-only pull solely to perform the originally source-tested bounded workload. Do not claim new-HEAD Actions CI, PLE RSS, port/GPU exclusivity, MTP2 or production acceptance.
+
+**Status:** `P5_MTP0_256_PLAN_AND_SERVICE_PREFLIGHT_PASS / P5_LIVE_INFERENCE_NOT_EXECUTED_BY_PLAN / DOCKER_FULL_ID_NOT_IN_STATUS_OUTPUT / CI_UNVERIFIED / PRODUCTION_BLOCKED`.
+
+---
+
 ## 2026-11-19 KST — operator CPU regression stdout and read-only measurement history
 
 - **Operator-provided receipt, not a Github Actions/GPU test:** `test_p5_readonly_attribution_cpu.py` 7/7 RC0; `test_p5d_p6e_cpu.py` 19/19 RC0; `test_p5_resource_diagnostics_cpu.py` 16/16 RC0; `test_model_measurements_cpu.py` 23/23 RC0. Total **65 selected CPU tests PASS**. Exact tested HEAD and clean-worktree result absent from pasted stdout; **source SHA unbound**. Avoid claiming entire repository PASS.
