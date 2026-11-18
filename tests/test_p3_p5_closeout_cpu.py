@@ -30,8 +30,9 @@ def fake(cmd, **kwargs):
     if "p4_bc_dry_run" in cmd:
         return subprocess.CompletedProcess(cmd, 0, '{"status":"READ_ONLY_DRY_RUN_PASS","executed":false}', "")
     if "model_measurements" in cmd:
+        status = "PLAN_ONLY_ACK_REQUIRED" if "benchmark-plan" in cmd else "READ_ONLY_PARTIAL"
         return subprocess.CompletedProcess(cmd, 0,
-            '{"status":"READ_ONLY_PARTIAL","inference_executed":false}', "")
+            json.dumps({"status": status, "inference_executed": False}), "")
     raise AssertionError("unexpected subprocess: " + repr(cmd))
 
 
