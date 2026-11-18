@@ -1,3 +1,11 @@
+## 2026-11-18 latest — exact-HEAD P6-E selected CPU 45/45 PASS; CI and production remain blocked
+
+The operator supplied `git pull --ff-only` from `4fc3aa8` to **`2f5240d3a5652ce44af51b4b323b0d8d88a105bd`**, `git rev-parse HEAD` at that SHA and empty `git status --short` *before tests*. Three selected unittest modules completed successfully: generic operations **14/14** (`GENERIC_RC=0`), fake nonce v2 **12/12** (`NONCE_RC=0`), P5-D/P6-E **19/19** (`P6E_RC=0`). **45/45 PASS, zero reported test failures/errors**, evidence `OPERATOR_SUPPLIED_CPU_45_OF_45_PASS_RC0_SHA_BOUND_CLEAN_TREE`. This **supersedes the older 43/43 receipt only for this selected CPU scope**, not for complete CI, independently authenticated execution or live DGX.
+
+**Current classification:** `SOURCE_UPDATED / CPU_REGRESSION_PASS_NEW_HEAD / CI_UNVERIFIED / PRODUCTION_BLOCKED`. The Actions trigger/registration/permissions root cause is unresolved; do not report CI PASS or infer new-HEAD workflow execution. P6-E independent evidence authority, durable crash consistency, real replay fencing, scoped approval and executor acceptance remain unqualified. PR #1 remains Draft/Open/unmerged; no real DGX service, model, port/GPU, operating Journal, automatic recovery or production release was changed. [Updated receipt](../docs/P6-E-CPU-CI-FOLLOWUP-20261118.md).
+
+---
+
 ## 2026-11-18 continuation: SHA-bound 43 CPU PASS, CI zero-run, new P6-E source pending CPU
 
 The operator transcript binds a **clean working-tree checkout at 4fc3aa8e0a0cb3b69c6337b6c34b701578b132cc** to three selected module results: generic operations **14/14 OK**, fake nonce **10/10 OK**, P5-D/P6-E **19/19 OK** = **43/43 CPU PASS** (operator-reported, not independent CI). GitHub returned zero Actions workflow runs/check runs/statuses for that exact commit. Last returned successful source-only workflow was 2026-11-11 at `8b118c8`; the feature-branch YAML contains matching Push/PR filters, but `main/.github` was absent (404). Repo Actions settings and workflow state are unverified; **root cause undetermined**.
