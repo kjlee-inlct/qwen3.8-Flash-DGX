@@ -1,3 +1,11 @@
+## 2026-11-18 explicit operator Push probe and stale Actions incident correlation
+
+**Probe:** local `git push` accepted `93473eda06769614ef259a1ab6acdc6e9db13b4b` (new `handoff/CI-PUSH-TRIGGER-PROBE-20261118.md`, two lines). PR HEAD followed. Repository run count remains 1640; exact SHA Actions runs 0, check-runs 0. Local push's actual credential type not observed; class `OPERATOR_GIT_PUSH_SHA_MATCHING_PATH_NO_ACTIONS_RUN`, **not** CI failure.
+
+**Stale queue:** `43096807109`, `43096812698`, `43097090510`, `43097097266` created 2026-11-11 20:34–20:36 UTC remain queued, `run_attempt=1`, no time update, **zero jobs each**. GitHub incident `dvy0t3mvh1lg` recorded Actions/Webhooks disruption starting 20:48 UTC; records precede official start. Community reports similar anomalies; *correlation, not proved cause*. No mutation/cancel/retry. [Evidence timeline](../docs/GITHUB-ACTIONS-NO-RUN-INVESTIGATION-20261118.md).
+
+---
+
 ## 2026-11-18 Actions settings — operator read-only evidence
 
 Operator supplied `gh api repos/kjlee-inlct/qwen3.8-Flash-DGX/actions/workflows/406361282` returning `state=active`, path `.github/workflows/recipe-manifest-cpu.yml`, and `gh api repos/kjlee-inlct/qwen3.8-Flash-DGX/actions/permissions` returning `enabled=true`, `allowed_actions=all`. **CONFIRMED current settings; NOT_OBSERVED historical policy or push credential.** GitHub connector latest run count remains **1640**. No same-head CI acceptance yet. [Full receipt](../docs/GITHUB-ACTIONS-NO-RUN-INVESTIGATION-20261118.md).
