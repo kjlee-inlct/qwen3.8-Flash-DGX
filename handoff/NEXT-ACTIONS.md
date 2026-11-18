@@ -1,3 +1,12 @@
+## 2026-11-18 Actions diagnosis: enabled and active, now isolate event origin
+
+- [x] Owner GitHub CLI: workflow ID `406361282` is `active`; Actions policy `enabled=true`, `allowed_actions=all`.
+- [ ] Determine whether an **operator-owned git Push** changing a `handoff/**` file creates a new Push and/or PR workflow run; inspect true push credential and exact commit. The detailed optional probe script and clean-tree/branch guards are in [Actions investigation](../docs/GITHUB-ACTIONS-NO-RUN-INVESTIGATION-20261118.md). An empty commit is not a valid path-filter probe.
+- [ ] If newly created runs are still absent, gather Actions UI banner, GitHub push event/webhook evidence and support ticket with UTC timestamps and exact commit SHA. If run exists, inspect job logs and test result instead of inferring success.
+- [ ] Preserve `CI_UNVERIFIED` and `PRODUCTION_BLOCKED` until actual exact-head CI succeeds and independent operational gates are separately approved; no PR merge, workflow settings change or DGX operation.
+
+---
+
 ## 2026-11-18 Actions no-run investigation — authority checks required
 
 1. **Owner/admin READ ONLY:** obtain `gh api repos/kjlee-inlct/qwen3.8-Flash-DGX/actions/workflows/406361282` (`state`) and `.../actions/permissions` (`enabled,allowed_actions`), along with Actions UI banners/settings. Distinguish disabled workflow, disabled repo, GitHub-controlled account restrictions and unsupported read permission.
