@@ -5,6 +5,7 @@ No Docker/API/GPU operations.
 """
 from pathlib import Path
 import re
+import subprocess
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -56,6 +57,33 @@ EXT = {".md", ".mdx", ".rst", ".adoc", ".json", ".yaml", ".yml", ".toml", ".txt"
 LINK = re.compile(r"\[[^\]]+\]\(([^)#]+\.md)\)")
 
 
+def _tracked_document_paths():
+    """Audit the Git index, not private/ignored operator receipts on the host.
+
+    An operator's ignored reports/transitions/*.json must not alter the
+    version-controlled document inventory; missing tracked files still fail.
+    """
+    raw = subprocess.check_output(
+        ["git", "ls-files", "--cached", "--full-name", "-z"],
+        cwd=ROOT, timeout=20)
+    if len(raw) > 8 * 1024 * 1024:
+        raise ValueError("TRACKED_FILE_LIST_TOO_LARGE")
+    entries = raw.split(b"\0")
+    if entries[-1] != b"":
+        raise ValueError("INVALID_TRACKED_FILE_LIST")
+    current = set()
+    for item in entries[:-1]:
+        path = Path(item.decode("utf-8"))
+        if not path.parts or path.is_absolute() or ".." in path.parts:
+            raise ValueError("INVALID_TRACKED_PATH")
+        if not (ROOT / path).is_file():
+            continue
+        if path.suffix.lower() in EXT or path.name in ("LICENSE", "NOTICE"):
+            current.add(path.as_posix())
+    return current
+
+
+
 class P5HandoffFullDocumentCPU(unittest.TestCase):
     def test_full_inventory_resolves_every_original_document(self):
         mark = chr(96)
@@ -68,15 +96,29 @@ class P5HandoffFullDocumentCPU(unittest.TestCase):
         self.assertEqual(len(set(original)), 169)
         missing = [p for p in original if not (ROOT / p).is_file()]
         self.assertFalse(missing, missing)
-        current = {
-            p.relative_to(ROOT).as_posix()
-            for p in ROOT.rglob("*")
-            if p.is_file() and (p.suffix.lower() in EXT
-                            or p.name in ("LICENSE", "NOTICE"))
-            and ".git" not in p.parts
-        }
+        current = _tracked_document_paths()
         self.assertEqual(current - set(original), {AUDIT, NEW_COMMON, NEW_P5D_P6E} | INCREMENTAL_APPROVED)
         self.assertEqual(set(original) - current, set())
+
+    def test_git_tracked_inventory_ignores_local_private_operator_reports(self):
+        from unittest.mock import patch
+
+        raw = (b"docs/P3-P5-ONE-TURN-CLOSEOUT-20261118.md\0"
+               b"reports/transitions/flash-next--to--27b/private-receipt.json\0"
+               b"tests/test_p5_document_integrity_cpu.py\0")
+        with patch("subprocess.check_output", return_value=raw):
+            found = _tracked_document_paths()
+        self.assertIn("docs/P3-P5-ONE-TURN-CLOSEOUT-20261118.md", found)
+        # The mocked receipt path is not an on-disk file, so a local report
+        # never gets accepted on the basis of a glob-like directory scan.
+        self.assertNotIn("reports/transitions/flash-next--to--27b/private-receipt.json", found)
+
+    def test_tracked_inventory_rejects_unsafe_git_paths(self):
+        from unittest.mock import patch
+
+        with patch("subprocess.check_output", return_value=b"../escape.json\0"):
+            with self.assertRaises(ValueError):
+                _tracked_document_paths()
 
     def test_latest_p3_p5_scope_is_non_authorizing(self):
         p = ROOT / "docs/P3-P5-ONE-TURN-CLOSEOUT-20261118.md"
