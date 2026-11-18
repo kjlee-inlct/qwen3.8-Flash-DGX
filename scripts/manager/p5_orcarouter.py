@@ -296,12 +296,21 @@ def cpu_only() -> dict:
             summary = next((line.strip() for line in reversed(run.stderr.splitlines())
                             if line.startswith("Ran ")), None)
             expected = re.fullmatch(r"Ran ([0-9]+) tests? in [0-9.]+s", summary or "")
-            success = (run.returncode == 0 and "OK" in run.stderr
-                       and expected is not None and int(expected.group(1)) == len(cases)
-                       and bool(cases) and all(case["status"] == PASS for case in cases))
+            summary_count = int(expected.group(1)) if expected else None
+            parsed_all = (summary_count is not None and summary_count == len(cases)
+                          and bool(cases) and all(case["status"] == PASS for case in cases))
+            success = (run.returncode == 0 and re.search(r"(?m)^OK\s*$", run.stderr)
+                       is not None and parsed_all)
+            # A real nonzero unittest exit and a zero-exit result that cannot
+            # be reconciled with verbose cases require different diagnoses.
+            # Neither case grants source or GPU acceptance.
+            issue = ("P5_CPU_TESTS_FAILED" if run.returncode != 0 else
+                     "P5_CPU_RESULT_PARSE_MISMATCH")
             result = _gate("cpu_fake_dgx", PASS if success else FAIL,
-                           *([] if success else ["P5_CPU_TESTS_FAILED"]),
+                           *([] if success else [issue]),
                            exit_code=run.returncode, test_summary=summary,
+                           parsed_case_count=len(cases),
+                           unittest_reported_count=summary_count,
                            test_cases=cases,
                            failure_details=run.stderr[-5000:] if not success else None)
         except (OSError, subprocess.TimeoutExpired):
