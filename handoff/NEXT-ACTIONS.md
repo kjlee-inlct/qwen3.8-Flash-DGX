@@ -1,3 +1,14 @@
+## 2026-11-19 06:46 KST — P5 visible TTFC GPU scope DONE; next work is read-only resource review
+
+- [x] Operator pulled clean `bc0a9ea2346b85fa9f8e6ef132b765078b6385db` and ran P5 visible safety CPU **8/8 PASS**, existing measurement CPU **23/23 PASS**.
+- [x] Operator-approved GPU one-shot **executed** once on active Orcarouter MTP0 1K/4K/7K, max 256 output tokens per case, `enable_thinking=false`. **3/3 `MEASURED_VISIBLE`** and observed TTFT=TTFC (0.52051 / 1.59565 / 2.80664 s), post-first-token TPS (21.961 / 22.943 / 22.948). `COLLECTED_UNQUALIFIED`; stable Docker ID, no observed service mutation, model not production-released.
+- [x] Operator private O_EXCL marker exists `/home/inlc/.local/state/blazux-wizard/model-measurements/p5-visible-mtp0-v1--9c49950015a845357e90fabe.claim`. **Approval is consumed. No duplicate execution, automatic retry, MTP2 or output cap increase.** All three cases terminated `finish_reason=length`; do not claim answer-completion quality.
+- [ ] **Next no-GPU action:** analyze existing private JSON receipt `/home/inlc/.local/state/blazux-wizard/model-measurements/orcarouter--20261118T214659097604Z--86b3752c0029.json` read-only for before/after GPU utilization, CPU/memory/PSI/NVMe/cgroup intervals, Docker identity and missing-data states. Do not expose prompts/secret raw logs. Do not claim resource/PLE residency from the stdout summary.
+- [ ] P5-D NAT-to-host listener/PID and PLE exact-path smaps/inode/worker-bound evidence remain separate read-only engineering; no NAT, GPU or PLE residency proof from this benchmark.
+- [ ] Establish new-head GitHub Actions eligibility/checks. P6-E independent durable Journal/approval/nonce, P7 integrations and P8 real recovery/production held. **Keep PR #1 Draft/Open/Unmerged.**
+
+---
+
 ## 2026-11-19 KST — new explicit P5 GPU usage approval; bounded visible-output one-shot SOURCE READY
 
 - [x] Operator separately approved **P5 GPU inference usage** for one-turn measurement. Created `scripts/manager/p5_visible_once.py` for **one-time** active Orcarouter MTP0 1K/4K/7K synthetic prompts at up to 256 generated tokens each, concurrency 1, explicit ack, fresh API/Docker/limit preflight, request-only `chat_template_kwargs.enable_thinking=false`, SSE TTFT/TTFC/TPS, pre/post resource snapshots, private `O_EXCL` claim, and private full receipt. Default-thinking 1K/4K 256-token historical approval was already consumed; do not rerun that workload.
