@@ -1,3 +1,11 @@
+## 2026-11-19 KST — operator targeted CPU 65 PASS, MTP0 256-token history still empty
+
+- Operator stdout: four targeted suites **7/7 P5 NAT/PLE**, **19/19 P5-D/P6-E**, **16/16 resource**, **23/23 SSE measurements** = **65/65 PASS, all four RC=0**. Logs did **not** include `git rev-parse HEAD` or worktree cleanliness, so **tested Git SHA UNBOUND**, full CI unverified. No GPU inference follows from CPU success.
+- Read-only `measurements history --model orcarouter` returned `READ_ONLY_HISTORY`, `count=2`, `inference_executed=false`: only the previous 2026-11-18 **128-token** `COLLECTED_UNQUALIFIED` benchmark (1K/4K TTFT/TTFC/TPS null, 8K skipped), and 2026-11-11 `READ_ONLY_PARTIAL` inventory. **No saved 256-token record observed**; unsaved external attempts cannot be ruled out.
+- No live port NAT-process ownership, PLE physical residence, CI on feature HEAD, P6/P7/P8 production release or operating Journal authorization is established. PR #1 remains Draft/Open/Unmerged. See [dated P3-P5 closeout](../docs/P3-P5-ONE-TURN-CLOSEOUT-20261118.md).
+
+---
+
 ## 2026-11-18 P5-D NAT/PLE code-only supersession — no live qualification
 
 - Feature branch adds `scripts/manager/p5_readonly_attribution.py`, integrates its `port_publication` diagnosis into `process_ownership.py`, and adds `tests/test_p5_readonly_attribution_cpu.py`. Port publishing is configuration evidence only; host listener, NAT datapath, GPU exclusivity and process ownership remain **unverified**. P5-D historical DGX RC3 still represents partial observation, not a service failure.
