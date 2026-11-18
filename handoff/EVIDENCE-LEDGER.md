@@ -1,3 +1,11 @@
+## 2026-11-18 operator P3–P5 integration result at exact source SHA 9a79c8
+
+**Provenance:** operator pasted full JSON for combined CPU and read-only runs with `source_head=9a79c8df4240c99836b0b0cf54ec3a88003686c6`, `clean_before_run=true`. **CPU:** P3 CPU 0, P4-A 9 PASS, P4-B/C 13 PASS, **P5 source FAIL RC3**, measurements 18 PASS, session 8 PASS, aggregate RC3. **Read-only:** P3-D/G BLOCKED; P4-A/B+C `READ_ONLY_DRY_RUN_BLOCKED` RC3; P5 plan BLOCKED (expected safety), inventory partial, benchmark plan only; aggregate RC3. Evidence class `OPERATOR_SHA_BOUND_P3P5_CPU_PARTIAL_AND_READONLY_BLOCKED`. Not CI and not proof of real service failure.
+
+**Post-receipt source fixes not yet tested:** P5 frozen inventory mismatch: 177 actual doc-like files versus previous 172 allowed, five new documented paths registered; historic marker lookup position corrected. Collector now separates valid RC3 receipts from acceptance. P5 cpu subprocess/parse diagnostic source changed and synthetic tests added. Exact newer source SHA CPU pending. [Detailed evidence and commands](../docs/P3-P5-ONE-TURN-CLOSEOUT-20261118.md).
+
+---
+
 ## 2026-11-18 P3–P5 staged closeout, source-only implementation and non-acceptance boundaries
 
 **Existing receipts, not rerun:** P3 A/B/C/G authorized one-off real transfers PASS, D GPU/host-port read-only PASS, E Flash host metadata inspected, F 168-source CPU operator receipt; **not** qualified Flash reinstall/production lifecycle. P4-A inventory and P4-B/C combined dry-run real DGX PASS within observation-only scope; reviewed 9 resources, **0 cleanup approvals**. P5 Orcarouter v3 MTP0 text/API actual DEVELOPMENT_TRIAL, C correlated, D `BLOCKED_PARTIAL_PROCESS_EVIDENCE` (not service down); loaded TTFT/TPS, actual PLE RSS and MTP2 NOT VERIFIED.
