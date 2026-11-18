@@ -1,3 +1,11 @@
+## 2026-11-19 KST — uploaded full P5 resource JSON REVIEWED (supersedes resource-review pending)
+
+Reviewed original `orcarouter--20261118T214659097604Z--86b3752c0029.json`: 4 snapshots spanning **42.008s** and `OBSERVED_INTERVAL`, stable Docker ID at clean trial SHA `bc0a9ea`, prior nonthinking 3/3 TTFC/TPS recorded separately. Sampled GPU utilization **0→66→74→75%**, GPU power **9.86→20.43→20.98→21.22W**, GPU temperature **34→38→40→41°C**; peak *observed system zone* 46.6°C. Host CPU busy **5.11%**. Host minimum MemAvailable **28.729GiB**; host used swap stable **1.307GiB** and **zero swap-in/swap-out** observed, memory PSI some avg10 **0%**, cgroup high/max/oom/kill event deltas all zero. Container cgroup `memory.current` **22.914→22.581GiB**, file cache `file` **17.863→17.525GiB**, anon near **4.60GiB**. Cgroup major-fault count rose **2004** in first measured segment only, with `workingset_refault_file_delta=0`. NVMe mean read/write over the window **195401 / 316600 bytes/s** from host cumulative counters, not PLE-specific. Docker CLI `MemUsage~7.18GiB` uses different accounting from cgroup `memory.current~22.58GiB`; do not merge or call either VRAM. `PLE-specific RSS=null` and `smaps_rollup=null`, no independent port/NAT process, GPU exclusivity or throttling proof. Four GPU values are **after-case point samples**, not in-flight peak utilization. Production and CI remain blocked.
+
+[Full resource review](../docs/P5-VISIBLE-GPU-ONE-SHOT-20261119.md).
+
+---
+
 ## 2026-11-19 06:46 KST — operator P5 visible TTFC one-shot live receipt accepted as observation
 
 Operator used existing active Orcarouter MTP0 (without service mutation), clean source `bc0a9ea2346b85fa9f8e6ef132b765078b6385db`, P5 CPU 8/8 + measurements CPU 23/23 PASS, then bounded 1K/4K/7K 256-token, request-local `enable_thinking=false` single-shot GPU trial. All 3 SSE streams returned visible content, observed TTFC=TTFT 0.52051/1.59565/2.80664s and usage-derived post-first TPS 21.961/22.943/22.948; all terminated at token cap (finish_reason=length). Saved private receipt and one-shot claim, marked authorization **CONSUMED**. This documentation update does not execute GPU work or modify service, Journal, caches or PR. Production/CI/PLE/NAT ownership not qualified.
