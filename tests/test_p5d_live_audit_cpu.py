@@ -193,12 +193,17 @@ class CollectionTests(unittest.TestCase):
                 return json.dumps(info())
             if argv[0]=="iptables-save":
                 return None
+            if argv[:2]==["git","-C"]:
+                return "c"*40 + "\n"
             raise AssertionError("unexpected command "+str(argv))
         return {"capture_ownership":lambda model:owner(), "run_command":run,
                 "scan":scanned, "sockets":sockets,"api":api}
 
     def test_correlated_ple_candidate_still_not_release(self):
         with patch.object(a, "_cgroup_membership", return_value=True), patch.object(
+                a, "_pid_identity", return_value={
+                    "starttime_ticks": 42, "netns": "net:[1]", "mntns": "mnt:[2]",
+                    "pidns": "pid:[3]"}), patch.object(
                 a, "_pinned_snapshot_inodes",
                 return_value=({(8,1,123):["model-00001.safetensors"]},[])):
             doc=a._collect(**self.opts())
@@ -217,6 +222,9 @@ class CollectionTests(unittest.TestCase):
             row["matched_docker_host_pids"]=[]
             return row
         with patch.object(a,"_cgroup_membership", return_value=True), patch.object(
+                a, "_pid_identity", return_value={
+                    "starttime_ticks": 42, "netns": "net:[1]", "mntns": "mnt:[2]",
+                    "pidns": "pid:[3]"}), patch.object(
                 a,"_pinned_snapshot_inodes",
                 return_value=({(8,1,123):["model-00001.safetensors"]},[])):
             doc=a._collect(**self.opts(sockets=no_owner))
@@ -228,6 +236,9 @@ class CollectionTests(unittest.TestCase):
         def captures(model):
             return answers.pop(0)
         with patch.object(a,"_cgroup_membership",return_value=True), patch.object(
+                a, "_pid_identity", return_value={
+                    "starttime_ticks": 42, "netns": "net:[1]", "mntns": "mnt:[2]",
+                    "pidns": "pid:[3]"}), patch.object(
                 a,"_pinned_snapshot_inodes",return_value=({},[])):
             doc=a._collect(**(self.opts()|{"capture_ownership":captures}))
         self.assertFalse(doc["container_id_continuous"])
