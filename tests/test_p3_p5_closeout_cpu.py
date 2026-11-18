@@ -31,7 +31,7 @@ def fake(cmd, **kwargs):
         return subprocess.CompletedProcess(cmd, 0, '{"status":"READ_ONLY_DRY_RUN_PASS","executed":false}', "")
     if "model_measurements" in cmd:
         return subprocess.CompletedProcess(cmd, 0,
-            '{"status":"OBSERVED_PARTIAL","inference_executed":false}', "")
+            '{"status":"READ_ONLY_PARTIAL","inference_executed":false}', "")
     raise AssertionError("unexpected subprocess: " + repr(cmd))
 
 
@@ -64,8 +64,10 @@ class P3P5CloseoutCPU(unittest.TestCase):
 
     def test_readonly_collects_denial_without_calling_it_pass(self):
         out = c.collect("read-only", runner=fake)
-        self.assertEqual(out["status"], "READ_ONLY_COLLECTED_NOT_RELEASED")
+        self.assertEqual(out["status"], "READ_ONLY_COLLECTED_WITH_GAPS")
         self.assertEqual(len(out["tasks"]), 5)
+        self.assertEqual(out["receipts_collected"], 5)
+        self.assertFalse(out["tasks"][3]["accepted"])  # inventory partial is not P5 acceptance
         self.assertTrue(out["tasks"][2]["collected"])
         self.assertFalse(out["tasks"][2]["accepted"])
         self.assertTrue(out["tasks"][2]["expected_non_authorizing_plan"])
