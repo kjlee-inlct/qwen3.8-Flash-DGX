@@ -128,6 +128,9 @@ def _stream_chat(model, prompt, output):
     start = time.perf_counter()
     first_token = first_visible = None
     output_chars = 0
+    reasoning_chars = 0
+    reasoning_delta_events = 0
+    reasoning_field = None
     usage = {}
     completion = None
     finish_reason = None
@@ -152,15 +155,33 @@ def _stream_chat(model, prompt, output):
             if isinstance(item.get("usage"), dict):
                 usage = item["usage"]
             for choice in item.get("choices") or []:
+                if not isinstance(choice, dict):
+                    continue
                 delta = choice.get("delta") or {}
-                visible = delta.get("content") or ""
-                reasoning = delta.get("reasoning_content") or ""
+                if not isinstance(delta, dict):
+                    continue
+                visible = delta.get("content")
+                visible = visible if isinstance(visible, str) else ""
+                # vLLM 0.32.0 uses delta.reasoning; older vLLM releases
+                # exposed delta.reasoning_content. Count either, never
+                # retain reasoning text or silently count missing deltas.
+                reasoning = delta.get("reasoning")
+                if not isinstance(reasoning, str) or not reasoning:
+                    reasoning = delta.get("reasoning_content")
+                    field = "reasoning_content"
+                else:
+                    field = "reasoning"
+                reasoning = reasoning if isinstance(reasoning, str) else ""
                 if (visible or reasoning) and first_token is None:
                     first_token = time.perf_counter() - start
                 if visible and first_visible is None:
                     first_visible = time.perf_counter() - start
                 if visible:
                     output_chars += len(visible)
+                if reasoning:
+                    reasoning_chars += len(reasoning)
+                    reasoning_delta_events += 1
+                    reasoning_field = field
                 finish_reason = choice.get("finish_reason") or finish_reason
     elapsed = time.perf_counter() - start
     completion = usage.get("completion_tokens")
@@ -169,10 +190,21 @@ def _stream_chat(model, prompt, output):
         completion = None
     if not isinstance(requested_prompt_tokens, int) or isinstance(requested_prompt_tokens, bool):
         requested_prompt_tokens = None
-    # The model's generated text is never retained; vLLM usage is the token source.
-    tps = (completion / (elapsed - first_token)
-           if completion is not None and first_token is not None
-           and elapsed > first_token else None)
+    # All generated tokens, including reasoning tokens, are counted by
+    # server usage. Exclude the first token from the post-TTFT rate.
+    tps = ((completion - 1) / (elapsed - first_token)
+           if completion is not None and completion > 1
+           and first_token is not None and elapsed > first_token else None)
+    if not received_done:
+        quality = "INCOMPLETE_STREAM"
+    elif first_token is None:
+        quality = "USAGE_ONLY_NO_TEXT_DELTA" if completion else "NO_TEXT_DELTA"
+    elif first_visible is None:
+        quality = "REASONING_ONLY_NO_VISIBLE_CONTENT" if reasoning_chars else "NO_VISIBLE_CONTENT"
+    elif completion is None:
+        quality = "VISIBLE_CONTENT_WITHOUT_SERVER_USAGE"
+    else:
+        quality = "VISIBLE_CONTENT_AND_USAGE_OBSERVED"
     return {
         "ttft_seconds": round(first_token, 5) if first_token is not None else None,
         "ttfc_seconds": round(first_visible, 5) if first_visible is not None else None,
@@ -180,7 +212,12 @@ def _stream_chat(model, prompt, output):
         "generation_tps_after_first_token": round(tps, 3) if tps is not None else None,
         "prompt_tokens_reported": requested_prompt_tokens,
         "completion_tokens_reported": completion,
-        "visible_characters": output_chars, "finish_reason": finish_reason,
+        "visible_characters": output_chars,
+        "reasoning_characters": reasoning_chars,
+        "reasoning_delta_events": reasoning_delta_events,
+        "reasoning_field_observed": reasoning_field,
+        "stream_metrics_quality": quality,
+        "finish_reason": finish_reason,
         "stream_done_observed": received_done, "response_content_saved": False,
         "token_count_source": "SSE_USAGE" if completion is not None else "NOT_OBSERVED",
     }
@@ -275,11 +312,21 @@ def benchmark_execute(model, *, contexts_k="1,4,8", max_output_tokens=128,
         "results": results,
         "summary": {"measured_cases": len(measured),
                     "requested_cases": len(contexts),
+                    "ttft_observed_cases": sum(
+                        x["metrics"].get("ttft_seconds") is not None for x in measured),
+                    "ttfc_observed_cases": sum(
+                        x["metrics"].get("ttfc_seconds") is not None for x in measured),
+                    "tps_observed_cases": sum(
+                        x["metrics"].get("generation_tps_after_first_token") is not None
+                        for x in measured),
+                    "reasoning_only_cases": sum(
+                        x["metrics"].get("stream_metrics_quality") ==
+                        "REASONING_ONLY_NO_VISIBLE_CONTENT" for x in measured),
                     "container_id_continuous": stable},
         "resource_snapshots": [before, after],
         "inference_executed": inference_executed, "service_mutated": False,
         "approval_accepted_for_inference_only": True,
         "benchmark_verified": False, "production_released": False,
         "raw_prompts_or_generated_text_saved": False,
-        "note": "SSE TTFT includes reasoning deltas; TTFC is first visible content. TPS requires server token usage. No release or live provenance acceptance.",
+        "note": "vLLM 0.32 delta.reasoning and legacy delta.reasoning_content are counted for TTFT, while TTFC requires visible content. Post-TTFT TPS excludes first token and includes reasoning tokens; reasoning-only streams cannot establish visible-answer latency. No release or independent provenance acceptance.",
     }
