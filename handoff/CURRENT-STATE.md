@@ -1,3 +1,13 @@
+## 2026-11-18 latest — P3/P4/P5 selected CPU regression PASS at clean 8ec6bc2
+
+**New operator SHA-bound receipt:** `8ec6bc2f148cf77bf0ed6e9ce0d54a91d1baf569`, `git status --short` clean; P5 document audit **8/8 RC0**, combined P3-P5 mock CPU **11/11 RC0**, all P5 CPU **152/152 RC0**. Combined `p3_p5_closeout --cpu-only` returned **`CPU_SELECTED_PASS_NOT_CI`, `P3_P5_CPU_RC=0`**, all **6/6 task receipts collected and accepted**, including P4-A **9/9**, P4-B/C **13/13**, P5 measurement **18/18**, P5 benchmark-session **8/8**, and P3-D~G CPU source contract PASS. The previous P5 document-inventory and closeout fixture failures **are resolved for this tested SHA**; the ten local private P3 transition JSON receipts remain untouched.
+
+This means **selected source/CPU/Fake-DGX verification completed**, **not** new production P3/P4/P5 approval. Prior P3 A/B/C/G real switch PASS and P4-A/B/C real read-only PASS remain historical. The most recent P3/P4/P5 `--read-only` receipt (at 8b8f5a0) was `READ_ONLY_COLLECTED_WITH_GAPS`, RC3; no newer read-only evidence was supplied. P5 loaded benchmark, PLE RSS, independent GPU/port ownership, MTP2 and full runtime promotion unqualified. Actions still **1640** total, last success 2026-11-11; exact SHA CI NOT VERIFIED, PR #1 Draft/Open. Runtime, Journal, cache, service, model switching, deletion and automatic recovery remain unchanged/unapproved. [Exact operator receipt and acceptance boundary](../docs/P3-P5-ONE-TURN-CLOSEOUT-20261118.md).
+
+**Current:** `CPU_SELECTED_PASS_AT_8EC6BC2 / P3_P4_HISTORIC_SCOPED_CLOSED / READONLY_WITH_GAPS / P5_LIVE_PENDING / CI_UNVERIFIED / PRODUCTION_BLOCKED`.
+
+---
+
 ## 2026-11-18 latest P3–P5 operator 8b8f5a0 follow-up: two CPU fixture failures repaired in source only
 
 Clean operator source `8b8f5a0132e8b1f27f9ec4b1cd53c5e82c7f1aea`: P5 doc 5/6 PASS RC1, total P5 149/150 PASS RC1, P3-P5 collector tests 5/11 PASS RC1. The P5 failing test is frozen document inventory contaminated by ten local/private `reports/transitions/flash-next--to--27b/*.json` P3 operator receipts; no report removal authorized. The six integration mock fails are caused by matching bare vs fully qualified `scripts.manager.p3_dg_acceptance` subprocess list entries. Code fix uses Git index tracked-file inventory, retains frozen 169+known incremental document validation, adds isolated untracked-file/unsafe-path CPU tests, and corrects fake runner module-name matching. **None of these fixes have new-HEAD CPU/CI PASS evidence yet.**
