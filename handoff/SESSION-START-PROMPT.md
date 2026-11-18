@@ -1,3 +1,13 @@
+## 2026-11-19 KST — latest operator evidence, 65 targeted CPU PASS and history receipts
+
+Resume on `feature/recipe-wizard-handoff`, first fetch actual GitHub HEAD and PR #1 state. **Operator reported 65/65 targeted CPU tests PASS** with RC0 for P5 read-only NAT/PLE helper (7), P5-D/P6-E (19), resource diagnostics (16), and SSE measurements (23); pasted output omitted `git rev-parse HEAD` and `git status`, so **exact test SHA and worktree cleanliness are unbound**. Do not claim new HEAD CI or full CPU success without fresh receipts.
+
+Read-only local `./wizard.sh operations measurements history --model orcarouter --json` returned `count=2`: 2026-11-18 older **128-token** Orcarouter MTP0 `COLLECTED_UNQUALIFIED` case (1K/4K, null TTFT/TTFC/TPS, 8K skipped) and 2026-11-11 inventory. **No 256-token saved receipt** within history; this does not exclude manual unsaved runs. The original bounded one-shot approval must be revalidated against any previous execution and fresh active model/API/Docker ID; do not auto-retry inference.
+
+Next: capture exact clean SHA for CPU evidence, investigate GitHub CI no-run, retain Docker NAT host-port ownership and PLE residency `NOT_OBSERVED`, and ensure P6-E/P7/P8 remain fail-closed. No live service stop/switch, Docker rewrite, HF cache deletion, operating Journal modification, automatic recovery or PR merge. See `docs/P3-P5-ONE-TURN-CLOSEOUT-20261118.md`.
+
+---
+
 ## 2026-11-18 latest P5-D NAT/PLE source-only handoff (supersession)
 
 Continue from feature-branch source SHA `4aef061f9f8cab7ef6ccaf88be918c91fbe99c68` or newer; **re-fetch GitHub HEAD first**. PR #1 Draft/Open/Unmerged. P3/P4 past scoped acceptance is unchanged; P5 active Orcarouter MTP0 is still DEVELOPMENT_TRIAL on expected API :8000, with no production release or live mutation authorized by this session.
