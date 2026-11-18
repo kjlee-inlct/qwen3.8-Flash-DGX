@@ -1,3 +1,9 @@
+## 2026-11-19 KST — P5 measurement acceptance boundary after 256-token live run
+
+Accept **scoped source/runtime evidence** that vLLM 0.32 `delta.reasoning` now populates TTFT and usage-derived post-first-token TPS for the already-active Orcarouter MTP0 at tested source SHA `17ebc7f7ba2dcfc27c6dca265952dc99cb85e3ee`. Results: 1K `TTFT=0.52965s`, `TPS=22.405`; 4K `TTFT=1.70999s`, `TPS=22.604`. Both cases emit no visible content within 256 completion tokens, `TTFC=null`, `finish_reason=length`, and are `MEASURED_REASONING_ONLY`. Interpret `COLLECTED_UNQUALIFIED` as successful collection only; it does not authorize release or prove visible-answer latency. The specific one-shot live inference approval has been consumed and must not be reused. Retain all previous 128-token measurements as historical evidence; no retrospective metric backfill. No release of P5-D port/GPU/PLE provenance, P6-E operating Journal, P7/P8 or production.
+
+---
+
 ## 2026-11-18 P5-D attribution contract decision (source only)
 
 Docker `HostConfig.PortBindings` and `NetworkSettings.Ports` are independently compared within one inspect document but **neither is authentication of a host listener or NAT owner**. Missing `ss` listener PID retains the existing partial-evidence block; contradictory nonempty publish declarations add an explicit mismatch issue. PLE per-file smaps mapping RSS/PSS may be reviewed for a bounded, exact caller-supplied path and one PID, but its caller, file/checkpoint binding and process provenance remain untrusted. Multi-process mapping RSS sums are not unique physical memory. Live auditor integration, authenticated attribution, executable gates and production promotion are separate future approvals.
