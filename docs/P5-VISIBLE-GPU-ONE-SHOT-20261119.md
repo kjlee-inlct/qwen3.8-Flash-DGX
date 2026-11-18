@@ -1,5 +1,35 @@
 # P5 Orcarouter MTP0 — one-shot visible-TTFC GPU measurement (2026-11-19)
 
+## 2026-11-19 KST — P5 1K/4K/7K saved FULL RESOURCE RECEIPT analyzed (READ-ONLY)
+
+**Supersedes:** previously `P5_RESOURCE_FULL_RECEIPT_REVIEW_PENDING` is now **reviewed for the fields present in the user-uploaded JSON**, but does **not** supersede `PLE_RESIDENCY_NOT_OBSERVED`, independent port/GPU process ownership, or production release.
+
+The operator uploaded the original full 38,619-byte private receipt `orcarouter--20261118T214659097604Z--86b3752c0029.json` from `/home/inlc/.local/state/blazux-wizard/model-measurements/`. This GitHub-side analysis opened and parsed the actual JSON without any DGX access, new inference, Docker/GPU changes or receipt mutation. Receipt action `benchmark-execute`; variant `P5_VISIBLE_NO_THINKING_ONESHOT_V1`, git SHA `bc0a9ea2346b85fa9f8e6ef132b765078b6385db`, 3/3 `MEASURED_VISIBLE`, `COLLECTED_UNQUALIFIED`, source-recorded API/serving identity and stable Docker ID `9c49950015a845357e90fabe74946565d41069362c083fe7982f54caa2b3beac`, `benchmark_verified=false`, `production_released=false`. Resource interval `OBSERVED_INTERVAL`, **42.008 s** with **four** snapshots at 2026-11-18 21:46:16.020624, 21:46:29.233449, 21:46:43.025011, 21:46:58.028546 UTC (before and after each request; not continuous in-flight sensor capture). `cgroup_container_identity_continuous=true`, `cgroup_identity_discontinuity_detected=false`.
+
+| Resource metric | Before | After 1K | After 4K | After 7K |
+| --- | ---: | ---: | ---: | ---: |
+| Sampled GPU utilization (%) | 0 | 66 | 74 | 75 |
+| Sampled GPU power (W) | 9.86 | 20.43 | 20.98 | 21.22 |
+| GPU temperature (°C) | 34 | 38 | 40 | 41 |
+| Highest system thermal-zone temp (°C) | 35.1 | 43.4 | 45.5 | 46.6 |
+| Host MemAvailable (GiB) | 29.777 | 29.794 | 28.729 | 28.731 |
+| Container cgroup memory.current (GiB) | 22.914 | 22.924 | 22.579 | 22.581 |
+| Container cgroup file cache (GiB) | 17.863 | 17.871 | 17.525 | 17.525 |
+| Container cgroup anon (GiB) | 4.597 | 4.596 | 4.596 | 4.598 |
+| Docker CLI `MemUsage` (GiB, distinct accounting) | 7.176 | 7.178 | 7.180 | 7.182 |
+| cgroup pgmajfault (cumulative) | 118278 | 120282 | 120282 | 120282 |
+| host io PSI some avg10 (%) | 0 | 0.53 | 0.18 | 0.03 |
+
+**Interval/derived values:** host CPU busy **5.11%** for this 42.008 s; host vmstat major faults **47.705/s**, cgroup `pgmajfault_delta=2004` (all added between before and first after-1K sample, none in remaining intervals); `workingset_refault_file_delta=0`; host `pswpin/s=0`, `pswpout/s=0`, host swap used constant **1.307 GiB**. Host memory PSI `some.avg10` maximum **0.0%**; cgroup memory `events` `low/high/max/oom/oom_kill` deltas **all zero**. `nvme0n1` sampled cumulative counter-derived read **195401 bytes/s ≈ 0.186 MiB/s**, write **316600 bytes/s ≈ 0.302 MiB/s**, average read time **0.15 ms/I/O**, write **1.56 ms/I/O**; **not PLE-file-specific**, not a load bandwidth benchmark. Historical `memory.peak=39,753,752,576 bytes ≈ 37.024 GiB` cannot be attributed to this short session.
+
+**Observed memory accounting:** from first to last, cgroup `memory.current` decreased approximately **0.333 GiB** and file cache `file` decreased approx **0.338 GiB**, while `anon` stayed near **4.60 GiB**. Host MemAvailable dropped **1.046 GiB**, with no observed swap traffic or memory PSI stall. These differences do not establish a memory leak, PLE eviction or saved GPU capacity: host and cgroup accounting differ; GB10 uses unified memory and `nvidia-smi memory.used/memory.total` were **null**, not zero; `process_smaps_rollup_status=NOT_OBSERVED`, `ple_specific_residency_status=NOT_OBSERVED`, `ple_specific_resident_bytes=null`. Do **not** sum Docker CLI's `MemUsage≈7.18GiB` with cgroup `memory.current≈22.58GiB`, or treat either as true exclusive model/PLE VRAM.
+
+**Scope limits:** GPU utilization/temperature/power are instantaneous readings *after* requests, not the workload's peak, per-token curve, or proof of stable clocks/throttling. CPU governors `performance` and sample frequencies 2808–3900 MHz do not verify throttling (`throttling_verified=false`). Each resource snapshot carries `model_identity_verified_by_api=false`; the benchmark's separate pre-run API identity gate is not an independently authenticated API+Docker+PID/smaps/PLE provenance chain. No validated host-port :8000 NAT listener PID or GPU exclusivity. All three visible-output streams ended with `finish_reason=length`, so no completed-answer quality assurance, and single samples are not reproducible performance qualification.
+
+**Acceptance:** `P5_FULL_RESOURCE_RECEIPT_REVIEWED_4_SNAPSHOTS / P5_42S_NO_OBSERVED_OOM_SWAP_PRESSURE / P5_CGROUP_MAJORFAULTS_2004 / P5_PLE_RSS_AND_NAT_OWNER_UNVERIFIED / CI_UNVERIFIED / PRODUCTION_BLOCKED`. The P5 GPU one-shot authorization is **consumed**, no further inference/retry authorized. Next source/read-only work: exact pinned PLE file-path/inode/PID/worker smaps evidence; NAT host-port ownership without treating absence of `ss` PID as outage; CI workflow registration/permissions investigation; then P6-E/P7/P8 safety gates.
+
+---
+
 ## 2026-11-19 06:46 KST — visible-output MTP0 1K/4K/7K GPU ONE-SHOT EXECUTED, 3/3 measured
 
 **Supersession:** the prior 'GPU one-shot SOURCE READY / EXECUTION PENDING' was resolved by an **operator-supplied actual DGX transcript**. At Git SHA `bc0a9ea2346b85fa9f8e6ef132b765078b6385db`, operator completed an exact-head fast-forward pull (17ebc7f..bc0a9ea), clean-worktree guards and two CPU suites: `test_p5_visible_once_cpu.py` **8/8 PASS**, `test_model_measurements_cpu.py` **23/23 PASS**, 31/31 selected CPU tests. The one-shot real workload ran with `chat_template_kwargs.enable_thinking=false`; the transcript ends with `P5_VISIBLE_ONESHOT_COMMAND_COMPLETED`. Source-bound reported Git SHA is `bc0a9ea2346b85fa9f8e6ef132b765078b6385db`.
