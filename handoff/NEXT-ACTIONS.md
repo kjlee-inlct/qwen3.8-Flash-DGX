@@ -1,3 +1,14 @@
+## 2026-11-19 KST — new explicit P5 GPU usage approval; bounded visible-output one-shot SOURCE READY
+
+- [x] Operator separately approved **P5 GPU inference usage** for one-turn measurement. Created `scripts/manager/p5_visible_once.py` for **one-time** active Orcarouter MTP0 1K/4K/7K synthetic prompts at up to 256 generated tokens each, concurrency 1, explicit ack, fresh API/Docker/limit preflight, request-only `chat_template_kwargs.enable_thinking=false`, SSE TTFT/TTFC/TPS, pre/post resource snapshots, private `O_EXCL` claim, and private full receipt. Default-thinking 1K/4K 256-token historical approval was already consumed; do not rerun that workload.
+- [x] `measurement_bench._stream_chat` now optionally sends request-local thinking flag **only when passed**; previous default-thinking path preserved.
+- [x] Added `tests/test_p5_visible_once_cpu.py` with 8 CPU-only safety/stream/stop/no-retry tests and [operator runbook](../docs/P5-VISIBLE-GPU-ONE-SHOT-20261119.md); **source committed but CPU and GPU execution NOT VERIFIED** at this new SHA.
+- [ ] On DGX, in **one terminal transaction**, fast-forward pull, check clean HEAD, run `test_p5_visible_once_cpu.py` plus `test_model_measurements_cpu.py` **before** the actual GPU command. If CPU fails, DO NOT run GPU. Only once, run `python3 -B -m scripts.manager.p5_visible_once --ack-live-inference I_ACCEPT_ACTIVE_MODEL_INFERENCE --json`. Save stdout/receipt metadata and never rerun if private claim exists or partial attempt occurred. The assistant has not executed DGX commands.
+- [ ] Independently qualify PLE RSS, NAT owner/GPU exclusivity, CI, P6-E/P7/P8. No service stop, model switching, operating Journal, cache deletion, production promotion or PR merge.
+- [ ] See [new P1–P8 roadmap](../docs/P1-P8-EXECUTION-ROADMAP-20261119.md).
+
+---
+
 ## 2026-11-19 KST — 256-token one-shot DONE, do not rerun without new approval
 
 - [x] **Operator one-shot inference executed**, exact clean DGX source `17ebc7f7ba2dcfc27c6dca265952dc99cb85e3ee`, fresh MTP0 service/API preflight PASS, full Docker ID confirmed, output `P5_MTP0_ONESHOT_COMPLETED`. Receipt: `/home/inlc/.local/state/blazux-wizard/model-measurements/orcarouter--20261118T191809604958Z--61a970733d8c.json`.
