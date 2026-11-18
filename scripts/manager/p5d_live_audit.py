@@ -35,6 +35,7 @@ _SOCKET = re.compile(r"^socket:\[(\d+)\]$")
 _PID_LIMIT = 32
 _MAP_LIMIT = 512
 _SMAPS_BYTES_LIMIT = 96 * 1024 * 1024
+ROOT = Path(__file__).resolve().parents[2]
 
 
 def _cmd(argv, *, limit=262144, timeout=8):
@@ -164,6 +165,26 @@ def _socket_pid_evidence(pids, init_pid, proc=Path("/proc")):
         "issues": sorted(set(issues)),
         "kernel_nat_owner_authenticated": False,
     }
+
+
+def _pid_identity(pid, *, proc=Path("/proc")):
+    """Start ticks and namespace inodes detect PID reuse/reparenting."""
+    try:
+        raw = (proc / str(pid) / "stat").read_text(encoding="utf-8")
+        # comm is enclosed in parentheses and may contain spaces or ')'.
+        close = raw.rfind(")")
+        fields = raw[close + 1:].strip().split()
+        if close < 1 or len(fields) <= 19:
+            return None
+        ticks = int(fields[19])  # proc stat field 22, remainder starts at 3.
+        return {
+            "starttime_ticks": ticks,
+            "netns": os.readlink(proc / str(pid) / "ns" / "net"),
+            "mntns": os.readlink(proc / str(pid) / "ns" / "mnt"),
+            "pidns": os.readlink(proc / str(pid) / "ns" / "pid"),
+        }
+    except (OSError, UnicodeError, IndexError, ValueError):
+        return None
 
 
 def _cgroup_membership(pid, cid, proc=Path("/proc")):
@@ -332,6 +353,8 @@ def _scan_smaps(pid, mounts, repo_marker, *, proc=Path("/proc"),
         result["status"] = ("MAPPINGS_INODE_MATCHED_CANDIDATE_NOT_PLE_AUTHENTICATED"
                             if all(x["inode_stat_match"] for x in result["mapped_files"])
                             and not result["issues"] else "MAPPINGS_PARTIAL_OR_UNQUALIFIED")
+    elif not result["issues"]:
+        result["status"] = "SMAPS_READ_COMPLETE_ZERO_CANDIDATE_MAPPINGS"
     return result
 
 
@@ -391,6 +414,7 @@ def _collect(*, capture_ownership=ownership_capture, run_command=_cmd,
     if not mounts:
         issues.append("NO_READONLY_MODEL_CACHE_MOUNT_OBSERVED")
     pinned_id = "models--orcarouter--Qwen3.8-Flash-Next-Uncensored-NVFP4"
+    pid_identity_before = {pid: _pid_identity(pid, proc=proc) for pid in pids}
     observed = []
     for pid in pids:
         row = scan(pid, mounts, pinned_id, proc=proc)
@@ -409,6 +433,13 @@ def _collect(*, capture_ownership=ownership_capture, run_command=_cmd,
     iptables = _iptables_nat(ips, run_command(["iptables-save", "-t", "nat"]))
     # Source switch and provenance details remain explicitly non-authorizing.
     after = capture_ownership(MODEL)
+    pid_identity_after = {pid: _pid_identity(pid, proc=proc) for pid in pids}
+    pid_identity_continuous = all(
+        pid_identity_before.get(pid) is not None
+        and pid_identity_before.get(pid) == pid_identity_after.get(pid)
+        for pid in pids)
+    if not pid_identity_continuous:
+        issues.append("PID_STARTTIME_OR_NAMESPACE_DRIFT_OR_UNAVAILABLE")
     after_container = after.get("container") or {}
     continuous = (after_container.get("id") == cid and
                   after_container.get("init_pid") == init_pid and
@@ -437,7 +468,8 @@ def _collect(*, capture_ownership=ownership_capture, run_command=_cmd,
         issues.append("DOCKER_PORT_PUBLISH_DECLARATION_NOT_CONSISTENT")
     # A correlation is a supported partial observation, never a production
     # proof that the kernel actually used a particular host NAT datapath.
-    correlated = (continuous and api_match and bool(ports["matched_docker_host_pids"])
+    correlated = (continuous and pid_identity_continuous and api_match
+                  and bool(ports["matched_docker_host_pids"])
                   and fully_statted and all_pids_accessible
                   and publication["docker_port_declarations_consistent"])
     return {
@@ -446,11 +478,14 @@ def _collect(*, capture_ownership=ownership_capture, run_command=_cmd,
                    if correlated else "BLOCKED_PARTIAL_PROVENANCE"),
         "model": MODEL, "timestamp_utc": started,
         "ended_utc": datetime.now(timezone.utc).isoformat(),
-        "git_head": before.get("git_head"),
+        "git_head": (_cmd(["git", "-C", str(ROOT), "rev-parse", "HEAD"]) or "").strip() or None,
         "container": container,
         "initial_ownership": before,
         "final_ownership": after,
         "container_id_continuous": continuous,
+        "pid_identity_continuous": pid_identity_continuous,
+        "pid_identity_before": pid_identity_before,
+        "pid_identity_after": pid_identity_after,
         "service_api_model_id_confirmed": api_match,
         "port": {"publication": publication, "container_ips": ips,
                  "container_listener": ports, "iptables_nat": iptables,
@@ -468,6 +503,7 @@ def _collect(*, capture_ownership=ownership_capture, run_command=_cmd,
         },
         "summary": {
             "examined_container_host_pids": len(pids),
+            "pid_starttime_namespace_continuous": pid_identity_continuous,
             "candidate_file_mapping_rows": candidate_files,
             "pinned_snapshot_alias_file_count": len(pinned_inodes),
             "pinned_revision_alias_matched_mappings": pinned_matched_count,
@@ -506,6 +542,7 @@ def main(argv=None):
         compact = {k: doc.get(k) for k in (
             "schema_version", "action", "status", "model", "timestamp_utc",
             "git_head", "container", "container_id_continuous",
+            "pid_identity_continuous",
             "service_api_model_id_confirmed", "port", "summary", "issues",
             "evidence_file", "executed_inference", "service_mutated",
             "production_released", "note") if k in doc}
