@@ -1,3 +1,15 @@
+## 2026-11-18: source-only Push confirmed no-run — escalate without repeated probes
+
+- [x] New matching-path local `git push` at `93473ed` reached remote, updated PR #1, **but no Push/PR Actions run or check run was created** on later readback; repository count still 1640.
+- [x] Investigate four 2026-11-11 `queued` workflow runs: each has **0 jobs**, no state update; compare documented GitHub Actions/Webhooks incident `dvy0t3mvh1lg`, retaining pre-incident timestamps.
+- [ ] Review Actions/account UI banner and usage restrictions, verify git pushing credential origin without printing tokens, and capture fresh post-propagation runs.
+- [ ] **GitHub Support escalation**: request reconciliation of stale queue/check suites and investigation of new-event noncreation. Include four run IDs, most recent success, current missing SHA, active/enabled policy, and incident URL. Avoid more blind commits, force cancellations, workflow toggles, default-branch merge or unauthorised dispatch.
+- [ ] Restore independent source-only CI evidence at exact current HEAD before raising CI acceptance; operator 45/45 at `2f5240d` remains valid only for its selected scope; P6-E real operations and PR merge blocked.
+
+[Evidence report and support package](../docs/GITHUB-ACTIONS-NO-RUN-INVESTIGATION-20261118.md)
+
+---
+
 ## 2026-11-18 Actions diagnosis: enabled and active, now isolate event origin
 
 - [x] Owner GitHub CLI: workflow ID `406361282` is `active`; Actions policy `enabled=true`, `allowed_actions=all`.
