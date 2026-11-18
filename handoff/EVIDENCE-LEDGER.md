@@ -1,3 +1,14 @@
+## 2026-11-18 code-only P5-D NAT and smaps attribution evidence
+
+- Scope: GitHub feature branch source only; historical P3/P4 DGX and 2026-11-18 P5-D operator receipts preserved unaltered.
+- New sources: `scripts/manager/p5_readonly_attribution.py`, `scripts/manager/process_ownership.py`, and `tests/test_p5_readonly_attribution_cpu.py`. Pure helper/test Git blob content matched independently verified local bytes. Local isolated CPU fixture **7 tests PASS**; do **not** label repository full regression or Actions as PASS.
+- Docker port declarations: no verified host listener PID or NAT-to-container packet owner; existing DGX `PORT_8000_HOST_LISTENER_PID_UNAVAILABLE_OR_NAT` remains unresolved. PLE: no live `smaps` capture, pinned file identity authentication, worker-set coverage or unique physical residency. Code-only mapped RSS/PSS must not be substituted for measured PLE RSS.
+- GitHub CI: workflow present on feature branch, not found under default `main` workflow directory; investigated former HEAD `c1bd76b` had no runs or combined status entries. Last observed successful historical workflow at `8b118c8`, not at current HEAD. Causality of CI no-run is **unverified**.
+- No authorized 256-token benchmark record, live model switch, service stop, Docker config adjustment, operating Journal write or recovery execution was produced by this GitHub session. PR #1 stays Draft/Open.
+- Full distinctions and follow-up: [P3-P5 dated closeout](../docs/P3-P5-ONE-TURN-CLOSEOUT-20261118.md).
+
+---
+
 ## 2026-11-18T12:13Z operator read-only P5-D / inventory / idle resource receipt
 
 User-provided terminal transcript, inventory source `7509a4e`, full active Docker ID `9c49950015a845357e90fabe74946565d41069362c083fe7982f54caa2b3beac`. `ownership-capture`: `BLOCKED_PARTIAL_PROCESS_EVIDENCE` RC3, one issue `PORT_8000_HOST_LISTENER_PID_UNAVAILABLE_OR_NAT`, Docker PID subset relation consistent with GPU compute PID `4016530`, host port listener PID set empty and both GPU exclusivity/port ownership booleans `false`. `inventory`: `READ_ONLY_PARTIAL` RC0, vLLM observed BF16/8K/max-one-seq flags, KV available 9.83 GiB / capacity 197352 tokens **log-reported**, cgroup 24586199040 B, peak 39753752576 B, PLE declared 102400491520 B **not resident**, process RSS/PSS unobserved. `resources snapshot`: `OBSERVED_PARTIAL` RC0, idle GPU 0%/35°C, no operating mutations. Historical Nov12 NAT evidence limit corroborated, not proved a service outage. **This attachment contains no 1K/4K 256-token SSE remeasurement result**. No API/CI/production release or independently authenticated GPU/port/PLE residency. [Detailed bounded evidence](../docs/P3-P5-ONE-TURN-CLOSEOUT-20261118.md).
