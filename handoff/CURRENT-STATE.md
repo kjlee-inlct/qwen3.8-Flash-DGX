@@ -1,3 +1,9 @@
+## 2026-11-19 KST — P5 MTP0 approved 256-token benchmark EXECUTED (supersedes pending)
+
+Operator evidence at exact DGX source SHA `17ebc7f7ba2dcfc27c6dca265952dc99cb85e3ee`: preflight PASS, clean worktree guard, active Orcarouter MTP0 trial at :8000, container ID `9c49950015a845357e90fabe74946565d41069362c083fe7982f54caa2b3beac`, and `P5_MTP0_ONESHOT_COMPLETED`. `benchmark-execute` wrote private measurement receipt `/home/inlc/.local/state/blazux-wizard/model-measurements/orcarouter--20261118T191809604958Z--61a970733d8c.json` (not independently attested). Result `COLLECTED_UNQUALIFIED`, two of two live cases `MEASURED_REASONING_ONLY`, container ID continuous. 1K: 1072 input/256 output server tokens, TTFT **0.52965s**, post-first TPS **22.405**, E2E **11.91080s**. 4K: 4132 input/256 output, TTFT **1.70999s**, TPS **22.604**, E2E **12.99106s**. Both `reasoning_field_observed=reasoning`, `stream_done_observed=true`, `finish_reason=length`, `visible_characters=0`, `ttfc_seconds=null`. TTFT/TPS actual reasoning-stream capture is validated; visible-answer TTFC, statistical repeatability and production qualification are **not**. Previous single-use 256-token approval is **CONSUMED — NO RETRY**. P5-D NAT/PID owner, GPU exclusivity, actual PLE RSS, CI, P6-E/P7/P8 and production remain blocked. Historical older 128-token receipt preserved. [Full detailed record](../docs/P3-P5-ONE-TURN-CLOSEOUT-20261118.md).
+
+---
+
 ## 2026-11-19 KST — operator live preflight and 1K/4K 256-token PLAN, NO inference
 
 Operator provided a fresh DGX shell transcript at local HEAD `17ebc7f7ba2dcfc27c6dca265952dc99cb85e3ee` with **empty `git status --porcelain`**. This is a clean source-tree observation made **after** the 65 targeted CPU test transcript; earlier CPU stdout itself lacked SHA, so do not retrospectively assert exact test-SHA cryptographic binding.
