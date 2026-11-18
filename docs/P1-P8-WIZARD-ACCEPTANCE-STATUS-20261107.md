@@ -1,3 +1,11 @@
+## 2026-11-18 P3–P5 one-turn source consolidation (current supersession)
+
+New read-only/CPU-only combined collector and 9 unexecuted CPU safety tests: `scripts/manager/p3_p5_closeout.py`, `tests/test_p3_p5_closeout_cpu.py`; workflow configured for Push and PR. **SOURCE UPDATED, NEW-HEAD CPU/CI PENDING**, because Actions stopped generating fresh runs after 2026-11-11. Existing P3 A/B/C/G approved live transfers and D observation remain historical PASS/CLOSED. P3-E host metadata/F CPU handoff does **not** mean canonical Flash reinstall or general lifecycle release; those are P8. P4-A/B/C historical DGX read-only acceptance is CLOSED; deleting actual HF/Docker resources is optional, never authorized here. P5 v3 BF16PLE MTP0 remains a DEVELOPMENT_TRIAL, and P5 loaded TTFT/TTFC/TPS, independent GPU/port PID attribution, file-specific PLE RSS and MTP2 are not accepted. No live DGX mutation, actual benchmark, PR merge or production signoff was performed.
+
+[New integrated runbook](P3-P5-ONE-TURN-CLOSEOUT-20261118.md) · [P5-D/P6-E provenance limitations](P5-D-P6-E-READ-ONLY-PROVENANCE-JOURNAL-V2-20261110.md).
+
+---
+
 ## 2026-11-18 P6-E operator CPU result supersession — 29/29 PASS, RC0, SHA unbound
 
 **2026-11-18 P6-E operator CPU test PASS supersession (new receipt):** The operator supplied final output for `test_mock_nonce_fence_v2_cpu.py`: `Ran 10 tests in 0.051s`, `OK`, `NONCE_RC=0`; and `test_p5d_p6e_cpu.py`: `Ran 19 tests in 0.012s`, `OK`, `P6E_RC=0`. **29/29 CPU unittest methods PASS, 0 failures** with explicitly reported zero process exit codes. This **supersedes the prior `FINAL_OK_NOT_SHOWN` status**; the earlier partial terminal receipt is preserved historically. Source code at upstream `beba71925214bf10f42adeb8813a96eca4499f06` contained the five new restart tests, and `0a732fc3bdb8786dfcef1b59938bfbe0de3206e3` is the subsequent docs-only evidence update. However, no new `git rev-parse HEAD` / `git status --short` accompanied the operator's latest transcript. Accordingly **the exact test checkout SHA and clean-tree condition remain unverified**; record evidence class `OPERATOR_SUPPLIED_P6E_29_OF_29_PASS_RC0_SHA_UNBOUND`, never `GITHUB_ACTIONS_VERIFIED`.
