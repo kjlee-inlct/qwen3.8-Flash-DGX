@@ -281,10 +281,20 @@ def benchmark_execute(model, *, contexts_k="1,4,8", max_output_tokens=128,
                 continue
             inference_executed = True
             sample = chat(identity["served_id"], prompt, output)
+            if not sample.get("stream_done_observed"):
+                case_status = "INCOMPLETE_STREAM"
+            elif sample.get("stream_metrics_quality") in (
+                "USAGE_ONLY_NO_TEXT_DELTA", "NO_TEXT_DELTA",
+                "VISIBLE_CONTENT_WITHOUT_SERVER_USAGE"):
+                case_status = "INCOMPLETE_METRICS"
+            elif sample.get("stream_metrics_quality") == "REASONING_ONLY_NO_VISIBLE_CONTENT":
+                case_status = "MEASURED_REASONING_ONLY"
+            else:
+                case_status = "MEASURED"
             results.append({
                 "context_k": context, "requested_input_tokens": target,
                 "tokenizer_input_tokens": token_count,
-                "status": "MEASURED" if sample.get("stream_done_observed") else "INCOMPLETE_STREAM",
+                "status": case_status,
                 "metrics": sample,
             })
         except (ValueError, TimeoutError, URLError, HTTPError, OSError) as exc:
@@ -296,11 +306,13 @@ def benchmark_execute(model, *, contexts_k="1,4,8", max_output_tokens=128,
     after_id = ((after.get("docker") or {}).get("container") or {}).get("id")
     stable = after_id == container["id"] and after.get("model") == model
     # Even a complete sample is not independently qualified loaded runtime proof.
-    measured = [x for x in results if x["status"] == "MEASURED"]
+    measured = [x for x in results if x["status"] in (
+        "MEASURED", "MEASURED_REASONING_ONLY")]
     return {
         "schema_version": 1, "action": "benchmark-execute",
         "status": ("COLLECTED_UNQUALIFIED" if measured and stable and
-                   all(x["status"] in ("MEASURED", "SKIPPED_ACTIVE_CONTEXT_LIMIT") for x in results)
+                   all(x["status"] in ("MEASURED", "MEASURED_REASONING_ONLY",
+                                       "SKIPPED_ACTIVE_CONTEXT_LIMIT") for x in results)
                    else "INCOMPLETE_MEASUREMENT"),
         "model": model, "identity": spec, "container": container,
         "timestamp_utc": start, "ended_utc": datetime.now(timezone.utc).isoformat(),
