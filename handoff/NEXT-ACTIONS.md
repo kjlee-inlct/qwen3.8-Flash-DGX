@@ -1,3 +1,13 @@
+## 2026-11-18 P5 follow-up operator approval — safe execution instruction ready
+
+- [x] User approved **one additional bounded** active-model Orcarouter BF16PLE MTP0 inference run (1K/4K, 256 output tokens, concurrency 1, repeat 1), plus P5-D and PLE/resource read-only observations. This is **not** authorization for MTP2 or any service, storage, operating Journal, recovery or PR mutation.
+- [x] Existing benchmark source at `7509a4e` CPU 23/23 PASS and integrated P3–P5 CPU 6/6 PASS; Wizard command reviewed and has exact active-model, served-ID, full Docker-ID gates; read-only P5-D command exists. An operator-ready fail-closed one-shot shell block was added to [P3–P5 measured evidence and runbook](../docs/P3-P5-ONE-TURN-CLOSEOUT-20261118.md). This commit only changes documentation; no source code alterations or model inference executed.
+- [ ] On DGX host, run the documented preflight and **only one** `benchmark-execute --model orcarouter --contexts-k 1,4 --max-output-tokens 256 --ack-live-inference I_ACCEPT_ACTIVE_MODEL_INFERENCE --save --summary-only --json` after clean source/identity validation. Capture the returned `status`, `results`, `stream_metrics_quality`, `ttft_seconds`, `ttfc_seconds`, `generation_tps_after_first_token` and private receipt path. **No automatic retries**.
+- [ ] Run `ownership-capture --model orcarouter` and read-only resource inventory/snapshot. Preserve `BLOCKED_PARTIAL_PROCESS_EVIDENCE` when `ss` host port PID is unavailable in Docker NAT; never misrepresent PID subset as GPU exclusivity or inferred port ownership. `ple_specific_resident_bytes=null` is a real unobserved metric; declared mmap bytes and cgroup file cache are not PLE-specific RSS.
+- [ ] Review returned evidence to determine next safe source-only work, if any; CI still no-run and PR #1 Draft/Open; P6-E/P7/P8 real executor and automatic recovery remain blocked.
+
+---
+
 ## 2026-11-18 after approved P5 MTP0 loaded benchmark — next gates (do not rerun live automatically)
 
 - [x] Operator used one-shot explicit inference-only approval for already-active Orcarouter MTP0 (no stop/switch), 1K and 4K prompts / 128 server-reported completion tokens each, end-to-end 6.458s/7.495s; 8K skipped under active max_model_len=8192. Exact report `COLLECTED_UNQUALIFIED` and saved; performance acceptance **NOT VERIFIED** because TTFT, TTFC, post-first TPS all null.
