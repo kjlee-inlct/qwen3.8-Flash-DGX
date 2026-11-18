@@ -13,6 +13,7 @@ from typing import Callable
 
 from scripts.manager.generic_operations import model_catalog
 from scripts.manager.observation_binding import observation_capture
+from scripts.manager.p5_readonly_attribution import review_port_publication
 
 _ID = re.compile(r"^[0-9a-f]{64}$")
 _PID = re.compile(r"^[1-9][0-9]*$")
@@ -98,6 +99,9 @@ def ownership_review(model: str, observation: dict | None,
     top_pids = _parse_top(docker_top)
     gpu_pids = _parse_gpu(gpu)
     ss_pids = _parse_ss(ss)
+    publication = review_port_publication(info)
+    if publication["status"] == "DOCKER_DECLARATION_MISMATCH":
+        issues.append("DOCKER_PUBLISHED_8000_DECLARATION_MISMATCH")
     if not top_pids or pid not in top_pids:
         issues.append("DOCKER_HOST_PID_SET_UNVERIFIED")
     if gpu is None or not gpu_pids:
@@ -117,6 +121,7 @@ def ownership_review(model: str, observation: dict | None,
         "docker_host_pids": sorted(top_pids),
         "gpu_compute_pids": sorted(gpu_pids),
         "host_port_8000_listener_pids": sorted(ss_pids),
+        "port_publication": publication,
         "docker_identity_match": not any("DOCKER_INSPECT" in x for x in issues),
         "gpu_pid_subset_of_container": bool(gpu_pids and top_pids
                                             and gpu_pids.issubset(top_pids)),
@@ -128,7 +133,9 @@ def ownership_review(model: str, observation: dict | None,
         "real_dgx_verified": False, "benchmark_verified": False,
         "note": ("PIDs are volatile and probes are sequential. ss listener may be "
                  "docker-proxy or NAT; no independently authenticated PID-to-container "
-                 "mapping, GPU kernel exclusivity, or operator authorization."),
+                 "mapping, GPU kernel exclusivity, or operator authorization. "
+                 "Docker inspect port publishing is a declaration, not proof "
+                 "of a live host listener or a NAT-to-container path."),
     }
 
 
