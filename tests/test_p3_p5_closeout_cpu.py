@@ -116,8 +116,9 @@ class P3P5CloseoutCPU(unittest.TestCase):
                     "status": "FAIL", "issues": ["P5_CPU_TESTS_FAILED"],
                     "stages": [{"gate": "cpu_fake_dgx", "status": "FAIL",
                                 "exit_code": 0, "test_summary": "Ran 91 tests in 1.3s",
-                                "test_cases": [{"case": "test_good", "status": "PASS"},
-                                               {"case": "test_bad", "status": "FAIL"}],
+                                "test_cases": ([{"case": f"test_ok_{i}", "status": "PASS"}
+                                                for i in range(30)] +
+                                               [{"case": "test_bad_after_25", "status": "FAIL"}]),
                                 "failure_details": "secret private log must never escape"}]}), "")
             return fake(cmd, **kw)
         out = c.collect("cpu-only", runner=failed)
@@ -126,8 +127,8 @@ class P3P5CloseoutCPU(unittest.TestCase):
         self.assertTrue(p5["collected"])
         self.assertFalse(p5["accepted"])
         self.assertEqual(p5["result"], "BLOCKED_RECEIPT")
-        self.assertEqual(p5["summary"]["cpu_suite"]["failed_cases"], ["test_bad"])
-        self.assertEqual(p5["summary"]["cpu_suite"]["parsed_case_count"], 2)
+        self.assertEqual(p5["summary"]["cpu_suite"]["failed_cases"], ["test_bad_after_25"])
+        self.assertEqual(p5["summary"]["cpu_suite"]["parsed_case_count"], 31)
         self.assertTrue(p5["summary"]["cpu_suite"]["failure_detail_available_in_direct_p5_output"])
         self.assertNotIn("secret private", json.dumps(out))
 
