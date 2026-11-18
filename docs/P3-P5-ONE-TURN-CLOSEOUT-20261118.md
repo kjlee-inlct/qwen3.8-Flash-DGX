@@ -1,5 +1,86 @@
 # P3–P5 one-turn scoped closeout and remaining operational acceptance (2026-11-18)
 
+## 2026-11-18 subsequent operator approval: MTP0 active-model timing remeasurement + read-only P5-D (execution pending)
+
+**New explicit operator instruction:** "진행 승인" after the exact-SHA \`7509a4ec095005418d9974bac07542be7def884e\` operator CPU PASS (23/23 timing tests, P3-P5 selected CPU 6/6 RC0). This approval is interpreted narrowly: **one more** bounded inference measurement on the **already running** Orcarouter BF16PLE **MTP0** model with **1K/4K** targets, **256 maximum generated tokens per case**, repeat=1, concurrency=1, fixed localhost port 8000 and exact acknowledgment; plus read-only P5-D process ownership and resource inventory. Explicitly **NO** MTP2 activation, model switch, GPU model launch, Docker mutation, service stop/restart, CPU/cgroup/memory setting change, HF cleanup, operating Journal write, recovery, PR merge or production release. The benchmark itself cannot start or switch a model.
+
+**Why 1K/4K and 256:** the prior 128-token 1K/4K inference saturated the completion budget with \`finish_reason=length\` and no visible content; the updated vLLM-0.32 SSE collector now reads \`delta.reasoning\` for reasoning TTFT. A 256-token output cap may improve the chance of visible answer content (TTFC), but does **not** guarantee it. 8K is omitted: active max_model_len=8192 cannot accommodate 8192 input plus output tokens.
+
+**Execution environment limitation:** The GitHub connector can review and commit source but does not provide a DGX host shell. The approved live step is **NOT EXECUTED by the assistant**; an operator must run the following on the existing DGX. Avoid additional local scripts, persistent daemon tasks and auto-retries. \`--save\` writes a private *measurement* receipt in \`~/.local/state/blazux-wizard/model-measurements/\`, **not** the operating Journal.
+
+### Fail-closed operator command — one-shot, no auto-retry
+
+\`\`\`bash
+# Run on the DGX host. This HEREDOC creates no script on disk.
+bash <<'P5_MTP0_APPROVED'
+set -euo pipefail
+cd ~/Workspace/llm/blazux-orcarouter
+
+git pull --ff-only
+test -z "$(git status --porcelain)" || {
+  echo "BLOCKED: unclean source tree"; exit 3;
+}
+git merge-base --is-ancestor 7509a4ec095005418d9974bac07542be7def884e HEAD || {
+  echo "BLOCKED: original tested SSE parser is not an ancestor"; exit 3;
+}
+git diff --quiet 7509a4ec095005418d9974bac07542be7def884e HEAD -- \
+  scripts/manager/measurement_bench.py tests/test_model_measurements_cpu.py || {
+  echo "BLOCKED: benchmark source differs from CPU-tested revision"; exit 3;
+}
+echo "P5_SOURCE_HEAD=$(git rev-parse HEAD)"
+
+STATUS_JSON="$(./wizard.sh service manager status --json)"
+printf '%s\n' "$STATUS_JSON" | python3 -c '
+import json,sys
+s=json.load(sys.stdin)
+passed=(s.get("status")=="LIVE_P5_TRIAL_API_VERIFIED"
+        and s.get("observed_model")=="orcarouter"
+        and s.get("runtime_role")=="DEVELOPMENT_TRIAL"
+        and s.get("p5_development_trial") is True
+        and s.get("expected_served_id")=="qwen3.8-flash-next-orca-uncensored-bf16"
+        and s.get("host_port")==8000 and s.get("issues")==[])
+print("P5_PREFLIGHT_PASS" if passed else "P5_PREFLIGHT_BLOCKED")
+if not passed:
+    print("status:",s.get("status"),"issues:",s.get("issues"))
+sys.exit(0 if passed else 3)
+'
+
+./wizard.sh operations measurements benchmark-plan \
+  --model orcarouter --contexts-k 1,4 --max-output-tokens 256 --json
+
+# Actual inference: approved active model only; sends two bounded requests.
+# Summarized stdout includes all per-context metrics and private receipt path.
+./wizard.sh operations measurements benchmark-execute \
+  --model orcarouter --contexts-k 1,4 --max-output-tokens 256 \
+  --ack-live-inference I_ACCEPT_ACTIVE_MODEL_INFERENCE \
+  --save --summary-only --json
+echo "P5_MTP0_REMEASUREMENT_COMPLETED"
+P5_MTP0_APPROVED
+\`\`\`
+
+The script stops before live inference if the active model/served ID/port, worktree, or inspected source revision differs. The CLI has an additional independent service/API/Docker identity gate; on failure it returns \`BLOCKED\` and does not generate tokens. The source guard checks only the benchmark code and its CPU tests; it cannot substitute for current host attestation or independent CI.
+
+### P5-D and PLE residency: separately approved READ-ONLY observations
+
+\`\`\`bash
+cd ~/Workspace/llm/blazux-orcarouter
+./wizard.sh operations generic ownership-capture --model orcarouter --json
+echo "P5_D_OWNERSHIP_RC=$?"
+./wizard.sh operations measurements inventory --model orcarouter --summary-only --json
+echo "P5_INVENTORY_RC=$?"
+./wizard.sh operations resources snapshot --model orcarouter --json
+echo "P5_RESOURCE_RC=$?"
+\`\`\`
+
+The P5-D helper uses bounded \`docker inspect\`, \`docker top\`, \`ss -H -ltnp sport = :8000\`, and \`nvidia-smi --query-compute-apps=pid\`; it neither modifies Docker nor executes inference. A \`BLOCKED_PARTIAL_PROCESS_EVIDENCE\` or no \`ss\` host listener PID **may be normal Docker NAT**, not proof of service failure. Even a consistent GPU Docker PID subset is **not independent GPU exclusivity or authenticated port ownership**. Source snapshots do not establish GPU kernel ownership, model launch authorization or operating release.
+
+The current \`resource_diagnostics.snapshot\` reports \`ple_specific_resident_bytes=null\` and \`process_smaps_rollup_bytes\` may also be null, because process-wide \`smaps_rollup\` cannot identify PLE file residency. **Do not substitute declared ~95.37 GiB PLE mmap bytes, cgroup memory, host cache, or GB10 GPU shared memory for PLE-specific RSS.** No privileged \`/proc/<pid>/smaps\` scan, kernel changes, memory prewarm or additional model load is approved in these instructions; a separately designed, bounded, file-path-and-container-ID-verified read-only PLE mapping auditor would be required for real PLE-specific attribution.
+
+**Expected classification:** \`P5_MTP0_256_INFERENCE_APPROVED_NOT_YET_EXECUTED\` until a matching operator receipt is provided. If TTFT/TPS become numeric, record the actual values and \`stream_metrics_quality\`; if only reasoning is generated, \`MEASURED_REASONING_ONLY\` and \`TTFC=null\` remain valid but **not a visible-answer latency result**. P5 independent GPU/port owner, PLE RSS, interval peak, MTP2, CI and production release remain separately gated. This scope-specific approval expires after the single bounded execution, not an open-ended authorization to replay.
+
+---
+
+
 ## 2026-11-18 operator-approved Orcarouter MTP0 loaded benchmark — measured usage, SSE timing defect
 
 **Operator-supplied actual DGX execution** at `2cb426f8346024267f3b361fe23cc0eaa477964b` (repository document/source HEAD at observation), UTC **2026-11-18 10:27:35–10:27:50**, in existing `qwen38-orcarouter-qsa62318-lmhead-v3` container ID `9c49950015a845357e90fabe74946565d41069362c083fe7982f54caa2b3beac`, image `sha256:088d8b7171d2fb1a54120727334c445991096e5ee4e684c5598d672d872d79d4`, host PID reported `4016083`. Preflight `P5_BENCHMARK_PREFLIGHT_PASS` and `benchmark-plan` returned `PLAN_ONLY_ACK_REQUIRED`. The operator then used the **explicit inference-only ACK** and `--save` for **one 1K/4K/8K bounded set, concurrency=1, repeat=1, output cap=128, active service only**. The benchmark JSON reports `inference_executed=true`, `service_mutated=false`, `container_id_continuous=true`, `status=COLLECTED_UNQUALIFIED`, `benchmark_verified=false`, `production_released=false`. A private local evidence receipt was created: `orcarouter--20261118T102750567863Z--aa19648b06f8.json` under the user model-measurements state directory. Operator terminal's ending `P5_BENCHMARK_RC=0+` has an extraneous pasted `+`, so treat it as a shell-log formatting anomaly, not a separate numeric result. Do not claim independent cryptographic proof from operator-supplied JSON.
