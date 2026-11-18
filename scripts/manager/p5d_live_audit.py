@@ -192,6 +192,54 @@ def _model_ro_mounts(info):
     return sorted(set(result), key=len, reverse=True)
 
 
+def _pinned_snapshot_inodes(init_pid, mounts, repo_id, revision,
+                            *, proc=Path("/proc")):
+    """Read-only exact cached snapshot files, bounded and inode-keyed.
+
+    This binds a mapped physical inode to an existing pinned snapshot alias.
+    It does NOT hash the file, prove that its tensors are PLE, or authenticate
+    the runtime's actually selected checkpoint.
+    """
+    if (not isinstance(repo_id, str) or not
+            re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", repo_id)
+            or not isinstance(revision, str) or not
+            re.fullmatch(r"[0-9a-f]{40}", revision)):
+        return {}, ["PINNED_REVISION_UNQUALIFIED"]
+    folder = "models--" + repo_id.replace("/", "--")
+    indexes = {}
+    issues = []
+    for mount in mounts:
+        for rel in ("/hub/" + folder, "/" + folder):
+            root = proc / str(init_pid) / "root"
+            target = Path(str(root) + mount + rel + "/snapshots/" + revision)
+            try:
+                if not target.is_dir():
+                    continue
+                with os.scandir(target) as items:
+                    children = list(items)
+                if len(children) > 256:
+                    issues.append("PINNED_SNAPSHOT_FILE_COUNT_LIMIT")
+                    continue
+                for ent in children:
+                    if not ent.name.endswith(".safetensors"):
+                        continue
+                    try:
+                        st = os.stat(ent.path)
+                    except OSError:
+                        issues.append("PINNED_SNAPSHOT_FILE_STAT_DENIED")
+                        continue
+                    if not stat.S_ISREG(st.st_mode):
+                        issues.append("PINNED_SNAPSHOT_NONREGULAR_FILE")
+                        continue
+                    key = (os.major(st.st_dev), os.minor(st.st_dev), st.st_ino)
+                    indexes.setdefault(key, []).append(ent.name)
+            except (OSError, PermissionError):
+                issues.append("PINNED_SNAPSHOT_DIRECTORY_UNREADABLE")
+    if not indexes:
+        issues.append("PINNED_SNAPSHOT_FILES_NOT_OBSERVED")
+    return indexes, sorted(set(issues))
+
+
 def _candidate_model_path(path, mounts, repo_marker):
     """Only model cache-backed file names, not every mapping in a process."""
     if not isinstance(path, str) or not path.startswith("/") or "\x00" in path:
@@ -330,6 +378,13 @@ def _collect(*, capture_ownership=ownership_capture, run_command=_cmd,
     ips = _published_ip(info)
     model_spec = model_catalog()["models"][MODEL]
     served_id = model_spec["served_id"]
+    repo_id = "orcarouter/Qwen3.8-Flash-Next-Uncensored-NVFP4"
+    revision = "3a3b63161c0745390e5270179af42e46efc70799"
+    pinned_inodes, pinned_issues = _pinned_snapshot_inodes(
+        init_pid, mounts, repo_id, revision, proc=proc)
+    # Profile values are candidate/current-source declarations, not a
+    # cryptographically authenticated attestation of live checkpoint.
+
     api_match = api(served_id)
     if not api_match:
         issues.append("API_MODEL_ID_NOT_CONFIRMED")
@@ -339,6 +394,12 @@ def _collect(*, capture_ownership=ownership_capture, run_command=_cmd,
     observed = []
     for pid in pids:
         row = scan(pid, mounts, pinned_id, proc=proc)
+        for item in row["mapped_files"]:
+            key = (item["dev_major"], item["dev_minor"], item["inode"])
+            names = pinned_inodes.get(key, [])
+            item["pinned_snapshot_alias_filenames"] = sorted(set(names))
+            item["pinned_revision_inode_alias_match"] = bool(names)
+            item["ple_tensor_identity_authenticated"] = False
         membership = _cgroup_membership(pid, cid, proc=proc)
         row["cgroup_exact_container_id_present"] = membership
         if membership is not True:
@@ -356,10 +417,14 @@ def _collect(*, capture_ownership=ownership_capture, run_command=_cmd,
                   after.get("model") == MODEL)
     if not continuous:
         issues.append("CONTAINER_OR_PID_DRIFT")
-    candidate_files = sum(len(x["mapped_files"]) for x in observed)
+    mapped_rows = [item for proc_result in observed
+                   for item in proc_result["mapped_files"]]
+    candidate_files = len(mapped_rows)
     fully_statted = bool(candidate_files and
-                         all(x.get("inode_stat_match") is True
-                             for x in observed for x in x["mapped_files"]))
+                         all(item.get("inode_stat_match") is True
+                             for item in mapped_rows))
+    pinned_matched_count = sum(
+        item["pinned_revision_inode_alias_match"] for item in mapped_rows)
     all_pids_accessible = all(x["status"] != "NOT_OBSERVED"
                               and not x["issues"] for x in observed)
     if not candidate_files:
@@ -393,9 +458,20 @@ def _collect(*, capture_ownership=ownership_capture, run_command=_cmd,
                  "host_nat_path_authenticated": False,
                  "host_port_process_ownership_verified": False},
         "file_mappings": observed,
+        "pinned_snapshot": {
+            "declared_repo_id": repo_id, "declared_revision": revision,
+            "filesystem_inode_aliases_observed": len(pinned_inodes),
+            "source": "PINNED_FILESYSTEM_ALIAS_NOT_AUTHENTICATED_CONTENT",
+            "issues": pinned_issues,
+            "model_content_authenticated": False,
+            "ple_tensor_identity_authenticated": False,
+        },
         "summary": {
             "examined_container_host_pids": len(pids),
             "candidate_file_mapping_rows": candidate_files,
+            "pinned_snapshot_alias_file_count": len(pinned_inodes),
+            "pinned_revision_alias_matched_mappings": pinned_matched_count,
+            "pinned_revision_is_cryptographically_authenticated": False,
             "all_candidate_inodes_statted": fully_statted,
             "all_pids_accessible_and_container_bound": all_pids_accessible,
             "socket_inode_to_container_pid_correlated": bool(ports["matched_docker_host_pids"]),
@@ -406,7 +482,7 @@ def _collect(*, capture_ownership=ownership_capture, run_command=_cmd,
         },
         "issues": sorted(set(issues +
             [issue for item in observed for issue in item["issues"]] +
-            ports["issues"])),
+            ports["issues"] + pinned_issues)),
         "executed_inference": False, "service_mutated": False,
         "production_released": False, "operations_enabled": False,
         "note": ("Per-file RSS/PSS is a process mapping observation; it cannot establish "
