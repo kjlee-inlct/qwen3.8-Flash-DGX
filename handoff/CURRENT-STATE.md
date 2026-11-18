@@ -1,3 +1,13 @@
+## 2026-11-18 Actions zero-run investigation — root cause not yet independently identified
+
+GitHub API reports **1,640 historical workflow runs**; newest run was successful at `8b118c8` on 2026-11-11 (Push and PR). The current feature branch had advanced **44 commits** to `a47a36a` with **no new runs**; exact-head Actions runs/check-runs/statuses were empty. The first post-success commit `fcd6accc` also has 0 runs. Workflow YAML on the feature branch matches edited `handoff/**`/source/test paths, contains no branch restriction, and first missing commit added only two CPU commands. All 44 commit messages lack skip-CI directives. PR #1 is Draft/Open/unmerged and `mergeable=true`. `main` lacks that workflow, preventing default-branch manual dispatch, but previous feature-branch Push/PR events succeeded.
+
+**Unresolved blocker:** connector cannot read workflow registration/enabled state or `actions/permissions`; these endpoints are rejected by connector allowlist, **not** returned disabled by GitHub. Check repository/account Actions policy and triggering token identity using owner/admin read-only CLI or UI; do not guess `GITHUB_TOKEN` or account restriction. **Decision:** `CPU_REGRESSION_PASS_AT_2F5240D_OPERATOR / CI_UNVERIFIED / PRODUCTION_BLOCKED`. [Evidence and read-only operator checks](../docs/GITHUB-ACTIONS-NO-RUN-INVESTIGATION-20261118.md). No workflow dispatch, settings change, actual DGX operation or PR merge.
+
+<!-- GITHUB_ACTIONS_ZERO_RUN_INVESTIGATION_20261118 -->
+
+---
+
 ## 2026-11-18 latest — exact-HEAD P6-E selected CPU 45/45 PASS; CI and production remain blocked
 
 The operator supplied `git pull --ff-only` from `4fc3aa8` to **`2f5240d3a5652ce44af51b4b323b0d8d88a105bd`**, `git rev-parse HEAD` at that SHA and empty `git status --short` *before tests*. Three selected unittest modules completed successfully: generic operations **14/14** (`GENERIC_RC=0`), fake nonce v2 **12/12** (`NONCE_RC=0`), P5-D/P6-E **19/19** (`P6E_RC=0`). **45/45 PASS, zero reported test failures/errors**, evidence `OPERATOR_SUPPLIED_CPU_45_OF_45_PASS_RC0_SHA_BOUND_CLEAN_TREE`. This **supersedes the older 43/43 receipt only for this selected CPU scope**, not for complete CI, independently authenticated execution or live DGX.
