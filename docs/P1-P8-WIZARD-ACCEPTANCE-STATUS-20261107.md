@@ -1,3 +1,11 @@
+## 2026-11-19 06:46 KST — P5 visible-answer TTFC measured 1K/4K/7K (latest supersession)
+
+**New real DGX outcome, user-supplied stdout at clean SHA `bc0a9ea2346b85fa9f8e6ef132b765078b6385db`:** P5 visible-output 1K/4K/7K 256-token request-local `enable_thinking=false` one-shot **3/3 `MEASURED_VISIBLE`**; TTFT=TTFC **0.52051 / 1.59565 / 2.80664 s**, post-first TPS **21.961 / 22.943 / 22.948**, E2E **12.13219 / 12.71006 / 13.91874 s**. All SSE usage and visible deltas observed; reasoning deltas zero; Docker ID continuous. Selected CPU 8/8 + 23/23 = **31/31 PASS** at the guarded source checkout. `COLLECTED_UNQUALIFIED`; `finish_reason=length` all 3, so full answer completion and real runtime release not established. Saved private receipt and exclusive consumed marker; **do not rerun without another explicit approval**.
+
+Older default-thinking 256-token test remains 1K/4K **REASONING_ONLY**, TTFC null; the new nonthinking test *only* closes visible TTFC observability for its own workload, not a controlled performance comparison. P5 private resource snapshot details not included in summary stdout; PLE RSS, PID/NAT port ownership, GPU exclusivity, Actions at current HEAD, P6-E/P7/P8 and production remain unqualified. Historical P1-P4 accepted scopes preserved. See [P5 one-shot live record](P5-VISIBLE-GPU-ONE-SHOT-20261119.md).
+
+---
+
 ## 2026-11-19 KST — P5 256-token live SSE measurement completed, visible TTFC still blocked
 
 - Actual approved DGX MTP0 1K/4K `benchmark-execute` **executed** at exact clean source `17ebc7f7ba2dcfc27c6dca265952dc99cb85e3ee`. Two of two cases `MEASURED_REASONING_ONLY`: 1K `TTFT=0.52965s` and `TPS=22.405`; 4K `TTFT=1.70999s` and `TPS=22.604`. Server usage 256 output tokens each, both streams complete, `delta.reasoning` observed. Saved local measurement receipt, Docker ID continuous.
