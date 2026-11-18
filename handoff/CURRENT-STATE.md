@@ -1,3 +1,11 @@
+## 2026-11-18 P3–P5 operator integration receipts and corrections — NOT PASSED
+
+Clean operator checkout `9a79c8df4240c99836b0b0cf54ec3a88003686c6`: combined `--cpu-only` returned `INCOMPLETE_OR_BLOCKED` RC3; P3 CPU PASS, P4-A 9 PASS, P4-B/C 13 PASS, P5 source CPU **FAIL RC3** `P5_CPU_TESTS_FAILED`, P5 measurements 18 PASS and session 8 PASS. Combined `--read-only` returned RC3; P3-D and P3-G BLOCKED, P4-A/B+C dry-run BLOCKED, P5 source plan expected BLOCKED, model inventory READ_ONLY_PARTIAL, benchmark plan only. No service failure or previous historical acceptance reversal is inferred.
+
+Source audit proved one P5 doc-integrity test could not pass at tested SHA: original frozen 169 + expected 3 scoped documents vs actually **169 + 8**, and old marker location assumptions were stale. The five newer paths are now registered without removing frozen inventory or content/link checks. P5 CPU diagnostics now distinguish actual unittest exit from parse mismatch. P3-P5 collector no longer labels blocked P3/P4 as accepted, extracts limited nested failure reason fields, and treats read-only gaps as RC3. Added CPU tests. **No post-fix CPU run, CI or real DGX acceptance is yet verified**. [Detailed receipt, corrective diff and runbook](../docs/P3-P5-ONE-TURN-CLOSEOUT-20261118.md). P1/P2, historical P3/P4 scoped PASS, vLLM 0.32, port 8000, ONE_ACTIVE_MODEL_ONLY preserved. PR #1 Draft/Open, no operating Journal/production change.
+
+---
+
 ## 2026-11-18 P3–P5 unified source/read-only closeout (NEW — evidence-scoped)
 
 P3 historical A/B/C/G real DGX PASS/CLOSED and D READ_ONLY_PASS retained without replay. E Flash host metadata and F source CPU are **handoff complete in their limited scopes**, while canonical Flash reinstall and generalized operating lifecycle remain NOT RELEASED (assigned to P8). P4-A plus P4-B/C real DGX read-only inventory/review/dry-run PASS/CLOSED; 0 selected deletion assets, actual cleanup remains NOT_RUN and is optional if capacity is sufficient. P5 Orcarouter v3 BF16PLE MTP0 is still **DEVELOPMENT_TRIAL**, with P5-C correlated source probes and 2026-11-12 P5-D `BLOCKED_PARTIAL_PROCESS_EVIDENCE` (host listener PID unavailable under NAT), not a service failure. Loaded benchmark, PLE RSS, independent GPU/port ownership and MTP2 remain unqualified.
