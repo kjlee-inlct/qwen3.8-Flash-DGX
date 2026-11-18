@@ -1,5 +1,34 @@
 # P3–P5 one-turn scoped closeout and remaining operational acceptance (2026-11-18)
 
+## 2026-11-18 operator exact-SHA regression: 8b8f5a0, localized two test-harness bugs
+
+**Operator-supplied terminal receipt** at `8b8f5a0132e8b1f27f9ec4b1cd53c5e82c7f1aea`; `git pull --ff-only` fast-forwarded from `9a79c8d` and `git status --short` showed no changes.
+
+| Operator command/result | Observed |
+| --- | --- |
+| `test_p5_document_integrity_cpu.py` | `Ran 6 tests`, **1 FAIL**, RC1: `test_full_inventory_resolves_every_original_document` |
+| `test_p5_*_cpu.py` | `Ran 150 tests`, **1 FAIL**, RC1: same document inventory test; other 149 PASS |
+| `test_p3_p5_closeout_cpu.py` | `Ran 11 tests`, **6 FAIL**, RC1: each fake command dispatch did not recognize `scripts.manager.p3_dg_acceptance` |
+| `p3_p5_closeout --cpu-only` | `INCOMPLETE_OR_BLOCKED`, RC3, source-P3 CPU/P4-A 9/P4-BC 13/measurements 18/session 8 passed; P5 source failed on the one document inventory test |
+| `p3_p5_closeout --read-only` | `READ_ONLY_COLLECTED_WITH_GAPS`, RC3; all **5/5 receipts collected**, not all accepted |
+
+The P5 document inventory failure identifies **ten** local files under `reports/transitions/flash-next--to--27b/p3-c-operator-*.json`. These are operator transition receipts physically on the host, not members of the repository's frozen source document inventory, and their presence does not justify deleting or editing them. The old test scanned `ROOT.rglob("*")` and therefore unintentionally included those local files. **Fix:** enumerate `git ls-files --cached --full-name -z` with bounded output and safety/path checks; keep the immutable **169 tracked historical files + three known later baseline files + five explicitly approved new documents** equality requirement. A new isolated temp-directory test verifies a real on-disk but unindexed private receipt is excluded; another test rejects unsafe paths. No private reports touched.
+
+The six P3–P5 integration unit failures have the same mock fixture cause: tests matched bare `"p3_dg_acceptance" in cmd` while the real command array contains the **full element** `"scripts.manager.p3_dg_acceptance"`. Corrected exact module command elements for P3, P4, P5, and model measurements; kept all safety/denial assertions. This **does not** weaken CPU acceptance or admit blocked outcomes.
+
+The operator's read-only record is **more informative, not an operational PASS**:
+- P3-D `BLOCKED`: `ACTIVE_API_IDENTITY_NOT_VERIFIED`, `ACTIVE_DOCKER_CONTAINER_UNKNOWN`, `DOCKER_GPU_EXCLUSIVITY_NOT_VERIFIED`, `DOCKER_HOST_8000_OWNER_NOT_EXCLUSIVE`, `HOST_PORT_PROCESS_PID_UNAVAILABLE`. P3-G `BLOCKED`: `SOURCE_ACTIVE_MODEL_UNKNOWN_OR_UNSUPPORTED`, `SOURCE_API_AND_MANIFEST_UNVERIFIED`. Historical P3 transfer was between NVIDIA Flash and 27B; with a different active service this read-only runner cannot validate the previous P3 configuration and must fail closed. No service outage has been established.
+- P3-E `DRAFT_REVIEW_REQUIRED`: `FLASH_CANONICAL_REINSTALL_RECIPE_NOT_QUALIFIED`; P3-F `SOURCE_CPU_PASS_NOT_RELEASED`. These keep P8 and production gates closed.
+- P4-B+C `READ_ONLY_DRY_RUN_BLOCKED`: P4-A `READ_ONLY_INVENTORY_PARTIAL`, `CURRENT_P4_A_COMPLETE_EVIDENCE_REQUIRED`, `P4_B_COMPLETE_REVIEW_REQUIRED`. This is a current-snapshot acceptance gap; earlier P4-A/B/C historical read-only PASS is not overwritten.
+- P5 source-plan `BLOCKED` with `P5_GPU_ABI_AND_ROLLBACK_UNQUALIFIED` is **expected fail-closed**; model inventory `READ_ONLY_PARTIAL` and benchmark plan `PLAN_ONLY_ACK_REQUIRED` are not measured loaded-performance results.
+
+**Post-receipt source commits are not yet covered by operator CPU reruns or CI.** The GitHub Actions zero-run issue remains unresolved. Next operator-side safe check: `python3 -B -m unittest discover -s tests -p 'test_p5_document_integrity_cpu.py' -v`, `... -p 'test_p5_*_cpu.py' -v`, `... -p 'test_p3_p5_closeout_cpu.py' -v`, then `python3 -B -m scripts.manager.p3_p5_closeout --cpu-only --json` on a new clean HEAD. Read-only retry is **not required** to validate these two test-harness fixes. Do not delete any private P3 reports, stop services, switch models, run inference, change operational Journal or merge PR #1.
+
+**Decision:** `TESTED_8B8F_P5_149_OF_150 / TESTED_8B8F_CLOSEOUT_5_OF_11 / FIXED_TEST_HARNESS_SOURCE_CPU_PENDING / READONLY_GAPS_RETAINED / CI_UNVERIFIED / PRODUCTION_BLOCKED`.
+
+---
+
+
 ## 2026-11-18 P3-P5 operator 9a79c8 integrated run receipt and source correction
 
 ### Operator CPU receipt — **partial, not PASS**
