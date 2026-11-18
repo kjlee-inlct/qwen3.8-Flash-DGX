@@ -1,3 +1,14 @@
+## 2026-11-18 next P5-D/CI work after source-only NAT and smaps helper
+
+- [x] GitHub feature-branch `port_publication` read-only diagnosis, conservative one-PID PLE smaps parser and 7 synthetic CPU fixtures committed; local **7/7 PASS only**. Preserve prior Docker PID subset and P3/P4 acceptance evidence.
+- [ ] Run `python3 -B -m unittest discover -s tests -p 'test_p5_readonly_attribution_cpu.py' -v` plus existing `test_p5d_p6e_cpu.py`, `test_p5_resource_diagnostics_cpu.py` and `test_model_measurements_cpu.py` **at a fresh clean Git SHA**, then full targeted regression. Do not claim new-HEAD PASS before actual execution.
+- [ ] Read-only DGX: check `./wizard.sh operations measurements history --model orcarouter --json` for an existing **256-token** remeasurement; do **not** automatically spend/replay single-use approval. Any real invocation still requires fresh exact active model/API/container verification and separate operator host access.
+- [ ] Inspect NAT `port_publication` diagnostics on the real host without changing network configuration, restarting Docker or sudo. It does not authenticate host :8000 process. Plan an independently bounded /proc smaps capture with exact PLE asset paths, pre/post PID, Docker ID, inode and worker-set binding before claiming PLE RSS.
+- [ ] CI: verify workflow registration and Actions eligibility from default `main` (its workflow directory was NOT_FOUND despite feature-branch file). Do not mutate default branch or merge Draft PR #1 merely to create runs. Check new SHA's actual Actions entries/checks independently.
+- [ ] Carry all remaining P5 operational acceptance gaps into P6-E/P7/P8 without relaxing fail-closed behavior or `PRODUCTION_BLOCKED`.
+
+---
+
 ## 2026-11-18 P5-D read-only follow-up received; keep separate approved inference gate
 
 - [x] Operator provided P5-D read-only `ownership-capture` RC3 (only NAT/host 8000 listener PID gap), inventory RC0 and resource snapshot RC0 at 2026-11-18 12:13Z. Docker/GPU PID subset consistent; not independent ownership. KV cache available 9.83 GiB, capacity 197352 tokens from runtime log. PLE-specific RSS and process RSS/PSS remain unknown.
