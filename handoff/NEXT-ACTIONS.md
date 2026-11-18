@@ -1,3 +1,15 @@
+## 2026-11-18 P5-D read-only follow-up received; keep separate approved inference gate
+
+- [x] Operator provided P5-D read-only `ownership-capture` RC3 (only NAT/host 8000 listener PID gap), inventory RC0 and resource snapshot RC0 at 2026-11-18 12:13Z. Docker/GPU PID subset consistent; not independent ownership. KV cache available 9.83 GiB, capacity 197352 tokens from runtime log. PLE-specific RSS and process RSS/PSS remain unknown.
+- [ ] The **approved** active Orcarouter MTP0 1K/4K `max-output-tokens=256` single inference remeasurement output has **not been received**. Use the documented fresh model/served-ID/Docker identity gates and no auto-retries. Capture actual TTFT, TTFC, TPS, stream_metrics_quality and saved local evidence path; do not assume it has run from read-only observations.
+- [ ] P5-D NAT-port owner: design an explicitly fail-closed and independently grounded host/container ownership path for Docker NAT, without treating missing `ss` PID as a service fault; do not change networking, restart services or request privileged host modifications as default.
+- [ ] PLE RSS: if needed develop a **bounded read-only file-specific mapping auditor** with exact pinned source path, Docker PID identity and independent evidence; existing `smaps_rollup`, cgroup file cache and 95.37 GiB declared mmap do **not** satisfy PLE residency verification.
+- [ ] CI Actions no-run persists; PR #1 Draft/Open; MTP2 and P8 real recovery or model transition remain unapproved.
+
+[Latest scoped receipt and runbook](../docs/P3-P5-ONE-TURN-CLOSEOUT-20261118.md).
+
+---
+
 ## 2026-11-18 P5 follow-up operator approval — safe execution instruction ready
 
 - [x] User approved **one additional bounded** active-model Orcarouter BF16PLE MTP0 inference run (1K/4K, 256 output tokens, concurrency 1, repeat 1), plus P5-D and PLE/resource read-only observations. This is **not** authorization for MTP2 or any service, storage, operating Journal, recovery or PR mutation.
