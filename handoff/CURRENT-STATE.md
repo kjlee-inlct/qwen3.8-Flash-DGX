@@ -1,3 +1,13 @@
+## 2026-11-18 P3–P5 unified source/read-only closeout (NEW — evidence-scoped)
+
+P3 historical A/B/C/G real DGX PASS/CLOSED and D READ_ONLY_PASS retained without replay. E Flash host metadata and F source CPU are **handoff complete in their limited scopes**, while canonical Flash reinstall and generalized operating lifecycle remain NOT RELEASED (assigned to P8). P4-A plus P4-B/C real DGX read-only inventory/review/dry-run PASS/CLOSED; 0 selected deletion assets, actual cleanup remains NOT_RUN and is optional if capacity is sufficient. P5 Orcarouter v3 BF16PLE MTP0 is still **DEVELOPMENT_TRIAL**, with P5-C correlated source probes and 2026-11-12 P5-D `BLOCKED_PARTIAL_PROCESS_EVIDENCE` (host listener PID unavailable under NAT), not a service failure. Loaded benchmark, PLE RSS, independent GPU/port ownership and MTP2 remain unqualified.
+
+New **source-only** `scripts/manager/p3_p5_closeout.py` exposes mutually exclusive `--plan`, `--cpu-only`, and `--read-only`. The explicit optional `--with-p5-asset-hashes` adds heavy read I/O, never writes/starts a model. New `tests/test_p3_p5_closeout_cpu.py` defines 9 mock negative/safety tests; Push/PR workflow filters and source-only job updated. **No actual new-head test execution, GitHub Actions PASS, independent DGX measurement or GPU benchmark is claimed**. CI has not generated fresh runs since 2026-11-11. [Scope, commands and remaining acceptance](../docs/P3-P5-ONE-TURN-CLOSEOUT-20261118.md).
+
+**Decision:** `P3_HISTORICAL_SWITCH_CLOSED_P8_REINSTALL_PENDING / P4_READ_ONLY_CLOSED_NO_DELETE / P5_DEVELOPMENT_TRIAL_LOADED_PENDING / NEW_SOURCE_CPU_PENDING / CI_UNVERIFIED / PRODUCTION_BLOCKED`. No actual DGX service, port, GPU, caches, model, Journal, PR merge or recovery was changed by this GitHub source update.
+
+---
+
 ## 2026-11-18: Git Push trigger probe also no-run; four queued/zero-job records
 
 Operator committed a new matching `handoff/**` path and pushed **`93473eda06769614ef259a1ab6acdc6e9db13b4b`** via local HTTPS Git to the existing feature branch. GitHub confirmed the commit and PR #1 HEAD but still returned **0 Actions runs and 0 check runs for that SHA**, repository-wide run count 1640. Therefore connector-only commits are not a sufficient explanation; the specific local Git Push credential remains unverified. Workflow state is `active`, repository Actions `enabled=true`, `allowed_actions=all`.
