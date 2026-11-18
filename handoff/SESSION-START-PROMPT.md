@@ -1,3 +1,11 @@
+## 2026-11-19 KST — LATEST: MTP0 256-token one-shot EXECUTED, evidence recorded
+
+**Supersedes previous "256-token pending" starter sections.** An operator executed the previously approved one-shot MTP0 1K/4K max-output=256 benchmark on DGX at exact clean SHA `17ebc7f7ba2dcfc27c6dca265952dc99cb85e3ee`, with active API/model and Docker identity preflight PASS and stable full container ID `9c49950015a845357e90fabe74946565d41069362c083fe7982f54caa2b3beac`. `COLLECTED_UNQUALIFIED`, both cases `MEASURED_REASONING_ONLY`, SSE `delta.reasoning` and usage observed. 1K TTFT 0.52965s / TPS 22.405 / E2E 11.91080s; 4K TTFT 1.70999s / TPS 22.604 / E2E 12.99106s. Both TTFC=null, no visible content, finish_reason=length. Private measurement receipt `/home/inlc/.local/state/blazux-wizard/model-measurements/orcarouter--20261118T191809604958Z--61a970733d8c.json`; preserve but do not claim independent authentication. **One-shot inference approval CONSUMED; do not rerun.**
+
+Next source/GitHub work: first fetch current feature-branch HEAD and PR #1; check Actions (historically missing), keep source-only CI labels separate from DGX inference evidence, investigate read-only Docker NAT host port and bounded authenticated per-file PLE RSS, and plan (NOT execute) any future visible TTFC trial requiring **new explicit approval**. Preserve P1–P4 history, vLLM 0.32.0, host :8000, ONE_ACTIVE_MODEL_ONLY, HF cache; no SGLang, Docker switch, Journal mutation, auto recovery, PR merge or production. See `docs/P3-P5-ONE-TURN-CLOSEOUT-20261118.md` and `handoff/EVIDENCE-LEDGER.md`.
+
+---
+
 ## 2026-11-19 KST — latest operator evidence, 65 targeted CPU PASS and history receipts
 
 Resume on `feature/recipe-wizard-handoff`, first fetch actual GitHub HEAD and PR #1 state. **Operator reported 65/65 targeted CPU tests PASS** with RC0 for P5 read-only NAT/PLE helper (7), P5-D/P6-E (19), resource diagnostics (16), and SSE measurements (23); pasted output omitted `git rev-parse HEAD` and `git status`, so **exact test SHA and worktree cleanliness are unbound**. Do not claim new HEAD CI or full CPU success without fresh receipts.
