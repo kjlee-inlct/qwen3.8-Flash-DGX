@@ -80,6 +80,65 @@ def _safe_doc(raw: str) -> dict | None:
     return doc if isinstance(doc, dict) else None
 
 
+def _issues(value) -> list[str]:
+    """Report only bounded failure reason codes, never raw host paths or logs."""
+    if not isinstance(value, list):
+        return []
+    codes = []
+    for item in value[:20]:
+        if not isinstance(item, str) or not re.fullmatch(r"[A-Z0-9_:-]{1,120}", item):
+            codes.append("NON_CODE_ISSUE_REDACTED")
+        else:
+            codes.append(item)
+    return codes
+
+
+def _stage_summary(doc: dict, task_name: str) -> dict:
+    summary_keys = ("status", "scope", "stage", "mode", "action",
+                    "model", "blocked_stages", "executed",
+                    "production_released", "acceptance_complete",
+                    "inventory_status")
+    summary = {key: doc[key] for key in summary_keys if key in doc}
+    summary["issues"] = _issues(doc.get("issues"))
+    if task_name == "p3_dg_read_only":
+        sections = doc.get("stages")
+        if isinstance(sections, dict):
+            summary["stages"] = {
+                stage: {"status": part.get("status"), "issues": _issues(part.get("issues"))}
+                for stage, part in sections.items()
+                if stage in ("P3-D", "P3-E", "P3-F", "P3-G") and isinstance(part, dict)
+            }
+    elif task_name == "p4_a_bc_read_only":
+        for key in ("candidate_review", "cleanup_rehearsal"):
+            section = doc.get(key)
+            if isinstance(section, dict):
+                summary[key] = {"status": section.get("status"),
+                                "issues": _issues(section.get("issues"))}
+    elif task_name == "p5_source_cpu":
+        stages = doc.get("stages")
+        if isinstance(stages, list):
+            for section in stages:
+                if isinstance(section, dict) and section.get("gate") == "cpu_fake_dgx":
+                    cases = section.get("test_cases")
+                    summary["cpu_suite"] = {
+                        "status": section.get("status"),
+                        "exit_code": section.get("exit_code"),
+                        "test_summary": section.get("test_summary"),
+                        "parsed_case_count": len(cases) if isinstance(cases, list) else None,
+                        "failed_cases": [
+                            case.get("case") for case in (cases or [])[:25]
+                            if isinstance(case, dict) and case.get("status") != "PASS"
+                            and isinstance(case.get("case"), str)
+                            and re.fullmatch(r"test_[A-Za-z0-9_]{1,110}", case["case"])
+                        ] if isinstance(cases, list) else [],
+                        "issues": _issues(section.get("issues")),
+                        "failure_detail_available_in_direct_p5_output":
+                            section.get("failure_details") is not None,
+                    }
+                    break
+    return summary
+
+
 def _execute(task: dict, *, runner=subprocess.run) -> dict:
     try:
         result = runner(task["cmd"], cwd=ROOT, capture_output=True, text=True,
@@ -87,34 +146,52 @@ def _execute(task: dict, *, runner=subprocess.run) -> dict:
                         env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"})
     except (OSError, ValueError, subprocess.TimeoutExpired) as exc:
         return {"task": task["name"], "result": "UNAVAILABLE",
-                "reason": type(exc).__name__, "accepted": False}
-    out = {"task": task["name"], "returncode": result.returncode, "accepted": False}
+                "reason": type(exc).__name__, "collected": False, "accepted": False}
+    out = {"task": task["name"], "returncode": result.returncode,
+           "collected": False, "accepted": False}
     if task["json"]:
         doc = _safe_doc(result.stdout)
         if doc is None or not isinstance(doc.get("status"), str):
             return {**out, "result": "INVALID_JSON_RECEIPT"}
-        # Expected gate denial (RC=3) is evidence collection, not a passed test.
-        valid = (result.returncode == 0 or
-                 (result.returncode == 3 and
-                  doc["status"] in ("BLOCKED", "FAIL", "INCOMPLETE_MEASUREMENT")))
-        summary_keys = ("status", "scope", "stage", "mode", "action",
-                        "model", "blocked_stages", "issues", "executed",
-                        "production_released", "acceptance_complete")
-        summary = {k: doc[k] for k in summary_keys if k in doc}
-        if "issues" in summary and isinstance(summary["issues"], list):
-            summary["issues"] = [str(x)[:120] for x in summary["issues"][:20]]
-        cpu_pass = (result.returncode == 0 and
-                    ((task["name"] == "p3_dg_cpu" and doc["status"] == "CPU_ONLY_SOURCE_PASS_NOT_DGX")
-                     or (task["name"] == "p5_source_cpu" and doc["status"] == "PASS")))
-        return {**out, "result": "COLLECTED" if valid else "INVALID_EXIT_OR_STATUS",
-                "summary": summary,
-                "accepted": bool(cpu_pass if task["name"] in ("p3_dg_cpu", "p5_source_cpu")
-                                 else valid)}
+        state = doc["status"]
+        # Exit=3 can be a legitimate fail-closed observation, not an invalid
+        # receipt and never a PASS. Ensure the status/exit combination agrees.
+        good = result.returncode == 0 and state in (
+            "CPU_ONLY_SOURCE_PASS_NOT_DGX", "PASS",
+            "DRAFT_PARTIAL_ACCEPTANCE_NOT_RELEASED", "READ_ONLY_DRY_RUN_PASS",
+            "READ_ONLY_PARTIAL", "READ_ONLY_COMPLETE", "COLLECTED_UNQUALIFIED",
+            "PLAN_ONLY_ACK_REQUIRED", "SOURCE_CATALOG_ONLY")
+        blocked = result.returncode == 3 and state in (
+            "BLOCKED", "FAIL", "INCOMPLETE_MEASUREMENT",
+            "READ_ONLY_DRY_RUN_BLOCKED")
+        if not (good or blocked):
+            return {**out, "result": "INVALID_EXIT_OR_STATUS",
+                    "summary": _stage_summary(doc, task["name"])}
+        qualified = (good and
+                     ((task["name"] == "p3_dg_cpu" and state == "CPU_ONLY_SOURCE_PASS_NOT_DGX")
+                      or (task["name"] == "p5_source_cpu" and state == "PASS")
+                      or (task["name"] == "p3_dg_read_only"
+                          and state == "DRAFT_PARTIAL_ACCEPTANCE_NOT_RELEASED"
+                          and not doc.get("blocked_stages"))
+                      or (task["name"] == "p4_a_bc_read_only"
+                          and state == "READ_ONLY_DRY_RUN_PASS")
+                      or (task["name"] == "p5_model_inventory"
+                          and state == "READ_ONLY_COMPLETE")
+                      or (task["name"] == "p5_benchmark_plan"
+                          and state == "PLAN_ONLY_ACK_REQUIRED")))
+        return {**out, "collected": True, "accepted": bool(qualified),
+                "result": ("CPU_PASS" if qualified and task["name"].endswith("_cpu") else
+                           "OBSERVATION_PASS_NOT_RELEASED" if qualified else
+                           "BLOCKED_RECEIPT" if blocked else "PARTIAL_RECEIPT"),
+                "expected_non_authorizing_plan":
+                    task["name"] == "p5_source_plan" and state == "BLOCKED",
+                "summary": _stage_summary(doc, task["name"])}
     log = (result.stdout or "") + "\n" + (result.stderr or "")
     count = _COUNT.findall(log)
     passed = (result.returncode == 0 and len(count) == 1 and
               int(count[0]) > 0 and re.search(r"(?m)^OK\s*$", log) is not None)
-    return {**out, "result": "CPU_PASS" if passed else "CPU_FAILED_OR_INCOMPLETE",
+    return {**out, "collected": True,
+            "result": "CPU_PASS" if passed else "CPU_FAILED_OR_INCOMPLETE",
             "tests": int(count[0]) if len(count) == 1 else 0,
             "accepted": bool(passed)}
 
@@ -138,16 +215,28 @@ def collect(mode: str, *, with_p5_asset_hashes: bool = False,
     except (OSError, ValueError, subprocess.TimeoutExpired):
         head, clean = None, False
     outcomes = [_execute(t, runner=runner) for t in tasks]
-    collected = all(r["accepted"] for r in outcomes)
-    if not head or not clean:
-        collected = False
+    valid_provenance = bool(head and clean)
+    cpu_pass = (mode == "cpu-only" and all(r["accepted"] for r in outcomes)
+                and valid_provenance)
+    observed = (mode == "read-only" and all(r["collected"] for r in outcomes)
+                and valid_provenance)
+    # A valid blocked P5 source plan is expected but not an acceptance PASS.
+    # P3 and P4 actual blocked stages and partial model inventory remain gaps.
+    read_only_complete = (observed and all(
+        r["accepted"] or r.get("expected_non_authorizing_plan")
+        for r in outcomes))
     return {
         "schema_version": 1, "action": "p3-p5-closeout", "mode": mode,
-        "status": ("CPU_SELECTED_PASS_NOT_CI" if collected and mode == "cpu-only" else
-                   "READ_ONLY_COLLECTED_NOT_RELEASED" if collected else
+        "status": ("CPU_SELECTED_PASS_NOT_CI" if cpu_pass else
+                   "READ_ONLY_COLLECTED_NOT_RELEASED" if read_only_complete else
+                   "READ_ONLY_COLLECTED_WITH_GAPS" if observed else
                    "INCOMPLETE_OR_BLOCKED"),
         "source_head": head, "clean_before_run": clean,
         "tasks": outcomes, "commands_executed": True,
+        "receipts_collected": sum(bool(r["collected"]) for r in outcomes),
+        "task_count": len(outcomes),
+        "source_cpu_selected_pass": cpu_pass,
+        "read_only_all_receipts_collected": observed,
         "real_model_switch_executed": False, "live_deletion_executed": False,
         "inference_executed": False, "operating_journal_written": False,
         "operations_enabled": False, "production_released": False,
