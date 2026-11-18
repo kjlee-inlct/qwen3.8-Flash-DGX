@@ -114,13 +114,21 @@ def _synthetic_prompt(model, target_tokens):
     return prompt, _token_count(model, prompt)
 
 
-def _stream_chat(model, prompt, output):
-    """SSE: first emitted token may be reasoning; TTFC needs delta.content."""
+def _stream_chat(model, prompt, output, *, enable_thinking=None):
+    """SSE: first emitted token may be reasoning; TTFC needs delta.content.
+
+    Request-local Qwen thinking override does not alter the running engine
+    and is sent only for the explicit visible-output P5 one-shot.
+    """
+    if enable_thinking is not None and not isinstance(enable_thinking, bool):
+        raise ValueError("INVALID_ENABLE_THINKING")
     payload = {
         "model": model, "messages": [{"role": "user", "content": prompt}],
         "stream": True, "stream_options": {"include_usage": True},
         "max_tokens": output, "temperature": 0,
     }
+    if enable_thinking is not None:
+        payload["chat_template_kwargs"] = {"enable_thinking": enable_thinking}
     req = Request(API + "/v1/chat/completions",
                   data=json.dumps(payload, separators=(",", ":")).encode("utf-8"),
                   headers={"Content-Type": "application/json", "Accept": "text/event-stream"},
