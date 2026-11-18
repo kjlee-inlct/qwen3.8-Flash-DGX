@@ -1,5 +1,11 @@
 # Blazux DGX Spark — P1–P8 execution roadmap (2026-11-19 KST)
 
+## Current update: P5 visible measurement COMPLETE (2026-11-19 06:46 KST (2026-11-18 21:46 UTC))
+
+**M1 P5 visible TTFC is now observed (scope-limited)**: operator ran the separate authorized one-shot, 1K/4K/7K `MEASURED_VISIBLE` 3/3, TTFC=TTFT 0.52051/1.59565/2.80664 seconds and post-first TPS 21.961/22.943/22.948. 31 selected CPU tests PASS on clean source SHA `bc0a9ea2346b85fa9f8e6ef132b765078b6385db`. All three completions ended with `finish_reason=length`; accuracy/task completion and production qualification are unverified. One-shot approval is **consumed**: no replay. M1 next target is **read-only resource receipt review, then independently grounded PLE RSS and NAT/GPU ownership**. M0 CI remains unverified; M2 P6-E, M3 P7, M4 P8 remain approval-gated. [Detailed measurement](P5-VISIBLE-GPU-ONE-SHOT-20261119.md).
+
+---
+
 This is the **current actionable roadmap** rather than a historical completion override. Stage receipts in `handoff/EVIDENCE-LEDGER.md`, original dated runbooks and exact commit-bound logs remain the evidence source. Avoid interpreting an old "PENDING" line as current after a newer receipt. Draft PR #1 is **Open / Unmerged**, with no authorization to merge or release.
 
 ```text
