@@ -1,3 +1,9 @@
+## 2026-11-19 06:46 KST — operator P5 visible TTFC one-shot live receipt accepted as observation
+
+Operator used existing active Orcarouter MTP0 (without service mutation), clean source `bc0a9ea2346b85fa9f8e6ef132b765078b6385db`, P5 CPU 8/8 + measurements CPU 23/23 PASS, then bounded 1K/4K/7K 256-token, request-local `enable_thinking=false` single-shot GPU trial. All 3 SSE streams returned visible content, observed TTFC=TTFT 0.52051/1.59565/2.80664s and usage-derived post-first TPS 21.961/22.943/22.948; all terminated at token cap (finish_reason=length). Saved private receipt and one-shot claim, marked authorization **CONSUMED**. This documentation update does not execute GPU work or modify service, Journal, caches or PR. Production/CI/PLE/NAT ownership not qualified.
+
+---
+
 ## 2026-11-19 KST — request-local nonthinking SSE / guarded one-shot P5 visible benchmark (SOURCE ONLY)
 
 Added request-scoped Qwen thinking override to SSE streaming without modifying default code path. Added P5 one-shot visible TTFC/TPS run with 1K/4K/7K context, max 256 generated tokens per request, exact live identity gates, private no-replay claim, no automatic retries, and sequential resource measurements; eight CPU fixtures committed and new runbook/current P1–P8 roadmap created. This source addition was **not executed on real DGX or marked CI PASS** by the assistant; operator approval was GPU inference only and no service or PR merge was performed.
