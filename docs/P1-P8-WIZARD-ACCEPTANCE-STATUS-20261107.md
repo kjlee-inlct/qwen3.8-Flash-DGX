@@ -1,3 +1,12 @@
+## 2026-11-19 KST P5 targeted CPU update — SHA unbound, CI/live gaps remain
+
+- Operator-supplied DGX stdout **65/65 targeted CPU tests PASS** in four groups (P5 NAT/PLE 7; P5-D/P6-E 19; P5 resources 16; P5 measurements/SSE 23), all exit code zero. The pasted log does not show git HEAD/clean status: **cannot pin PASS to an exact new HEAD**. This is not entire-repository regression, GitHub Actions CI or GPU qualification.
+- Read-only MTP0 local history contained `count=2`: historical 128-token benchmark `COLLECTED_UNQUALIFIED` (TTFT/TTFC/TPS null; 8K skipped) and older `READ_ONLY_PARTIAL` inventory. **No 256-token recorded benchmark**; unsaved independent run cannot be ruled out.
+- P3/P4 scoped historical acceptance preserved. P5 actual timing/port/PLE/CI not qualified. P6/P7/P8 production executor/operational verification blocked. PR #1 remains Draft/Open/Unmerged; no approved operational mutation or merge.
+- See [P3-P5 scoped closeout](P3-P5-ONE-TURN-CLOSEOUT-20261118.md).
+
+---
+
 ## 2026-11-18 P5-D NAT/PLE source-only improvement — no acceptance promotion
 
 - **P1–P4 historical scope unchanged.** No new DGX release or operational validation is claimed.
