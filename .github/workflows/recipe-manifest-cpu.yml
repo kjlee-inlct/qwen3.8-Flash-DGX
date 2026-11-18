@@ -61,6 +61,7 @@ on:
       - 'tests/test_mock_benchmark_session_cpu.py'
       - 'tests/test_mock_transaction_pipeline_cpu.py'
       - 'tests/test_mock_persistent_contract_cpu.py'
+      - 'tests/test_p3_p5_closeout_cpu.py'
       - 'tests/test_mock_nonce_fence_v2_cpu.py'
       - 'tests/test_p5c_p6d_contract_cpu.py'
       - 'tests/test_p5d_p6e_cpu.py'
@@ -101,6 +102,7 @@ on:
       - 'docs/WIZARD-MANIFEST-*'
       - 'recipes/**'
       - 'scripts/manager/**'
+      - 'tests/test_p3_p5_closeout_cpu.py'
       - 'tests/test_mock_nonce_fence_v2_cpu.py'
       - 'tests/test_manager_manifest_cpu.py'
       - 'tests/test_flash_host_assets_cpu.py'
@@ -173,6 +175,7 @@ jobs:
           python -m wizard operations generic pipeline-mock --from-model 27b --to-model flash-next --json
           python -m unittest discover -s tests -p 'test_transition_safety_cpu.py' -v
           python -m unittest discover -s tests -p 'test_integration_contract_cpu.py' -v
+          python -m unittest discover -s tests -p 'test_p3_p5_closeout_cpu.py' -v
           python -m unittest discover -s tests -p 'test_generic_operations_cpu.py' -v
           python -m unittest discover -s tests -p 'test_generic_console_cpu.py' -v
           python -m wizard operations generic catalog --json
