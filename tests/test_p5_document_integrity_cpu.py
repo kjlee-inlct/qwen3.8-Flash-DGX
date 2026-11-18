@@ -101,17 +101,22 @@ class P5HandoffFullDocumentCPU(unittest.TestCase):
         self.assertEqual(set(original) - current, set())
 
     def test_git_tracked_inventory_ignores_local_private_operator_reports(self):
+        from tempfile import TemporaryDirectory
         from unittest.mock import patch
 
-        raw = (b"docs/P3-P5-ONE-TURN-CLOSEOUT-20261118.md\0"
-               b"reports/transitions/flash-next--to--27b/private-receipt.json\0"
-               b"tests/test_p5_document_integrity_cpu.py\0")
-        with patch("subprocess.check_output", return_value=raw):
-            found = _tracked_document_paths()
-        self.assertIn("docs/P3-P5-ONE-TURN-CLOSEOUT-20261118.md", found)
-        # The mocked receipt path is not an on-disk file, so a local report
-        # never gets accepted on the basis of a glob-like directory scan.
-        self.assertNotIn("reports/transitions/flash-next--to--27b/private-receipt.json", found)
+        with TemporaryDirectory() as temp:
+            workspace = Path(temp)
+            (workspace / "docs").mkdir()
+            (workspace / "docs" / "tracked.md").write_text("tracked", encoding="utf-8")
+            receipt = workspace / "reports" / "transitions" / "private-receipt.json"
+            receipt.parent.mkdir(parents=True)
+            receipt.write_text('{"private":true}', encoding="utf-8")
+            self.assertTrue(receipt.is_file())  # physically exists, deliberately NOT indexed
+            with (patch("subprocess.check_output", return_value=b"docs/tracked.md\0"),
+                  patch(__name__ + ".ROOT", workspace)):
+                found = _tracked_document_paths()
+        self.assertEqual(found, {"docs/tracked.md"})
+        self.assertNotIn("reports/transitions/private-receipt.json", found)
 
     def test_tracked_inventory_rejects_unsafe_git_paths(self):
         from unittest.mock import patch
