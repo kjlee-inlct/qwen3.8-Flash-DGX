@@ -1,3 +1,17 @@
+## 2026-11-18 latest P5-D NAT/PLE source-only handoff (supersession)
+
+Continue from feature-branch source SHA `4aef061f9f8cab7ef6ccaf88be918c91fbe99c68` or newer; **re-fetch GitHub HEAD first**. PR #1 Draft/Open/Unmerged. P3/P4 past scoped acceptance is unchanged; P5 active Orcarouter MTP0 is still DEVELOPMENT_TRIAL on expected API :8000, with no production release or live mutation authorized by this session.
+
+New `scripts/manager/p5_readonly_attribution.py` and `tests/test_p5_readonly_attribution_cpu.py` implement pure fail-closed Docker port binding configuration review and exact per-PID smaps file mapping RSS/PSS analysis; `process_ownership.py` now reports `port_publication`. Isolated local synthetic CPU 7/7 PASS and exact source/test Git blobs matched GitHub, **not full repository CPU / GitHub CI / actual DGX validation**. Docker NAT attribution, live host listener, GPU exclusivity, PLE physical residency and pinned path/workers identity **remain unverified**.
+
+Prior SHA `c1bd76b` had no CI runs; now feature HEAD also no Actions run/check-status. Repository run count stayed at 1640, last successful workflow SHA `8b118c8` (2026-11-11). Workflow file exists on feature branch; default `main` `.github/workflows` contents returned NOT_FOUND. Do not assert this alone caused the CI no-run or merge PR to troubleshoot. Review Actions eligibility, branch registration and permissions separately.
+
+Next: run CPU regression at **exact clean SHA** (including `tests/test_p5_readonly_attribution_cpu.py`, `tests/test_p5d_p6e_cpu.py`, `tests/test_model_measurements_cpu.py`), then read-only DGX `./wizard.sh operations measurements history --model orcarouter --json`. Approved single-use 1K/4K 256-token measurement has no attached result; do not automatically rerun after unknown execution history. Only after provenance and bounded read-only pilot design can PLE specific file-mapping capture be introduced. Maintain fail-closed RC3 for missing host port PID; no live Docker changes, Journal writes, auto restore, cache deletion, MTP2, CI claims or PR merge.
+
+See `docs/P3-P5-ONE-TURN-CLOSEOUT-20261118.md` and `handoff/EVIDENCE-LEDGER.md` for the dated detailed state.
+
+---
+
 ## 2026-11-18 P6-E read-only evidence-ingest fence — SOURCE UPDATED / TESTS AND CI PENDING
 
 **Current code scope (supersedes older source descriptions, not older test receipts):** On the Draft PR #1 feature branch, starting GitHub HEAD `4e93c6f9e1c0ef14cc55fab7aae378689828c6f8`, code now pins one read-only regular-file descriptor for injected JSON, verifies inode/size/timestamps, caps read size at 1 MiB, and rejects duplicate nested JSON keys, nonfinite numbers, malformed UTF-8 and excessive nesting. Four new CPU negative tests are added to `tests/test_generic_operations_cpu.py` for tampering/races/CLI fail-closed. **New tests were NOT executed in this session; no new exact-head CI PASS is claimed.** Full design and safe reproduction checklist: [P6-E JSON ingest fence](../docs/P6-E-UNTRUSTED-JSON-INGEST-FENCE-20261118.md).
