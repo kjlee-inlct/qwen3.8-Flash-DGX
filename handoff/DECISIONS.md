@@ -1,3 +1,11 @@
+## 2026-11-19 06:46 KST — accept P5 visible TTFC observation, not production / answered-task acceptance
+
+The separately approved 1K/4K/7K (256 completion-token cap) Orcarouter MTP0 request-local no-thinking GPU one-shot **completed once**, at source SHA `bc0a9ea2346b85fa9f8e6ef132b765078b6385db`. All three cases produced SSE-visible content, TTFT=TTFC 0.52051/1.59565/2.80664s, post-first TPS 21.961/22.943/22.948, zero reasoning deltas, stable Docker ID and saved private evidence. **This closes the earlier "TTFC_NOT_OBSERVED" measurement gap for this exact no-thinking workload only.** The prior default-thinking workload remains **reasoning-only**, TTFC null, and must not be rewritten. All 3 cases terminated by `finish_reason=length`, so generated-task completeness/accuracy remains unverified. Single samples do not establish statistical reproducibility.
+
+The new private consumed-on-attempt claim prohibits replay without new explicit operator approval; a read-only examination of the saved resource receipt is the next reasonable work item, with no more GPU traffic. Claim no PLE unique RSS, independent host port/GPU owner, qualified runtime, P6/P7/P8 operation or production release. PR #1 stays Draft/Open.
+
+---
+
 ## 2026-11-19 KST — P5 measurement acceptance boundary after 256-token live run
 
 Accept **scoped source/runtime evidence** that vLLM 0.32 `delta.reasoning` now populates TTFT and usage-derived post-first-token TPS for the already-active Orcarouter MTP0 at tested source SHA `17ebc7f7ba2dcfc27c6dca265952dc99cb85e3ee`. Results: 1K `TTFT=0.52965s`, `TPS=22.405`; 4K `TTFT=1.70999s`, `TPS=22.604`. Both cases emit no visible content within 256 completion tokens, `TTFC=null`, `finish_reason=length`, and are `MEASURED_REASONING_ONLY`. Interpret `COLLECTED_UNQUALIFIED` as successful collection only; it does not authorize release or prove visible-answer latency. The specific one-shot live inference approval has been consumed and must not be reused. Retain all previous 128-token measurements as historical evidence; no retrospective metric backfill. No release of P5-D port/GPU/PLE provenance, P6-E operating Journal, P7/P8 or production.
