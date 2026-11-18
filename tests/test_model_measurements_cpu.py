@@ -210,6 +210,86 @@ class SyntheticBenchmarkCPU(unittest.TestCase):
         self.assertNotIn("answer", json.dumps(result))
         self.assertIsNotNone(result["generation_tps_after_first_token"])
 
+    def test_vllm032_reasoning_field_is_counted_for_ttft_not_ttfc(self):
+        """Official vLLM 0.32 SSE uses delta.reasoning, not reasoning_content."""
+        raw = (
+            b'data: {"choices":[{"delta":{"reasoning":"SECRET_THINKING_1"},'
+            b'"finish_reason":null}]}\n'
+            b'data: {"choices":[{"delta":{"reasoning":"SECRET_THINKING_2"},'
+            b'"finish_reason":"length"}]}\n'
+            b'data: {"choices":[],"usage":{"prompt_tokens":1072,"completion_tokens":128}}\n'
+            b'data: [DONE]\n'
+        )
+        with patch.object(b, "urlopen", return_value=io.BytesIO(raw)):
+            result = b._stream_chat("example-api", "private prompt", 128)
+        self.assertTrue(result["stream_done_observed"])
+        self.assertIsNotNone(result["ttft_seconds"])
+        self.assertIsNone(result["ttfc_seconds"])
+        self.assertIsNotNone(result["generation_tps_after_first_token"])
+        self.assertEqual(result["reasoning_delta_events"], 2)
+        self.assertEqual(result["reasoning_field_observed"], "reasoning")
+        self.assertEqual(result["visible_characters"], 0)
+        self.assertEqual(result["stream_metrics_quality"],
+                         "REASONING_ONLY_NO_VISIBLE_CONTENT")
+        self.assertEqual(result["completion_tokens_reported"], 128)
+        self.assertEqual(result["finish_reason"], "length")
+        self.assertNotIn("SECRET_THINKING", json.dumps(result))
+        self.assertFalse(result["response_content_saved"])
+
+    def test_vllm032_reasoning_then_visible_content_records_both(self):
+        raw = (
+            b'data: {"choices":[{"delta":{"reasoning":"PRIVATE_REASONING"},'
+            b'"finish_reason":null}]}\n'
+            b'data: {"choices":[{"delta":{"content":"PRIVATE_ANSWER"},'
+            b'"finish_reason":"stop"}]}\n'
+            b'data: {"choices":[],"usage":{"completion_tokens":9}}\n'
+            b'data: [DONE]\n'
+        )
+        with patch.object(b, "urlopen", return_value=io.BytesIO(raw)):
+            result = b._stream_chat("example-api", "secret prompt", 128)
+        self.assertGreaterEqual(result["ttfc_seconds"], result["ttft_seconds"])
+        self.assertEqual(result["reasoning_field_observed"], "reasoning")
+        self.assertEqual(result["stream_metrics_quality"], "VISIBLE_CONTENT_AND_USAGE_OBSERVED")
+        self.assertNotIn("PRIVATE_", json.dumps(result))
+
+    def test_usage_without_text_deltas_fails_quality_not_fabricated_ttft(self):
+        raw = (
+            b'data: {"choices":[{"delta":{"role":"assistant"},'
+            b'"finish_reason":"length"}]}\n'
+            b'data: {"choices":[],"usage":{"completion_tokens":128}}\n'
+            b'data: [DONE]\n'
+        )
+        with patch.object(b, "urlopen", return_value=io.BytesIO(raw)):
+            result = b._stream_chat("example-api", "prompt", 128)
+        self.assertTrue(result["stream_done_observed"])
+        self.assertEqual(result["stream_metrics_quality"], "USAGE_ONLY_NO_TEXT_DELTA")
+        self.assertIsNone(result["ttft_seconds"])
+        self.assertIsNone(result["generation_tps_after_first_token"])
+        self.assertIsNone(result["ttfc_seconds"])
+
+    def test_reasoning_only_benchmark_summary_never_claims_visible_answer(self):
+        before = resource()
+        def gate(model):
+            return SPEC, before, before["docker"]["container"], 8192
+        sample = {"stream_done_observed": True, "ttft_seconds": 0.21,
+                  "ttfc_seconds": None, "generation_tps_after_first_token": 19.5,
+                  "stream_metrics_quality": "REASONING_ONLY_NO_VISIBLE_CONTENT"}
+        with (patch.object(b, "model_catalog", return_value=CAT),
+              patch.object(b, "_candidate_profile", return_value={})):
+            doc = b.benchmark_execute(
+                "orcarouter", contexts_k="1", max_output_tokens=128,
+                ack=b.ACK, identity_gate=gate,
+                tokenize=lambda model, target: ("PRIVATE_PROMPT", target),
+                chat=lambda *a: sample, capture=lambda **_: resource())
+        self.assertEqual(doc["status"], "COLLECTED_UNQUALIFIED")
+        self.assertEqual(doc["summary"]["measured_cases"], 1)
+        self.assertEqual(doc["summary"]["ttft_observed_cases"], 1)
+        self.assertEqual(doc["summary"]["ttfc_observed_cases"], 0)
+        self.assertEqual(doc["summary"]["reasoning_only_cases"], 1)
+        self.assertFalse(doc["benchmark_verified"])
+        self.assertFalse(doc["production_released"])
+        self.assertNotIn("PRIVATE_PROMPT", json.dumps(doc))
+
     def test_benchmark_cases_record_context_and_identity_without_prompts(self):
         before = resource()
         def gate(model):
