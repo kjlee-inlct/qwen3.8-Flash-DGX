@@ -69,6 +69,13 @@ class PleAttributionCPU(unittest.TestCase):
         self.assertEqual(out["status"], "BLOCKED_UNQUALIFIED")
         self.assertIn("SMAPS_INCOMPLETE_OR_INCONSISTENT_MAPPING", out["issues"])
 
+    def test_anonymous_mapping_does_not_inherit_previous_filename(self):
+        raw = (self.raw + "3000-4000 rw-p 00000000 00:00 0\n"
+               "Size: 4096 kB\nRss: 4096 kB\nPss: 4096 kB\n")
+        out = self._review(raw=raw)
+        self.assertEqual(out["mapped_rss_bytes"], 80 * 1024)
+        self.assertEqual(out["mapped_pss_bytes"], 40 * 1024)
+
     def test_no_matching_file_not_observed(self):
         out = self._review(expected_paths=["/hf/another.safetensors"])
         self.assertEqual(out["status"], "NOT_OBSERVED")
