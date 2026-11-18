@@ -1,5 +1,24 @@
 # P3–P5 one-turn scoped closeout and remaining operational acceptance (2026-11-18)
 
+## 2026-11-19 KST / 2026-11-18 UTC — operator four-suite CPU regression + measurement history receipt
+
+The operator returned full stdout for the four targeted CPU suites previously requested. **All 65 selected tests passed with exit code zero**: `test_p5_readonly_attribution_cpu.py` **7/7** (`P5_ATTRIBUTION_CPU_RC=0`), `test_p5d_p6e_cpu.py` **19/19** (`P5D_P6E_CPU_RC=0`), `test_p5_resource_diagnostics_cpu.py` **16/16** (`P5_RESOURCE_CPU_RC=0`), and `test_model_measurements_cpu.py` **23/23** (`P5_MEASUREMENT_CPU_RC=0`). These were run on the DGX host's Python environment by the operator, but the shared stdout **does not include the preceding `git rev-parse HEAD` / clean worktree check**, so attribution to exact source SHA `17ebc7f7...` remains **UNVERIFIED**. This is targeted CPU PASS, **not** full-repo CPU, GitHub Actions CI, GPU provenance, or production acceptance.
+
+The operator also ran the read-only `operations measurements history --model orcarouter --json` query. It returned `READ_ONLY_HISTORY`, `count=2`, `inference_executed=false`, `service_mutated=false`:
+
+| Local saved record | Git SHA recorded in receipt | Outcome |
+| --- | --- | --- |
+| 2026-11-18T10:27:35Z `benchmark-execute` | `2cb426f8346024267f3b361fe23cc0eaa477964b` | MTP0 1K/4K **128 completion tokens each**, `COLLECTED_UNQUALIFIED`; TTFT/TTFC/TPS null; 8K skipped |
+| 2026-11-11T21:12:57Z `inventory` | `5a48e9ca417b939b1cc51b2933c3086472033b6a` | `READ_ONLY_PARTIAL`; idle resource/config evidence, not inference |
+
+**No 1K/4K 256-output-token benchmark receipt is present in these two saved history records.** This narrows the duplicate-execution check but **cannot exclude an unsaved or external manual run**. The previous single-use approval is not an authorization to retry without checking for other execution evidence and exact current Docker/API/model identity. This assistant did not run a live benchmark or inspect private DGX files directly.
+
+Continue with (1) exact `git rev-parse HEAD` and `git status --porcelain` receipt, (2) source-SHA-bound repeat of CPU tests **only if needed** (no inference), (3) new-HEAD CI investigation, and (4) controlled review of one-shot 256-token approval after checking for any unsaved execution. Docker NAT port ownership, independent PLE RSS, P6-E production Journal/executor, P7/P8 and production remain blocked. Historical 128-token and P3/P4 evidence is retained.
+
+**State:** `P5_TARGETED_CPU_65_PASS_SHA_UNBOUND / P5_HISTORY_2_RECORDS_NO_256_RECEIPT / CI_UNVERIFIED / P5_D_NAT_PLE_NOT_AUTHENTICATED / PRODUCTION_BLOCKED`.
+
+---
+
 ## 2026-11-18 source-only follow-up — NAT publishing and PLE smaps attribution (not DGX verified)
 
 **GitHub source changes (Draft PR #1, not merged):** `scripts/manager/p5_readonly_attribution.py` adds an isolated, non-mutating Docker `HostConfig.PortBindings` ↔ `NetworkSettings.Ports` port-8000 declaration reviewer and a pure per-PID `/proc/<pid>/smaps` file-mapping RSS/PSS parser. `process_ownership.ownership_review` now includes `port_publication`; when both Docker declarations contradict it adds `DOCKER_PUBLISHED_8000_DECLARATION_MISMATCH`. These fields **do not** authorize a host-port owner, NAT datapath, GPU exclusivity, service release, restart or any P6 transition. A matching bridge declaration is only `DOCKER_DECLARATION_CONSISTENT_NOT_HOST_VERIFIED`; an absent host listener still yields the existing `PORT_8000_HOST_LISTENER_PID_UNAVAILABLE_OR_NAT` and RC3.
