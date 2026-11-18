@@ -18,18 +18,18 @@ def fake(cmd, **kwargs):
         return subprocess.CompletedProcess(cmd, 0, "", "")
     if "-p" in cmd and "unittest" in cmd:
         return subprocess.CompletedProcess(cmd, 0, "", "Ran 4 tests in 0.002s\n\nOK\n")
-    if "p3_dg_acceptance" in cmd:
+    if "scripts.manager.p3_dg_acceptance" in cmd:
         status = ("CPU_ONLY_SOURCE_PASS_NOT_DGX" if "--cpu-only" in cmd
                   else "DRAFT_PARTIAL_ACCEPTANCE_NOT_RELEASED")
         return subprocess.CompletedProcess(cmd, 0, json.dumps({"status": status,
             "production_released": False, "executed": False}), "")
-    if "p5_orcarouter" in cmd:
+    if "scripts.manager.p5_orcarouter" in cmd:
         if "--cpu-only" in cmd:
             return subprocess.CompletedProcess(cmd, 0, '{"status":"PASS","executed":false}', "")
         return subprocess.CompletedProcess(cmd, 3, '{"status":"BLOCKED","executed":false}', "")
-    if "p4_bc_dry_run" in cmd:
+    if "scripts.manager.p4_bc_dry_run" in cmd:
         return subprocess.CompletedProcess(cmd, 0, '{"status":"READ_ONLY_DRY_RUN_PASS","executed":false}', "")
-    if "model_measurements" in cmd:
+    if "scripts.manager.model_measurements" in cmd:
         status = "PLAN_ONLY_ACK_REQUIRED" if "benchmark-plan" in cmd else "READ_ONLY_PARTIAL"
         return subprocess.CompletedProcess(cmd, 0,
             json.dumps({"status": status, "inference_executed": False}), "")
@@ -56,7 +56,7 @@ class P3P5CloseoutCPU(unittest.TestCase):
 
     def test_cpu_fail_closed_for_p3_draft_denial(self):
         def blocked(cmd, **kw):
-            if "p3_dg_acceptance" in cmd:
+            if "scripts.manager.p3_dg_acceptance" in cmd:
                 return subprocess.CompletedProcess(cmd, 3,
                     '{"status":"BLOCKED","issues":["CPU_REGRESSION_FAILED"]}', "")
             return fake(cmd, **kw)
@@ -80,19 +80,19 @@ class P3P5CloseoutCPU(unittest.TestCase):
 
     def test_readonly_real_blockers_have_valid_receipts_not_false_pass(self):
         def blocked(cmd, **kw):
-            if "p3_dg_acceptance" in cmd:
+            if "scripts.manager.p3_dg_acceptance" in cmd:
                 return subprocess.CompletedProcess(cmd, 3, json.dumps({
                     "status": "BLOCKED", "blocked_stages": ["P3-D", "P3-G"],
                     "stages": {"P3-D": {"status": "BLOCKED", "issues": ["NO_HOST_PID"]},
                                "P3-G": {"status": "BLOCKED", "issues": ["PREVIEW_BLOCKED"]}}
                 }), "")
-            if "p4_bc_dry_run" in cmd:
+            if "scripts.manager.p4_bc_dry_run" in cmd:
                 return subprocess.CompletedProcess(cmd, 3, json.dumps({
                     "status": "READ_ONLY_DRY_RUN_BLOCKED",
                     "candidate_review": {"status": "BLOCKED", "issues": ["P4_A_UNAVAILABLE"]},
                     "cleanup_rehearsal": {"status": "BLOCKED", "issues": []},
                 }), "")
-            if "model_measurements" in cmd and "inventory" in cmd:
+            if "scripts.manager.model_measurements" in cmd and "inventory" in cmd:
                 return subprocess.CompletedProcess(cmd, 0, json.dumps({
                     "status": "READ_ONLY_PARTIAL", "action": "inventory"}), "")
             return fake(cmd, **kw)
@@ -111,7 +111,7 @@ class P3P5CloseoutCPU(unittest.TestCase):
 
     def test_p5_cpu_failure_exposes_structured_parser_diagnostic_without_raw_log(self):
         def failed(cmd, **kw):
-            if "p5_orcarouter" in cmd and "--cpu-only" in cmd:
+            if "scripts.manager.p5_orcarouter" in cmd and "--cpu-only" in cmd:
                 return subprocess.CompletedProcess(cmd, 3, json.dumps({
                     "status": "FAIL", "issues": ["P5_CPU_TESTS_FAILED"],
                     "stages": [{"gate": "cpu_fake_dgx", "status": "FAIL",
