@@ -1,3 +1,9 @@
+## 2026-11-18 — P5 bounded live MTP0 measurement / vLLM 0.32.0 SSE parser source fix
+
+An operator-approved and completed 1K/4K/8K measurement reached active Orcarouter MTP0: 1K/4K consumed 128 tokens each but no TTFT/TTFC/TPS due streamed reasoning delta field mismatch; 8K skipped under active 8192 context cap. No model mutation. Source-only patch `scripts/manager/measurement_bench.py` supports documented `delta.reasoning` plus legacy `delta.reasoning_content`, classifies reasoning-only and usage-only SSE, exposes reason-only counts without saving private reasoning or generated text, and marks missing token deltas `INCOMPLETE_METRICS` rather than successful metrics. Regression cases added to `tests/test_model_measurements_cpu.py`, **CPU unexecuted/CI unverified** at this post-benchmark source SHA. Historical P5 152/152 CPU PASS at 8ec6bc2 is preserved, not transferred. No additional live inference or operational modification was triggered by GitHub code updates. [P5 actual receipt and acceptance boundary](../docs/P3-P5-ONE-TURN-CLOSEOUT-20261118.md).
+
+---
+
 ## 2026-11-18 — P3–P5 scoped consolidation (source-only; no live operation)
 
 Added `scripts/manager/p3_p5_closeout.py`: fixed non-mutating `--plan`, `--cpu-only`, `--read-only` source/DGX observation collection; optional separately selected heavy P5 asset read hashing; no inference/service switch/cleanup/operating Journal/recovery path. Added 9 source CPU tests in `tests/test_p3_p5_closeout_cpu.py` and included them in Push/PR workflow filters and CPU suite. No new-head CPU/CI run has been observed, no production acceptance asserted.
