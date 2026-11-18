@@ -282,6 +282,7 @@ class SyntheticBenchmarkCPU(unittest.TestCase):
                 tokenize=lambda model, target: ("PRIVATE_PROMPT", target),
                 chat=lambda *a: sample, capture=lambda **_: resource())
         self.assertEqual(doc["status"], "COLLECTED_UNQUALIFIED")
+        self.assertEqual(doc["results"][0]["status"], "MEASURED_REASONING_ONLY")
         self.assertEqual(doc["summary"]["measured_cases"], 1)
         self.assertEqual(doc["summary"]["ttft_observed_cases"], 1)
         self.assertEqual(doc["summary"]["ttfc_observed_cases"], 0)
@@ -289,6 +290,27 @@ class SyntheticBenchmarkCPU(unittest.TestCase):
         self.assertFalse(doc["benchmark_verified"])
         self.assertFalse(doc["production_released"])
         self.assertNotIn("PRIVATE_PROMPT", json.dumps(doc))
+
+    def test_usage_only_stream_is_incomplete_not_a_measured_case(self):
+        before = resource()
+        def gate(model):
+            return SPEC, before, before["docker"]["container"], 8192
+        sample = {"stream_done_observed": True, "ttft_seconds": None,
+                  "ttfc_seconds": None, "generation_tps_after_first_token": None,
+                  "completion_tokens_reported": 128,
+                  "stream_metrics_quality": "USAGE_ONLY_NO_TEXT_DELTA"}
+        with (patch.object(b, "model_catalog", return_value=CAT),
+              patch.object(b, "_candidate_profile", return_value={})):
+            doc = b.benchmark_execute(
+                "orcarouter", contexts_k="1", max_output_tokens=128,
+                ack=b.ACK, identity_gate=gate,
+                tokenize=lambda model, target: ("PRIVATE_PROMPT", target),
+                chat=lambda *a: sample, capture=lambda **_: resource())
+        self.assertEqual(doc["status"], "INCOMPLETE_MEASUREMENT")
+        self.assertEqual(doc["results"][0]["status"], "INCOMPLETE_METRICS")
+        self.assertEqual(doc["summary"]["measured_cases"], 0)
+        self.assertFalse(doc["benchmark_verified"])
+        self.assertFalse(doc["production_released"])
 
     def test_benchmark_cases_record_context_and_identity_without_prompts(self):
         before = resource()
