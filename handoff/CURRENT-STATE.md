@@ -1,3 +1,11 @@
+## 2026-11-18 Actions configuration confirmed enabled; event source still unverified
+
+Operator read-only GitHub CLI reports workflow ID `406361282` `state=active`, repository `actions/permissions.enabled=true`, `allowed_actions=all`. Current workflow/repository disablement is now excluded; prior dates and push token/event identity remain unverified. The source-only Actions run count remains 1640, newest successful 2026-11-11, despite subsequent documentation commits. Existing YAML paths match. Do **not** equate GitHub App/REST writes with GitHub Actions `GITHUB_TOKEN` suppression without actual credential provenance.
+
+**Next distinguishing test:** optionally perform one **operator-owned, human-authenticated** `git push` that changes an approved `handoff/**` document on the feature branch, then inspect Actions Push/PR runs at that exact SHA. Avoid empty commits, which do not satisfy the path filter. See [read-only findings and controlled probe](../docs/GITHUB-ACTIONS-NO-RUN-INVESTIGATION-20261118.md). No live DGX, workflow settings, production journal, recovery or PR merge authorized. `CPU_REGRESSION_PASS_AT_2F5240D_OPERATOR / CI_UNVERIFIED / PRODUCTION_BLOCKED`.
+
+---
+
 ## 2026-11-18 Actions zero-run investigation — root cause not yet independently identified
 
 GitHub API reports **1,640 historical workflow runs**; newest run was successful at `8b118c8` on 2026-11-11 (Push and PR). The current feature branch had advanced **44 commits** to `a47a36a` with **no new runs**; exact-head Actions runs/check-runs/statuses were empty. The first post-success commit `fcd6accc` also has 0 runs. Workflow YAML on the feature branch matches edited `handoff/**`/source/test paths, contains no branch restriction, and first missing commit added only two CPU commands. All 44 commit messages lack skip-CI directives. PR #1 is Draft/Open/unmerged and `mergeable=true`. `main` lacks that workflow, preventing default-branch manual dispatch, but previous feature-branch Push/PR events succeeded.
