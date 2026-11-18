@@ -1,3 +1,14 @@
+## 2026-11-18 P5-D NAT/PLE source-only improvement — no acceptance promotion
+
+- **P1–P4 historical scope unchanged.** No new DGX release or operational validation is claimed.
+- **P5:** source code adds Docker port-8000 published configuration comparison and conservative one-PID exact PLE-file smaps mapping RSS/PSS reviewer; owner authentication, GPU exclusivity, unique PLE residency, all-worker mapping and loaded MTP0 256-token TTFT/TPS remain **NOT VERIFIED**. Historical read-only P5-D RC3 / NAT-host-listener-PID absence is preserved.
+- **CPU:** isolated source copy of the new helper and synthetic fixture **7/7 PASS**, with exact Git blob match; repository-wide regression and current GitHub Actions **NOT VERIFIED**.
+- **P6/P7/P8:** unchanged source contracts, no operating Journal, real executor, privileged host alterations, auto recovery or production release authorized.
+- **CI:** path-qualified workflow exists in feature branch, while checked default `main` did not expose a workflows directory; missing latest-HEAD Actions is investigated but not fully explained.
+- **Controls:** PR #1 Draft/Open/Unmerged; vLLM 0.32.0, :8000, ONE_ACTIVE_MODEL_ONLY, HF cache preservation, no SGLang. See [dated P3-P5 scoped closeout](P3-P5-ONE-TURN-CLOSEOUT-20261118.md).
+
+---
+
 ## 2026-11-18 P5 approved MTP0 loaded benchmark — executed 2/3, TTFT/TPS NULL
 
 At `2cb426f8346024267f3b361fe23cc0eaa477964b`, operator ran allowed active-model MTP0 1K/4K/8K one-shot inference with exact acknowledgement, saved evidence, observed 1K and 4K SSE usage **128 generated tokens each**, end-to-end **6.45791s / 7.49535s**; 8K safely skipped due 8192 maximum context. `COLLECTED_UNQUALIFIED`, `benchmark_verified=false`, `production_released=false`, container ID stable. **All TTFT, TTFC, generation TPS and visible output were unobserved**; `finish_reason=length`. API docs for vLLM 0.32.0 explicitly use `delta.reasoning`, but source parser had read only `delta.reasoning_content`: source-only fix and 5 new CPU unit cases added; **no new-head CPU or CI result yet**. PLE-specific RSS, active port PID & GPU ownership, independent resource interval, MTP2 remain unresolved. Prior 152/152 CPU PASS is bound to 8ec6bc2, **not this new source**. No second inference replay authorized; PR Draft/Open and production blocked. [Actual observation and contract](P3-P5-ONE-TURN-CLOSEOUT-20261118.md).
