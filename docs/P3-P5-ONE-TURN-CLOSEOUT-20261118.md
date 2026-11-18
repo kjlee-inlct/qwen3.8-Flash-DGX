@@ -1,5 +1,35 @@
 # P3–P5 one-turn scoped closeout and remaining operational acceptance (2026-11-18)
 
+## 2026-11-19 KST / 2026-11-18 19:17 UTC — APPROVED MTP0 256-token ONE-SHOT EXECUTED
+
+**New operator-supplied actual DGX output supersedes all prior `256_TOKEN_PENDING` statements in this document only as of this timestamp.** The operator ran the bounded one-shot `benchmark-execute --model orcarouter --contexts-k 1,4 --max-output-tokens 256 --ack-live-inference I_ACCEPT_ACTIVE_MODEL_INFERENCE --save --summary-only --json` against the already-active MTP0 trial. Shell printed `P5_PREFLIGHT_PASS`, the 64-char Docker ID, the benchmark result, and `P5_MTP0_ONESHOT_COMPLETED` after a container-ID continuity check. Tested source Git SHA in the saved benchmark result: `17ebc7f7ba2dcfc27c6dca265952dc99cb85e3ee`; the preceding operator shell checked this exact SHA and a clean worktree. Exact active Docker ID: `9c49950015a845357e90fabe74946565d41069362c083fe7982f54caa2b3beac`, image `sha256:088d8b7171d2fb1a54120727334c445991096e5ee4e684c5598d672d872d79d4`, name `qwen38-orcarouter-qsa62318-lmhead-v3`, host init PID 4016083 (volatile).
+
+Receipt: `/home/inlc/.local/state/blazux-wizard/model-measurements/orcarouter--20261118T191809604958Z--61a970733d8c.json` (stored on DGX, not fetched or independently authenticated by GitHub). Start timestamp `2026-11-18T19:17:43.621227+00:00`; saved filename timestamp approximately 19:18:09Z. `COLLECTED_UNQUALIFIED`, `container_id_continuous=true`, `measured_cases=2/2`, `reasoning_only_cases=2`, `ttft_observed_cases=2`, `tps_observed_cases=2`, `ttfc_observed_cases=0`. This **consumes the previously approved one-shot inference allowance**. Do **not** run it again without new explicit operator approval, fresh identity evidence and a new bounded protocol.
+
+| Observed per-case metric | 1K context | 4K context |
+|---|---:|---:|
+| `tokenizer_input_tokens` | 1021 | 4081 |
+| `prompt_tokens_reported` (server) | 1072 | 4132 |
+| `completion_tokens_reported` (server) | 256 | 256 |
+| `ttft_seconds` | 0.52965 | 1.70999 |
+| `generation_tps_after_first_token` | 22.405 | 22.604 |
+| `end_to_end_seconds` | 11.91080 | 12.99106 |
+| `ttfc_seconds` | null | null |
+| `reasoning_delta_events` | 256 | 256 |
+| `reasoning_characters` | 1179 | 1191 |
+| `visible_characters` | 0 | 0 |
+| `stream_metrics_quality` | REASONING_ONLY_NO_VISIBLE_CONTENT | REASONING_ONLY_NO_VISIBLE_CONTENT |
+| `finish_reason` | length | length |
+| `status` | MEASURED_REASONING_ONLY | MEASURED_REASONING_ONLY |
+
+Both streamed results observed `reasoning_field_observed=reasoning`, `stream_done_observed=true`, and `token_count_source=SSE_USAGE`. This **live-validates vLLM 0.32 `delta.reasoning` first-token capture and post-first-token usage-based TPS** at this source/runtime, correcting the older 128-token run's TTFT/TPS nulls. TPS is a usage-derived post-TTFT rate, **not** direct inter-token timestamp sampling. No visible content arrived within the 256-token budgets, so first-visible-content latency `TTFC` remains **NOT_OBSERVED**, not zero and not an instrument failure. `finish_reason=length` means the requests terminated at the capped budget. These are two single samples, not statistical repeatability or full performance qualification.
+
+**Still blocked/unverified:** loaded visible-answer latency; independently authenticated PID-to-container/NAT host :8000 owner; GPU exclusivity; PLE-specific resident memory; current HEAD GitHub Actions CI; runtime recipe/image qualification; P6-E operating Journal/live Executor; P7/P8 real integration/fault/recovery; and production release. The log shows **no service restart/switch, Docker config change, operating Journal write or cache deletion**, but this GitHub-side review is not independently privileged host attestation. Preserve all historical receipts and their SHA/timestamp, including the 128-token `COLLECTED_UNQUALIFIED` result. PR #1 remains Draft/Open/Unmerged.
+
+**Status:** `P5_MTP0_256_LIVE_INFERENCE_COMPLETED / P5_SSE_REASONING_TTFT_TPS_MEASURED / P5_TTFC_NOT_OBSERVED / P5_ONESHOT_APPROVAL_CONSUMED / P5_LOADED_QUALIFICATION_PENDING / CI_UNVERIFIED / PRODUCTION_BLOCKED`.
+
+---
+
 ## 2026-11-19 KST — operator live preflight and 1K/4K 256-token PLAN, NO inference
 
 Operator provided a fresh DGX shell transcript at local HEAD `17ebc7f7ba2dcfc27c6dca265952dc99cb85e3ee` with **empty `git status --porcelain`**. This is a clean source-tree observation made **after** the 65 targeted CPU test transcript; earlier CPU stdout itself lacked SHA, so do not retrospectively assert exact test-SHA cryptographic binding.
