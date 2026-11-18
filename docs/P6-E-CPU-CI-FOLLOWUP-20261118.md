@@ -1,5 +1,16 @@
 # P6-E CPU receipt, Actions trigger diagnosis and fake replay hardening (2026-11-18)
 
+## Follow-up — Actions no-run investigation results (2026-11-18)
+
+The source-only workflow previously produced **1,640 historical runs**, most recently Push/PR SUCCESS at `8b118c8` on 2026-11-11. From that SHA to feature HEAD `a47a36a`, **44 commits** were added without a newer run record. Exact-head Actions runs/check-runs/statuses were empty; the first missing P6-E source commit `fcd6accc` also had zero runs. PR is mergeable. Workflow path filters and skip-CI checks did not explain the problem. GitHub connector does **not** permit reading Actions enabled state, workflow state or repository Actions permissions; therefore **root cause remains unverified**. For complete evidence, competing hypotheses and read-only admin diagnostic commands, see [Actions zero-run investigation](GITHUB-ACTIONS-NO-RUN-INVESTIGATION-20261118.md).
+
+The operator's 45/45 PASS at `2f5240d` remains valid **only** as a selected CPU test receipt, not CI. No workflow dispatch, repo settings change, source test execution, PR merge, operating service or Journal action occurred in the investigation.
+
+<!-- GITHUB_ACTIONS_ZERO_RUN_INVESTIGATION_20261118 -->
+
+---
+
+
 ## 2026-11-18 update — new-HEAD selected CPU regression 45/45 PASS (operator receipt)
 
 **Superseding selected-CPU result:** The operator supplied a complete terminal transcript after `git pull --ff-only`, showing fast-forward `4fc3aa8..2f5240d`, `git rev-parse HEAD = 2f5240d3a5652ce44af51b4b323b0d8d88a105bd`, and **empty `git status --short` before running the tests**. The following selected CPU modules were executed on that checkout:
