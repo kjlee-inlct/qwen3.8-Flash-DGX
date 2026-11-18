@@ -102,9 +102,14 @@ def run_once(ack: str | None, *, gate=_identity_gate, stream=_stream_chat,
                              enable_thinking=False)
             case_status = ("MEASURED_VISIBLE" if
                            metrics.get("stream_done_observed") is True and
+                           metrics.get("stream_metrics_quality") ==
+                               "VISIBLE_CONTENT_AND_USAGE_OBSERVED" and
+                           metrics.get("ttft_seconds") is not None and
                            metrics.get("ttfc_seconds") is not None and
+                           metrics.get("generation_tps_after_first_token") is not None and
                            metrics.get("visible_characters", 0) > 0 and
-                           metrics.get("completion_tokens_reported") is not None
+                           isinstance(metrics.get("completion_tokens_reported"), int) and
+                           metrics["completion_tokens_reported"] > 1
                            else "INCOMPLETE_VISIBLE_OUTPUT")
             results.append({"context_k": context, "status": case_status,
                             "requested_input_tokens": target,
@@ -120,7 +125,7 @@ def run_once(ack: str | None, *, gate=_identity_gate, stream=_stream_chat,
                 reason = "NO_VERIFIED_VISIBLE_CONTENT_STOP"
                 break
         except (ValueError, RuntimeError, TimeoutError, URLError,
-                HTTPError, OSError, TypeError) as exc:
+                HTTPError, OSError, TypeError, KeyError, AttributeError) as exc:
             # Never retry. Do not preserve prompt/response/HTTP body.
             reason = "INCOMPLETE_CASE_" + type(exc).__name__
             break
@@ -186,7 +191,8 @@ def main(argv=None) -> int:
     args = parser.parse_args(argv)
     try:
         doc = run_once(args.ack_live_inference)
-    except (ValueError, OSError, RuntimeError, TypeError) as exc:
+    except (ValueError, OSError, RuntimeError, TypeError,
+            KeyError, AttributeError) as exc:
         doc = {"schema_version": 1, "action": "benchmark-execute",
                "benchmark_variant": "P5_VISIBLE_NO_THINKING_ONESHOT_V1",
                "model": MODEL, "status": "BLOCKED",
