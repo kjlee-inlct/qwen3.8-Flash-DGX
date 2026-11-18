@@ -1,16 +1,41 @@
 # P3–P5 one-turn scoped closeout and remaining operational acceptance (2026-11-18)
 
+## 2026-11-18 12:13Z operator P5-D ownership, inventory and idle resource receipts — executed read-only
+
+**Latest operator-host evidence** (supersedes only "P5-D follow-up read-only pending" and does **not** imply the separate approved 256-token inference was run): the user executed `ownership-capture --model orcarouter --json`, `measurements inventory --model orcarouter --summary-only --json`, and `resources snapshot --model orcarouter --summary-only --json` at the existing DGX. The inventory receipt bound to git SHA `7509a4ec095005418d9974bac07542be7def884e` and timestamp `2026-11-18T12:13:12.345679+00:00`; the idle resource snapshot is `2026-11-18T12:13:14.332388+00:00`. These are user-shared stdout receipts, **not** cryptographically independent acceptance.
+
+| Read-only evidence | Observed | Interpretation |
+| --- | --- | --- |
+| P5-D `ownership-capture` | `BLOCKED_PARTIAL_PROCESS_EVIDENCE`, `P5_D_RC=3`, **sole issue** `PORT_8000_HOST_LISTENER_PID_UNAVAILABLE_OR_NAT` | Correctly fail-closed; **not proof of service outage** |
+| Docker identity | Container `qwen38-orcarouter-qsa62318-lmhead-v3`, full ID `9c49950015a845357e90fabe74946565d41069362c083fe7982f54caa2b3beac`, image `sha256:088d8b7171d2fb1a54120727334c445991096e5ee4e684c5598d672d872d79d4`, init PID **4016083**, `docker_identity_match=true` | Current observed Docker identity matched; PID is a transient observation, **not an authorization** |
+| P5-D Docker/GPU PID relation | Docker host PIDs `{4016083,4016529,4016530}`; GPU compute PID `{4016530}`; `gpu_pid_subset_of_container=true` | Consistent process subsets; **not independent GPU exclusivity**, and **not proof of host port owner** |
+| Host port process | `host_port_8000_listener_pids=[]`, `host_port_pid_to_container_verified=false` | NAT, docker-proxy differences or host inspection privilege can explain missing listener PID; leave port-process ownership `false` |
+| Inventory | `READ_ONLY_PARTIAL`, `P5_INVENTORY_RC=0`; observed runtime flags `dtype=bfloat16`, `enforce-eager`, `gpu-memory-utilization=0.7`, `kv-cache-dtype=bfloat16`, `max-model-len=8192`, `max-num-seqs=1`; `VLLM_PLE_MMAP=1`, `VLLM_PLE_MMAP_PREWARM=0` | Reported live configuration for this container; recipe's `runtime_settings_proven=false` remains a distinction from fully qualified runtime |
+| KV cache | Runtime-log reported available **9.83 GiB**, capacity **197,352 tokens** | Logged capacity, not independently measured GPU memory or free context |
+| Memory | cgroup `memory.current=24586199040 B` (approx **22.90 GiB**), `memory.peak=39753752576 B` (approx **37.03 GiB**), cgroup swap **0 B** | Peak is cumulative cgroup high-water mark, not proof that the new 12:13Z idle snapshot reached that peak |
+| PLE residency | Declared `102400491520 B` (**95.37 GiB**) mmap, `DECLARED_NOT_RESIDENT`; `ple_resident_bytes=null`, process RSS/PSS `null` | PLE-file-specific residency and true process memory remain **unobserved**; do not equate declared file size to RSS |
+| Single idle snapshot | `OBSERVED_PARTIAL`, `P5_RESOURCE_RC=0`, GPU utilization **0%**, temperature **35°C**, power **9.83W**, host MemAvailable **31981281280 B**, advisory thresholds uncalibrated, no service mutation | A one-sample idle observation, **not a live performance interval or benchmark acceptance** |
+
+P5-D independently verifies neither the GPU's actual kernel allocation exclusivity nor host-port-to-container ownership. Previous 2026-11-12 P5-D was also partial with missing :8000 host listener PID; the new 2026-11-18 receipt **reproduces the expected NAT/host-listener limitation**, not a demonstrated new failure. Do not issue automatic service restarts, privileged host rewiring, NAT rules changes or sudo attempts as a workaround. No model load, live inference, deletion, operating Journal write, or PR merge is authorized or evidenced by these three read-only commands.
+
+**Remaining separate authorization:** the previously approved one-shot **1K/4K, max 256 output tokens** active MTP0 timing remeasurement **has not been supplied** in this attachment. The corrected `delta.reasoning` parser has CPU PASS at 7509a4e, but **new loaded TTFT/TTFC/TPS are still unobserved**. The one-shot runbook remains in this document; it will require fresh service/API gate and approved bounded execution, and should not be automatically retried if already used on the DGX. The P5-D improvement path is separate, design/review a fail-closed **read-only** NAT-port attribution and **actual mapped PLE file-specific RSS** auditor; do not claim success before independent host evidence. CI still unverified, production blocked.
+
+**Status:** `P5_D_READONLY_EXECUTED_PARTIAL_NAT / P5_RUNTIME_CONFIG_AND_KV_REPORTED / PLE_RSS_NOT_OBSERVED / P5_MTP0_256_TIMING_REMEASURE_PENDING_EVIDENCE / CI_UNVERIFIED / PRODUCTION_BLOCKED`.
+
+---
+
+
 ## 2026-11-18 subsequent operator approval: MTP0 active-model timing remeasurement + read-only P5-D (execution pending)
 
-**New explicit operator instruction:** "진행 승인" after the exact-SHA \`7509a4ec095005418d9974bac07542be7def884e\` operator CPU PASS (23/23 timing tests, P3-P5 selected CPU 6/6 RC0). This approval is interpreted narrowly: **one more** bounded inference measurement on the **already running** Orcarouter BF16PLE **MTP0** model with **1K/4K** targets, **256 maximum generated tokens per case**, repeat=1, concurrency=1, fixed localhost port 8000 and exact acknowledgment; plus read-only P5-D process ownership and resource inventory. Explicitly **NO** MTP2 activation, model switch, GPU model launch, Docker mutation, service stop/restart, CPU/cgroup/memory setting change, HF cleanup, operating Journal write, recovery, PR merge or production release. The benchmark itself cannot start or switch a model.
+**New explicit operator instruction:** "진행 승인" after the exact-SHA `7509a4ec095005418d9974bac07542be7def884e` operator CPU PASS (23/23 timing tests, P3-P5 selected CPU 6/6 RC0). This approval is interpreted narrowly: **one more** bounded inference measurement on the **already running** Orcarouter BF16PLE **MTP0** model with **1K/4K** targets, **256 maximum generated tokens per case**, repeat=1, concurrency=1, fixed localhost port 8000 and exact acknowledgment; plus read-only P5-D process ownership and resource inventory. Explicitly **NO** MTP2 activation, model switch, GPU model launch, Docker mutation, service stop/restart, CPU/cgroup/memory setting change, HF cleanup, operating Journal write, recovery, PR merge or production release. The benchmark itself cannot start or switch a model.
 
-**Why 1K/4K and 256:** the prior 128-token 1K/4K inference saturated the completion budget with \`finish_reason=length\` and no visible content; the updated vLLM-0.32 SSE collector now reads \`delta.reasoning\` for reasoning TTFT. A 256-token output cap may improve the chance of visible answer content (TTFC), but does **not** guarantee it. 8K is omitted: active max_model_len=8192 cannot accommodate 8192 input plus output tokens.
+**Why 1K/4K and 256:** the prior 128-token 1K/4K inference saturated the completion budget with `finish_reason=length` and no visible content; the updated vLLM-0.32 SSE collector now reads `delta.reasoning` for reasoning TTFT. A 256-token output cap may improve the chance of visible answer content (TTFC), but does **not** guarantee it. 8K is omitted: active max_model_len=8192 cannot accommodate 8192 input plus output tokens.
 
-**Execution environment limitation:** The GitHub connector can review and commit source but does not provide a DGX host shell. The approved live step is **NOT EXECUTED by the assistant**; an operator must run the following on the existing DGX. Avoid additional local scripts, persistent daemon tasks and auto-retries. \`--save\` writes a private *measurement* receipt in \`~/.local/state/blazux-wizard/model-measurements/\`, **not** the operating Journal.
+**Execution environment limitation:** The GitHub connector can review and commit source but does not provide a DGX host shell. The approved live step is **NOT EXECUTED by the assistant**; an operator must run the following on the existing DGX. Avoid additional local scripts, persistent daemon tasks and auto-retries. `--save` writes a private *measurement* receipt in `~/.local/state/blazux-wizard/model-measurements/`, **not** the operating Journal.
 
 ### Fail-closed operator command — one-shot, no auto-retry
 
-\`\`\`bash
+```bash
 # Run on the DGX host. This HEREDOC creates no script on disk.
 bash <<'P5_MTP0_APPROVED'
 set -euo pipefail
@@ -56,13 +81,13 @@ sys.exit(0 if passed else 3)
   --save --summary-only --json
 echo "P5_MTP0_REMEASUREMENT_COMPLETED"
 P5_MTP0_APPROVED
-\`\`\`
+```
 
-The script stops before live inference if the active model/served ID/port, worktree, or inspected source revision differs. The CLI has an additional independent service/API/Docker identity gate; on failure it returns \`BLOCKED\` and does not generate tokens. The source guard checks only the benchmark code and its CPU tests; it cannot substitute for current host attestation or independent CI.
+The script stops before live inference if the active model/served ID/port, worktree, or inspected source revision differs. The CLI has an additional independent service/API/Docker identity gate; on failure it returns `BLOCKED` and does not generate tokens. The source guard checks only the benchmark code and its CPU tests; it cannot substitute for current host attestation or independent CI.
 
 ### P5-D and PLE residency: separately approved READ-ONLY observations
 
-\`\`\`bash
+```bash
 cd ~/Workspace/llm/blazux-orcarouter
 ./wizard.sh operations generic ownership-capture --model orcarouter --json
 echo "P5_D_OWNERSHIP_RC=$?"
@@ -70,13 +95,13 @@ echo "P5_D_OWNERSHIP_RC=$?"
 echo "P5_INVENTORY_RC=$?"
 ./wizard.sh operations resources snapshot --model orcarouter --json
 echo "P5_RESOURCE_RC=$?"
-\`\`\`
+```
 
-The P5-D helper uses bounded \`docker inspect\`, \`docker top\`, \`ss -H -ltnp sport = :8000\`, and \`nvidia-smi --query-compute-apps=pid\`; it neither modifies Docker nor executes inference. A \`BLOCKED_PARTIAL_PROCESS_EVIDENCE\` or no \`ss\` host listener PID **may be normal Docker NAT**, not proof of service failure. Even a consistent GPU Docker PID subset is **not independent GPU exclusivity or authenticated port ownership**. Source snapshots do not establish GPU kernel ownership, model launch authorization or operating release.
+The P5-D helper uses bounded `docker inspect`, `docker top`, `ss -H -ltnp sport = :8000`, and `nvidia-smi --query-compute-apps=pid`; it neither modifies Docker nor executes inference. A `BLOCKED_PARTIAL_PROCESS_EVIDENCE` or no `ss` host listener PID **may be normal Docker NAT**, not proof of service failure. Even a consistent GPU Docker PID subset is **not independent GPU exclusivity or authenticated port ownership**. Source snapshots do not establish GPU kernel ownership, model launch authorization or operating release.
 
-The current \`resource_diagnostics.snapshot\` reports \`ple_specific_resident_bytes=null\` and \`process_smaps_rollup_bytes\` may also be null, because process-wide \`smaps_rollup\` cannot identify PLE file residency. **Do not substitute declared ~95.37 GiB PLE mmap bytes, cgroup memory, host cache, or GB10 GPU shared memory for PLE-specific RSS.** No privileged \`/proc/<pid>/smaps\` scan, kernel changes, memory prewarm or additional model load is approved in these instructions; a separately designed, bounded, file-path-and-container-ID-verified read-only PLE mapping auditor would be required for real PLE-specific attribution.
+The current `resource_diagnostics.snapshot` reports `ple_specific_resident_bytes=null` and `process_smaps_rollup_bytes` may also be null, because process-wide `smaps_rollup` cannot identify PLE file residency. **Do not substitute declared ~95.37 GiB PLE mmap bytes, cgroup memory, host cache, or GB10 GPU shared memory for PLE-specific RSS.** No privileged `/proc/<pid>/smaps` scan, kernel changes, memory prewarm or additional model load is approved in these instructions; a separately designed, bounded, file-path-and-container-ID-verified read-only PLE mapping auditor would be required for real PLE-specific attribution.
 
-**Expected classification:** \`P5_MTP0_256_INFERENCE_APPROVED_NOT_YET_EXECUTED\` until a matching operator receipt is provided. If TTFT/TPS become numeric, record the actual values and \`stream_metrics_quality\`; if only reasoning is generated, \`MEASURED_REASONING_ONLY\` and \`TTFC=null\` remain valid but **not a visible-answer latency result**. P5 independent GPU/port owner, PLE RSS, interval peak, MTP2, CI and production release remain separately gated. This scope-specific approval expires after the single bounded execution, not an open-ended authorization to replay.
+**Expected classification:** `P5_MTP0_256_INFERENCE_APPROVED_NOT_YET_EXECUTED` until a matching operator receipt is provided. If TTFT/TPS become numeric, record the actual values and `stream_metrics_quality`; if only reasoning is generated, `MEASURED_REASONING_ONLY` and `TTFC=null` remain valid but **not a visible-answer latency result**. P5 independent GPU/port owner, PLE RSS, interval peak, MTP2, CI and production release remain separately gated. This scope-specific approval expires after the single bounded execution, not an open-ended authorization to replay.
 
 ---
 
