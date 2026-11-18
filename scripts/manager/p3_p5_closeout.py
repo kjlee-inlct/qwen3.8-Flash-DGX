@@ -126,11 +126,11 @@ def _stage_summary(doc: dict, task_name: str) -> dict:
                         "test_summary": section.get("test_summary"),
                         "parsed_case_count": len(cases) if isinstance(cases, list) else None,
                         "failed_cases": [
-                            case.get("case") for case in (cases or [])[:25]
+                            case.get("case") for case in cases
                             if isinstance(case, dict) and case.get("status") != "PASS"
                             and isinstance(case.get("case"), str)
                             and re.fullmatch(r"test_[A-Za-z0-9_]{1,110}", case["case"])
-                        ] if isinstance(cases, list) else [],
+                        ][:25] if isinstance(cases, list) else [],
                         "issues": _issues(section.get("issues")),
                         "failure_detail_available_in_direct_p5_output":
                             section.get("failure_details") is not None,
