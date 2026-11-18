@@ -1,3 +1,13 @@
+## 2026-11-18 current operator supersession — P3–P5 selected CPU PASS at clean 8ec6bc2
+
+**Operator supplied exact SHA `8ec6bc2f148cf77bf0ed6e9ce0d54a91d1baf569` and clean tree.** Fixed P5 document-integrity **8/8 PASS RC0**, fixed closeout unit suite **11/11 PASS RC0**, all P5 CPU/Fake-DGX **152/152 PASS RC0**, combined `p3_p5_closeout --cpu-only` **`CPU_SELECTED_PASS_NOT_CI` / RC0 / all 6 tasks accepted**, plus P4-A **9/9**, P4-B/C **13/13**, P5 measurements **18/18**, P5 session **8/8** (nested/overlapping tests, do not sum as independent total). **Earlier CPU errors resolved for tested SHA**, not GitHub CI.
+
+P3 previously accepted real A/B/C/G transfers and P4 real read-only A/B/C acceptance remain **historical scoped PASS**. No new read-only verification was provided here; prior five valid 8b8f5a0 receipts retain `READ_ONLY_COLLECTED_WITH_GAPS` RC3, with current active API/port/Docker/PID identity and P4-A inventory incomplete. P5 v3 MTP0 remains DEVELOPMENT_TRIAL; loaded benchmark TTFT/TTFC/TPS, file-specific PLE RSS, P5-D independent GPU/port owner, MTP2 and production admission remain NOT VERIFIED. GitHub Actions latest workflow success remains 2026-11-11, count 1640, **CI_UNVERIFIED**. PR #1 still Draft/Open; no actual model switch, inference, deletion, Docker action, Journal mutation, automatic recovery or deployment occurred during CPU evidence collection. [Full evidence](P3-P5-ONE-TURN-CLOSEOUT-20261118.md).
+
+`P3_P4_P5_SELECTED_CPU_PASS_AT_8EC6BC2 / P3_P4_HISTORIC_SCOPED_CLOSED / P5_REAL_WORKLOAD_PENDING / CI_UNVERIFIED / PRODUCTION_BLOCKED`
+
+---
+
 ## 2026-11-18 operator 8b8f5a0 P3–P5 source regression receipt (supersedes older pending-only claim)
 
 Operator on clean `8b8f5a0132e8b1f27f9ec4b1cd53c5e82c7f1aea` reported P5 doc integrity **5/6 PASS**, all P5 source CPU **149/150 PASS**, and P3–P5 closeout mock CPU **5/11 PASS**, all RC1; combined P3–P5 CPU `INCOMPLETE_OR_BLOCKED` RC3. Root causes identified from line-numbered traces: the source document test's recursive filesystem scan accidentally picked up **10 private P3 historical operator transition JSON receipts** in `reports/transitions/flash-next--to--27b`; mock command matching erroneously expected bare `p3_dg_acceptance` instead of `scripts.manager.p3_dg_acceptance`. Fixes now committed: Git-index tracked-document-only audit (including Markdown links), isolated private-file and unsafe-path tests, fully-qualified fake runner matching. No operator post-fix CPU/CI PASS yet.
