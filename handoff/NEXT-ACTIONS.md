@@ -1,3 +1,13 @@
+## 2026-11-19 KST — 256-token one-shot DONE, do not rerun without new approval
+
+- [x] **Operator one-shot inference executed**, exact clean DGX source `17ebc7f7ba2dcfc27c6dca265952dc99cb85e3ee`, fresh MTP0 service/API preflight PASS, full Docker ID confirmed, output `P5_MTP0_ONESHOT_COMPLETED`. Receipt: `/home/inlc/.local/state/blazux-wizard/model-measurements/orcarouter--20261118T191809604958Z--61a970733d8c.json`.
+- [x] 1K: input 1072 / output 256, TTFT 0.52965s, post-first TPS 22.405, E2E 11.91080s; 4K: input 4132 / output 256, TTFT 1.70999s, TPS 22.604, E2E 12.99106s. Both `MEASURED_REASONING_ONLY`, `reasoning_field_observed=reasoning`, complete SSE, `finish_reason=length`. `COLLECTED_UNQUALIFIED`, continuous Docker ID. **TTFC=null** in both because zero visible characters; no visible-answer latency acceptance.
+- [x] **Previous 1K/4K 256-token one-shot approval consumed**. Do not auto-rerun, increase output cap, add contexts, switch to MTP2, or issue further inference without a new explicit approval.
+- [ ] If later requested, design a separately approved measurement for **first visible content** (possibly more output budget / controlled prompt), requiring advance scope, current exact Docker/API checks, recording quality and zero automatic retries. Do not infer TTFC from TTFT.
+- [ ] Follow up bounded read-only P5-D NAT attribution, pinned PLE file smaps/inode/worker coverage, GitHub Actions CI no-run, and P6-E/P7/P8 source-safety gates. Keep `PRODUCTION_BLOCKED`, PR #1 Draft/Open/Unmerged. Full record: [P3–P5 closeout](../docs/P3-P5-ONE-TURN-CLOSEOUT-20261118.md).
+
+---
+
 ## 2026-11-19 KST — P5 256-token plan validated, execution remains separately gated
 
 - [x] Operator clean DGX source HEAD `17ebc7f7ba2dcfc27c6dca265952dc99cb85e3ee`; `git status --porcelain` empty. Earlier 65 targeted CPU PASS belongs to the operator receipt but its original stdout did not print the tested HEAD.
