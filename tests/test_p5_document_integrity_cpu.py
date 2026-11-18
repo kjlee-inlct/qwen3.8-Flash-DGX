@@ -149,9 +149,10 @@ class P5HandoffFullDocumentCPU(unittest.TestCase):
         # Verify repository-wide local Markdown paths, not just handoff headers.
         missing = []
         inspected = 0
-        for page in ROOT.rglob("*.md"):
-            if ".git" in page.parts:
+        for rel in sorted(_tracked_document_paths()):
+            if not rel.endswith(".md"):
                 continue
+            page = ROOT / rel
             for link in LINK.findall(page.read_text(encoding="utf-8")):
                 if link.startswith(("https://", "http://", "mailto:", "#")):
                     continue
