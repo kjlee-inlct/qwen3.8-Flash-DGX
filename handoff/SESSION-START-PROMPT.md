@@ -1,3 +1,18 @@
+## 2026-11-19 KST — P5-D bounded read-only one-turn audit SOURCE IMPLEMENTED, DGX execution pending
+
+User requested P5-D **PLE file-mapping RSS/PSS and inode↔PID plus Docker host :8000 NAT process attribution in one operator turn**, with *read-only* host behavior. Added:
+- `scripts/manager/p5d_live_audit.py`: fixed `orcarouter` scope, first/last P5-D read-only ownership probes, exact Docker ID/init PID/host PID set, `/proc/PID/stat` starttime plus net/mount/PID namespace continuity, cgroup ID relationship, streamed bounded `/proc/PID/smaps` per-file RSS/PSS and dev/inode→task root stat, optional immutable pinned Hugging Face snapshot inode alias (not a content checksum or verified PLE identity), `/proc/PID/net/tcp{,6}` LISTEN inode→`/proc/PID/fd/*` host PID correlation, Docker publish/bridge IP, optional unprivileged `iptables-save -t nat` candidate, localhost read-only /v1/models exact ID. Does **not** authenticate kernel DNAT path, unique PLE physical residency, independent GPU exclusivity or production authority.
+- `tests/test_p5d_live_audit_cpu.py`: **14 new synthetic test methods committed, NOT YET EXECUTED on operator DGX/CI**.
+- `scripts/temporary/p5d-readonly-once.sh`: operator one-turn shell wrapper, clean Git source guard, 3 CPU modules (new 14, existing P5 attribution 7 and P5-D/P6-E 19 expected methods), active service/API preflight, and single `--save --json` read-only host audit. Exit 3 means **blocked/incomplete evidence**, not service failure; no sudo, retry or GPU inference.
+- Updated `.github/workflows/recipe-manifest-cpu.yml` CPU suite and Push/PR path filters. Workflow **new HEAD CI not verified**; historically zero new workflow runs after 2026-11-11.
+- [P5-D exact one-turn runbook](../docs/P5-D-READONLY-ONE-TURN-20261119.md).
+
+**Operator entry:** `cd ~/Workspace/llm/blazux-orcarouter && git pull --ff-only && bash scripts/temporary/p5d-readonly-once.sh`. Print exact Git SHA and result; optionally upload private JSON `evidence_file` for per-PID/file details. Host read probes may be permission-blocked; this does not authorize sudo or a kernel rule change. On insufficient evidence keep `BLOCKED_PARTIAL_PROVENANCE`, not a false PASS. All previous 1K/4K/7K GPU approvals consumed, no new inference; P6-E/P7/P8, PR merge and production remain blocked.
+
+**Status:** `P5_D_READONLY_ONE_TURN_SOURCE_READY / CPU_NOT_YET_VERIFIED / REAL_DGX_AUDIT_PENDING / PLE_UNIQUE_RSS_AND_KERNEL_NAT_PATH_NOT_ATTESTED / CI_UNVERIFIED / PRODUCTION_BLOCKED`.
+
+---
+
 ## 2026-11-19 KST — LATEST: full P5 resource JSON analyzed; no further P5 inference authorized
 
 Uploaded original `orcarouter--20261118T214659097604Z--86b3752c0029.json` now **reviewed**, superseding prior `P5_RESOURCE_REVIEW_PENDING`. Four saved, sequential, after-case snapshots over **42.008 seconds**: sampled GPU utilization 0/66/74/75%, power 9.86/20.43/20.98/21.22W, GPU temp 34/38/40/41°C, system max observed zone 46.6°C; host busy CPU 5.11%, min available memory 28.729 GiB, container cgroup `memory.current` ~22.914→22.581 GiB and file-cache drop ~0.338 GiB, cgroup major faults +2004 (first segment only), memory PSI 0%, OOM/kill/high/max zero, no observed swap traffic. NVMe counter-derived rates ~195KB/s read, ~317KB/s write (not PLE-specific). PLE RSS and process smaps still `NOT_OBSERVED`, host port PID/GPU exclusivity unauthenticated, post-request GPU values are *not peak during inference*. Exact clean operator inference SHA `bc0a9ea` and stable container ID in receipt. P5 1K/4K/7K TTFC/TPS previously captured; all finish_reason=length. **Both prior GPU approvals consumed: no more GPU benchmark/retries without a new explicit approval.**
