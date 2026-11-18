@@ -1,3 +1,12 @@
+## 2026-11-19 KST — operator CPU regression stdout and read-only measurement history
+
+- **Operator-provided receipt, not a Github Actions/GPU test:** `test_p5_readonly_attribution_cpu.py` 7/7 RC0; `test_p5d_p6e_cpu.py` 19/19 RC0; `test_p5_resource_diagnostics_cpu.py` 16/16 RC0; `test_model_measurements_cpu.py` 23/23 RC0. Total **65 selected CPU tests PASS**. Exact tested HEAD and clean-worktree result absent from pasted stdout; **source SHA unbound**. Avoid claiming entire repository PASS.
+- `operations measurements history --model orcarouter --json` reported 2 local saved records, no source changes/inference from history command. Prior 128-token benchmark: `COLLECTED_UNQUALIFIED`, source `2cb426f8346024267f3b361fe23cc0eaa477964b`, saved path `.../orcarouter--20261118T102750567863Z--aa19648b06f8.json`; 1K input 1072, 4K input 4132, each 128 output, TTFT/TTFC/TPS null, 8K skipped. Older inventory: `READ_ONLY_PARTIAL`, source `5a48e9ca417b939b1cc51b2933c3086472033b6a`, 2026-11-11.
+- There is **no saved 256-token evidence within this two-record history view**; unsaved/manual runs and other evidence stores are not disproven. Do not auto-execute the previously approved single-use run based on history alone. Not a new PLE RSS or Docker NAT host-port ownership finding.
+- Preserve earlier receipts and P3/P4 scoped conclusions without overwriting; see [closeout](../docs/P3-P5-ONE-TURN-CLOSEOUT-20261118.md).
+
+---
+
 ## 2026-11-18 code-only P5-D NAT and smaps attribution evidence
 
 - Scope: GitHub feature branch source only; historical P3/P4 DGX and 2026-11-18 P5-D operator receipts preserved unaltered.
