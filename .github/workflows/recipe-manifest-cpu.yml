@@ -103,6 +103,7 @@ on:
       - 'recipes/**'
       - 'scripts/manager/**'
       - 'tests/test_p3_p5_closeout_cpu.py'
+      - 'tests/test_p5_*_cpu.py'
       - 'tests/test_mock_nonce_fence_v2_cpu.py'
       - 'tests/test_manager_manifest_cpu.py'
       - 'tests/test_flash_host_assets_cpu.py'
