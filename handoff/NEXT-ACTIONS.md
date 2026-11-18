@@ -1,3 +1,15 @@
+## 2026-11-18 P3–P5 one-turn source integration — remaining verified steps
+
+1. **P3/P4 historical results stay closed in scoped sense.** Do not replay A/B/C/G actual model transfers or delete Flash/27B/Orcarouter HF assets. P3 canonical Flash reinstall/general production adapter is P8-gated; P4 destructive cleanup is optional and requires fresh capacity evidence plus exact separate approval.
+2. **New source CPU receipt needed:** at a clean current SHA, run `python3 -B -m scripts.manager.p3_p5_closeout --cpu-only --json`; record each task, `source_head`, `clean_before_run`, return code. This does not replace independent GitHub Actions CI, whose event problem remains unresolved.
+3. **Read-only DGX closeout:** run `python3 -B -m scripts.manager.p3_p5_closeout --read-only --json` after status review; P5 donor/PLE hash scan requires explicit `--with-p5-asset-hashes` because of potentially heavy read I/O. Do not treat collection as acceptance.
+4. **P5 loaded acceptance pending:** after separately approved inference-only operator window and confirmation that Orcarouter MTP0 is already active, use existing `./wizard.sh operations measurements benchmark-execute --model orcarouter --contexts-k 1,4,8 --max-output-tokens 128 --ack-live-inference I_ACCEPT_ACTIVE_MODEL_INFERENCE --save --json`. This does not perform switching but also does **not** independently qualify PID/GPU port ownership or PLE-specific RSS. Any runtime change requires a distinct scoped approval.
+5. **CI/PR:** register and run 9 new tests only once valid CI event processing is restored; require full exact-HEAD source-only checks before merging Draft PR #1. Keep P5 production promotion, P6/P7/P8 real admission blocked.
+
+[Integrated P3–P5 closeout and runbook](../docs/P3-P5-ONE-TURN-CLOSEOUT-20261118.md)
+
+---
+
 ## 2026-11-18: source-only Push confirmed no-run — escalate without repeated probes
 
 - [x] New matching-path local `git push` at `93473ed` reached remote, updated PR #1, **but no Push/PR Actions run or check run was created** on later readback; repository count still 1640.
