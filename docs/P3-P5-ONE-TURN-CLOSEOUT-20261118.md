@@ -1,5 +1,32 @@
 # P3–P5 one-turn scoped closeout and remaining operational acceptance (2026-11-18)
 
+## 2026-11-18 P3-P5 operator 9a79c8 integrated run receipt and source correction
+
+### Operator CPU receipt — **partial, not PASS**
+
+On a clean source checkout at `9a79c8df4240c99836b0b0cf54ec3a88003686c6`, the operator ran the new `p3_p5_closeout --cpu-only` collector: `INCOMPLETE_OR_BLOCKED`, shell `P3_P5_CPU_RC=3`. Individual tasks: P3-D~G CPU contract accepted `CPU_ONLY_SOURCE_PASS_NOT_DGX` RC0; P4-A **9/9 CPU PASS** RC0; P4-B/C **13/13 CPU PASS** RC0; **P5 source CPU FAIL RC3** with `P5_CPU_TESTS_FAILED`; P5 measurement **18/18 CPU PASS** RC0; P5 benchmark session **8/8 CPU PASS** RC0. No new-HEAD CI result exists. This transcript does not include the P5 inner `test_cases` / unittest `failure_details`, so it does not prove which individual test methods failed.
+
+### Operator read-only receipt — blocked snapshot, not a service failure
+
+The same source SHA and clean tree ran `p3_p5_closeout --read-only` and returned `INCOMPLETE_OR_BLOCKED`, shell `P3_P5_READONLY_RC=3`. P3 D/G stages were `BLOCKED`; P4-B+C status was `READ_ONLY_DRY_RUN_BLOCKED`, but the original collector incorrectly classified its valid fail-closed RC3 JSON as `INVALID_EXIT_OR_STATUS`. P5 static source plan `BLOCKED` RC3 is expected because launch/ABI/rollback authority is unavailable; P5 inventory `READ_ONLY_PARTIAL` is an actual partial observation; P5 benchmark `PLAN_ONLY_ACK_REQUIRED` is a valid *plan*, not live benchmark data. The original collector also showed `accepted=true` for a blocked P3 observational task because it conflated valid evidence collection with qualified acceptance. **None of these results establish a malfunction of the active inference service.** Historical P3 A/B/C/G successes and P4 read-only success remain historical receipts, not proof of the 2026-11-18 host state.
+
+### Source-side investigation and corrections after the observed receipt — **not yet rerun**
+
+GitHub tree at the **tested SHA** contained **177** document-like files under the frozen P5 audit criterion: the historical 169, original authorized additions `HANDOFF-DOCUMENT-AUDIT-FULL-P5`, `P5-P8-MODEL-AGNOSTIC-OPERATIONS`, `P5-D-P6-E-READ-ONLY-PROVENANCE-JOURNAL-V2`, **plus 5 newer scoped docs**: Actions no-run investigation, P3-P5 one-turn closeout, P6-E CPU CI follow-up, P6-E untrusted JSON ingest fence, and the operator CI Push probe. The old `test_p5_document_integrity_cpu.py` asserted exactly the original three additions, so its full-inventory equality **necessarily fails on the tested SHA**. Its additional checks assumed historical supersession markers stayed within the first 180 characters, while newer chronological handoff entries were prepended; static inspection also showed current primary/secondary documents still retain the original marker and adapter/scale references elsewhere. This is a **confirmed source-contract mismatch**, without claiming it was the sole cause of the failed P5 suite.
+
+Source changes now:
+- Extend the explicit allowed **incremental** file inventory with the five known new documents; keep the original 169/169 immutable-presence assertion, duplicate check, and repository-wide Markdown link check. Search historical supersession content in the entire document rather than treating one old heading's byte offset as the current-state authority. Add a test that the current P3-P5 evidence-scoped document explicitly remains non-authorizing.
+- Distinguish true nonzero `unittest` exit (`P5_CPU_TESTS_FAILED`) from zero-exit verbose output mismatch (`P5_CPU_RESULT_PARSE_MISMATCH`), preserving strict fail-closed behavior. Add three synthetic tests covering fail, parse drift and pass; these tests themselves are **not** an actual P5 runner receipt.
+- In the collector, preserve valid `RC3` blocked receipts with `collected=true`, **never `accepted=true`** for blocked P3/P4/P5; extract only bounded structured stage status/issues and P5 failed-test names/counts, not raw logs. Distinguish a clean read-only evidence collection with gaps (`READ_ONLY_COLLECTED_WITH_GAPS`, RC3) from unparseable/incomplete output. The always-partial P5 model inventory is explicitly a gap, not a benchmark PASS.
+- Expand closeout unit guards from nine to eleven tests, add three P5 diagnostics tests, and register `tests/test_p5_*_cpu.py` in PR path filters. No DGX runtime executor, inference, model switch, Docker mutation, operating Journal write, automatic recovery, cache delete or PR merge was performed.
+
+**Required verification:** at a newly pulled clean source SHA, run direct P5 CPU suite to preserve the actual unittest failure line if any; then rerun combined CPU and read-only collectors. A new `P5_CPU_TESTS_FAILED` proves at least one test method still fails; `P5_CPU_RESULT_PARSE_MISMATCH` distinguishes a suite output parser defect; `CPU_SELECTED_PASS_NOT_CI` must only follow genuine P3/P4/P5 selected CPU PASS. Read-only `WITH_GAPS` is a valid truthfulness result (RC3), not something to bypass. Existing Actions no-run remains unresolved. **No P3/P4/P5 live production acceptance is implied.**
+
+**Current decision:** `TESTED_9A79_CPU_PARTIAL_P5_FAILED / TESTED_9A79_DGX_READONLY_BLOCKED / SOURCE_FIXES_UNVERIFIED / CI_UNVERIFIED / PRODUCTION_BLOCKED`.
+
+---
+
+
 ## Verdict
 
 **P3-A/B/C/G are already real-DGX historical PASS/CLOSED; P3-D read-only PASS; P3-E/F are completed only within source/host-read-only and CPU handoff.** P3-E canonical Flash reinstallation and new generalized transition release are not qualified and remain assigned to the separately gated P8 production lifecycle. Do not rerun previously successful operating transitions to manufacture a fresh P3 PASS.
