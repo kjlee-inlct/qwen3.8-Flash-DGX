@@ -1,3 +1,12 @@
+## 2026-11-18 — P5-D Docker NAT publication diagnostics and pure PLE smaps parser
+
+- Added `scripts/manager/p5_readonly_attribution.py`: conservative port-8000 inspect declaration review; exact-path one-PID smaps mapping RSS/PSS review; all ownership, checkpoint authentication, unique residency and production flags stay false/null.
+- Connected `port_publication` to `process_ownership.ownership_review` with mismatch issue while preserving missing-host-listener/NAT partial status and existing read-only probe count.
+- Added `tests/test_p5_readonly_attribution_cpu.py`: 7 standalone local CPU fixtures PASS; tested bytes match GitHub Git blobs. Repository-wide CPU/Actions/DGX acceptance remains unverified.
+- Updated P3-P5 closeout and handoff evidence with CI default-branch workflow discovery gap. No operational Docker, service, inference, journal, cache or PR-merge mutation.
+
+---
+
 ## 2026-11-18 — P5 bounded live MTP0 measurement / vLLM 0.32.0 SSE parser source fix
 
 An operator-approved and completed 1K/4K/8K measurement reached active Orcarouter MTP0: 1K/4K consumed 128 tokens each but no TTFT/TTFC/TPS due streamed reasoning delta field mismatch; 8K skipped under active 8192 context cap. No model mutation. Source-only patch `scripts/manager/measurement_bench.py` supports documented `delta.reasoning` plus legacy `delta.reasoning_content`, classifies reasoning-only and usage-only SSE, exposes reason-only counts without saving private reasoning or generated text, and marks missing token deltas `INCOMPLETE_METRICS` rather than successful metrics. Regression cases added to `tests/test_model_measurements_cpu.py`, **CPU unexecuted/CI unverified** at this post-benchmark source SHA. Historical P5 152/152 CPU PASS at 8ec6bc2 is preserved, not transferred. No additional live inference or operational modification was triggered by GitHub code updates. [P5 actual receipt and acceptance boundary](../docs/P3-P5-ONE-TURN-CLOSEOUT-20261118.md).
