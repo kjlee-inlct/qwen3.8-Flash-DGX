@@ -1,3 +1,11 @@
+## 2026-11-18 P3–P5 operator selected CPU PASS — clean 8ec6bc2
+
+Operator terminal report explicitly bound to clean `8ec6bc2f148cf77bf0ed6e9ce0d54a91d1baf569`: `test_p5_document_integrity_cpu` **8/8 PASS RC0**; `test_p3_p5_closeout_cpu` **11/11 PASS RC0**; all `test_p5_*_cpu` **152/152 PASS RC0**. Aggregator `--cpu-only`: `CPU_SELECTED_PASS_NOT_CI` **RC0**, `source_cpu_selected_pass=true`, all six tasks collected/accepted, P3 CPU PASS, P4-A 9 PASS, P4-B/C 13 PASS, P5 source CPU 152 PASS, P5 measurement 18 PASS, P5 session 8 PASS. This supersedes the earlier exact source failure at `8b8f5a0`; totals are **overlapping groups** and not 152+8+11 distinct P5 test methods. Evidence class **OPERATOR_SHA_BOUND_SELECTED_P3_P4_P5_CPU_PASS_RC0**, not Github Actions CI or real loaded DGX acceptance.
+
+No latest read-only rerun; prior `8b8f5a0` read-only collection remains **5/5 collected, READ_ONLY_COLLECTED_WITH_GAPS RC3**, with P3-D/G current API/Docker/GPU/port owner, P4-A inventory, P5 residency/ownership incomplete. Immutable ten local P3 transition JSON records kept. GitHub Actions count 1640, last run Nov 11 2026. [Detailed permanent record](../docs/P3-P5-ONE-TURN-CLOSEOUT-20261118.md).
+
+---
+
 ## 2026-11-18 verified operator 8b8f5a0 transcript and source-only fixture repair
 
 **Operator-supplied, clean checkout:** `8b8f5a0132e8b1f27f9ec4b1cd53c5e82c7f1aea`. P5 docs `5/6 PASS`, P5 all CPU `149/150 PASS`, closeout fake CPU `5/11 PASS` (six fixture errors), combined CPU RC3; read-only `READ_ONLY_COLLECTED_WITH_GAPS` RC3 and all 5 receipts collected. Exact failures: ten **local non-tracked** historical P3 transition JSON receipts incorrectly included by `ROOT.rglob` source inventory, and P3-P5 fake CLI matcher looked for bare instead of full `scripts.manager.p3_dg_acceptance` argument. Read-only receipt shows P3-D/G blockers and P4-A snapshot partial; not proof of active service outage. Source changed to Git-tracked inventory + exact fake command matching, with negative tests; **post-fix tests not yet run**, CI still unavailable.
