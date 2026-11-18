@@ -1,3 +1,11 @@
+## 2026-11-18 P5-D operator read-only observation — executed; port and PLE RSS still blocked
+
+Operator submitted full DGX stdout for 2026-11-18 12:13Z read-only `ownership-capture`, measurement inventory, and resource snapshot: P5-D `BLOCKED_PARTIAL_PROCESS_EVIDENCE`, `RC3`, **only** `PORT_8000_HOST_LISTENER_PID_UNAVAILABLE_OR_NAT`; Docker full ID `9c49950015a845357e90fabe74946565d41069362c083fe7982f54caa2b3beac`, `docker_identity_match=true`; GPU PID 4016530 within Docker host PID set {4016083,4016529,4016530}. Missing host :8000 listener PID and sequential probes mean port and GPU ownership **NOT** verified, not a service failure. Inventory `READ_ONLY_PARTIAL RC0`: runtime BF16, max-model-len 8192, KV available 9.83 GiB, KV capacity 197,352 tokens from logs; PLE mmap declared 95.37 GiB **NOT RSS**, process RSS/PSS null. Resource single idle snapshot `OBSERVED_PARTIAL RC0`, 0% GPU utilization, 35°C, cgroup current ~22.9 GiB and prior high-water ~37.03 GiB. The 256-token MTP0 timing remeasurement is **not present in these logs**, so TTFT/TTFC/TPS remain pending live evidence. Historic P3/P4 and P5 CPU tested SHA 7509a4e unchanged; CI not verified. [Full latest evidence](../docs/P3-P5-ONE-TURN-CLOSEOUT-20261118.md).
+
+`P5_D_PARTIAL_NAT_REPRODUCED / PLE_RSS_PENDING / ACTIVE_MTP0_TIMING_REMEASURE_PENDING / CI_UNVERIFIED / PRODUCTION_BLOCKED`.
+
+---
+
 ## 2026-11-18 operator follow-up approval — P5 MTP0 one-shot inference + read-only ownership NOT YET EXECUTED
 
 The user explicitly replied **"진행 승인"** after selected SHA-bound P3–P5 CPU PASS (`7509a4ec095005418d9974bac07542be7def884e`, measurement 23/23 RC0, selected combined 6/6 RC0). Scope: **one** repeat of active Orcarouter v3 BF16PLE MTP0 bounded synthetic loaded inference at 1K/4K, output cap 256 each, concurrency=1; separately read-only P5-D `ownership-capture`, measurement inventory and resource snapshot. 8K excluded under 8192 total token cap. No MTP2 profile, model switch/stop/start, Docker mutation, storage deletion, operating Journal update, recovery or PR merge approved.
