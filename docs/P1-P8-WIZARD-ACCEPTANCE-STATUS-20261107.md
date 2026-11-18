@@ -1,3 +1,11 @@
+## 2026-11-18 P5 approved MTP0 loaded benchmark — executed 2/3, TTFT/TPS NULL
+
+At `2cb426f8346024267f3b361fe23cc0eaa477964b`, operator ran allowed active-model MTP0 1K/4K/8K one-shot inference with exact acknowledgement, saved evidence, observed 1K and 4K SSE usage **128 generated tokens each**, end-to-end **6.45791s / 7.49535s**; 8K safely skipped due 8192 maximum context. `COLLECTED_UNQUALIFIED`, `benchmark_verified=false`, `production_released=false`, container ID stable. **All TTFT, TTFC, generation TPS and visible output were unobserved**; `finish_reason=length`. API docs for vLLM 0.32.0 explicitly use `delta.reasoning`, but source parser had read only `delta.reasoning_content`: source-only fix and 5 new CPU unit cases added; **no new-head CPU or CI result yet**. PLE-specific RSS, active port PID & GPU ownership, independent resource interval, MTP2 remain unresolved. Prior 152/152 CPU PASS is bound to 8ec6bc2, **not this new source**. No second inference replay authorized; PR Draft/Open and production blocked. [Actual observation and contract](P3-P5-ONE-TURN-CLOSEOUT-20261118.md).
+
+`P5_LIVE_BOUND_2_OF_3 / P5_SSE_FIX_CPU_PENDING / P5_REAL_METRICS_INCOMPLETE / CI_UNVERIFIED / PRODUCTION_BLOCKED`.
+
+---
+
 ## 2026-11-18 current operator supersession — P3–P5 selected CPU PASS at clean 8ec6bc2
 
 **Operator supplied exact SHA `8ec6bc2f148cf77bf0ed6e9ce0d54a91d1baf569` and clean tree.** Fixed P5 document-integrity **8/8 PASS RC0**, fixed closeout unit suite **11/11 PASS RC0**, all P5 CPU/Fake-DGX **152/152 PASS RC0**, combined `p3_p5_closeout --cpu-only` **`CPU_SELECTED_PASS_NOT_CI` / RC0 / all 6 tasks accepted**, plus P4-A **9/9**, P4-B/C **13/13**, P5 measurements **18/18**, P5 session **8/8** (nested/overlapping tests, do not sum as independent total). **Earlier CPU errors resolved for tested SHA**, not GitHub CI.
