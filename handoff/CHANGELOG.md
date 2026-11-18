@@ -1,3 +1,9 @@
+## 2026-11-19 KST — operator one-shot P5 MTP0 SSE measurement receipt (documentation only)
+
+User provided completed bounded inference stdout at clean DGX source SHA `17ebc7f7ba2dcfc27c6dca265952dc99cb85e3ee`. Two 256-token MTP0 cases returned `MEASURED_REASONING_ONLY`, `COLLECTED_UNQUALIFIED`; 1K TTFT 0.52965s / TPS 22.405; 4K TTFT 1.70999s / TPS 22.604; TTFC null in both, `finish_reason=length`. Result saved to private DGX measurement receipt. Source parser `delta.reasoning` works on this live stream; visible-answer measurement and production acceptance remain pending. The one-shot approval has been consumed. This GitHub update changes documentation only; no assistant-run inference or Docker/service/operating Journal mutation.
+
+---
+
 ## 2026-11-19 KST — received operator CPU and history evidence (docs only)
 
 Four selected Python CPU suites passed on operator DGX: 7/7 P5 attribution, 19/19 P5-D/P6-E, 16/16 P5 resource and 23/23 P5 measurement (65/65 RC0). The shared log omitted tested HEAD and clean worktree state, so SHA binding is pending. Read-only local history contained older 128-token benchmark and older inventory, not a saved 256-token result; this does not rule out unsaved activity. No code or live service operations resulted from these receipts.
