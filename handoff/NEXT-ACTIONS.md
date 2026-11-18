@@ -1,3 +1,14 @@
+## 2026-11-18 follow-up after exact-HEAD 45/45 CPU PASS
+
+1. **CPU action closed for tested SHA:** operator log confirms `2f5240d3a5652ce44af51b4b323b0d8d88a105bd` and selected **14 + 12 + 19 = 45/45 PASS**, `GENERIC_RC=0`, `NONCE_RC=0`, `P6E_RC=0` (working tree was clean before the run). Preserve raw console receipt and code SHA. If new source/test commits are added, require fresh SHA-bound CPU regression; do not inherit the 45/45 result.
+2. **CI is still unverified:** inspect Actions workflow registration/enabled state, repo/org permissions, Push/PR actor/token and branch/paths behavior; locate a genuinely executed same-HEAD workflow and inspect checks/logs. Earlier zero-run finding remains unresolved. Do not claim a CI PASS from the YAML or operator tests, and do not merge PR #1 as a trigger workaround.
+3. **Next source/Fake-DGX scope only:** strengthen independent evidence signing/trust roots, Journal v2 crash-consistency fault matrix, globally durable Nonce replay fencing and expiry/scope-bound approval review. Keep these structurally non-authorizing and CPU tested.
+4. **Operational acceptance still blocked:** no real DGX service stop/switch, inference load, operating Journal migration, automatic recovery, P5 benchmark, P7 integration, P8 recovery exercise or production release without separate evidence and operator approval.
+
+**Decision:** `SOURCE_UPDATED / CPU_REGRESSION_PASS_NEW_HEAD / CI_UNVERIFIED / PRODUCTION_BLOCKED`. [Updated P6-E receipt](../docs/P6-E-CPU-CI-FOLLOWUP-20261118.md).
+
+---
+
 ## 2026-11-18 next verification after 43-test receipt / fake-only code hardening
 
 1. On the development checkout, `git pull --ff-only`, capture `git rev-parse HEAD` and `git status --short`, then run `test_generic_operations_cpu.py`, `test_mock_nonce_fence_v2_cpu.py`, and `test_p5d_p6e_cpu.py` with verbose `unittest`. Expected tests **14 + 12 + 19 = 45**, but **not yet run at the new source HEAD**. Record all `OK`, exact RC and SHA. Previous `4fc3aa8` operator-selected 43/43 PASS remains historical and SHA-bound.
