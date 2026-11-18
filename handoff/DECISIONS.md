@@ -1,3 +1,11 @@
+## 2026-11-18 P5-D attribution contract decision (source only)
+
+Docker `HostConfig.PortBindings` and `NetworkSettings.Ports` are independently compared within one inspect document but **neither is authentication of a host listener or NAT owner**. Missing `ss` listener PID retains the existing partial-evidence block; contradictory nonempty publish declarations add an explicit mismatch issue. PLE per-file smaps mapping RSS/PSS may be reviewed for a bounded, exact caller-supplied path and one PID, but its caller, file/checkpoint binding and process provenance remain untrusted. Multi-process mapping RSS sums are not unique physical memory. Live auditor integration, authenticated attribution, executable gates and production promotion are separate future approvals.
+
+CI path filtering is not equivalent to an eligible or enabled workflow. The feature branch contains a CPU workflow while `main` lacked `.github/workflows` at the checked time; investigate workflow registration/permissions before diagnosing a specific cause. PR #1 remains Draft/Open and must not be merged as a CI workaround.
+
+---
+
 ## 2026-11-18 P6-E operator CPU result supersession — 29/29 PASS, RC0, SHA unbound
 
 **2026-11-18 P6-E operator CPU test PASS supersession (new receipt):** The operator supplied final output for `test_mock_nonce_fence_v2_cpu.py`: `Ran 10 tests in 0.051s`, `OK`, `NONCE_RC=0`; and `test_p5d_p6e_cpu.py`: `Ran 19 tests in 0.012s`, `OK`, `P6E_RC=0`. **29/29 CPU unittest methods PASS, 0 failures** with explicitly reported zero process exit codes. This **supersedes the prior `FINAL_OK_NOT_SHOWN` status**; the earlier partial terminal receipt is preserved historically. Source code at upstream `beba71925214bf10f42adeb8813a96eca4499f06` contained the five new restart tests, and `0a732fc3bdb8786dfcef1b59938bfbe0de3206e3` is the subsequent docs-only evidence update. However, no new `git rev-parse HEAD` / `git status --short` accompanied the operator's latest transcript. Accordingly **the exact test checkout SHA and clean-tree condition remain unverified**; record evidence class `OPERATOR_SUPPLIED_P6E_29_OF_29_PASS_RC0_SHA_UNBOUND`, never `GITHUB_ACTIONS_VERIFIED`.
