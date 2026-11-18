@@ -1,3 +1,9 @@
+## 2026-11-19 KST — received operator CPU and history evidence (docs only)
+
+Four selected Python CPU suites passed on operator DGX: 7/7 P5 attribution, 19/19 P5-D/P6-E, 16/16 P5 resource and 23/23 P5 measurement (65/65 RC0). The shared log omitted tested HEAD and clean worktree state, so SHA binding is pending. Read-only local history contained older 128-token benchmark and older inventory, not a saved 256-token result; this does not rule out unsaved activity. No code or live service operations resulted from these receipts.
+
+---
+
 ## 2026-11-18 — P5-D Docker NAT publication diagnostics and pure PLE smaps parser
 
 - Added `scripts/manager/p5_readonly_attribution.py`: conservative port-8000 inspect declaration review; exact-path one-PID smaps mapping RSS/PSS review; all ownership, checkpoint authentication, unique residency and production flags stay false/null.
