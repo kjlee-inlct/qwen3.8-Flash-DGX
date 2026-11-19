@@ -41,7 +41,20 @@ def review_port_publication(inspect: object) -> dict:
     mode = mode if isinstance(mode, str) and len(mode) <= 128 else None
     expected = _published_bindings(host.get("PortBindings"))
     observed = _published_bindings(network.get("Ports"))
-    consistent = bool(expected and observed and expected == observed)
+    # Docker may append IPv6 wildcard :: to NetworkSettings.Ports
+    # when HostConfig.PortBindings declares the IPv4 wildcard alone.
+    # Accept ONLY that exact dual-stack extension, not changed host ports,
+    # loopback-to-wildcard promotion, arbitrary extra bindings or ownership.
+    ipv4_wildcard = {("0.0.0.0", "8000/tcp")}
+    ipv6_wildcard = {("::", "8000/tcp")}
+    dual_stack_extension = bool(
+        expected == ipv4_wildcard and
+        observed == ipv4_wildcard | ipv6_wildcard
+    )
+    consistent = bool(
+        expected and observed and
+        (expected == observed or dual_stack_extension)
+    )
     if expected is None or observed is None:
         status = "NOT_OBSERVED"
     elif consistent:
@@ -53,10 +66,11 @@ def review_port_publication(inspect: object) -> dict:
         "declared_host_port_8000": bool(expected),
         "effective_host_port_8000": bool(observed),
         "docker_port_declarations_consistent": consistent,
+        "docker_ipv6_wildcard_extension_observed": dual_stack_extension,
         "nat_candidate_not_verified": bool(consistent and mode not in (None, "host", "none")),
         "host_listener_verified": False,
         "port_process_ownership_verified": False,
-        "note": "Inspect-only declarations: no host NAT traversal, socket/PID owner attestation, or Docker identity continuity."
+        "note": "Inspect-only declarations (allow exact IPv4 wildcard plus Docker IPv6 wildcard extension): no host NAT traversal, socket/PID owner attestation, or Docker identity continuity."
     }
 
 
