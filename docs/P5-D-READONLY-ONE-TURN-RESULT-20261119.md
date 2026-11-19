@@ -1,5 +1,16 @@
 # P5-D — One-turn DGX read-only result and evidence-bound diagnosis (2026-11-19 KST)
 
+## 2026-11-19 KST — operator CPU regression 50/50 PASS at 08d03b1
+
+**Evidence type: operator-provided terminal transcript (not independently run by GitHub connector).** On DGX host `lc-gx10-pc` under `~/Workspace/llm/blazux-orcarouter`, the operator reported `git rev-parse HEAD = 08d03b182c3a1be78a698312d1abcb5b2cef571e` and three selected CPU-only unittest completions: `test_p5d_live_audit_cpu.py` **22/22 OK (0.013s)**, `test_p5_readonly_attribution_cpu.py` **9/9 OK (0.000s)**, and `test_p5d_p6e_cpu.py` **19/19 OK (0.012s)**. **Total 50/50 selected tests PASS**, based on that exact supplied transcript. The previously expected 44 was a mistaken projection: there were 40 historical selected tests at old SHA `4366f3b`; the latest three modules report 50, an increase of 10 across that historical baseline. There is no claim of full repository test-suite execution or GitHub-run CI.
+
+**Qualification:** The source and unit-test files on this code SHA (`scripts/manager/p5d_live_audit.py`, `tests/test_p5d_live_audit_cpu.py`) received the new fail-closed namespace/limited enumeration/errno handling patches. This observed CPU execution verifies selected synthetic regressions, **not a new live P5-D probe**. The original private read-only receipt remains `BLOCKED_PARTIAL_PROVENANCE / RC3`, with 3/3 unreadable smaps, absent namespace identities, unbound LISTEN inode↔PID FD and independently unverified NAT owner. No per-PLE unique RSS/PSS, pinned tensor identity, GPU exclusivity or production authority is established.
+
+**Independent CI check after operator report:** for `08d03b182c3a1be78a698312d1abcb5b2cef571e`, GitHub workflow-runs API returned `[]` and combined commit statuses `[]`. Latest observed workflow run remained on historical `8b118c8` (2026-11-12 KST). **CPU_TESTED=OPERATOR_REPORTED_SELECTED_50_OF_50; CI_VERIFIED=NO; DGX_LIVE_AUDIT_NEW_HEAD=NOT_RUN; PRODUCTION_RELEASED=NO**. Source-only follow-up documentation may advance the repository HEAD beyond the tested SHA; that does not create new CPU or live-DGX evidence, and must retain this exact tested-source SHA. PR #1 stays Draft/Open/Unmerged. No new live service intervention authorized.
+
+---
+
+
 ## 2026-11-19 KST — follow-up SOURCE hardening after base HEAD `141df9fdd562`
 
 Code review found two fail-closed gaps: `pid_identity_continuous` could accidentally accept a PID identity dictionary **omitting** any namespace key (empty iterator passes `all()`), and pinned-snapshot directory entries were fully materialized before applying the 256-file cap. The revised source explicitly requires positive integer start ticks plus **all three** valid `net:[N]`/`mnt:[N]`/`pid:[N]` identifiers; snapshot entry enumeration is capped at 257 including the one overflow sentinel. It also bounds container `/proc/PID/net/tcp{,6}` reads at 5,000,001 chars and records numeric `smaps_errno` per PID in the private receipt and compact summary (without copying raw exception text).
