@@ -1,3 +1,13 @@
+## 2026-11-19 KST — P5-D fail-closed namespace and bounded provenance reader
+
+Commit `f8525988ea800eb44855558aa932a4ce1d1d3dab` fixed the PID identity omission bug (all three nonempty namespace IDs and positive start ticks are mandatory), bounded pinned-snapshot directory enumeration to 257 entries before allocation, bounded container proc TCP reads, and retained numeric `smaps_errno` per PID in the receipt and compact summary. Four new CPU-only test methods added but **NOT EXECUTED** on new source. Follow-up documentation commits updated P5-D and P1–P8 records. Original 40/40 selected CPU PASS and `BLOCKED_PARTIAL_PROVENANCE / RC3` receipt are historical DGX results at `4366f3b`, not current-source acceptance.
+
+CI investigation: recipe-manifest-cpu.yml and correct path filters exist in feature branch; main contains no `.github/workflows/` directory. No workflow runs since old SHA `8b118c8` (Nov 12 KST); reason not proven. **SOURCE_IMPLEMENTED / CPU_TESTED_NEW_HEAD_PENDING / CI_UNVERIFIED / DGX_OBSERVED_PRIOR_ONLY / OPERATION_AUTHORIZED_FALSE / PRODUCTION_BLOCKED.** The original 3 unreadable smaps, blank namespace IDs, unowned container LISTEN FD and unverified NAT/PLE identity cannot be reconstructed from source changes. Do not classify RC3 as outage or assign PLE RSS/PSS zero.
+
+Preserve Draft/Open/Unmerged PR #1, :8000, vLLM 0.32.0 and ONE_ACTIVE_MODEL_ONLY. No new DGX command, GPU inference, Docker/service transition, sudo, cleanup, operating Journal write, recovery or merge. Next: focused CPU-only tests; verify GitHub Actions registration/settings/runner; optionally seek separate operator scope for bounded no-sudo read-only collection; P6-E authenticated journal/nonce, P7 gateway/storage, P8 real recovery and production remain independently blocked.
+
+---
+
 ## 2026-11-19 06:46 KST — accept P5 visible TTFC observation, not production / answered-task acceptance
 
 The separately approved 1K/4K/7K (256 completion-token cap) Orcarouter MTP0 request-local no-thinking GPU one-shot **completed once**, at source SHA `bc0a9ea2346b85fa9f8e6ef132b765078b6385db`. All three cases produced SSE-visible content, TTFT=TTFC 0.52051/1.59565/2.80664s, post-first TPS 21.961/22.943/22.948, zero reasoning deltas, stable Docker ID and saved private evidence. **This closes the earlier "TTFC_NOT_OBSERVED" measurement gap for this exact no-thinking workload only.** The prior default-thinking workload remains **reasoning-only**, TTFC null, and must not be rewritten. All 3 cases terminated by `finish_reason=length`, so generated-task completeness/accuracy remains unverified. Single samples do not establish statistical reproducibility.
