@@ -88,9 +88,24 @@ def draft_v2_event(source: str, target: str, *,
         if not _valid_event_types(prior):
             raise ValueError("V2_DRAFT_UNTRUSTED_PRIOR")
         prev_body = {k: v for k, v in prior.items() if k != "event_hash"}
+        # A matching untrusted hash is not enough: reject self-rehashed
+        # prior events whose immutable policy or predecessor shape drifted.
         if (prior["event_hash"] != _digest(prev_body)
                 or not 0 <= prior["event_index"] < 63
-                or prior["phase"] not in PHASE_LABELS):
+                or prior["phase"] not in PHASE_LABELS
+                or prior["record_origin"] != V2_ORIGIN
+                or prior["source_role"] != "CANONICAL_REQUIRED"
+                or prior["target_role"] != "CANONICAL_REQUIRED"
+                or prior["api_host_port"] != 8000
+                or prior["max_active_gpu_models"] != 1
+                or prior["live_revalidation_required"] is not True
+                or prior["approval_authentication_required"] is not True
+                or prior["nonce_ledger_required"] is not True
+                or (prior["event_index"] == 0
+                    and prior["previous_hash"] is not None)
+                or (prior["event_index"] > 0
+                    and (not isinstance(prior["previous_hash"], str)
+                         or not _ID.fullmatch(prior["previous_hash"])))):
             raise ValueError("V2_DRAFT_UNTRUSTED_PRIOR")
     previous_phase = prior["phase"] if prior is not None else None
     if phase not in PHASES.get(previous_phase, set()):

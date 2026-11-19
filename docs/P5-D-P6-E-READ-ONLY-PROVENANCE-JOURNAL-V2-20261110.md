@@ -1,3 +1,5 @@
+> **2026-11-19 source-only P6-E follow-up:** The in-memory `draft_v2_event` predecessor check now rejects a *self-rehashed* prior whose origin, canonical roles, fixed port/model-count/approval/nonce policies, or index-to-previous-hash shape drifted. A new CPU unittest method covers 10 negative fixtures. This does **not** attest an authentic prior, the full predecessor chain, durable nonce, real Journal, restart authority, or live executor. **Tests added but NOT run here; GitHub Actions new-HEAD CI UNVERIFIED.** No DGX/GPU/Docker/operating-Journal actions, approval, merge or production release. Original P5-D RC3 provenance and PLE/NAT gaps unchanged.
+
 # P5-D Read-Only Process Ownership / P6-E Generic Journal V2 (2026-11-10)
 
 ## 2026-11-18 P6-E operator CPU result supersession — 29/29 PASS, RC0, SHA unbound

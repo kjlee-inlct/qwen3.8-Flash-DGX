@@ -1,3 +1,5 @@
+> **2026-11-19 P6-E code follow-up (source only, SHA-bound to ensuing commit):** `generic_journal_v2.draft_v2_event` now fails closed on correctly rehashed but policy-drifted or predecessor-link-drifted input; `tests/test_p5d_p6e_cpu.py` adds 10 negative scenarios in one unittest method. Exact-HEAD test execution and GitHub CI remain **UNVERIFIED** unless separately observed. P5-D actual RC3 / unknown PLE RSS-PSS / NAT owner, P6-E approval/replay/Journal-v2 operating release, P7/P8 and production stay **BLOCKED**. No live DGX, GPU load, sudo, journal mutation or PR merge authorized.
+
 ## P3–P5 staged closeout navigation — 2026-11-18
 
 The current source-safe P3–P5 integration and operator entrypoint are documented at [P3–P5 one-turn scoped closeout](../docs/P3-P5-ONE-TURN-CLOSEOUT-20261118.md). Prior P3 A/B/C/G live PASS and P4-A/B/C read-only PASS are evidence-bound and should not be replayed. P3 Flash reinstall and P5 loaded benchmark/MTP2/ownership are not production accepted. New 9 CPU tests and CI are pending execution due to GitHub Actions no-run; PR #1 remains Draft/Open.

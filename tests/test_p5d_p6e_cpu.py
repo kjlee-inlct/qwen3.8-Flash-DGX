@@ -191,6 +191,40 @@ class P6ECPU(unittest.TestCase):
                                    source_id="a"*64, target_id="b"*64,
                                    plan_id="c"*64, prior=previous, phase="PLANNED")
 
+    def test_rehashed_prior_policy_and_previous_link_drift_rejected(self):
+        """Even a correctly rehashed, untrusted prior cannot seed a draft."""
+        first = draft_v2_event("27b", "flash-next",
+                               source_id="a" * 64, target_id="b" * 64,
+                               plan_id="c" * 64)
+        cases = (
+            ("record_origin", "FORGED_ORIGIN"),
+            ("source_role", "UNVERIFIED"),
+            ("target_role", "UNVERIFIED"),
+            ("api_host_port", 8001),
+            ("max_active_gpu_models", 2),
+            ("live_revalidation_required", False),
+            ("approval_authentication_required", False),
+            ("nonce_ledger_required", False),
+            ("previous_hash", "d" * 64),
+            ("event_index", 1),
+        )
+        for field, value in cases:
+            with self.subTest(field=field):
+                previous = dict(first, **{field: value})
+                body = {k: v for k, v in previous.items()
+                        if k != "event_hash"}
+                previous["event_hash"] = hashlib.sha256(
+                    json.dumps(body, sort_keys=True,
+                               separators=(",", ":")).encode()).hexdigest()
+                self.assertEqual(
+                    audit_v2_draft([previous])["status"], "BLOCKED_V2_DRAFT")
+                with self.assertRaisesRegex(ValueError,
+                                            "V2_DRAFT_UNTRUSTED_PRIOR"):
+                    draft_v2_event(
+                        "27b", "flash-next",
+                        source_id="a" * 64, target_id="b" * 64,
+                        plan_id="c" * 64, prior=previous, phase="PLANNED")
+
     def test_v2_exact_nonce_binding_is_structural_only(self):
         kwargs = dict(source_id="a" * 64, target_id="b" * 64,
                       plan_id="c" * 64, nonce="d" * 64)
