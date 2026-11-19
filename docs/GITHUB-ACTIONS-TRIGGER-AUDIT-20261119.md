@@ -1,5 +1,18 @@
 # GitHub Actions missing-run audit — 2026-11-19 (source-only)
 
+## 2026-11-19 KST — operator Actions read-only diagnostic evidence: ACTIVE workflow / permissions HTTP 401
+
+**Operator-provided DGX stdout**, source SHA `2d8be63f7c7899e3e048d2544c9b27f817da7f18` (exact `tested_sha` in the JSON): `test_github_actions_readonly_audit_cpu.py` **6/6 PASS**, 0.000s, `ACTIONS_CPU_RC=0`. Read-only audit printed `finding=NO_MATCHING_RUN_IN_LATEST_BRANCH_PAGE`, `workflow_id=406361282`, `workflow_state=active`, `default_branch_workflow_present=false` (HTTP 404), `feature_branch_workflow_present=true` (HTTP 200), `exact_sha_check_runs=0` (HTTP 200), `exact_sha_runs_in_latest_page=0` (HTTP 200), last run old SHA `8b118c8b1ef7079fabe0b4edbc6d8a2860fd98d8` at 2026-11-11 22:00:50 UTC (event pull_request, success). `permissions` endpoint returned **HTTP 401**; `repository_actions_enabled=null`, **NOT OBSERVED, not false**. Final `ACTIONS_AUDIT_RC=3` reflects one incomplete permissions endpoint, **not a CI failure or DGX service failure**. `mutated_github_or_dgx=false`, `ci_verified=false`, `production_released=false` as reported.
+
+**Evidence classification:** workflow **ACTIVE_OBSERVED**, feature workflow file **PRESENT_OBSERVED**, default branch file **ABSENT_OBSERVED**, exact-source CI/checks **NOT_OBSERVED**, repository Actions permissions **UNVERIFIED_UNAUTHENTICATED_401**, trigger root cause **UNDETERMINED**. A missing workflow on `main` does not alone explain why the earlier feature push/PR workflows executed successfully when `main` was unchanged. A disabled workflow is contradicted by the present `active` observation. Path filters for recent `scripts/manager/**`/`handoff/**` commits are present. GitHub documentation notes that some `GITHUB_TOKEN`-generated events do not trigger workflows, but the credential responsible for these feature branch commits is **not known from the commit identity**; do not declare token suppression as proven.
+
+**Next safe evidence:** With an already-authorized GitHub CLI login and no new token disclosure, optionally run `GH_TOKEN="$(gh auth token)" python3 -B -m scripts.manager.github_actions_readonly_audit --sha "$(git rev-parse HEAD)" --use-gh-token --json` in a current checkout, or inspect GitHub repository Settings → Actions → General (read-only). Neither creates jobs or changes settings. Missing login or HTTP 403 is an evidence gap, not proof disabled. **Do not execute a new workflow, submit a synthetic commit, change `main`, enable Actions, merge the Draft PR or modify real DGX resources without separate authorization.**
+
+**Independent gates:** `SOURCE_IMPLEMENTED / ACTIONS_AUDIT_CPU_OPERATOR_6_OF_6_PASS_AT_2D8BE63 / WORKFLOW_ACTIVE / REPO_ACTIONS_PERMISSION_UNKNOWN_401 / CI_UNVERIFIED / P5D_SELECTED_CPU_50_OF_50_PASS_AT_08D03B1 / PLE_NAT_UNQUALIFIED / PRODUCTION_BLOCKED`. The historical 50/50 P5-D tests and 6/6 new diagnostic CPU tests are separate suites at separate SHA scopes.
+
+---
+
+
 ## Scope and evidence (as-of 2026-11-19 KST)
 
 - Repository: `kjlee-inlct/qwen3.8-Flash-DGX`; feature branch `feature/recipe-wizard-handoff`, Draft PR #1 remains Open/Unmerged.
