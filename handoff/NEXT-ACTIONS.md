@@ -1,7 +1,7 @@
 ## 2026-11-20 — Approved P5-D source work; Actions investigation parked
 
-- Actions operator HTTPS push \`2b97762\` succeeded but 0 matching new Push/PR runs/checks. Investigation committed at \`docs/GITHUB-ACTIONS-OPERATOR-PUSH-COMPARISON-20261120.md\`; stop repetitive trigger probes; CI \`UNVERIFIED\`.
-- P5-D source improvement: manifest-bound PLE audit preflight and Wizard \`operations generic p5d-source-binding-review --model orcarouter --json\`, plus negative CPU fixtures. See \`docs/P5-D-MANIFEST-BOUND-READONLY-SOURCE-20261120.md\`. New-source CPU and CI must be freshly verified (do not transfer historical 50/50 PASS).
+- Actions operator HTTPS push `2b97762` succeeded but 0 matching new Push/PR runs/checks. Investigation committed at `docs/GITHUB-ACTIONS-OPERATOR-PUSH-COMPARISON-20261120.md`; stop repetitive trigger probes; CI `UNVERIFIED`.
+- P5-D source improvement: manifest-bound PLE audit preflight and Wizard `operations generic p5d-source-binding-review --model orcarouter --json`, plus negative CPU fixtures. See `docs/P5-D-MANIFEST-BOUND-READONLY-SOURCE-20261120.md`. New-source CPU and CI must be freshly verified (do not transfer historical 50/50 PASS).
 - Next gate: verify Manifest/Wizard/P5-D CPU tests; only thereafter request independently approved DGX **read-only** evidence if needed. Real RSS/PSS, inode/PID and NAT ownership remain blocked; P6-E operating Journal, P7/P8 real service, PR merge, main and production release remain outside scope.
 
 ---
