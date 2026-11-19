@@ -18,6 +18,29 @@ class PortPublicationCPU(unittest.TestCase):
         self.assertFalse(row["port_process_ownership_verified"])
         self.assertFalse(row["host_listener_verified"])
 
+    def test_ipv4_plus_docker_ipv6_wildcard_is_normalized_only_at_config_level(self):
+        doc = self._inspect()
+        doc["NetworkSettings"]["Ports"]["8000/tcp"].append(
+            {"HostIp": "::", "HostPort": "8000"})
+        out = review_port_publication(doc)
+        self.assertTrue(out["docker_ipv6_wildcard_extension_observed"])
+        self.assertTrue(out["docker_port_declarations_consistent"])
+        self.assertEqual(out["status"],
+                         "DOCKER_DECLARATION_CONSISTENT_NOT_HOST_VERIFIED")
+        self.assertFalse(out["port_process_ownership_verified"])
+
+    def test_ipv4_plus_unexpected_ipv6_or_wrong_host_address_still_mismatch(self):
+        doc = self._inspect()
+        doc["NetworkSettings"]["Ports"]["8000/tcp"].append(
+            {"HostIp": "::1", "HostPort": "8000"})
+        out = review_port_publication(doc)
+        self.assertFalse(out["docker_ipv6_wildcard_extension_observed"])
+        self.assertEqual(out["status"], "DOCKER_DECLARATION_MISMATCH")
+        doc["NetworkSettings"]["Ports"]["8000/tcp"] = [
+            {"HostIp": "127.0.0.1", "HostPort": "8000"}]
+        self.assertEqual(review_port_publication(doc)["status"],
+                         "DOCKER_DECLARATION_MISMATCH")
+
     def test_host_mismatch_missing_and_malformed_fail_closed(self):
         doc = self._inspect()
         doc["NetworkSettings"]["Ports"]["8000/tcp"][0]["HostPort"] = "8001"
