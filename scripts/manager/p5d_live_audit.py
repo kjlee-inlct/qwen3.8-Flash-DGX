@@ -536,6 +536,15 @@ def _collect(*, capture_ownership=ownership_capture, run_command=_cmd,
         "summary": {
             "examined_container_host_pids": len(pids),
             "pid_starttime_namespace_continuous": pid_identity_continuous,
+            "per_pid_readonly_observation": [
+                {"pid": x["pid"], "smaps_status": x["status"],
+                 "candidate_mapping_files": len(x["mapped_files"]),
+                 "issues": sorted(set(x["issues"]))}
+                for x in observed
+            ],
+            "pinned_snapshot_issue_codes": pinned_issues,
+            "smaps_denied_pid_count": sum(
+                "SMAPS_ACCESS_DENIED" in x["issues"] for x in observed),
             "candidate_file_mapping_rows": candidate_files,
             "pinned_snapshot_alias_file_count": len(pinned_inodes),
             "pinned_revision_alias_matched_mappings": pinned_matched_count,
