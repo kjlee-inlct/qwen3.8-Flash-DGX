@@ -91,6 +91,14 @@ class CommonUXCPU(unittest.TestCase):
         self.assertIn("PASS_FAKE_NONCE_REPLAY_FENCE_EXPECTATIONS", out.getvalue())
         self.assertIn("no approval", out.getvalue())
 
+    def test_p5d_menu_option_14_is_manifest_only(self):
+        with patch.object(console, "_input", side_effect=["14", "0"]), \
+             patch("subprocess.run", side_effect=AssertionError("No runtime")), \
+             contextlib.redirect_stdout(io.StringIO()) as out:
+            console._generic_qualification_menu("orcarouter")
+        self.assertIn("P5-D manifest binding: DECLARATIVE_P5D_SOURCE_BOUND", out.getvalue())
+        self.assertIn("No host probe", out.getvalue())
+
     def test_new_registry_model_exposes_only_common_readonly_menu(self):
         registry = {"models": {
             "flash-next": {}, "27b": {}, "orcarouter": {},

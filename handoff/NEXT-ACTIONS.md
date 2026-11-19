@@ -1,3 +1,11 @@
+## 2026-11-20 — Approved P5-D source work; Actions investigation parked
+
+- Actions operator HTTPS push \`2b97762\` succeeded but 0 matching new Push/PR runs/checks. Investigation committed at \`docs/GITHUB-ACTIONS-OPERATOR-PUSH-COMPARISON-20261120.md\`; stop repetitive trigger probes; CI \`UNVERIFIED\`.
+- P5-D source improvement: manifest-bound PLE audit preflight and Wizard \`operations generic p5d-source-binding-review --model orcarouter --json\`, plus negative CPU fixtures. See \`docs/P5-D-MANIFEST-BOUND-READONLY-SOURCE-20261120.md\`. New-source CPU and CI must be freshly verified (do not transfer historical 50/50 PASS).
+- Next gate: verify Manifest/Wizard/P5-D CPU tests; only thereafter request independently approved DGX **read-only** evidence if needed. Real RSS/PSS, inode/PID and NAT ownership remain blocked; P6-E operating Journal, P7/P8 real service, PR merge, main and production release remain outside scope.
+
+---
+
 ## 2026-11-19 KST — operator authenticated Actions audit COMPLETE, 9/9 CPU PASS at 178a328
 
 **2026-11-19 connector read-only cross-check:** newest repository run is PR `43108072440` (Nov 12 KST, old SHA `8b118c8`), paired with push `43107837772`; newer feature HEAD `8a12c96` has zero Check Runs and zero Commit Status entries. Authored/committed by the same user and unsigned as the last successful commit, but that does not identify the event credential. Root cause `UNVERIFIED`. Diagnostic now fails closed on HTTP 200 malformed runs/checks arrays (three new CPU fixtures, **assistant-local exact-blobs CPU 12/12 PASS at `6442c97` (0.004s, RC0) / CI NOT OBSERVED**). Existing 9/9 at `178a328` and P5-D 50/50 at `08d03b1` remain historical. Production `BLOCKED`; PR Draft/Open/Unmerged. See [Actions audit](../docs/GITHUB-ACTIONS-TRIGGER-AUDIT-20261119.md).

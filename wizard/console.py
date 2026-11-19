@@ -280,7 +280,7 @@ def _generic_qualification_menu(model: str) -> None:
     actions = ("resource", "switch", "faults", "integration",
                "session", "faults-extended", "integration-reconcile",
                "observation", "ownership", "operating-gate", "journal-v2",
-               "measurements", "nonce-fence")
+               "measurements", "nonce-fence", "ple-binding")
     while True:
         print("\nP5–P8 common model qualification (0 back)")
         print("  1. P5 bounded read-only resource snapshot")
@@ -296,13 +296,23 @@ def _generic_qualification_menu(model: str) -> None:
         print(" 11. P6-E review Journal v2 migration (always BLOCKED)")
         print(" 12. Model measurements: memory/profile/current metrics and history (read only)")
         print(" 13. P6-E isolated Fake-DGX nonce/replay fence (no operating Journal write)")
+        print(" 14. P5-D source-to-PLE manifest binding (no host reads)")
         picked = _choice(_input("Review (0 back): "), list(actions))
         if picked is None:
             return
         if not picked:
             print("Unknown option; nothing executed.")
             continue
-        if picked == "measurements":
+        if picked == "ple-binding":
+            from scripts.manager.p5d_manifest_binding import source_binding
+            report = source_binding(model)
+            print("  P5-D manifest binding: " + report["status"])
+            if report.get("asset_id"):
+                print("  PLE asset: " + report["asset_id"])
+            for issue in report["issues"]:
+                print("   - " + issue)
+            print("  No host probe, PLE residency, NAT owner or release authorization.")
+        elif picked == "measurements":
             _show_measurement_dashboard(model)
         elif picked == "nonce-fence":
             targets = [name for name in catalog["models"] if name != model]

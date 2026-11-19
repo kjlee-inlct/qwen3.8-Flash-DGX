@@ -428,7 +428,8 @@ def main(argv: list[str] | None = None) -> int:
         "fake-disk-contract", "fake-disk-matrix",
         "observation-review", "observation-capture", "operating-gate-review",
         "ownership-review", "ownership-capture", "journal-v2-preview",
-         "nonce-fence-mock", "journal-v2-restart-review"))
+         "nonce-fence-mock", "journal-v2-restart-review",
+         "p5d-source-binding-review"))
     parser.add_argument("--from-model")
     parser.add_argument("--to-model")
     parser.add_argument("--model")
@@ -492,6 +493,11 @@ def main(argv: list[str] | None = None) -> int:
             result = migration_preview(
                 args.from_model, args.to_model,
                 _load_evidence(args.operating_journal_evidence))
+        elif args.action == "p5d-source-binding-review":
+            if not args.model:
+                raise ValueError("EXACT_MODEL_REQUIRED")
+            from scripts.manager.p5d_manifest_binding import source_binding
+            result = source_binding(args.model)
         elif args.action in ("observation-review", "observation-capture"):
             if not args.model:
                 raise ValueError("EXACT_MODEL_REQUIRED")
@@ -614,6 +620,7 @@ def main(argv: list[str] | None = None) -> int:
         "OBSERVED_PID_SETS_CONSISTENT_NOT_AUTHORIZED",
         "SOURCE_COMPONENT_FIELDS_CONSISTENT_NOT_LIVE_VERIFIED",
         "SOURCE_EVIDENCE_COMPLETE_NOT_RUNTIME_ACCEPTANCE",
+        "DECLARATIVE_P5D_SOURCE_BOUND_NOT_LIVE_ATTESTED",
     ) else 3
 
 

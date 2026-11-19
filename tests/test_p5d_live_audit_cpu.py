@@ -351,6 +351,53 @@ class CollectionTests(unittest.TestCase):
         self.assertIn("PID_STARTTIME_OR_NAMESPACE_DRIFT_OR_UNAVAILABLE",
                       doc["issues"])
 
+    def test_invalid_manifest_stops_before_any_host_capture(self):
+        def forbidden(*args, **kwargs):
+            raise AssertionError("manifest failure must not touch host")
+        with patch.object(a, "source_binding", return_value={
+                "status": "BLOCKED_MANIFEST_BINDING",
+                "issues": ["P5D_SOURCE_MODEL_ASSET_PIN_DRIFT"]}):
+            doc = a._collect(capture_ownership=forbidden, run_command=forbidden,
+                             scan=forbidden, sockets=forbidden, api=forbidden)
+        self.assertEqual(doc["status"], "BLOCKED_MANIFEST_PREFLIGHT")
+        self.assertFalse(doc["executed_inference"])
+        self.assertFalse(doc["production_released"])
+
+    def test_source_pin_is_supplied_by_manifest_not_hardcoded(self):
+        seen = {}
+        expected = {"repo_id": "example/revision-model",
+                    "revision": "b" * 40}
+        binding = {
+            "status": "DECLARATIVE_P5D_SOURCE_BOUND_NOT_LIVE_ATTESTED",
+            "asset_id": "candidate-ple",
+            "source": expected,
+            "served_id": "candidate-id",
+            "manifest_graph_validated": True,
+        }
+        def scan(pid, mounts, marker, *, proc):
+            seen["marker"] = marker
+            return model_scan(pid, mounts, REPO, proc=proc)
+        def pinned(pid, mounts, repo, revision, *, proc):
+            seen["repo"], seen["revision"] = repo, revision
+            return {(8, 1, 123): ["model-00001.safetensors"]}, []
+        def api(served):
+            seen["served"] = served
+            return True
+        with patch.object(a, "source_binding", return_value=binding), \
+             patch.object(a, "_pid_identity", return_value={
+                 "starttime_ticks": 42, "netns": "net:[1]",
+                 "mntns": "mnt:[2]", "pidns": "pid:[3]"}), \
+             patch.object(a, "_cgroup_membership", return_value=True), \
+             patch.object(a, "_pinned_snapshot_inodes", side_effect=pinned):
+            doc = a._collect(**self.opts(scanned=scan, api=api))
+        self.assertEqual(seen, {
+            "repo": expected["repo_id"], "revision": expected["revision"],
+            "served": "candidate-id",
+            "marker": "models--example--revision-model",
+        })
+        self.assertEqual(doc["pinned_snapshot"]["manifest_asset_id"], "candidate-ple")
+        self.assertFalse(doc["summary"]["ple_residency_authenticated"])
+
     def test_no_preflight_leaves_host_unprobed(self):
         def fail(model):
             return {"status":"BLOCKED_PARTIAL_PROCESS_EVIDENCE",

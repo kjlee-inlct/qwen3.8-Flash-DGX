@@ -19,7 +19,7 @@ import stat
 import subprocess
 from urllib.request import urlopen
 
-from scripts.manager.generic_operations import model_catalog
+from scripts.manager.p5d_manifest_binding import source_binding
 from scripts.manager.model_measurements import save_record
 from scripts.manager.p5_readonly_attribution import review_port_publication
 from scripts.manager.process_ownership import ownership_capture
@@ -409,6 +409,17 @@ def _collect(*, capture_ownership=ownership_capture, run_command=_cmd,
              api=_exact_api, proc=Path("/proc")):
     started = datetime.now(timezone.utc).isoformat()
     issues = []
+    binding = source_binding(MODEL)
+    if binding["status"] != "DECLARATIVE_P5D_SOURCE_BOUND_NOT_LIVE_ATTESTED":
+        # Invalid registry/PLE binding must not cause any host probing.
+        return {
+            "schema_version": 1, "action": "p5d-live-readonly-audit",
+            "status": "BLOCKED_MANIFEST_PREFLIGHT", "model": MODEL,
+            "issues": ["P5D_MANIFEST_SOURCE_BINDING_UNQUALIFIED"],
+            "manifest_binding": binding,
+            "executed_inference": False, "service_mutated": False,
+            "production_released": False,
+        }
     before = capture_ownership(MODEL)
     container = before.get("container") or {}
     cid, name, init_pid = (container.get("id"), container.get("name"),
@@ -428,7 +439,8 @@ def _collect(*, capture_ownership=ownership_capture, run_command=_cmd,
         return {"schema_version": 1, "action": "p5d-live-readonly-audit",
                 "status": "BLOCKED_PREFLIGHT", "model": MODEL,
                 "issues": ["DOCKER_OR_PID_PREFLIGHT_UNQUALIFIED"],
-                "initial_ownership": before, "executed_inference": False,
+                "initial_ownership": before, "manifest_binding": binding,
+                "executed_inference": False,
                 "service_mutated": False, "production_released": False}
 
     raw = run_command(["docker", "inspect", "--format", "{{json .}}", name])
@@ -445,10 +457,9 @@ def _collect(*, capture_ownership=ownership_capture, run_command=_cmd,
     publication = review_port_publication(info)
     mounts = _model_ro_mounts(info)
     ips = _published_ip(info)
-    model_spec = model_catalog()["models"][MODEL]
-    served_id = model_spec["served_id"]
-    repo_id = "orcarouter/Qwen3.8-Flash-Next-Uncensored-NVFP4"
-    revision = "3a3b63161c0745390e5270179af42e46efc70799"
+    served_id = binding["served_id"]
+    repo_id = binding["source"]["repo_id"]
+    revision = binding["source"]["revision"]
     pinned_inodes, pinned_issues = _pinned_snapshot_inodes(
         init_pid, mounts, repo_id, revision, proc=proc)
     # Profile values are candidate/current-source declarations, not a
@@ -459,7 +470,7 @@ def _collect(*, capture_ownership=ownership_capture, run_command=_cmd,
         issues.append("API_MODEL_ID_NOT_CONFIRMED")
     if not mounts:
         issues.append("NO_READONLY_MODEL_CACHE_MOUNT_OBSERVED")
-    pinned_id = "models--orcarouter--Qwen3.8-Flash-Next-Uncensored-NVFP4"
+    pinned_id = "models--" + repo_id.replace("/", "--")
     pid_identity_before = {pid: _pid_identity(pid, proc=proc) for pid in pids}
     observed = []
     for pid in pids:
@@ -526,6 +537,7 @@ def _collect(*, capture_ownership=ownership_capture, run_command=_cmd,
         "status": ("CORRELATED_READ_ONLY_NOT_INDEPENDENTLY_AUTHENTICATED"
                    if correlated else "BLOCKED_PARTIAL_PROVENANCE"),
         "model": MODEL, "timestamp_utc": started,
+        "manifest_binding": binding,
         "ended_utc": datetime.now(timezone.utc).isoformat(),
         "git_head": (run_command(["git", "-C", str(ROOT), "rev-parse", "HEAD"]) or "").strip() or None,
         "container": container,
@@ -543,6 +555,7 @@ def _collect(*, capture_ownership=ownership_capture, run_command=_cmd,
                  "host_port_process_ownership_verified": False},
         "file_mappings": observed,
         "pinned_snapshot": {
+            "manifest_asset_id": binding["asset_id"],
             "declared_repo_id": repo_id, "declared_revision": revision,
             "filesystem_inode_aliases_observed": len(pinned_inodes),
             "source": "PINNED_FILESYSTEM_ALIAS_NOT_AUTHENTICATED_CONTENT",
@@ -552,6 +565,8 @@ def _collect(*, capture_ownership=ownership_capture, run_command=_cmd,
         },
         "summary": {
             "examined_container_host_pids": len(pids),
+            "manifest_graph_validated": binding["manifest_graph_validated"],
+            "pinned_source_asset_id": binding["asset_id"],
             "pid_starttime_namespace_continuous": pid_identity_continuous,
             "per_pid_readonly_observation": [
                 {"pid": x["pid"], "smaps_status": x["status"], "smaps_errno": x.get("smaps_errno"),
@@ -599,7 +614,7 @@ def main(argv=None):
             doc["evidence_file"] = save_record(doc)
         compact = {k: doc.get(k) for k in (
             "schema_version", "action", "status", "model", "timestamp_utc",
-            "git_head", "container", "container_id_continuous",
+            "git_head", "container", "manifest_binding", "container_id_continuous",
             "pid_identity_continuous",
             "service_api_model_id_confirmed", "port", "summary", "issues",
             "evidence_file", "executed_inference", "service_mutated",
