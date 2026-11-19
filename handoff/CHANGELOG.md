@@ -1,3 +1,13 @@
+## 2026-11-19 KST — P5-D operator-selected CPU regression 50/50 OK
+
+Operator supplied terminal evidence from clean source SHA `08d03b182c3a1be78a698312d1abcb5b2cef571e`: `test_p5d_live_audit_cpu.py` 22/22 OK (0.013s), `test_p5_readonly_attribution_cpu.py` 9/9 OK (0.000s), `test_p5d_p6e_cpu.py` 19/19 OK (0.012s), **50/50 selected CPU PASS**. This is **user-provided execution evidence**, not independent CI or a full suite. Historical old-source selected CPU 40/40 at `4366f3b` remains separate; no inferred new live P5-D host audit.
+
+**Updated gate:** `SOURCE_IMPLEMENTED / CPU_TESTED_OPERATOR_50_OF_50_AT_08D03B1 / CI_UNVERIFIED / DGX_LIVE_P5D_NEW_SOURCE_NOT_RUN / OPERATION_AUTHORIZED_FALSE / PRODUCTION_BLOCKED`. GitHub workflow runs and commit statuses for tested SHA were both empty on recheck. Default-branch workflow registration/settings remain to investigate. The prior live receipt's all-three unreadable smaps, blank namespaces, PLE RSS/PSS/inode and kernel NAT ownership gaps remain unverified; `RC3` is not service failure. PR #1 continues Draft/Open/Unmerged.
+
+**Next priorities:** (1) investigate missing Actions runs and reproducibility of source-only CI, without unauthorized default-branch changes; (2) independently capture P5-D provenance only on a newly approved, strictly bounded no-sudo read-only operator run if the facts are needed; (3) P6-E independently authenticated durable nonce/Journal v2 Crash Consistency; (4) P7 proxy/gateway/storage binding and P8 recovery gates. Source documentation commits after `08d03b1` do not change which SHA has actually been CPU-tested. No GPU workload, Docker mutation, sudo, operating Journal write, PR merge or production release is authorized.
+
+---
+
 ## 2026-11-19 KST — P5-D fail-closed namespace and bounded provenance reader
 
 Commit `f8525988ea800eb44855558aa932a4ce1d1d3dab` fixed the PID identity omission bug (all three nonempty namespace IDs and positive start ticks are mandatory), bounded pinned-snapshot directory enumeration to 257 entries before allocation, bounded container proc TCP reads, and retained numeric `smaps_errno` per PID in the receipt and compact summary. Four new CPU-only test methods added but **NOT EXECUTED** on new source. Follow-up documentation commits updated P5-D and P1–P8 records. Original 40/40 selected CPU PASS and `BLOCKED_PARTIAL_PROVENANCE / RC3` receipt are historical DGX results at `4366f3b`, not current-source acceptance.

@@ -1,3 +1,13 @@
+## 2026-11-19 KST — P5-D operator-selected CPU regression 50/50 OK
+
+Operator supplied terminal evidence from clean source SHA `08d03b182c3a1be78a698312d1abcb5b2cef571e`: `test_p5d_live_audit_cpu.py` 22/22 OK (0.013s), `test_p5_readonly_attribution_cpu.py` 9/9 OK (0.000s), `test_p5d_p6e_cpu.py` 19/19 OK (0.012s), **50/50 selected CPU PASS**. This is **user-provided execution evidence**, not independent CI or a full suite. Historical old-source selected CPU 40/40 at `4366f3b` remains separate; no inferred new live P5-D host audit.
+
+**Updated gate:** `SOURCE_IMPLEMENTED / CPU_TESTED_OPERATOR_50_OF_50_AT_08D03B1 / CI_UNVERIFIED / DGX_LIVE_P5D_NEW_SOURCE_NOT_RUN / OPERATION_AUTHORIZED_FALSE / PRODUCTION_BLOCKED`. GitHub workflow runs and commit statuses for tested SHA were both empty on recheck. Default-branch workflow registration/settings remain to investigate. The prior live receipt's all-three unreadable smaps, blank namespaces, PLE RSS/PSS/inode and kernel NAT ownership gaps remain unverified; `RC3` is not service failure. PR #1 continues Draft/Open/Unmerged.
+
+**Next priorities:** (1) investigate missing Actions runs and reproducibility of source-only CI, without unauthorized default-branch changes; (2) independently capture P5-D provenance only on a newly approved, strictly bounded no-sudo read-only operator run if the facts are needed; (3) P6-E independently authenticated durable nonce/Journal v2 Crash Consistency; (4) P7 proxy/gateway/storage binding and P8 recovery gates. Source documentation commits after `08d03b1` do not change which SHA has actually been CPU-tested. No GPU workload, Docker mutation, sudo, operating Journal write, PR merge or production release is authorized.
+
+---
+
 ## 2026-11-19 KST — P5-D new-source provenance safeguards (CI unverified)
 
 **GitHub source `f8525988ea800eb44855558aa932a4ce1d1d3dab`:** fail closed for missing net/mount/PID namespace keys and invalid PID start ticks; cap pinned-snapshot directory listing *before* allocation; bound container proc TCP read; preserve per-PID `smaps_errno` without raw error text. Added four synthetic CPU test methods, **not run at the new HEAD**. See [P5-D result](../docs/P5-D-READONLY-ONE-TURN-RESULT-20261119.md). The historical **40/40 CPU PASS** and `RC3` live receipt are bound to DGX SHA `4366f3b`.
