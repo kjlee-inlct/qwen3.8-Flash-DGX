@@ -1,5 +1,9 @@
 # P5-D host procfs permissions blocker — 2026-11-20 KST
 
+## Follow-up 2026-11-20 KST — permission boundary now localized
+
+An exact-SHA (`045947fccd33952ef4911c908ffb480d62b3d82b`) operator one-turn preflight confirmed audit EUID 1001 vs three root-owned model PIDs (UID 0), smaps EACCES 3/3, FD EACCES 3/3, container root link EACCES, pinned snapshot dir access denied 2/2, stable start ticks, no explicit procfs hidepid/subset and Yama ptrace_scope=1 policy hint. No full P5-D audit was repeated. See [P5-D one-turn permission diagnosis](P5-D-ONE-TURN-PERMISSION-DIAGNOSIS-20261120.md) for complete SHA-bound transcript classification. Namespace links were UNQUALIFIED but lacked errno. No new live PLE/NAT acceptance.
+
 ## 1. Fresh operator-run DGX evidence (exact-source bound)
 
 Source: operator-provided terminal transcript from `~/Workspace/llm/blazux-orcarouter`, following an exact clean-tree `git pull --ff-only` on `feature/recipe-wizard-handoff`.

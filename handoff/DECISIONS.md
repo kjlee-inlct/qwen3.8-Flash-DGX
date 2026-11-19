@@ -1,3 +1,11 @@
+## 2026-11-20 — operator one-turn P5-D permission diagnosis COMPLETE (exact SHA, non-elevated)
+
+- DGX operator transcript at `045947fccd33952ef4911c908ffb480d62b3d82b`: **7/7 new P5-D permission CPU PASS**, Manifest graph PASS, Wizard PLE source binding PASS. Do not pool with historical 138/138 selected suites at `7c11d0d` as if one SHA/test run.
+- Fresh Docker PID count 3, start ticks stable. Audit EUID **1001**; all three model PIDs real/effective UID **0**. `smaps` EACCES errno13 **3/3**; PID FD EACCES 3/3; init root link EACCES; 2/2 pinned cache candidates EACCES. Namespace links `UNQUALIFIED` (specific errno not established). procfs `hidepid` / `subset` not declared; Yama `ptrace_scope=1` is contextual, not proven sole root cause.
+- Report `BLOCKED_PERMISSION_PREFLIGHT / RC3`; full live audit **correctly skipped**, `service_mutated=false`, `executed_inference=false`, production blocked. Preserve actual RSS/PSS and PLE residency as **unobserved**, and NAT as unauthenticated.
+- **Decision:** stop repeating no-sudo probes with these credentials. Any future narrowly bounded privileged read-only procfs inquiry needs separate explicit operator authorization; no automatic sudo, ptrace, Docker exec, sysctl or permissions changes. GitHub CI UNVERIFIED; PR #1 remains Draft/Open/Unmerged. Full record `docs/P5-D-ONE-TURN-PERMISSION-DIAGNOSIS-20261120.md`.
+
+---
 ## 2026-11-19 KST — P5-D CPU gate updated to operator 50/50 (source-bound)
 
 Operator reported `08d03b182c3a1be78a698312d1abcb5b2cef571e` and `22/22 + 9/9 + 19/19 = 50/50` CPU unit tests `OK` (respectively 0.013s, 0.000s, 0.012s). This supports **CPU_TESTED_OPERATOR_REPORTED_50_OF_50**, not a GitHub Actions PASS and not PLE/NAT live acceptance. The previous 40/40 selected CPU PASS was bound to the older actual DGX audit source `4366f3b`; never combine or silently backfill execution evidence. GitHub workflow runs/statuses for the new tested SHA were empty on recheck; CI is **UNVERIFIED**.
