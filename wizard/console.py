@@ -280,7 +280,7 @@ def _generic_qualification_menu(model: str) -> None:
     actions = ("resource", "switch", "faults", "integration",
                "session", "faults-extended", "integration-reconcile",
                "observation", "ownership", "operating-gate", "journal-v2",
-               "measurements", "nonce-fence", "ple-binding")
+               "measurements", "nonce-fence", "ple-binding", "ple-permissions")
     while True:
         print("\nP5–P8 common model qualification (0 back)")
         print("  1. P5 bounded read-only resource snapshot")
@@ -297,13 +297,21 @@ def _generic_qualification_menu(model: str) -> None:
         print(" 12. Model measurements: memory/profile/current metrics and history (read only)")
         print(" 13. P6-E isolated Fake-DGX nonce/replay fence (no operating Journal write)")
         print(" 14. P5-D source-to-PLE manifest binding (no host reads)")
+        print(" 15. P5-D non-elevated procfs permission preflight (read-only)")
         picked = _choice(_input("Review (0 back): "), list(actions))
         if picked is None:
             return
         if not picked:
             print("Unknown option; nothing executed.")
             continue
-        if picked == "ple-binding":
+        if picked == "ple-permissions":
+            from scripts.manager.p5d_permission_preflight import permission_preflight
+            report = permission_preflight(model)
+            print("  P5-D procfs permission preflight: " + report["status"])
+            for issue in report["issues"]:
+                print("   - " + issue)
+            print("  No privilege escalation, PLE/NAT attestation or release.")
+        elif picked == "ple-binding":
             from scripts.manager.p5d_manifest_binding import source_binding
             report = source_binding(model)
             print("  P5-D manifest binding: " + report["status"])

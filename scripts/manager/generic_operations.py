@@ -429,7 +429,7 @@ def main(argv: list[str] | None = None) -> int:
         "observation-review", "observation-capture", "operating-gate-review",
         "ownership-review", "ownership-capture", "journal-v2-preview",
          "nonce-fence-mock", "journal-v2-restart-review",
-         "p5d-source-binding-review"))
+         "p5d-source-binding-review", "p5d-permission-preflight"))
     parser.add_argument("--from-model")
     parser.add_argument("--to-model")
     parser.add_argument("--model")
@@ -493,6 +493,11 @@ def main(argv: list[str] | None = None) -> int:
             result = migration_preview(
                 args.from_model, args.to_model,
                 _load_evidence(args.operating_journal_evidence))
+        elif args.action == "p5d-permission-preflight":
+            if not args.model:
+                raise ValueError("EXACT_MODEL_REQUIRED")
+            from scripts.manager.p5d_permission_preflight import permission_preflight
+            result = permission_preflight(args.model)
         elif args.action == "p5d-source-binding-review":
             if not args.model:
                 raise ValueError("EXACT_MODEL_REQUIRED")
@@ -621,6 +626,7 @@ def main(argv: list[str] | None = None) -> int:
         "SOURCE_COMPONENT_FIELDS_CONSISTENT_NOT_LIVE_VERIFIED",
         "SOURCE_EVIDENCE_COMPLETE_NOT_RUNTIME_ACCEPTANCE",
         "DECLARATIVE_P5D_SOURCE_BOUND_NOT_LIVE_ATTESTED",
+        "READABLE_PROCFS_PREFLIGHT_NOT_ATTESTED",
     ) else 3
 
 

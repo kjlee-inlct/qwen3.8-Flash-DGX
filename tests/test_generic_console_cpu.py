@@ -99,6 +99,16 @@ class CommonUXCPU(unittest.TestCase):
         self.assertIn("P5-D manifest binding: DECLARATIVE_P5D_SOURCE_BOUND", out.getvalue())
         self.assertIn("No host probe", out.getvalue())
 
+    def test_p5d_menu_option_15_is_non_authorizing(self):
+        with patch.object(console, "_input", side_effect=["15", "0"]), \
+             patch("scripts.manager.p5d_permission_preflight.permission_preflight",
+                   return_value={"status": "BLOCKED_PERMISSION_PREFLIGHT",
+                                 "issues": ["SMAPS_ACCESS_DENIED"]}), \
+             contextlib.redirect_stdout(io.StringIO()) as output:
+            console._generic_qualification_menu("orcarouter")
+        self.assertIn("P5-D procfs permission preflight: BLOCKED", output.getvalue())
+        self.assertIn("No privilege escalation", output.getvalue())
+
     def test_new_registry_model_exposes_only_common_readonly_menu(self):
         registry = {"models": {
             "flash-next": {}, "27b": {}, "orcarouter": {},

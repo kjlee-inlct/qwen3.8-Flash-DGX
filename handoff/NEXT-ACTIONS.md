@@ -1,3 +1,11 @@
+## 2026-11-20 — one-shot P5-D procfs permission preflight (source implemented, operator CPU pending)
+
+- New module scripts/manager/p5d_permission_preflight.py; Wizard generic p5d-permission-preflight --model orcarouter --json and interactive common menu 15; wrapper scripts/temporary/p5d-permission-diagnose-once.sh. Manifest source binding before host probes, fresh Docker/PID identity, bounded smaps/namespace/UID/fd/root/pinned-directory access checks.
+- If blocked, full live audit is SKIPPED, rather than repeating EACCES. If all permissions sampled readable, run the existing full read-only audit at most once. No production or PLE/NAT attestation is inferred from a preflight RC0.
+- New CPU synthetic suite + Wizard menu case added; NEW SOURCE CPU NOT RUN and GitHub CI UNVERIFIED. Prior operator selected 138/138 PASS bound to 7c11d0d; prior real EACCES 3/3 audit at fd338ef. See docs/P5-D-ONE-TURN-PERMISSION-DIAGNOSIS-20261120.md.
+- No sudo, Docker exec/change, GPU inference, service changes, operating Journal writes, main modifications, CI dispatch, PR merge or production release.
+
+---
 ## 2026-11-20 — P5-D live procfs EACCES confirmed at fd338ef
 
 - Operator read-only `p5d_live_audit` at SHA `fd338efa549a8c3bb54e65e5e033d2334d9e96e1`: `BLOCKED_PARTIAL_PROVENANCE / RC3`; **all 3 PIDs smaps errno 13 EACCES**. Manifest/Wizard source binding PASS; Docker port declarations consistent with wildcard IPv6 extension, **not kernel NAT attestation**.
