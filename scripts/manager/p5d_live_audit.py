@@ -136,24 +136,36 @@ def _socket_pid_evidence(pids, init_pid, proc=Path("/proc")):
     except OSError:
         container_netns = None
         issues.append("CONTAINER_NETNS_UNREADABLE")
+    if not isinstance(container_netns, str) or not re.fullmatch(r"net:\[\d+\]", container_netns):
+        issues.append("CONTAINER_NETNS_EMPTY_OR_UNQUALIFIED")
     owners = []
     for pid in sorted(set(pids)):
         try:
             namespace = os.readlink(proc / str(pid) / "ns" / "net")
-            if not container_netns or container_netns != namespace:
-                issues.append("PID_NETNS_DRIFT")
+            if (not isinstance(container_netns, str)
+                    or not re.fullmatch(r"net:\[\d+\]", container_netns)):
+                # An empty/unavailable namespace ID is an observation gap,
+                # NOT evidence that the process moved namespaces.
+                continue
+            if not re.fullmatch(r"net:\[\d+\]", namespace):
+                issues.append("PID_NETNS_EMPTY_OR_UNQUALIFIED")
+                continue
+            if container_netns != namespace:
+                issues.append("PID_NETNS_MISMATCH_AT_CAPTURE")
                 continue
             fd_dir = proc / str(pid) / "fd"
             has_match = False
-            for ent in os.scandir(fd_dir):
-                try:
-                    ref = os.readlink(ent.path)
-                except OSError:
-                    continue
-                match = _SOCKET.fullmatch(ref)
-                if match and int(match.group(1)) in sockets:
-                    has_match = True
-                    break
+            # The context manager closes the iterator even after early break.
+            with os.scandir(fd_dir) as entries:
+                for ent in entries:
+                    try:
+                        ref = os.readlink(ent.path)
+                    except OSError:
+                        continue
+                    match = _SOCKET.fullmatch(ref)
+                    if match and int(match.group(1)) in sockets:
+                        has_match = True
+                        break
             if has_match:
                 owners.append(pid)
         except (OSError, PermissionError):
@@ -178,6 +190,8 @@ def _pid_identity(pid, *, proc=Path("/proc")):
         if close < 1 or len(fields) <= 19:
             return None
         ticks = int(fields[19])  # proc stat field 22, remainder starts at 3.
+        if ticks <= 0:
+            return None
         return {
             "starttime_ticks": ticks,
             "netns": os.readlink(proc / str(pid) / "ns" / "net"),
@@ -231,7 +245,11 @@ def _pinned_snapshot_inodes(init_pid, mounts, repo_id, revision,
     indexes = {}
     issues = []
     for mount in mounts:
-        for rel in ("/hub/" + folder, "/" + folder):
+        # A read-only bind mount can already point at the HF hub directory.
+        # Never recurse over the cache; probe only two exact bounded layouts.
+        rels = (("/" + folder,) if mount.endswith("/hub")
+                else ("/hub/" + folder, "/" + folder))
+        for rel in rels:
             root = proc / str(init_pid) / "root"
             target = Path(str(root) + mount + rel + "/snapshots/" + revision)
             try:
@@ -334,8 +352,15 @@ def _scan_smaps(pid, mounts, repo_marker, *, proc=Path("/proc"),
                     metrics[x.group(1)] = int(x.group(2))
             if "SMAPS_READ_LIMIT" not in result["issues"] and "SMAPS_LINE_LIMIT" not in result["issues"]:
                 finish()
-    except (OSError, UnicodeError):
+    except (OSError, UnicodeError) as exc:
         result["issues"].append("SMAPS_UNREADABLE")
+        if isinstance(exc, OSError):
+            if exc.errno in (1, 13):
+                result["issues"].append("SMAPS_ACCESS_DENIED")
+            elif exc.errno == 2:
+                result["issues"].append("SMAPS_PID_OR_FILE_GONE")
+            else:
+                result["issues"].append("SMAPS_READ_IO_UNCLASSIFIED")
         return result
     # Stat through the task's actual mount namespace, not host cache alias.
     for key, row in rows.items():
@@ -438,6 +463,9 @@ def _collect(*, capture_ownership=ownership_capture, run_command=_cmd,
     pid_identity_continuous = all(
         pid_identity_before.get(pid) is not None
         and pid_identity_before.get(pid) == pid_identity_after.get(pid)
+        and all(re.fullmatch(r"(?:net|mnt|pid):\[\d+\]", v or "")
+                for k, v in pid_identity_before[pid].items()
+                if k in ("netns", "mntns", "pidns"))
         for pid in pids)
     if not pid_identity_continuous:
         issues.append("PID_STARTTIME_OR_NAMESPACE_DRIFT_OR_UNAVAILABLE")
