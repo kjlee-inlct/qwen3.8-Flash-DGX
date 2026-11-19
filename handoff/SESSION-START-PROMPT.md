@@ -1,3 +1,13 @@
+## 2026-11-19 KST — actual P5-D one-turn RC3 source-bound; diagnosis and safe source fixes
+
+Operator ran `scripts/temporary/p5d-readonly-once.sh` on clean source SHA `4366f3b1476105c6f556e0e93c4f5e1da64f68fa`: P5-D live audit CPU **14/14 PASS**, P5 attribution CPU **7/7 PASS**, P5-D/P6-E CPU **19/19 PASS**, **40/40 selected PASS**. `P5D_SERVICE_PREFLIGHT_PASS`, `service_api_model_id_confirmed=true`, Docker ID and PID-set continuity confirmed; **actual live P5-D `BLOCKED_PARTIAL_PROVENANCE` / RC3**. Container netns returned empty `""`; one container-side :8000 socket inode found but no matching FD host PID. Docker declared/effective port 8000 both present but strict compare `DOCKER_DECLARATION_MISMATCH`. `iptables-save` unavailable; `SMAPS_UNREADABLE`, pinned snapshot directory unreadable, mapped candidate files 0; PLE RSS/PSS and unique residency remain unobserved. One passing CPU test emitted `ResourceWarning` from unclosed scandir iterator (not an operator runtime service failure).
+
+**After this operator run**, source-only patches close scandir; distinguish empty/unqualified namespace from actual mismatch, check nonempty identity; classify smaps read errors; accept only Docker's exact IPv4 wildcard + IPv6 `::` extension while rejecting unexpected bindings; probe pinned cache mount already ending in `/hub`; emit per-PID summary issues and add negative CPU fixtures. **No new source SHA CI, CPU execution or repeat real DGX read-only test is verified.** The earlier RC3 is preserved and not retroactively converted to PASS. New source is not a production gate.
+
+Already-saved full JSON (not yet provided here): `/home/inlc/.local/state/blazux-wizard/model-measurements/orcarouter--20261119T004619880648Z--bd848453cb4f.json`. **Next:** upload/read the existing receipt first; no GPU inference or service mutation needed, do not rerun automatically. [Detailed evidence and subsequent source changes](../docs/P5-D-READONLY-ONE-TURN-RESULT-20261119.md). PR #1 Draft/Open/Unmerged; PLE/NAT ownership, P6-E/P7/P8 and production blocked.
+
+---
+
 ## 2026-11-19 KST — P5-D bounded read-only one-turn audit SOURCE IMPLEMENTED, DGX execution pending
 
 User requested P5-D **PLE file-mapping RSS/PSS and inode↔PID plus Docker host :8000 NAT process attribution in one operator turn**, with *read-only* host behavior. Added:
