@@ -3,6 +3,7 @@
 Calls a fixed set of GitHub REST GET endpoints. No service/GPU/Docker actions.
 Optional GH_TOKEN is used ONLY when explicitly requested; never printed.
 Exit 3 means partial evidence, not a service or CI failure.
+Exit 0 means complete diagnostic fields, not that CI ran or passed.
 """
 from __future__ import annotations
 
@@ -46,6 +47,30 @@ def _get_json(path, *, token=None, opener=urlopen):
         return {"http_status": exc.code, "data": None, "issue": "HTTP_UNAVAILABLE"}
     except (URLError, TimeoutError, OSError, ValueError, UnicodeError):
         return {"http_status": None, "data": None, "issue": "REQUEST_UNAVAILABLE"}
+
+
+def _evidence_complete(receipt):
+    """HTTP 404 for an absent default-branch file is a conclusive observation.
+
+    Complete diagnostics do not constitute CI success or production approval.
+    """
+    http = receipt.get("endpoint_http_status")
+    if not isinstance(http, dict):
+        return False
+    required = ("workflow", "permissions", "branch_file", "runs", "check_runs")
+    return (
+        all(http.get(key) == 200 for key in required)
+        and http.get("default_file") in (200, 404)
+        and isinstance(receipt.get("workflow_state"), str)
+        and bool(receipt["workflow_state"])
+        and type(receipt.get("repository_actions_enabled")) is bool
+        and receipt.get("feature_branch_workflow_present") is True
+        and type(receipt.get("default_branch_workflow_present")) is bool
+        and type(receipt.get("exact_sha_runs_in_latest_page")) is int
+        and receipt["exact_sha_runs_in_latest_page"] >= 0
+        and type(receipt.get("exact_sha_check_runs")) is int
+        and receipt["exact_sha_check_runs"] >= 0
+    )
 
 
 def collect(*, repo=_REPO, branch=_BRANCH, sha, workflow_id=_WORKFLOW,
@@ -102,7 +127,7 @@ def collect(*, repo=_REPO, branch=_BRANCH, sha, workflow_id=_WORKFLOW,
             return False
         return None
 
-    return {
+    receipt = {
         "action": "github-actions-readonly-diagnosis",
         "repo": repo, "branch": branch, "tested_sha": sha,
         "workflow_id": workflow_id,
@@ -122,6 +147,8 @@ def collect(*, repo=_REPO, branch=_BRANCH, sha, workflow_id=_WORKFLOW,
                  "Actions permissions is not proof that Actions are disabled. "
                  "The result never authorizes service or repository settings changes.")
     }
+    receipt["audit_evidence_complete"] = _evidence_complete(receipt)
+    return receipt
 
 
 def main(argv=None):
@@ -145,7 +172,8 @@ def main(argv=None):
         print(json.dumps({"status": "BLOCKED", "issue": "INVALID_AUDIT_SCOPE"}))
         return 3
     print(json.dumps(result, indent=2, sort_keys=True))
-    return 0 if all(x == 200 for x in result["endpoint_http_status"].values()) else 3
+    # RC0 means complete read-only observation, NEVER CI PASS.
+    return 0 if result.get("audit_evidence_complete") is True else 3
 
 
 if __name__ == "__main__":

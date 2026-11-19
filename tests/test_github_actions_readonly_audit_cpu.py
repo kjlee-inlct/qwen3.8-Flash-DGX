@@ -1,7 +1,9 @@
 """CPU-only fake GitHub response contract tests; never calls GitHub or DGX."""
+import io
 import unittest
+from unittest.mock import patch
 
-from scripts.manager.github_actions_readonly_audit import collect
+from scripts.manager.github_actions_readonly_audit import collect, main
 
 SHA = "a" * 40
 
@@ -81,6 +83,41 @@ class ActionsAuditCPU(unittest.TestCase):
                     kwargs = {"sha": SHA}
                     kwargs.update(data)
                     collect(fetch=evidence, **kwargs)
+
+    def test_authenticated_complete_with_default_branch_404_is_rc_zero(self):
+        def authorized(path, *, token=None):
+            row = evidence(path, token=token)
+            if path.endswith("/actions/permissions"):
+                return {"http_status": 200, "data": {"enabled": True}}
+            return row
+
+        receipt = collect(sha=SHA, fetch=authorized)
+        self.assertTrue(receipt["audit_evidence_complete"])
+        self.assertEqual(receipt["endpoint_http_status"]["default_file"], 404)
+        self.assertFalse(receipt["default_branch_workflow_present"])
+        self.assertFalse(receipt["ci_verified"])
+
+        with patch("scripts.manager.github_actions_readonly_audit.collect",
+                   return_value=receipt), patch("sys.stdout", new_callable=io.StringIO):
+            self.assertEqual(main(["--sha", SHA, "--json"]), 0)
+
+    def test_missing_permissions_stays_rc_three(self):
+        receipt = collect(sha=SHA, fetch=evidence)
+        self.assertFalse(receipt["audit_evidence_complete"])
+        with patch("scripts.manager.github_actions_readonly_audit.collect",
+                   return_value=receipt), patch("sys.stdout", new_callable=io.StringIO):
+            self.assertEqual(main(["--sha", SHA, "--json"]), 3)
+
+    def test_http_success_without_required_fields_does_not_pass_audit(self):
+        def missing_data(path, *, token=None):
+            row = evidence(path, token=token)
+            if path.endswith("/actions/permissions"):
+                return {"http_status": 200, "data": {}}
+            return row
+
+        receipt = collect(sha=SHA, fetch=missing_data)
+        self.assertIsNone(receipt["repository_actions_enabled"])
+        self.assertFalse(receipt["audit_evidence_complete"])
 
     def test_token_not_in_report(self):
         doc = collect(sha=SHA, fetch=evidence, token="sensitive-placeholder")
