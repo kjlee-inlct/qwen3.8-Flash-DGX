@@ -1,3 +1,15 @@
+## 2026-11-19 KST — GitHub Actions missing-run read-only diagnostic committed
+
+Following the operator's approval to investigate missing GitHub Actions runs, source-only commit `5871e9e05c6c682cf7dda8f8a07d19d3c468327f` added `scripts/manager/github_actions_readonly_audit.py` (six bounded GitHub REST GETs; optional GH_TOKEN only by explicit flag, never printed), `tests/test_github_actions_readonly_audit_cpu.py` (six fake-response unit tests), [permanent CI investigation document](../docs/GITHUB-ACTIONS-TRIGGER-AUDIT-20261119.md), and matching push/PR paths + test command in `.github/workflows/recipe-manifest-cpu.yml`. **New diagnostic CPU tests NOT YET EXECUTED; CI for this new code NOT VERIFIED**. Old P5-D 50/50 selected CPU PASS is strictly operator-reported at `08d03b1`.
+
+Direct GitHub reads found branch-head `291f76b4` before this commit, `main=b0aa8b7` with no workflow directory, feature workflow ID `406361282` configured for both push and PR with changed paths included; latest Actions runs still ended on old `8b118c8` on Nov 12 KST. Because that older push/PR CI **did** run after the current `main` commit date, absence of the default-branch workflow **alone cannot be confirmed as the root cause**. GitHub connector explicitly rejects workflow-state and repository Actions-permissions endpoints, so disabled state and token suppression remain **HYPOTHESES / NOT OBSERVED**, not facts.
+
+**Operator follow-up:** from a fresh checkout, `python3 -B -m unittest discover -s tests -p 'test_github_actions_readonly_audit_cpu.py' -v`, then `python3 -B -m scripts.manager.github_actions_readonly_audit --sha "$(git rev-parse HEAD)" --json`. Diagnostic exit 3 can mean API permissions inaccessible, **not CI failure or DGX service outage**. No sudo, Docker operations, model switch, GPU inference, permissions mutation, GitHub Actions enable/dispatch, `main` modification or PR merge was executed.
+
+**Gate:** `P5D_CPU_OPERATOR_SELECTED_50_PASS_AT_08D03B1 / CI_DIAGNOSTIC_SOURCE_IMPLEMENTED / CI_DIAGNOSTIC_CPU_PENDING / WORKFLOW_ACTIVATION_UNVERIFIED / LIVE_PLE_NAT_UNQUALIFIED / PRODUCTION_BLOCKED`. PR #1 Draft/Open/Unmerged; P6-E/P7/P8 release gates remain independent.
+
+---
+
 ## 2026-11-19 KST — operator CPU regression 50/50 PASS at 08d03b1
 
 **Evidence type: operator-provided terminal transcript (not independently run by GitHub connector).** On DGX host `lc-gx10-pc` under `~/Workspace/llm/blazux-orcarouter`, the operator reported `git rev-parse HEAD = 08d03b182c3a1be78a698312d1abcb5b2cef571e` and three selected CPU-only unittest completions: `test_p5d_live_audit_cpu.py` **22/22 OK (0.013s)**, `test_p5_readonly_attribution_cpu.py` **9/9 OK (0.000s)**, and `test_p5d_p6e_cpu.py` **19/19 OK (0.012s)**. **Total 50/50 selected tests PASS**, based on that exact supplied transcript. The previously expected 44 was a mistaken projection: there were 40 historical selected tests at old SHA `4366f3b`; the latest three modules report 50, an increase of 10 across that historical baseline. There is no claim of full repository test-suite execution or GitHub-run CI.
