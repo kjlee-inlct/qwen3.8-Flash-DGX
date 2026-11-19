@@ -178,6 +178,44 @@ class ParserTests(unittest.TestCase):
             missing=a._socket_pid_evidence([42,43],42,proc=root)
             self.assertEqual(missing["matched_docker_host_pids"], [])
 
+    def test_empty_netns_is_unqualified_not_pid_drift(self):
+        with tempfile.TemporaryDirectory() as t:
+            root = Path(t)
+            (root/"42"/"net").mkdir(parents=True)
+            (root/"42"/"ns").mkdir()
+            (root/"42"/"net"/"tcp").write_text(
+                "sl local_address rem_address st a b c d e f inode\n"
+                "0: 00000000:1F40 00000000:0000 0A 0:0 00:0 0 0 0 777\n")
+            (root/"42"/"net"/"tcp6").write_text(
+                "sl local_address rem_address st a b c d e f inode\n")
+            with patch.object(a.os, "readlink", return_value=""):
+                out = a._socket_pid_evidence([42], 42, proc=root)
+            self.assertEqual(out["matched_docker_host_pids"], [])
+            self.assertIn("CONTAINER_NETNS_EMPTY_OR_UNQUALIFIED", out["issues"])
+            self.assertNotIn("PID_NETNS_DRIFT", out["issues"])
+
+    def test_smaps_permission_denied_is_explicitly_classified(self):
+        with patch.object(Path, "open", side_effect=PermissionError(13,"denied")):
+            out = a._scan_smaps(42, ["/hf"], REPO)
+        self.assertEqual(out["status"], "NOT_OBSERVED")
+        self.assertIn("SMAPS_UNREADABLE", out["issues"])
+        self.assertIn("SMAPS_ACCESS_DENIED", out["issues"])
+
+    def test_pinned_cache_mount_already_hub_does_not_double_hub(self):
+        with tempfile.TemporaryDirectory() as t:
+            root = Path(t)
+            folder = (root/"42"/"root"/"hf"/"hub"/REPO/"snapshots"/("b"*40))
+            folder.mkdir(parents=True)
+            (folder/"model-00002.safetensors").write_bytes(b"fixture")
+            st = (folder/"model-00002.safetensors").stat()
+            rows, issues = a._pinned_snapshot_inodes(
+                42, ["/hf/hub"],
+                "orcarouter/Qwen3.8-Flash-Next-Uncensored-NVFP4",
+                "b"*40, proc=root)
+            key = (os.major(st.st_dev),os.minor(st.st_dev),st.st_ino)
+            self.assertEqual(rows[key], ["model-00002.safetensors"])
+            self.assertEqual(issues, [])
+
     def test_cgroup_exact_id_readonly(self):
         with tempfile.TemporaryDirectory() as t:
             root=Path(t);(root/"42").mkdir()
@@ -243,6 +281,19 @@ class CollectionTests(unittest.TestCase):
             doc=a._collect(**(self.opts()|{"capture_ownership":captures}))
         self.assertFalse(doc["container_id_continuous"])
         self.assertIn("CONTAINER_OR_PID_DRIFT",doc["issues"])
+
+    def test_blank_namespace_ids_cannot_pass_continuity(self):
+        with patch.object(a, "_cgroup_membership", return_value=True), patch.object(
+                a, "_pid_identity", return_value={
+                    "starttime_ticks": 42, "netns": "", "mntns": "mnt:[2]",
+                    "pidns": "pid:[3]"}), patch.object(
+                a, "_pinned_snapshot_inodes",
+                return_value=({(8,1,123):["model-00001.safetensors"]},[])):
+            doc = a._collect(**self.opts())
+        self.assertEqual(doc["status"], "BLOCKED_PARTIAL_PROVENANCE")
+        self.assertFalse(doc["pid_identity_continuous"])
+        self.assertIn("PID_STARTTIME_OR_NAMESPACE_DRIFT_OR_UNAVAILABLE",
+                      doc["issues"])
 
     def test_no_preflight_leaves_host_unprobed(self):
         def fail(model):
