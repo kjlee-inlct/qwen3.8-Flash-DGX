@@ -11,6 +11,7 @@ import json
 import os
 from pathlib import Path
 import re
+import stat
 
 from scripts.manager.p5d_manifest_binding import source_binding
 from scripts.manager.p5d_live_audit import _cmd, _model_ro_mounts
@@ -35,6 +36,46 @@ def _smaps(path):
         return {"status": "READABLE_SAMPLE_ONLY", "bytes_sampled": len(sample)}
     except OSError as exc:
         return _error(exc)
+
+
+
+def _smaps_metadata(path):
+    """Numeric metadata only; mode does not override ptrace/LSM access checks."""
+    try:
+        st = path.stat()
+        return {"status": "OBSERVED", "file_uid": st.st_uid,
+                "file_gid": st.st_gid, "file_mode_octal": oct(stat.S_IMODE(st.st_mode))}
+    except OSError as exc:
+        return _error(exc)
+
+
+def _proc_mount_policy(proc):
+    """Bounded proc mountinfo hint; no raw mount paths or host options leaked."""
+    try:
+        with (proc / "self/mountinfo").open(encoding="utf-8") as stream:
+            raw = stream.read(524289)
+        if len(raw) > 524288:
+            return {"status": "TOO_LARGE"}
+        matches = []
+        for line in raw.splitlines():
+            before, sep, after = line.partition(" - ")
+            fields = before.split()
+            other = after.split()
+            if (sep and len(fields) >= 6 and len(other) >= 1
+                    and fields[4] == "/proc" and other[0] == "proc"):
+                opts = fields[5].split(",")
+                matches.append({
+                    "hidepid": next((o.partition("=")[2] for o in opts
+                                     if o.startswith("hidepid=")), "NOT_DECLARED"),
+                    "subset": next((o.partition("=")[2] for o in opts
+                                    if o.startswith("subset=")), "NOT_DECLARED")})
+                if len(matches) >= 4:
+                    break
+        return {"status": "OBSERVED" if matches else "NOT_FOUND",
+                "proc_mounts": matches,
+                "note": "Mount metadata hint only; per-PID access requires kernel check."}
+    except (OSError, UnicodeError) as exc:
+        return _error(exc) if isinstance(exc, OSError) else {"status": "UNQUALIFIED"}
 
 
 def _stat_ticks(pid, proc):
@@ -166,6 +207,7 @@ def permission_preflight(model, *, capture=ownership_capture,
     mounts = _model_ro_mounts(info)
     result["container"] = {"id": cid, "init_pid": init, "pid_count": len(pids)}
     result["yama_ptrace_scope_hint"] = _scope(proc)
+    result["proc_mount_policy_hint"] = _proc_mount_policy(proc)
     result["read_only_cache_mount_count"] = len(mounts)
     rows, issues = [], []
     for pid in sorted(pids):
@@ -178,7 +220,8 @@ def permission_preflight(model, *, capture=ownership_capture,
         row = {"pid": pid, "process_uid": _uid(pid, proc),
                "start_ticks_before": ticks_before,
                "start_ticks_after": _stat_ticks(pid, proc),
-               "smaps": smaps, "namespaces": ns, "fd": fd}
+               "smaps": smaps, "smaps_metadata": _smaps_metadata(base / "smaps"),
+               "namespaces": ns, "fd": fd}
         if pid == init:
             row["root_link"] = _link(base / "root")
         row["start_ticks_stable"] = (

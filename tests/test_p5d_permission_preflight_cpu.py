@@ -62,6 +62,8 @@ class PermissionCPU(unittest.TestCase):
         self.assertFalse(report["ple_residency_authenticated"])
         self.assertFalse(report["host_nat_owner_authenticated"])
         self.assertFalse(report["production_released"])
+        self.assertEqual(report["pids"][0]["smaps_metadata"]["status"], "OBSERVED")
+        self.assertIn("proc_mount_policy_hint", report)
 
     def test_smaps_eacces_is_not_zero_measured_rss(self):
         with tempfile.TemporaryDirectory() as tmp:
