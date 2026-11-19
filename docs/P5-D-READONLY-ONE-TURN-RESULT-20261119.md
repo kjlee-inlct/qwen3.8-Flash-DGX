@@ -1,5 +1,37 @@
 # P5-D — One-turn DGX read-only result and evidence-bound diagnosis (2026-11-19 KST)
 
+## 2026-11-19 KST — uploaded ORIGINAL 9,661-byte P5-D private receipt reviewed (later evidence)
+
+Operator uploaded the **actual saved** `orcarouter--20261119T004619880648Z--bd848453cb4f.json`, not only the compact terminal summary. It is an operator-supplied receipt originally captured from **DGX source SHA `4366f3b1476105c6f556e0e93c4f5e1da64f68fa`** between 2026-11-19 00:46:16.550982 and 00:46:19.879156 UTC; this upload/review is later than the original audit. No new host audit, GPU inference, model switch, service restart or privilege escalation was performed while reviewing this file.
+
+### Evidence-by-evidence reclassification
+
+| Field | Original JSON | Supported interpretation |
+| --- | --- | --- |
+| `initial_ownership.docker_host_pids` and `final_ownership.docker_host_pids` | `[4016083, 4016529, 4016530]` both; exact Docker ID stable | Same Docker ID and reported host PID set in this short sequential capture |
+| `gpu_compute_pids` | `[4016530]`, subset of Docker PID set | Positive process-set correlation only; independent GPU exclusivity still false |
+| `file_mappings[*].cgroup_exact_container_id_present` | `true` for all three PIDs | Concrete cgroup text contained the Docker ID as checked by old collector, but no independent kernel security attestation |
+| `file_mappings[*].sampled_smaps_bytes` | **0 bytes for all three**; each `NOT_OBSERVED`, `SMAPS_UNREADABLE`, `mapped_files=[]` | **Failed to read smaps**, NOT proof that there are zero memory-mapped file pages. Old collector did not retain errno, so cannot distinguish `EACCES`/`EPERM` vs missing file or other I/O cause |
+| `pinned_snapshot.filesystem_inode_aliases_observed` | 0; `PINNED_SNAPSHOT_DIRECTORY_UNREADABLE` + `PINNED_SNAPSHOT_FILES_NOT_OBSERVED` | The candidate pinned HF snapshot cannot be stat-verified; cannot prove path missing versus permission or mount alias problems; expected revision is a **declared** source value |
+| `pid_identity_before/after` | start ticks: 4016083=159946344, 4016529=159948383, 4016530=159948383 before/after; **netns, mntns, pidns all empty strings for all three PIDs** | Nonempty namespace identity was **NOT verified**. The original `pid_identity_continuous=true` only checked equality of the same empty strings and is **not acceptable** as validated namespace continuity. Later source correctly requires nonempty namespace format |
+| `port.container_listener.listening_inode_count` | 1; `container_netns=""`; matched Docker FD-owning PIDs=[] | The Linux `/proc/PID/net/tcp*` read exposed a :8000 LISTEN inode, but FD↔PID mapping was **NOT confirmed**. Old `PID_NETNS_DRIFT` was triggered by an empty namespace and is **not evidence of a real network namespace transition** |
+| `port.publication` | `declared_host_port_8000=true`, `effective_host_port_8000=true`, `network_mode=bridge`, but `docker_port_declarations_consistent=false` | The old equality comparator labelled `DOCKER_DECLARATION_MISMATCH`; **actual raw HostConfig and NetworkSettings port binding entries are absent from receipt**, so cannot determine whether Docker appended IPv6 wildcard or there was a substantive IP/port mismatch. Later source normalizes *only* IPv4 wildcard plus IPv6 wildcard, not all mismatches |
+| `port.iptables_nat` and `host_listener_pid_observed` | `status=UNAVAILABLE`, `matching_rule_found=false`, host listener PID absent | NAT tables and host listener PID **unobserved**, not proof of absent DNAT or service outage. No kernel NAT path attribution |
+| `service_api_model_id_confirmed` | `true` | Existing API was responsive for expected served ID at sampling time; not a port owner or authenticated PLE-residency guarantee |
+| `executed_inference`, `service_mutated`, `production_released` | `false` for all | This was read-only observation (plus separate private JSON persistence), not operating release |
+
+**Required corrections:** `SMAPS_UNREADABLE` must be displayed as **UNKNOWN_ACCESS_CAUSE** (the old receipt does not expose errno); `pid_identity_continuous=true` cannot be accepted as a complete identity check because namespace values are blank; `PID_NETNS_DRIFT` is a misleading category in this old source when the reference netns was empty; `DOCKER_DECLARATION_MISMATCH` cannot be diagnosed as real host configuration drift without the raw Docker bindings.
+
+**What later source changes address:** the newer (unverified-on-DGX) P5-D collector closes the `os.scandir` iterator, explicitly classifies unavailable/empty namespaces, rejects blank namespace IDs for identity continuity, records per-PID `SMAPS_ACCESS_DENIED`/not-found classification when the errno is available, and distinguishes compatible Docker dual-stack wildcard declarations. **These changes do not retroactively establish PLE RSS/PSS, pinned inode ownership, or kernel NAT port owner.**
+
+### Acceptance after full-file inspection
+
+`P5D_FULL_PRIVATE_RECEIPT_REVIEWED / SOURCE_SHA_BOUND_OPERATOR_EVIDENCE / DOCKER_PID_CGROUP_API_CORRELATED / PID_NAMESPACE_IDENTITY_UNVERIFIED / SMAPS_READ_ZERO_BYTES_ALL_3 / PLE_RSS_PSS_INODE_NOT_OBSERVED / NAT_OWNER_NOT_OBSERVED / PRODUCTION_BLOCKED`
+
+**No additional GPU workload is needed.** The next possible *strictly read-only* diagnostic would require a new operator-provided output from the updated collector / accessible PID procfs, or independent privilege-aware evidence acquisition. Do not automatically rerun or invoke sudo, Docker exec, firewall changes or operation. The existing uploaded JSON has no more raw evidence for determining the exact `smaps` errno, actual Docker HostConfig/NetworkSettings entries, or owner of a socket inode. PR #1 remains Draft/Open/Unmerged; CI is not independently verified.
+
+---
+
 ## Live operator observation (historical run, source 4366f3b)
 
 At operator checkout `4366f3b1476105c6f556e0e93c4f5e1da64f68fa`, read-only wrapper `scripts/temporary/p5d-readonly-once.sh` printed:
