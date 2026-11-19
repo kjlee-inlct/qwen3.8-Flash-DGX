@@ -1,3 +1,12 @@
+## 2026-11-20 — P5-D / Wizard / Manifest operator CPU verification complete (SHA-bound)
+
+- Operator DGX terminal: clean worktree, FF-only to `7c11d0d1a0921ef7b0f4134bd3d3c0d8ac4e5795`, eight selected unittest suites **5+24+9+20+19+14+11+36 = 138/138 PASS**, `P5D_MANIFEST_WIZARD_CPU_RC=0` and exact matching `TESTED_SHA`.
+- Wizard `manifest validate --json` **PASS** (7 registered documents, cross-reference PASS, no issues). New `p5d-source-binding-review --model orcarouter --json` **DECLARATIVE_P5D_SOURCE_BOUND_NOT_LIVE_ATTESTED** (PLE BF16/DISK_MMAP/source pin); no runtime authorization.
+- Source CPU acceptance at **tested SHA** only; this documentation-only commit will advance HEAD without new tests. GitHub Actions CI remains `UNVERIFIED`; P5-D real smaps/RSS/PSS/inode/PID/host NAT, P6-E, P7, P8 and Production Release remain blocked.
+- Next P5-D: bounded, separately approved DGX **read-only** live provenance evidence (smaps errno, valid namespaces, pinned inode mapping, Docker port bindings and kernel NAT owner); no sudo, Docker changes, new inference, operating Journal changes, PR merge or main mutation. See `docs/P5-D-MANIFEST-BOUND-READONLY-SOURCE-20261120.md`.
+
+---
+
 ## 2026-11-20 — Approved P5-D source work; Actions investigation parked
 
 - Actions operator HTTPS push `2b97762` succeeded but 0 matching new Push/PR runs/checks. Investigation committed at `docs/GITHUB-ACTIONS-OPERATOR-PUSH-COMPARISON-20261120.md`; stop repetitive trigger probes; CI `UNVERIFIED`.

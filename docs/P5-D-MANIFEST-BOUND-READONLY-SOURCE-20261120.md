@@ -1,5 +1,29 @@
 # P5-D source-side manifest binding and Wizard read-only review (2026-11-20 KST)
 
+## 2026-11-20 KST — operator-confirmed exact-source CPU acceptance: 138/138 PASS
+
+**Evidence origin:** operator-supplied DGX terminal transcript from `~/Workspace/llm/blazux-orcarouter`, **not** a GitHub Actions runner or an assistant-executed test. The operator performed branch/clean-tree preflight, `git pull --ff-only origin feature/recipe-wizard-handoff`, and checked the exact source `TESTED_SHA=7c11d0d1a0921ef7b0f4134bd3d3c0d8ac4e5795`; printed `P5D_MANIFEST_WIZARD_CPU_RC=0`. All eight selected `unittest` module summaries explicitly reported `OK`:
+
+| CPU unit test module | Tests | Result |
+| --- | ---: | --- |
+| `test_p5d_manifest_binding_cpu.py` | 5 | PASS |
+| `test_p5d_live_audit_cpu.py` | 24 | PASS |
+| `test_p5_readonly_attribution_cpu.py` | 9 | PASS |
+| `test_p5d_p6e_cpu.py` | 20 | PASS |
+| `test_manifest_registry_cpu.py` | 19 | PASS |
+| `test_generic_operations_cpu.py` | 14 | PASS |
+| `test_generic_console_cpu.py` | 11 | PASS |
+| `test_wizard_router_cpu.py` | 36 | PASS |
+| **Total (selected suites, non-overlapping methods)** | **138** | **138/138 PASS** |
+
+The same operator run completed `python3 -B -m wizard manifest validate --json` with `status=PASS`, `issues=[]`, seven registered manifest files plus registry and cross-reference marked PASS, `scope=DECLARATIVE_MANIFEST_ONLY`. The unified CLI `python3 -B -m wizard operations generic p5d-source-binding-review --model orcarouter --json` returned `DECLARATIVE_P5D_SOURCE_BOUND_NOT_LIVE_ATTESTED`, `manifest_graph_validated=true`, PLE asset `orcarouter-bf16-ple`, declared BF16 / DISK_MMAP and pinned revision `3a3b63161c0745390e5270179af42e46efc70799`. Both explicitly returned `operations_enabled=false`, `production_released=false`; PLE residency and NAT ownership attestation remain false.
+
+**Conclusion and SHA scoping:** `SOURCE_CPU_SELECTED_138_OF_138_OPERATOR_PASS_AT_7C11D0D / MANIFEST_GRAPH_PASS / WIZARD_P5D_BINDING_PASS`. This supersedes earlier selected-source CPU 50/50 for the covered suites, **not** the historical live DGX `BLOCKED_PARTIAL_PROVENANCE/RC3` result. No P5-D live audit on this SHA was included in the uploaded transcript, no real per-PLE RSS/PSS/inode/FD↔PID/NAT ownership observed, no GPU exclusivity authenticated. `GITHUB_ACTIONS_CI_UNVERIFIED / P5D_LIVE_ACCEPTANCE_BLOCKED / P6E_P7_P8_OPERATING_BLOCKED / PRODUCTION_RELEASE_BLOCKED`.
+
+**Next bounded P5-D evidence:** the validated PLE manifest binding can now be used before a *separately approved read-only* host audit. Check exact per-PID `smaps_errno` (do not assume zero RSS when unreadable), all three namespace identifiers + start ticks, pinned snapshot file/inode aliases, raw Docker publish/bindings vs kernel NAT and container socket-FD owner. A failed permission check is an evidence gap and **must not** be fixed by automatic sudo, Docker exec, service restart, firewall change or cache mutation. Preserve separate explicit authorization for live audit, and store a private receipt only if approved. Do not repeat CI trigger test commits; see [Actions comparison](GITHUB-ACTIONS-OPERATOR-PUSH-COMPARISON-20261120.md).
+
+---
+
 ## Scope and rationale
 
 P5-D previously duplicated the Orcarouter HF repository/revision in the host audit module. The shared seven-document Wizard manifest graph already records the model checkpoint, pinned revision, PLE asset, discovery, loader capability and runtime policy. A source-level drift could otherwise cause P5-D to scan files outside the declared PLE target. This change binds the P5-D host audit **before any host probe** to the complete validated registry and derives the exact HF repo/revision, provisional served ID and asset ID from the manifest, rather than a separate source constant.
