@@ -1,5 +1,14 @@
 # Blazux DGX Spark — P1–P8 execution roadmap (2026-11-19 KST)
 
+## 2026-11-19 KST — P5-D CPU gate updated to operator 50/50 (source-bound)
+
+Operator reported `08d03b182c3a1be78a698312d1abcb5b2cef571e` and `22/22 + 9/9 + 19/19 = 50/50` CPU unit tests `OK` (respectively 0.013s, 0.000s, 0.012s). This supports **CPU_TESTED_OPERATOR_REPORTED_50_OF_50**, not a GitHub Actions PASS and not PLE/NAT live acceptance. The previous 40/40 selected CPU PASS was bound to the older actual DGX audit source `4366f3b`; never combine or silently backfill execution evidence. GitHub workflow runs/statuses for the new tested SHA were empty on recheck; CI is **UNVERIFIED**.
+
+**Decision:** keep P5-D `BLOCKED_PARTIAL_PROVENANCE / RC3` at historical live audit (smaps inaccessible for all 3 PIDs, namespace IDs blank, file inode↔PID and kernel NAT ownership not proved). CPU corrections may be accepted as source-level regressions, but PLE-specific RSS/PSS, independent GPU exclusivity, runtime Journal, P6-E/P7/P8 live release and production are **NOT QUALIFIED**. No new DGX operations, GPU load, model switch, sudo, operating Journal writes, automatic recovery or PR merge. PR #1 remains Draft/Open/Unmerged. Next focus: Actions registration/triggers, then optional separately authorized bounded read-only provenance capture. Later documentation-only HEADs preserve this exact tested-source SHA.
+
+---
+
+
 ## 2026-11-19 KST — P5-D additional source-only hardening and CI gate
 
 **Source commit `f8525988ea800eb44855558aa932a4ce1d1d3dab`:** PID identity checks now require positive start ticks and each explicit `netns`, `mntns`, `pidns` value; bounded `scandir` prevents pre-limit full snapshot enumeration; namespace TCP reads are capped; numeric `smaps_errno` reaches per-PID summaries. Four CPU-only regression tests were **ADDED BUT NOT EXECUTED**. Earlier 40/40 PASS belongs exclusively to operator source `4366f3b`, not to this new code.
