@@ -1,5 +1,18 @@
 # P5 Orcarouter MTP0 — one-shot visible-TTFC GPU measurement (2026-11-19)
 
+## 2026-11-19 KST — P5-D additional source-only hardening and CI gate
+
+**Source commit `f8525988ea800eb44855558aa932a4ce1d1d3dab`:** PID identity checks now require positive start ticks and each explicit `netns`, `mntns`, `pidns` value; bounded `scandir` prevents pre-limit full snapshot enumeration; namespace TCP reads are capped; numeric `smaps_errno` reaches per-PID summaries. Four CPU-only regression tests were **ADDED BUT NOT EXECUTED**. Earlier 40/40 PASS belongs exclusively to operator source `4366f3b`, not to this new code.
+
+**GitHub inspection:** feature branch had the CPU workflow and matching push/PR filters; `main` had no `.github/workflows/` directory. Last observed workflow run: 2026-11-12 KST at older `8b118c8`. New HEAD CI **UNVERIFIED**; root cause of missing runs not established. Default-branch registration is only a hypothesis.
+
+**P5-D evidence stays blocked:** original DGX receipt was `BLOCKED_PARTIAL_PROVENANCE / RC3`, three unreadable smaps, blank namespaces, no matched socket FD owner and no proven NAT datapath. PLE per-file RSS/PSS, pinned tensor content identity, unique GB10 residency and kernel NAT owner remain **UNQUALIFIED**. No repeat real DGX probe, GPU workload, service mutation, sudo, Journal write or PR merge. Historical P5 visible GPU measurements are unchanged.
+
+**Independent gates:** SOURCE_IMPLEMENTED=yes; CPU_TESTED=new HEAD not run; CI_VERIFIED=no; DGX_OBSERVED=historical receipt only; OPERATION_AUTHORIZED=no; PRODUCTION_RELEASED=no. Keep PR #1 Draft/Open. Next: CPU/Fake-DGX test execution, GitHub Actions workflow registration investigation, then separately approved read-only evidence collection if required. P6-E durable nonce/Journal v2, P7 proxy/storage, P8 recovery acceptance remain blocked by their own evidence and approvals.
+
+---
+
+
 ## 2026-11-19 KST — P5 1K/4K/7K saved FULL RESOURCE RECEIPT analyzed (READ-ONLY)
 
 **Supersedes:** previously `P5_RESOURCE_FULL_RECEIPT_REVIEW_PENDING` is now **reviewed for the fields present in the user-uploaded JSON**, but does **not** supersede `PLE_RESIDENCY_NOT_OBSERVED`, independent port/GPU process ownership, or production release.
