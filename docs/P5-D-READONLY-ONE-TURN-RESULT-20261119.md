@@ -1,5 +1,16 @@
 # P5-D — One-turn DGX read-only result and evidence-bound diagnosis (2026-11-19 KST)
 
+## 2026-11-19 KST — follow-up SOURCE hardening after base HEAD `141df9fdd562`
+
+Code review found two fail-closed gaps: `pid_identity_continuous` could accidentally accept a PID identity dictionary **omitting** any namespace key (empty iterator passes `all()`), and pinned-snapshot directory entries were fully materialized before applying the 256-file cap. The revised source explicitly requires positive integer start ticks plus **all three** valid `net:[N]`/`mnt:[N]`/`pid:[N]` identifiers; snapshot entry enumeration is capped at 257 including the one overflow sentinel. It also bounds container `/proc/PID/net/tcp{,6}` reads at 5,000,001 chars and records numeric `smaps_errno` per PID in the private receipt and compact summary (without copying raw exception text).
+
+Four new CPU-only regression methods cover omitted/empty/wrong namespace evidence, bounded scandir iteration, errno 13/2/5, and an oversized container TCP listing. The tests are **SOURCE_ADDED / NOT_EXECUTED** in this GitHub-only update: no local repository checkout or new workflow run is available for the updated HEAD. The historical **40/40** result applies only to DGX SHA `4366f3b` and must not be reused. GitHub branch had no newer workflow runs since 2026-11-12 07:00 KST, and `main` had no `.github/workflows/` directory at inspection; the root cause remains **UNVERIFIED** (default-branch registration, workflow settings, event semantics and runner state require separate checking).
+
+**Gate:** `SOURCE_IMPLEMENTED` (once committed) / `CPU_TESTED=NOT_RUN_ON_NEW_HEAD` / `CI_VERIFIED=NO` / `DGX_OBSERVED=HISTORICAL_RECEIPT_ONLY` / `OPERATION_AUTHORIZED=NO` / `PRODUCTION_RELEASED=NO`. PLE-specific RSS/PSS, inode content authenticity, NAT kernel owner and production admission remain unqualified. `RC=3` signifies evidence gaps, not a service outage. No sudo, GPU workload, DGX probing, Docker mutation, live Journal or PR merge was performed.
+
+---
+
+
 ## 2026-11-19 KST — uploaded ORIGINAL 9,661-byte P5-D private receipt reviewed (later evidence)
 
 Operator uploaded the **actual saved** `orcarouter--20261119T004619880648Z--bd848453cb4f.json`, not only the compact terminal summary. It is an operator-supplied receipt originally captured from **DGX source SHA `4366f3b1476105c6f556e0e93c4f5e1da64f68fa`** between 2026-11-19 00:46:16.550982 and 00:46:19.879156 UTC; this upload/review is later than the original audit. No new host audit, GPU inference, model switch, service restart or privilege escalation was performed while reviewing this file.

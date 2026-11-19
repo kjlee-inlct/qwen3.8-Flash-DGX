@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 from datetime import datetime, timezone
+from itertools import islice
 import json
 import os
 from pathlib import Path
@@ -127,7 +128,11 @@ def _socket_pid_evidence(pids, init_pid, proc=Path("/proc")):
     sockets = set()
     for name in ("tcp", "tcp6"):
         try:
-            s = (proc / str(init_pid) / "net" / name).read_text(encoding="utf-8")
+            with (proc / str(init_pid) / "net" / name).open(encoding="utf-8") as handle:
+                s = handle.read(5_000_001)
+            if len(s) > 5_000_000:
+                issues.append("CONTAINER_NET_" + name.upper() + "_READ_LIMIT")
+                continue
             sockets.update(_listener_inodes(s))
         except (PermissionError, OSError, UnicodeError):
             issues.append("CONTAINER_NET_" + name.upper() + "_UNREADABLE")
@@ -202,6 +207,19 @@ def _pid_identity(pid, *, proc=Path("/proc")):
         return None
 
 
+def _qualified_pid_identity(value):
+    """Fail closed when a required start-time or namespace field is missing."""
+    if (not isinstance(value, dict)
+            or type(value.get("starttime_ticks")) is not int
+            or value["starttime_ticks"] <= 0):
+        return False
+    return all(
+        isinstance(value.get(key), str)
+        and re.fullmatch(rf"{prefix}:\[\d+\]", value[key]) is not None
+        for key, prefix in (("netns", "net"), ("mntns", "mnt"), ("pidns", "pid"))
+    )
+
+
 def _cgroup_membership(pid, cid, proc=Path("/proc")):
     """Host cgroup evidence is separate from Docker top and subject to host layout."""
     try:
@@ -256,7 +274,8 @@ def _pinned_snapshot_inodes(init_pid, mounts, repo_id, revision,
                 if not target.is_dir():
                     continue
                 with os.scandir(target) as items:
-                    children = list(items)
+                    # Bound enumeration before allocating the directory listing.
+                    children = list(islice(items, 257))
                 if len(children) > 256:
                     issues.append("PINNED_SNAPSHOT_FILE_COUNT_LIMIT")
                     continue
@@ -299,7 +318,7 @@ def _scan_smaps(pid, mounts, repo_marker, *, proc=Path("/proc"),
                 stat_function=os.stat):
     """Stream smaps, never retain raw text. Bound bytes, mappings, and trust."""
     result = {"pid": pid, "status": "NOT_OBSERVED", "mapped_files": [],
-              "issues": [], "sampled_smaps_bytes": 0}
+              "issues": [], "sampled_smaps_bytes": 0, "smaps_errno": None}
     rows = {}
     current = None
     metrics = {}
@@ -355,6 +374,7 @@ def _scan_smaps(pid, mounts, repo_marker, *, proc=Path("/proc"),
     except (OSError, UnicodeError) as exc:
         result["issues"].append("SMAPS_UNREADABLE")
         if isinstance(exc, OSError):
+            result["smaps_errno"] = exc.errno if type(exc.errno) is int else None
             if exc.errno in (1, 13):
                 result["issues"].append("SMAPS_ACCESS_DENIED")
             elif exc.errno == 2:
@@ -461,11 +481,8 @@ def _collect(*, capture_ownership=ownership_capture, run_command=_cmd,
     after = capture_ownership(MODEL)
     pid_identity_after = {pid: _pid_identity(pid, proc=proc) for pid in pids}
     pid_identity_continuous = all(
-        pid_identity_before.get(pid) is not None
-        and pid_identity_before.get(pid) == pid_identity_after.get(pid)
-        and all(re.fullmatch(r"(?:net|mnt|pid):\[\d+\]", v or "")
-                for k, v in pid_identity_before[pid].items()
-                if k in ("netns", "mntns", "pidns"))
+        _qualified_pid_identity(pid_identity_before.get(pid))
+        and pid_identity_before[pid] == pid_identity_after.get(pid)
         for pid in pids)
     if not pid_identity_continuous:
         issues.append("PID_STARTTIME_OR_NAMESPACE_DRIFT_OR_UNAVAILABLE")
@@ -537,7 +554,7 @@ def _collect(*, capture_ownership=ownership_capture, run_command=_cmd,
             "examined_container_host_pids": len(pids),
             "pid_starttime_namespace_continuous": pid_identity_continuous,
             "per_pid_readonly_observation": [
-                {"pid": x["pid"], "smaps_status": x["status"],
+                {"pid": x["pid"], "smaps_status": x["status"], "smaps_errno": x.get("smaps_errno"),
                  "candidate_mapping_files": len(x["mapped_files"]),
                  "issues": sorted(set(x["issues"]))}
                 for x in observed

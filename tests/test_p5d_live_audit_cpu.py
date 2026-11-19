@@ -149,6 +149,27 @@ class ParserTests(unittest.TestCase):
             self.assertEqual(rows[key], ["model-00001.safetensors"])
             self.assertEqual(issues, [])
 
+    def test_pinned_snapshot_directory_is_bounded_during_enumeration(self):
+        class OversizedEntries:
+            def __enter__(self):
+                return self
+            def __exit__(self, *args):
+                return False
+            def __iter__(self):
+                for i in range(257):
+                    yield SimpleNamespace(name=f"model-{i}.safetensors", path="")
+                raise AssertionError("unbounded directory enumeration")
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root/"42"/"root"/"hf"/"hub"/REPO/"snapshots"/("b"*40)).mkdir(parents=True)
+            with patch.object(a.os, "scandir", return_value=OversizedEntries()):
+                rows, issues = a._pinned_snapshot_inodes(
+                    42, ["/hf"], "orcarouter/Qwen3.8-Flash-Next-Uncensored-NVFP4",
+                    "b"*40, proc=root)
+        self.assertEqual(rows, {})
+        self.assertIn("PINNED_SNAPSHOT_FILE_COUNT_LIMIT", issues)
+
     def test_missing_snapshot_must_not_be_claimed(self):
         with tempfile.TemporaryDirectory() as t:
             rows, issues=a._pinned_snapshot_inodes(42, ["/hf"],
@@ -201,6 +222,18 @@ class ParserTests(unittest.TestCase):
         self.assertIn("SMAPS_UNREADABLE", out["issues"])
         self.assertIn("SMAPS_ACCESS_DENIED", out["issues"])
 
+    def test_smaps_errno_preserved_without_raw_exception_text(self):
+        for err, issue in ((PermissionError(13, "permission denied"), "SMAPS_ACCESS_DENIED"),
+                           (FileNotFoundError(2, "file gone"), "SMAPS_PID_OR_FILE_GONE"),
+                           (OSError(5, "I/O error"), "SMAPS_READ_IO_UNCLASSIFIED")):
+            with self.subTest(errno=err.errno):
+                with patch.object(Path, "open", side_effect=err):
+                    out = a._scan_smaps(42, ["/hf"], REPO)
+                self.assertEqual(out["smaps_errno"], err.errno)
+                self.assertEqual(out["status"], "NOT_OBSERVED")
+                self.assertEqual(out["mapped_files"], [])
+                self.assertIn(issue, out["issues"])
+
     def test_pinned_cache_mount_already_hub_does_not_double_hub(self):
         with tempfile.TemporaryDirectory() as t:
             root = Path(t)
@@ -215,6 +248,29 @@ class ParserTests(unittest.TestCase):
             key = (os.major(st.st_dev),os.minor(st.st_dev),st.st_ino)
             self.assertEqual(rows[key], ["model-00002.safetensors"])
             self.assertEqual(issues, [])
+
+    def test_pid_identity_requires_three_nonempty_namespaces_and_starttime(self):
+        valid = {"starttime_ticks": 123, "netns": "net:[11]",
+                 "mntns": "mnt:[12]", "pidns": "pid:[13]"}
+        self.assertTrue(a._qualified_pid_identity(valid))
+        for missing in ("netns", "mntns", "pidns", "starttime_ticks"):
+            with self.subTest(missing=missing):
+                self.assertFalse(a._qualified_pid_identity({
+                    k: v for k, v in valid.items() if k != missing}))
+        self.assertFalse(a._qualified_pid_identity({**valid, "netns": ""}))
+        self.assertFalse(a._qualified_pid_identity({**valid, "mntns": "pid:[12]"}))
+        self.assertFalse(a._qualified_pid_identity({**valid, "starttime_ticks": True}))
+
+    def test_container_tcp_read_is_bounded(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root/"42"/"net").mkdir(parents=True)
+            (root/"42"/"net"/"tcp").write_text("X" * 5_000_001)
+            (root/"42"/"net"/"tcp6").write_text("")
+            with patch.object(a.os, "readlink", return_value="net:[11]"):
+                out = a._socket_pid_evidence([42], 42, proc=root)
+        self.assertIn("CONTAINER_NET_TCP_READ_LIMIT", out["issues"])
+        self.assertFalse(out["kernel_nat_owner_authenticated"])
 
     def test_cgroup_exact_id_readonly(self):
         with tempfile.TemporaryDirectory() as t:
