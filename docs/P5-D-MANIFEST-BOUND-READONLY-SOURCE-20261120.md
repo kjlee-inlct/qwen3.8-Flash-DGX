@@ -24,6 +24,10 @@ The same operator run completed `python3 -B -m wizard manifest validate --json` 
 
 ---
 
+## Latest real DGX read-only result
+
+On SHA `fd338efa549a8c3bb54e65e5e033d2334d9e96e1`, the source-bound audit remained `BLOCKED_PARTIAL_PROVENANCE / RC3`: three host PIDs returned `smaps_errno=13` (EACCES), while Docker IPv4/IPv6 port declarations matched. This is a permission-limited measurement, **not** zero PLE residency or verified kernel NAT. See [permission blocker](P5-D-PROCFS-PERMISSION-BLOCKER-20261120.md). The 138/138 CPU PASS remains bound to earlier `7c11d0d`.
+
 ## Scope and rationale
 
 P5-D previously duplicated the Orcarouter HF repository/revision in the host audit module. The shared seven-document Wizard manifest graph already records the model checkpoint, pinned revision, PLE asset, discovery, loader capability and runtime policy. A source-level drift could otherwise cause P5-D to scan files outside the declared PLE target. This change binds the P5-D host audit **before any host probe** to the complete validated registry and derives the exact HF repo/revision, provisional served ID and asset ID from the manifest, rather than a separate source constant.

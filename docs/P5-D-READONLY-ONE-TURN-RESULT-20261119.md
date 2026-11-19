@@ -1,5 +1,15 @@
 # P5-D — One-turn DGX read-only result and evidence-bound diagnosis (2026-11-19 KST)
 
+## 2026-11-20 KST — new P5-D DGX read-only audit: EACCES 13 on 3/3 PIDs
+
+**New operator-provided exact-SHA audit:** `fd338efa549a8c3bb54e65e5e033d2334d9e96e1` (documentation-only child of prior CPU-verified `7c11d0d`). Manifest validation PASS and Wizard `p5d-source-binding-review` PASS for `orcarouter-bf16-ple` (declarative BF16 / DISK_MMAP source pin). Actual `p5d_live_audit --save --json` returned `BLOCKED_PARTIAL_PROVENANCE`, `P5D_READONLY_RC=3` with `SMAPS_ACCESS_DENIED` / **`errno=13` on all three host PIDs** `4016083`, `4016529`, `4016530`. Thus 0 mapped candidates does not mean 0 RSS, PSS or PLE residency. Docker IPv4+IPv6 wildcard port declarations now classify `DOCKER_DECLARATION_CONSISTENT_NOT_HOST_VERIFIED`; actual kernel NAT owner remains unobserved. PID namespace identity unqualified (`container_netns=""`), LISTEN FD owner absent, pinned snapshot aliases unreadable, host NAT `UNAVAILABLE`. Exact outcome and safe permission preflight documented in [P5-D procfs blocker](P5-D-PROCFS-PERMISSION-BLOCKER-20261120.md).
+
+**Decision:** P5-D source/Wizard/manifest acceptance remains CPU-supported at prior `7c11d0d` **138/138 operator PASS**, but live PLE RSS/PSS/inode/PID/NAT qualification remains BLOCKED. No repeat GPU workload, service mutation, sudo, Docker exec, live Journal write, CI dispatch, main change, PR merge or production release. A future non-elevated procfs access preflight must first refresh the PID ownership snapshot; historical PIDs can be recycled. `RC3` denotes unqualified evidence, not a running service failure. Full private receipt is not attached to this documentation update.
+
+---
+
+
+
 ## 2026-11-19 KST — operator CPU regression 50/50 PASS at 08d03b1
 
 **Evidence type: operator-provided terminal transcript (not independently run by GitHub connector).** On DGX host `lc-gx10-pc` under `~/Workspace/llm/blazux-orcarouter`, the operator reported `git rev-parse HEAD = 08d03b182c3a1be78a698312d1abcb5b2cef571e` and three selected CPU-only unittest completions: `test_p5d_live_audit_cpu.py` **22/22 OK (0.013s)**, `test_p5_readonly_attribution_cpu.py` **9/9 OK (0.000s)**, and `test_p5d_p6e_cpu.py` **19/19 OK (0.012s)**. **Total 50/50 selected tests PASS**, based on that exact supplied transcript. The previously expected 44 was a mistaken projection: there were 40 historical selected tests at old SHA `4366f3b`; the latest three modules report 50, an increase of 10 across that historical baseline. There is no claim of full repository test-suite execution or GitHub-run CI.

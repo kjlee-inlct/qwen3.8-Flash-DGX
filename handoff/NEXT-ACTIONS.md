@@ -1,3 +1,11 @@
+## 2026-11-20 — P5-D live procfs EACCES confirmed at fd338ef
+
+- Operator read-only `p5d_live_audit` at SHA `fd338efa549a8c3bb54e65e5e033d2334d9e96e1`: `BLOCKED_PARTIAL_PROVENANCE / RC3`; **all 3 PIDs smaps errno 13 EACCES**. Manifest/Wizard source binding PASS; Docker port declarations consistent with wildcard IPv6 extension, **not kernel NAT attestation**.
+- Host namespace/PID FD ownership and pinned HF inode aliases remain unqualified; absent PLE RSS/PSS mappings are access gaps, not measured zero. See `docs/P5-D-PROCFS-PERMISSION-BLOCKER-20261120.md`.
+- Stop repeating live audit until a separately authorized non-elevated procfs/UID permission preflight and fresh Docker/PID identity. Preserve CPU 138/138 PASS at **old tested SHA `7c11d0d` only**; CI UNVERIFIED; no new production approvals.
+
+---
+
 ## 2026-11-20 — P5-D / Wizard / Manifest operator CPU verification complete (SHA-bound)
 
 - Operator DGX terminal: clean worktree, FF-only to `7c11d0d1a0921ef7b0f4134bd3d3c0d8ac4e5795`, eight selected unittest suites **5+24+9+20+19+14+11+36 = 138/138 PASS**, `P5D_MANIFEST_WIZARD_CPU_RC=0` and exact matching `TESTED_SHA`.
