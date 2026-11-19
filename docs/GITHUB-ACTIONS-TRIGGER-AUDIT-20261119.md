@@ -1,3 +1,17 @@
+
+## 2026-11-19 KST — direct GitHub connector cross-check; fail-closed response contract
+
+Direct REST GET evidence on feature HEAD `8a12c96d0fe1b77a9a9f40dc84a44b953346adda`:
+- `GET /actions/runs` returned total_count=1640; the newest visible run remains `43108072440` (PR, success, SHA `8b118c8`, 2026-11-11 22:00:50 UTC), paired with push run `43107837772`. No later run was present in the returned newest page.
+- The newest commit's `/check-runs` had `total_count=0`; commit statuses had zero entries (combined status `pending`, not a CI result). Its message and changed `handoff/**` paths are within the current workflow triggers. Both last-success and new HEAD have author/committer `kjlee-inlct` and unsigned verification: these fields **do not attest the credential that moved the ref**.
+- PR #1 is Draft/Open/Unmerged. The previously independently observed workflow active / repository Actions enabled evidence remains from the operator's authenticated RC0 receipt. The default branch workflow is absent but historical feature-branch push+PR jobs still ran. The trigger omission root cause is **UNVERIFIED**.
+
+Source-only follow-up hardens diagnostic validity for HTTP 200 malformed bodies: a successful HTTP response without typed `workflow_runs` / `check_runs` arrays and consistent numeric counts now remains `INCOMPLETE_API_EVIDENCE`; it is not converted to zero runs or RC0. Three synthetic tests added. **CPU execution on this new source: NOT OBSERVED; Actions CI on new SHA: NOT OBSERVED.** Existing operator diagnostic 9/9 PASS is bound to prior `178a328` and P5-D 50/50 to `08d03b1`. No test push/dispatch, main change, service operation, journal change, PR merge, or production release was authorized or performed.
+
+**Proposed comparison test (separate operator approval required):** one normal user-authenticated `git push` on the feature branch containing a deliberately safe, workflow-matching no-op file change. Capture the pushed SHA, actual credential *type* (not the token), `push` and `pull_request` run IDs and timestamps, and queued/started/conclusion states after publication. Do not turn the proposed test into an unattended retry or imply `GITHUB_TOKEN` is proven.
+
+---
+
 # GitHub Actions missing-run audit — 2026-11-19 (source-only)
 
 ## 2026-11-19 KST — operator authenticated Actions audit COMPLETE, 9/9 CPU PASS at 178a328

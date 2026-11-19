@@ -1,3 +1,11 @@
+## 2026-11-19 — Harden Actions read-only audit against malformed HTTP 200 evidence
+
+Source-only update to `github_actions_readonly_audit.py` and three added synthetic CPU tests: missing or inconsistent `workflow_runs` / `check_runs` arrays now yield partial evidence rather than misleading zero counts or audit RC0. Diagnostic completion is not CI success. Tests on this new code and CI are NOT YET OBSERVED. No DGX operational mutation, Actions dispatch, deliberate trigger test, default branch change, or PR merge.
+
+**2026-11-19 connector read-only cross-check:** newest repository run is PR `43108072440` (Nov 12 KST, old SHA `8b118c8`), paired with push `43107837772`; newer feature HEAD `8a12c96` has zero Check Runs and zero Commit Status entries. Authored/committed by the same user and unsigned as the last successful commit, but that does not identify the event credential. Root cause `UNVERIFIED`. Diagnostic now fails closed on HTTP 200 malformed runs/checks arrays (three new CPU fixtures, **new SHA CPU NOT RUN; CI NOT RUN**). Existing 9/9 at `178a328` and P5-D 50/50 at `08d03b1` remain historical. Production `BLOCKED`; PR Draft/Open/Unmerged. See [Actions audit](../docs/GITHUB-ACTIONS-TRIGGER-AUDIT-20261119.md).
+
+---
+
 ## 2026-11-19 KST — P5-D operator-selected CPU regression 50/50 OK
 
 Operator supplied terminal evidence from clean source SHA `08d03b182c3a1be78a698312d1abcb5b2cef571e`: `test_p5d_live_audit_cpu.py` 22/22 OK (0.013s), `test_p5_readonly_attribution_cpu.py` 9/9 OK (0.000s), `test_p5d_p6e_cpu.py` 19/19 OK (0.012s), **50/50 selected CPU PASS**. This is **user-provided execution evidence**, not independent CI or a full suite. Historical old-source selected CPU 40/40 at `4366f3b` remains separate; no inferred new live P5-D host audit.

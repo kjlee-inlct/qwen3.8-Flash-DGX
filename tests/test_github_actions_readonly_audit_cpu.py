@@ -17,7 +17,7 @@ def evidence(path, *, token=None):
         return {"http_status": 404 if path.endswith("ref=main") else 200,
                 "data": None if path.endswith("ref=main") else {"name": "recipe-manifest-cpu.yml"}}
     if "/actions/runs?" in path:
-        return {"http_status": 200, "data": {"workflow_runs": [
+        return {"http_status": 200, "data": {"total_count": 1, "workflow_runs": [
             {"head_sha": "b" * 40, "created_at": "2026-11-12T00:00:00Z",
              "event": "push", "status": "completed", "conclusion": "success"}]}}
     if "/check-runs?" in path:
@@ -51,7 +51,7 @@ class ActionsAuditCPU(unittest.TestCase):
         def with_run(path, *, token=None):
             row = evidence(path, token=token)
             if "/actions/runs?" in path:
-                row["data"] = {"workflow_runs": [
+                row["data"] = {"total_count": 1, "workflow_runs": [
                     {"head_sha": SHA, "event": "push", "status": "queued",
                      "conclusion": None}]}
             return row
@@ -118,6 +118,45 @@ class ActionsAuditCPU(unittest.TestCase):
         receipt = collect(sha=SHA, fetch=missing_data)
         self.assertIsNone(receipt["repository_actions_enabled"])
         self.assertFalse(receipt["audit_evidence_complete"])
+
+
+    def test_http_200_missing_run_array_is_incomplete_not_zero(self):
+        def malformed(path, *, token=None):
+            row = evidence(path, token=token)
+            if path.endswith("/actions/permissions"):
+                return {"http_status": 200, "data": {"enabled": True}}
+            if "/actions/runs?" in path:
+                return {"http_status": 200, "data": {"total_count": 0}}
+            return row
+        receipt = collect(sha=SHA, fetch=malformed)
+        self.assertFalse(receipt["runs_page_schema_valid"])
+        self.assertIsNone(receipt["exact_sha_runs_in_latest_page"])
+        self.assertEqual(receipt["finding"], "INCOMPLETE_API_EVIDENCE")
+        self.assertFalse(receipt["audit_evidence_complete"])
+
+    def test_http_200_missing_check_array_is_incomplete_not_zero(self):
+        def malformed(path, *, token=None):
+            row = evidence(path, token=token)
+            if path.endswith("/actions/permissions"):
+                return {"http_status": 200, "data": {"enabled": True}}
+            if "/check-runs?" in path:
+                return {"http_status": 200, "data": {"total_count": 0}}
+            return row
+        receipt = collect(sha=SHA, fetch=malformed)
+        self.assertTrue(receipt["runs_page_schema_valid"])
+        self.assertFalse(receipt["check_runs_schema_valid"])
+        self.assertIsNone(receipt["exact_sha_check_runs"])
+        self.assertFalse(receipt["audit_evidence_complete"])
+
+    def test_run_count_less_than_returned_rows_is_incomplete(self):
+        def malformed(path, *, token=None):
+            row = evidence(path, token=token)
+            if "/actions/runs?" in path:
+                row["data"]["total_count"] = 0
+            return row
+        receipt = collect(sha=SHA, fetch=malformed)
+        self.assertFalse(receipt["runs_page_schema_valid"])
+        self.assertIsNone(receipt["exact_sha_runs_in_latest_page"])
 
     def test_token_not_in_report(self):
         doc = collect(sha=SHA, fetch=evidence, token="sensitive-placeholder")

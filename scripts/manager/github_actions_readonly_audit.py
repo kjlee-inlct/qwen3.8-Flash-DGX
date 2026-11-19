@@ -61,6 +61,8 @@ def _evidence_complete(receipt):
     return (
         all(http.get(key) == 200 for key in required)
         and http.get("default_file") in (200, 404)
+        and receipt.get("runs_page_schema_valid") is True
+        and receipt.get("check_runs_schema_valid") is True
         and isinstance(receipt.get("workflow_state"), str)
         and bool(receipt["workflow_state"])
         and type(receipt.get("repository_actions_enabled")) is bool
@@ -100,10 +102,25 @@ def collect(*, repo=_REPO, branch=_BRANCH, sha, workflow_id=_WORKFLOW,
     permissions = evidence["permissions"].get("data") or {}
     runs = evidence["runs"].get("data") or {}
     checks = evidence["check_runs"].get("data") or {}
-    raw_runs = runs.get("workflow_runs", [])
-    run_rows = raw_runs if isinstance(raw_runs, list) else []
-    exact = [item for item in run_rows if
-             isinstance(item, dict) and item.get("head_sha") == sha]
+    raw_runs = runs.get("workflow_runs")
+    raw_checks = checks.get("check_runs")
+    runs_page_schema_valid = (
+        type(runs.get("total_count")) is int
+        and runs["total_count"] >= 0
+        and isinstance(raw_runs, list)
+        and runs["total_count"] >= len(raw_runs)
+        and all(isinstance(item, dict) and isinstance(item.get("head_sha"), str)
+                for item in raw_runs)
+    )
+    checks_page_schema_valid = (
+        type(checks.get("total_count")) is int
+        and checks["total_count"] >= 0
+        and isinstance(raw_checks, list)
+        and checks["total_count"] >= len(raw_checks)
+        and all(isinstance(item, dict) for item in raw_checks)
+    )
+    run_rows = raw_runs if runs_page_schema_valid else []
+    exact = [item for item in run_rows if item.get("head_sha") == sha]
     recent = next((item for item in run_rows if isinstance(item, dict)), {})
 
     state = workflow.get("state") if isinstance(workflow.get("state"), str) else None
@@ -114,7 +131,7 @@ def collect(*, repo=_REPO, branch=_BRANCH, sha, workflow_id=_WORKFLOW,
         finding = "REPOSITORY_ACTIONS_DISABLED_OBSERVED"
     elif exact:
         finding = "WORKFLOW_RUN_OBSERVED_NOT_CI_ATTESTED"
-    elif evidence["runs"].get("data") is not None:
+    elif runs_page_schema_valid:
         finding = "NO_MATCHING_RUN_IN_LATEST_BRANCH_PAGE"
     else:
         finding = "INCOMPLETE_API_EVIDENCE"
@@ -136,14 +153,17 @@ def collect(*, repo=_REPO, branch=_BRANCH, sha, workflow_id=_WORKFLOW,
         "repository_actions_enabled": enabled,
         "default_branch_workflow_present": present("default_file"),
         "feature_branch_workflow_present": present("branch_file"),
-        "exact_sha_runs_in_latest_page": len(exact) if evidence["runs"].get("data") is not None else None,
-        "exact_sha_check_runs": checks.get("total_count") if type(checks.get("total_count")) is int else None,
+        "runs_page_schema_valid": runs_page_schema_valid,
+        "check_runs_schema_valid": checks_page_schema_valid,
+        "exact_sha_runs_in_latest_page": len(exact) if runs_page_schema_valid else None,
+        "exact_sha_check_runs": checks.get("total_count") if checks_page_schema_valid else None,
         "last_branch_run": {k: recent.get(k) for k in
                             ("head_sha", "created_at", "event", "status", "conclusion")} if recent else None,
         "endpoint_http_status": {key: evidence[key].get("http_status") for key in paths},
         "read_only": True, "mutated_github_or_dgx": False,
         "ci_verified": False, "production_released": False,
-        "note": ("Latest-page run count is not exhaustive history. HTTP 401/403/404 on "
+        "note": ("HTTP 200 without well-formed run/check arrays is partial evidence, not zero. "
+                 "Latest-page run count is not exhaustive history. HTTP 401/403/404 on "
                  "Actions permissions is not proof that Actions are disabled. "
                  "The result never authorizes service or repository settings changes.")
     }
