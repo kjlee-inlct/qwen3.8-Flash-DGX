@@ -1,3 +1,5 @@
+> **2026-11-20 P7 source-only update:** P7 source reconciliation now fails closed on repeated (whitespace-trimmed) `probe_id` across service/proxy/gateway/storage, without claiming independent evidence authentication. New negative CPU tests added. Git blob exact-match local isolated fixture **8/8 PASS** and modified P7 methods with stubbed model registry **7/7 PASS**, **not** the full Wizard CLI/repo suite or GitHub CI. See [P7 detail](../docs/P7-PROBE-ID-INDEPENDENCE-CONTRACT-20261120.md). Old P5-D 138/138 and permission 7/7 belong to their historical, distinct SHAs; P5-D PLE/NAT, P6-E operating, P7 actual integration, P8 recovery and production remain unaccepted. PR stays Draft/Open/Unmerged.
+
 # Blazux DGX Spark — 새 세션 인수인계 / 실행 프롬프트 (2026-11-20 KST)
 
 > **현재 판단의 기준:** 2026-11-20 현재 feature branch GitHub HEAD `fe62f7284d12a7556cd0dc4925c627289c207208`를 확인한 후 작성했습니다. 이 문서를 커밋하면 HEAD가 바뀌므로 새 세션에서는 **GitHub PR #1의 최신 HEAD를 다시 조회**해야 합니다. 문서 커밋을 신규 CPU 또는 CI 수용으로 간주하지 마십시오.

@@ -76,6 +76,26 @@ class P7IntegrationContractCPU(unittest.TestCase):
         self.assertIn("PROXY_OBSERVATION_TIME_MISSING",
                       integration_reconcile(self.model, self.doc)["issues"])
 
+    def test_duplicate_probe_id_blocks_both_components(self):
+        self.doc["gateway"]["probe_id"] = self.doc["proxy"]["probe_id"]
+        report = integration_reconcile(self.model, self.doc)
+        self.assertEqual(report["status"], "BLOCKED")
+        for component in ("proxy", "gateway"):
+            self.assertEqual(report["component_checks"][component]["status"],
+                             "NOT_OBSERVED")
+            self.assertIn(component.upper() + "_PROBE_ID_REUSED_ACROSS_COMPONENTS",
+                          report["issues"])
+        self.assertFalse(report["operations_enabled"])
+        self.assertFalse(report["production_released"])
+
+    def test_whitespace_normalized_duplicate_probe_id_fails_closed(self):
+        self.doc["service"]["probe_id"] = " shared-probe "
+        self.doc["storage"]["probe_id"] = "shared-probe"
+        report = integration_reconcile(self.model, self.doc)
+        self.assertEqual(report["status"], "BLOCKED")
+        self.assertIn("SERVICE_PROBE_ID_REUSED_ACROSS_COMPONENTS", report["issues"])
+        self.assertIn("STORAGE_PROBE_ID_REUSED_ACROSS_COMPONENTS", report["issues"])
+
     def test_future_model_registry_is_automatically_supported(self):
         from scripts.manager.service_manifest import policy
         cfg = json.loads(json.dumps(policy()))

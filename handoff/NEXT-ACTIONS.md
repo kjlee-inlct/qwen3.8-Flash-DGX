@@ -1,3 +1,11 @@
+## 2026-11-20 — P7 duplicate probe-ID fail-closed (source-only)
+- `scripts/manager/integration_contract.py` now rejects the same normalized (trimmed) nonblank `probe_id` appearing in any two of service/proxy/gateway/storage. Both components are marked `NOT_OBSERVED`; issue suffix `PROBE_ID_REUSED_ACROSS_COMPONENTS`. Unique identifiers remain mere untrusted text, **not** independent authentication.
+- `tests/test_integration_contract_cpu.py`: two new negative unittest methods for exact duplicate and whitespace-variant IDs. GitHub source blob `84c8032f5bf2a957fc2cdeb913879d948888c26f`, test blob `78f22792f288cc8e567f68b60457f7bbcaf31700` match the files executed locally after an exact-original-Git-blob check.
+- Local isolated synthetic CPU checks: **8/8 PASS**; **7/7 PASS** of modified P7 test methods with a stubbed registry (real Wizard CLI case excluded). **Full repo suite, actual Wizard CLI, Actions CI and DGX live P7 probes: NOT_RUN / UNVERIFIED**. No new full-HEAD test/CI acceptance is claimed.
+- P5-D real PLE/NAT provenance remains BLOCKED; P6-E operating Journal/replay and P7/P8 real acceptance remain BLOCKED/PENDING; production BLOCKED. No Docker/GPU/service/sudo/real Journal/Actions dispatch, main change or PR merge performed. See [P7 scoped change](../docs/P7-PROBE-ID-INDEPENDENCE-CONTRACT-20261120.md).
+
+---
+
 ## 2026-11-20 — 새 세션 인수인계 기준 확정 (2026-11-20 KST, documentation-only)
 
 - Canonical resumable prompt: [SESSION-HANDOFF-P5D-20261120.md](SESSION-HANDOFF-P5D-20261120.md). 반드시 PR #1 latest HEAD를 재조회하고, 문서 커밋이 새 CPU/CI PASS를 의미하지 않는다는 점을 유지한다.

@@ -1,3 +1,11 @@
+## 2026-11-20 — P7 reused source probe IDs rejected without evidence promotion
+- **Decision:** a structural P7 reconciliation cannot label reused IDs as independently observed component records. Trim surrounding whitespace for comparison; reject every component sharing a normalized nonblank `probe_id`. Keep registered model portability, canonical service/served ID, 8000, one active model and 120-second evidence window unchanged.
+- **Evidence boundary:** 8/8 separate isolated synthetic checks and 7/7 modified P7 test methods with stubbed registry succeeded against exact Git blobs `84c8032f5bf2a957fc2cdeb913879d948888c26f` and `78f22792f288cc8e567f68b60457f7bbcaf31700`. The genuine Wizard CLI method, full repository suite, GitHub Actions, live P7/Gateway/Storage probes and operating acceptance **were not executed/verified**. This is source consistency only, not proof of genuinely independent captures.
+- Do not elevate `SOURCE_COMPONENT_FIELDS_CONSISTENT_NOT_LIVE_VERIFIED` to live PASS. Prior P5-D UID/procfs EACCES, PLE RSS/PSS/inode and kernel NAT blockers remain. Do not repeat the known no-sudo audit; do not change DGX, operating Journal, main or PR merge.
+- Contract detail: [P7 probe identity](../docs/P7-PROBE-ID-INDEPENDENCE-CONTRACT-20261120.md).
+
+---
+
 ## 2026-11-20 — operator one-turn P5-D permission diagnosis COMPLETE (exact SHA, non-elevated)
 
 - DGX operator transcript at `045947fccd33952ef4911c908ffb480d62b3d82b`: **7/7 new P5-D permission CPU PASS**, Manifest graph PASS, Wizard PLE source binding PASS. Do not pool with historical 138/138 selected suites at `7c11d0d` as if one SHA/test run.

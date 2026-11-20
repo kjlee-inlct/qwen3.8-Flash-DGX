@@ -44,6 +44,20 @@ def integration_reconcile(model: str, evidence: dict | None,
     if data.get("api_port") != 8000:
         issues.append("FIXED_API_PORT_NOT_EVIDENCED")
 
+    # Reused component IDs cannot even support a structural claim of
+    # independent captures. This is a syntactic fence, not authentication.
+    probe_id_owners = {}
+    for component in _COMPONENTS:
+        entry = data.get(component)
+        if isinstance(entry, dict) and isinstance(entry.get("probe_id"), str):
+            probe_id = entry["probe_id"].strip()
+            if probe_id:
+                probe_id_owners.setdefault(probe_id, []).append(component)
+    reused_probe_ids = {
+        probe_id for probe_id, owners in probe_id_owners.items()
+        if len(owners) > 1
+    }
+
     for component in _COMPONENTS:
         entry = data.get(component)
         reasons = []
@@ -57,6 +71,8 @@ def integration_reconcile(model: str, evidence: dict | None,
         probe_id = entry.get("probe_id")
         if not isinstance(probe_id, str) or not probe_id.strip():
             reasons.append("PROBE_ID_MISSING")
+        elif probe_id.strip() in reused_probe_ids:
+            reasons.append("PROBE_ID_REUSED_ACROSS_COMPONENTS")
         if entry.get("model") != model:
             reasons.append("MODEL_MISMATCH")
         if entry.get("probe_mode") != "DIRECT_OBSERVATION":

@@ -1,3 +1,5 @@
+> **2026-11-20 source-only P7 constraint:** `operations generic integration-reconcile` now treats duplicate nonblank `probe_id` values among service/proxy/gateway/storage as blocked for **both** components (`*_PROBE_ID_REUSED_ACROSS_COMPONENTS`); surrounding whitespace is normalized for this comparison. Four unique IDs are only a source-level consistency prerequisite, not proof of independent probes, live API health, or operations authority. Wizard CLI and full CI remain NOT_RUN/UNVERIFIED for the patch; see [P7 rationale](P7-PROBE-ID-INDEPENDENCE-CONTRACT-20261120.md).
+
 ## 2026-11-09 current P5 v2 supersession — archived adapter compatibility marker
 
 Historical adapter `qwen4exp-qsa62318-lmhead-v032-v2` was superseded by v3, which resolved `lm_head.weight_scale`; neither legacy adapter nor source-only P5–P8 updates grant production release. Latest 10:15 KST operator idle observation and common source status appear below.
