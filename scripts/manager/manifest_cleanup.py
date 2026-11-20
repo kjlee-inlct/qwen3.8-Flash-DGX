@@ -208,8 +208,9 @@ def make_plan(*, run: Callable[..., Any] = gpu.call,
             return _deny("COMPLETED_MANIFEST_BUT_DOCKER_OR_RECEIPT_DRIFT")
         if root.is_symlink() or (root.exists() and list(root.glob("attempt-*.json"))):
             issues.append("PREVIOUS_CLEANUP_ATTEMPT_REQUIRES_MANUAL_RECONCILIATION")
-        status = active_status()
-        if status.get("status") != "LIVE_CANONICAL_27B_NATIVE_TOOLS_VERIFIED" or status.get("issues"):
+        active_report = active_status()
+        if (active_report.get("status") != "LIVE_CANONICAL_27B_NATIVE_TOOLS_VERIFIED"
+                or active_report.get("issues")):
             issues.append("ACTIVE_CANONICAL_27B_AND_BENCHMARK_NOT_VERIFIED")
         names = _run_names(run, all_containers=True)
         running = _run_names(run, all_containers=False)
