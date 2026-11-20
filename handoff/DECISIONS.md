@@ -1,3 +1,10 @@
+## 2026-11-20 — P6-E type-strict fake nonce marker decisions
+- **Decision:** a fake replay fence's read-back JSON must not accept Python's bool/int/float value equality as a valid typed schema. Match the full key set, each primitive's exact type and its value, while preserving the existing fake-only, never-authorizing output and no marker auto-deletion.
+- **Evidence:** locally isolated helper-schema harness 8/8 PASS (8 tests, 5 tampering subcases), source/test Git blobs `8a7b0f2c69bed0fabb9031d17dc5e7008c6910a1`/`c0659778720716a1f98ee80882dee85c876e9fc0`. **Full repository CPU tests NOT_RUN, GitHub CI UNVERIFIED, no real DGX proof or durable nonce attestation.** No live Journal, service or approval state altered.
+- No repeat P5-D non-elevated procfs audit until separate rights/authorization; keep PLE/NAT and P6-E/P7/P8 production barriers. See [type guard analysis](../docs/P6-E-FAKE-NONCE-JSON-TYPE-GUARD-20261120.md).
+
+---
+
 ## 2026-11-20 — P7 reused source probe IDs rejected without evidence promotion
 - **Decision:** a structural P7 reconciliation cannot label reused IDs as independently observed component records. Trim surrounding whitespace for comparison; reject every component sharing a normalized nonblank `probe_id`. Keep registered model portability, canonical service/served ID, 8000, one active model and 120-second evidence window unchanged.
 - **Evidence boundary:** 8/8 separate isolated synthetic checks and 7/7 modified P7 test methods with stubbed registry succeeded against exact Git blobs `84c8032f5bf2a957fc2cdeb913879d948888c26f` and `78f22792f288cc8e567f68b60457f7bbcaf31700`. The genuine Wizard CLI method, full repository suite, GitHub Actions, live P7/Gateway/Storage probes and operating acceptance **were not executed/verified**. This is source consistency only, not proof of genuinely independent captures.

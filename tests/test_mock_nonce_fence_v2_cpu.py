@@ -103,6 +103,40 @@ class MockNonceFenceV2CPU(unittest.TestCase):
             self.assertEqual(claim(folder)["status"], "BLOCKED_FAKE_NONCE_REPLAY")
             self.assertTrue(marker.exists())
 
+    def test_same_value_wrong_json_type_marker_fails_closed(self):
+        # Old dict equality would accept these without changing record_hash:
+        # True == 1, 1 == True, and 8000 == 8000.0 in Python.
+        substitutions = (
+            ("requires_independent_approval", 1),
+            ("requires_live_revalidation", 1),
+            ("max_active_gpu_models", True),
+            ("api_host_port", 8000.0),
+            ("schema_version", 2.0),
+        )
+        for field, substitute in substitutions:
+            with (self.subTest(field=field),
+                  tempfile.TemporaryDirectory(prefix=PREFIX) as root):
+                folder = Path(root)
+                self.assertEqual(claim(folder)["status"],
+                                 "PASS_FAKE_NONCE_MARKER_CREATED")
+                marker = next(folder.iterdir())
+                doc = json.loads(marker.read_text(encoding="utf-8"))
+                self.assertEqual(doc[field], substitute)
+                self.assertIsNot(type(doc[field]), type(substitute))
+                doc[field] = substitute
+                marker.write_text(
+                    json.dumps(doc, sort_keys=True, separators=(",", ":")) + "\n",
+                    encoding="utf-8",
+                )
+                result = audit(folder)
+                self.assertEqual(result["status"], "BLOCKED_FAKE_NONCE_AUDIT")
+                self.assertIn("FAKE_MARKER_IDENTITY_OR_HASH_MISMATCH",
+                              result["issues"])
+                self.assertFalse(result["real_operating_nonce_fence_verified"])
+                self.assertEqual(claim(folder)["status"],
+                                 "BLOCKED_FAKE_NONCE_REPLAY")
+                self.assertTrue(marker.exists())
+
     def test_injected_fsync_failure_keeps_nonce_spent_and_never_recovers(self):
         # Failure at either file fsync or directory fsync is uncertain durable
         # state, not permission to retry, delete, resume, or claim approval.

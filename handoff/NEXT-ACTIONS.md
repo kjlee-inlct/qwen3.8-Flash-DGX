@@ -1,3 +1,10 @@
+## 2026-11-20 — P6-E fake nonce marker JSON type fail-closed (source-only)
+- Fixed Python JSON bool/int/float equality ambiguity in `mock_nonce_fence_v2.fake_nonce_audit`. Exact type + value + field key-set checks prevent `True↔1` and `8000↔8000.0` marker laundering. Added five malformed-type fixtures as one new CPU unittest method.
+- New code blob `8a7b0f2c69bed0fabb9031d17dc5e7008c6910a1`, test blob `c0659778720716a1f98ee80882dee85c876e9fc0`. **Isolated helper/schema CPU harness 8/8 PASS (0.001s), not a full module test.** Added repository unittest method NOT_RUN; full P6-E/P5-D suite, Wizard CLI and GitHub Actions on new HEAD NOT_RUN/UNVERIFIED. See [technical record](../docs/P6-E-FAKE-NONCE-JSON-TYPE-GUARD-20261120.md).
+- Next: clean exact-SHA CPU `test_mock_nonce_fence_v2_cpu.py` and `test_p5d_p6e_cpu.py`; do not trigger CI manually or repeat known P5-D EACCES. Real durable operating Journal/replay, P5-D PLE/NAT, P7 live integration, P8 recovery and Production all remain BLOCKED/UNVERIFIED. No DGX operational changes.
+
+---
+
 ## 2026-11-20 — P7 duplicate probe-ID fail-closed (source-only)
 - `scripts/manager/integration_contract.py` now rejects the same normalized (trimmed) nonblank `probe_id` appearing in any two of service/proxy/gateway/storage. Both components are marked `NOT_OBSERVED`; issue suffix `PROBE_ID_REUSED_ACROSS_COMPONENTS`. Unique identifiers remain mere untrusted text, **not** independent authentication.
 - `tests/test_integration_contract_cpu.py`: two new negative unittest methods for exact duplicate and whitespace-variant IDs. GitHub source blob `84c8032f5bf2a957fc2cdeb913879d948888c26f`, test blob `78f22792f288cc8e567f68b60457f7bbcaf31700` match the files executed locally after an exact-original-Git-blob check.

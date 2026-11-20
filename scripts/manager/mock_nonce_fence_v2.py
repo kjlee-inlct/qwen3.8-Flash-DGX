@@ -101,6 +101,19 @@ def _reject_json_constant(value: str) -> None:
     raise ValueError("FAKE_MARKER_NONFINITE_JSON")
 
 
+def _exact_record_fields(actual: object, expected: dict) -> bool:
+    """Prevent JSON bool/int/float equality from laundering a tampered marker.
+
+    Python considers True == 1 and 8000 == 8000.0, but the persisted
+    marker is a typed schema. Both the key set and each primitive type
+    must match the locally reconstructed fake expectation exactly.
+    """
+    if type(actual) is not dict or actual.keys() != expected.keys():
+        return False
+    return all(type(actual[key]) is type(expected[key])
+               and actual[key] == expected[key] for key in expected)
+
+
 def _result(status: str, issues: list[str], *, marker_created: bool = False) -> dict:
     return {
         "schema_version": 2, "stage": "p6",
@@ -199,7 +212,7 @@ def fake_nonce_audit(folder: Path, source: str, target: str,
                 raise ValueError("FAKE_MARKER_OR_DIRECTORY_CHANGED_DURING_READ")
             actual = json.loads(raw, object_pairs_hook=_unique_json_pairs,
                                     parse_constant=_reject_json_constant)
-            if type(actual) is not dict or actual != expected:
+            if not _exact_record_fields(actual, expected):
                 raise ValueError("FAKE_MARKER_IDENTITY_OR_HASH_MISMATCH")
         except (OSError, ValueError, TypeError, UnicodeError) as exc:
             return _result("BLOCKED_FAKE_NONCE_AUDIT", [str(exc)])

@@ -1,3 +1,7 @@
+## 2026-11-20 — P6-E fake-only marker read-back type guard
+- `mock_nonce_fence_v2.fake_nonce_audit` now blocks otherwise value-equal but type-drifted JSON markers; `True==1`, `8000==8000.0` are not valid typed nonce schema evidence. A CPU unit test was added with 5 negative cases. Local **isolated helper-only 8/8 PASS**; full repository tests, new-HEAD Actions and actual operating P6-E nonce/Journal validation **NOT_RUN/UNVERIFIED**.
+- Operating P5-D, P6-E, P7, P8 and production gates unchanged. [P6-E type guard source decision](P6-E-FAKE-NONCE-JSON-TYPE-GUARD-20261120.md).
+
 ## 2026-11-20 — P7 source-only evidence ID uniqueness
 - The P7 `integration-reconcile` source contract now rejects duplicated nonblank `probe_id` across service/proxy/gateway/storage (trimmed equality). Both reused components are `NOT_OBSERVED`, overall `BLOCKED`; the fields are untrusted and uniqueness does not prove external observation. Negative cases added without modifying Wizard execution permissions.
 - Local exact-blob isolated synthetic 8/8 PASS; stubbed-registry P7 test methods 7/7 PASS. **Actual Wizard CLI and whole-repository tests NOT_RUN; GitHub CI UNVERIFIED.** P5-D permission/PLE/NAT, P6-E real durable ledger, P7 actual components, P8 actual recovery and production gates unchanged. See [P7 note](P7-PROBE-ID-INDEPENDENCE-CONTRACT-20261120.md).
