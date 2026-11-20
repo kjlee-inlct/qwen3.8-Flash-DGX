@@ -1,3 +1,10 @@
+## 2026-11-20 — P6-E fake nonce marker post-fsync inode check (source-only)
+- In `mock_nonce_fence_v2.fake_nonce_claim`, pin created marker `fstat` identity and compare to non-following `stat` after directory `fsync`. Detect symlink replacement, same-bytes new-inode swap, mode/owner/link/size drift before reporting a fake marker created. Do not unlink or retry ambiguous markers.
+- Added **one** CPU unittest method with **two** injected file-swap negatives to `test_mock_nonce_fence_v2_cpu.py`. New source/test blobs `0c015922e4d24d4e4df2a0b8f946d49198f42ae9` / `a671dbb2088a4f1f124b436d3a539d889588d4c6`. **Separate isolated filesystem reproducer 4/4 PASS (0.020s), full repository unittest NOT_RUN, CI UNVERIFIED.** See [P6-E inode continuity note](../docs/P6-E-FAKE-NONCE-POST-FSYNC-INODE-CONTINUITY-20261120.md).
+- Operator next: exact-SHA full `test_mock_nonce_fence_v2_cpu.py` and `test_p5d_p6e_cpu.py` CPU tests, no full P5-D live audit repeat. All real P5-D PLE/NAT, P6-E operating ledger, P7/P8 live, production blocked. PR Draft/Open/Unmerged, no DGX service changes.
+
+---
+
 ## 2026-11-20 — P6-E fake nonce marker JSON type fail-closed (source-only)
 - Fixed Python JSON bool/int/float equality ambiguity in `mock_nonce_fence_v2.fake_nonce_audit`. Exact type + value + field key-set checks prevent `True↔1` and `8000↔8000.0` marker laundering. Added five malformed-type fixtures as one new CPU unittest method.
 - New code blob `8a7b0f2c69bed0fabb9031d17dc5e7008c6910a1`, test blob `c0659778720716a1f98ee80882dee85c876e9fc0`. **Isolated helper/schema CPU harness 8/8 PASS (0.001s), not a full module test.** Added repository unittest method NOT_RUN; full P6-E/P5-D suite, Wizard CLI and GitHub Actions on new HEAD NOT_RUN/UNVERIFIED. See [technical record](../docs/P6-E-FAKE-NONCE-JSON-TYPE-GUARD-20261120.md).

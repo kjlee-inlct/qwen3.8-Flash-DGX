@@ -1,3 +1,6 @@
+## 2026-11-20 — P6-E fake marker post-fsync continuity
+- Source-only `fake_nonce_claim` now rejects a marker whose named inode, file type, owner/mode/link or size changes between file `fsync` and post-directory-`fsync` check. Synthetic negative test cases for symlink and identical-byte inode replacement added. Isolated mirror-harness **4/4 PASS**; full repo tests NOT_RUN, Actions exact-HEAD CI UNVERIFIED. Production and P5-D/P6-E/P7/P8 operating gates unchanged. See [technical record](P6-E-FAKE-NONCE-POST-FSYNC-INODE-CONTINUITY-20261120.md).
+
 ## 2026-11-20 — P6-E fake-only marker read-back type guard
 - `mock_nonce_fence_v2.fake_nonce_audit` now blocks otherwise value-equal but type-drifted JSON markers; `True==1`, `8000==8000.0` are not valid typed nonce schema evidence. A CPU unit test was added with 5 negative cases. Local **isolated helper-only 8/8 PASS**; full repository tests, new-HEAD Actions and actual operating P6-E nonce/Journal validation **NOT_RUN/UNVERIFIED**.
 - Operating P5-D, P6-E, P7, P8 and production gates unchanged. [P6-E type guard source decision](P6-E-FAKE-NONCE-JSON-TYPE-GUARD-20261120.md).

@@ -164,6 +164,48 @@ class MockNonceFenceV2CPU(unittest.TestCase):
                 self.assertTrue(marker.exists())
                 self.assertEqual(claim(folder)["status"], "BLOCKED_FAKE_NONCE_REPLAY")
 
+    def test_marker_swap_after_directory_fsync_blocks_claim(self):
+        # An O_EXCL write/fsync is not enough if a concurrent test writer
+        # moves/replaces the path before the claim reports success.
+        original_fsync = os.fsync
+        for replacement in ("symlink", "same_bytes_new_inode"):
+            with (self.subTest(replacement=replacement),
+                  tempfile.TemporaryDirectory(prefix=PREFIX) as root):
+                folder = Path(root)
+                marker = folder / ("fake-nonce-" + "d" * 64 + ".json")
+                calls = 0
+
+                def swap_on_directory_fsync(fd):
+                    nonlocal calls
+                    calls += 1
+                    if calls == 2:
+                        raw = marker.read_bytes()
+                        if replacement == "symlink":
+                            marker.unlink()
+                            marker.symlink_to(folder / "missing-target")
+                        else:
+                            # Keep the original inode alive so a byte-equal
+                            # replacement cannot accidentally reuse it.
+                            marker.rename(folder / "old-marker-held")
+                            marker.write_bytes(raw)
+                            os.chmod(marker, 0o600)
+                    return original_fsync(fd)
+
+                with patch("scripts.manager.mock_nonce_fence_v2.os.fsync",
+                           side_effect=swap_on_directory_fsync):
+                    result = claim(folder)
+                self.assertEqual(calls, 2)
+                self.assertEqual(result["status"], "BLOCKED_FAKE_NONCE_IO")
+                self.assertIn(
+                    "FAKE_NONCE_DURABILITY_OR_ROOT_IDENTITY_UNKNOWN",
+                    result["issues"],
+                )
+                self.assertFalse(result["fake_durable_marker_created"])
+                self.assertFalse(result["real_operating_nonce_fence_verified"])
+                self.assertEqual(claim(folder)["status"],
+                                 "BLOCKED_FAKE_NONCE_REPLAY")
+                self.assertTrue(marker.exists() or marker.is_symlink())
+
     def test_bad_root_expiry_nonce_and_pair_never_write(self):
         with tempfile.TemporaryDirectory(prefix=PREFIX) as root:
             folder = Path(root)

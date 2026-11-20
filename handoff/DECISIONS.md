@@ -1,3 +1,10 @@
+## 2026-11-20 — P6-E fake marker must retain inode identity after fsync
+- **Decision:** `fsync(file)` plus `fsync(directory)` and a stable **directory** identity are insufficient to claim even fake marker consistency when the named file may be replaced. Add best-effort post-fsync `stat(..., follow_symlinks=False)` tied to the originally written `fstat` inode and private regular-file metadata. Fail closed without deleting uncertain markers.
+- Local isolated filesystem harness **4/4 PASS**, new repository negative swap tests added **NOT_RUN**. Blob SHA source `0c015922e4d24d4e4df2a0b8f946d49198f42ae9`, tests `a671dbb2088a4f1f124b436d3a539d889588d4c6`. Real operating nonce/Journal, full suite and GitHub CI still unverified/blocked.
+- This is a fake-only limited timing check; no guarantee against subsequent tampering, no sudo/GPU/Docker/Journal real writes, no main/merge/release. [Technical record](../docs/P6-E-FAKE-NONCE-POST-FSYNC-INODE-CONTINUITY-20261120.md).
+
+---
+
 ## 2026-11-20 — P6-E type-strict fake nonce marker decisions
 - **Decision:** a fake replay fence's read-back JSON must not accept Python's bool/int/float value equality as a valid typed schema. Match the full key set, each primitive's exact type and its value, while preserving the existing fake-only, never-authorizing output and no marker auto-deletion.
 - **Evidence:** locally isolated helper-schema harness 8/8 PASS (8 tests, 5 tampering subcases), source/test Git blobs `8a7b0f2c69bed0fabb9031d17dc5e7008c6910a1`/`c0659778720716a1f98ee80882dee85c876e9fc0`. **Full repository CPU tests NOT_RUN, GitHub CI UNVERIFIED, no real DGX proof or durable nonce attestation.** No live Journal, service or approval state altered.

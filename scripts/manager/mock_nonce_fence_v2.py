@@ -164,7 +164,20 @@ def fake_nonce_claim(folder: Path, source: str, target: str,
                 stream.write(raw)
                 stream.flush()
                 os.fsync(stream.fileno())
+                created = os.fstat(stream.fileno())
             os.fsync(directory_fd)
+            # The directory can remain the same while a concurrent fixture
+            # writer replaces the marker. Pin the inode observed at file
+            # fsync and reject a path swap at the final read-only check.
+            named = os.stat(filename, dir_fd=directory_fd,
+                            follow_symlinks=False)
+            if (not stat.S_ISREG(named.st_mode)
+                    or (created.st_dev, created.st_ino)
+                    != (named.st_dev, named.st_ino)
+                    or created.st_uid != os.getuid()
+                    or stat.S_IMODE(named.st_mode) != 0o600
+                    or named.st_nlink != 1 or named.st_size != len(raw)):
+                raise OSError("FAKE_NONCE_MARKER_CHANGED_AFTER_WRITE")
             if not _same_private_root(root, directory_fd):
                 raise OSError("FAKE_DIRECTORY_CHANGED_AFTER_WRITE")
         except (OSError, ValueError):
