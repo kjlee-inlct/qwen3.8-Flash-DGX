@@ -1,3 +1,47 @@
+## 2026-11-21 KST — 새 세션 최종 인수인계 (문서 커밋 전 HEAD 4c28ee8778a4837a0b7f4452a0195af460acd038)
+- GitHub feature branch HEAD를 직접 대조해 `4c28ee8778a4837a0b7f4452a0195af460acd038`와 identical 확인. 문서 변경으로 최종 HEAD는 달라지므로 시작 시 반드시 다시 조회.
+- **CPU 검증은 각각 다른 SHA:** P6-E 37/37 RC0 at `4c86b799`; P7 13/13 RC0 at `77fe76a8`; Wizard 126/126 RC0 at `a4bd913`; Cleanup 12/12 RC0 및 Manifest 77/77 RC0 (서브셋 중복 계산 금지) at `dcf73332`. 실제 CI는 최신 exact-SHA 검증되지 않았으며 doc-only HEAD는 CPU PASS가 아님.
+- Next action: P7 independent/authenticated observation provenance boundary, model/service identity binding and fail-closed source-only tests; no runtime modifications or unapproved CI.
+
+# 새 세션 실행 프롬프트 — Blazux DGX Spark / P7 independent provenance (2026-11-21)
+
+이전 Blazux DGX Spark GB10 / vLLM 0.32.0 / P1–P8 개발을 이어서 수행해주세요. **단순 계획이나 요약으로 끝내지 말고**, GitHub 연결 도구로 최신 소스/문서를 확인한 뒤 허용된 **source-only 범위에서** 실제 결함 재현 → 최소 구현 → 부정 조건 CPU 테스트 추가 → 가능한 검증 → feature 브랜치 커밋 → 최신 SHA/CI 조회 → 영구 문서 갱신까지 진행하세요. 기존 구현을 중복 개발하지 마세요. 새로운 오류가 없다면 임의 코드 변경 대신 근거 있는 테스트/문서 개선을 수행하세요.
+
+## 저장소와 진입점
+- Development: https://github.com/kjlee-inlct/qwen3.8-Flash-DGX
+- Upstream: https://github.com/blazux/qwen3.8-Flash-DGX
+- Branch: `feature/recipe-wizard-handoff`; PR #1: https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/pull/1 (기록상 Draft/Open/Unmerged, base main; **현재 상태 재조회**)
+- 작업 전 확인한 HEAD: `4c28ee8778a4837a0b7f4452a0195af460acd038`. **인수인계 문서 커밋 후 SHA는 바뀌므로 이것을 현재 HEAD로 단정하지 마세요.**
+- 최우선 문서: `handoff/SESSION-HANDOFF-P7-20261120.md`, `handoff/SESSION-START-PROMPT.md`, `handoff/EVIDENCE-LEDGER.md`, `handoff/NEXT-ACTIONS.md`, `handoff/DECISIONS.md`, `docs/P1-P8-EXECUTION-ROADMAP-20261119.md`, `docs/P7-PROBE-ID-INDEPENDENCE-CONTRACT-20261120.md`, `docs/WIZARD-CLI-CONTRACT.md`.
+- Source: `scripts/manager/integration_contract.py`, `scripts/manager/generic_operations.py`, `scripts/manager/manifest_cleanup.py`, `tests/test_integration_contract_cpu.py`, `tests/test_manifest_cleanup_cpu.py`, `wizard/main.py`, 서비스/모델 Manifest.
+
+## 마지막으로 확정한 CPU 증거 — SHA별로 분리
+- P6-E Fake Journal/Nonce: `4c86b7990ea865a31bb78a346ca92867ed5e9e83`에서 Journal **22/22 RC0** + Fake Nonce **15/15 RC0** = **37/37** (운영자 로그, CI 아님).
+- P7 upstream/service identity source consistency: `77fe76a839d85930533536ec2db5af3c1f4c7293`에서 **13/13 RC0 (0.005s)**. Proxy/Gateway `upstream_container_id`가 Service `container_id`와 동일한 유효 64-hex여야 한다. Numeric type, timestamp +120s, normalized duplicate `probe_id`, model/served ID, fixed :8000도 기존 구현됨. **편집 가능한 JSON 필드는 독립 인증이 아님**.
+- Wizard CPU: `a4bd913267f688129477415fd7d15c6842122acb`에서 **126/126 RC0 (61.070s)** (운영자 로그).
+- Manifest cleanup 이전 오류: `a4bd913...`에서 **76건 중 2 ERROR, RC1** (`manifest_cleanup.py`의 지역 `status`가 전역 함수 `status()`를 shadow); 소스 수정 `84352446dfcdafd9002a16f05b67fc0300318aa1`, 테스트 추가 `6a76c425a7b4916c8fcec9d0c98cfb124d361200`; 신규 테스트에 double-backslash SyntaxError가 발생한 뒤 `9f891f85eac8fd595c74a824b4f9efe20938ddd4`에서 수정.
+- **최신 Manifest 검증 완료**: `dcf73332e8ffc8d729b9cbf4b35d08c52643421b`에서 Python AST **2/2 OK**, Cleanup **12/12 RC0 (0.003s)**, full Manifest **77/77 RC0 (0.141s)**. **12개는 77개에 포함되므로 중복 합산 금지**. `git status --short` 출력은 별도로 표시되지 않아 clean-tree 확인은 미완료. 해당 SHA의 GitHub PR-filtered Actions runs 0, commit statuses 0; **CI_UNVERIFIED**.
+- 그 이후 documentation-only HEAD `4c28ee8778a4837a0b7f4452a0195af460acd038`는 **새 CPU PASS가 아님**. 서로 다른 SHA에서의 Wizard/P7/Manifest 결과를 하나의 최신 HEAD 전체 테스트 PASS로 합치지 마세요.
+
+## P5–P8 운영 수용 게이트 (변경 없음)
+- P5-D: 이전 SHA들에서 source CPU PASS. 실제 PLE RSS/PSS, inode/PID와 Docker NAT/kernel port owner는 **BLOCKED**, 비승격 procfs EACCES/UID 차이. 같은 권한으로 반복 실측하지 마세요. RC3은 증거 부족이지 서비스 장애 단정이 아님.
+- P6-E: Fake Journal v2/Nonce fence CPU 37/37 PASS; **실제 operating Journal, durable replay prevention, operator approval identity는 BLOCKED**.
+- P7: source-only model/service/upstream binding CPU PASS; **독립적으로 인증된 service/Proxy/Gateway/Storage 관측은 PENDING/NOT_ACCEPTED**. `SOURCE_COMPONENT_FIELDS_CONSISTENT_NOT_LIVE_VERIFIED`를 live PASS로 승격 금지.
+- P8: 실제 restart/rollback/restore 수용 **BLOCKED**. Production Release **BLOCKED**. GitHub CI 최신 exact-SHA **UNVERIFIED**; 신규 run이 없다는 사실만으로 원인을 단정하지 마세요.
+
+## 다음 작업 우선순위
+1. 최신 HEAD/PR/관련 소스 및 계약을 GitHub connector로 직접 재확인. `integration_reconcile`가 주장된 단일 Docker ID/served ID만 신뢰하고 있는 한계와 **독립 수집 출처의 인증 경계**를 분석. 소스 문서 구조 검증과 실제 provenance를 엄격히 분리.
+2. 독립 Probe provenance를 설계할 때 **capture/collector identity, command provenance, time/nonce/session, model/service/container binding, evidence authenticity, replay/forgery**, origin/source isolation을 검사하되, 증명되지 않은 신뢰를 부여하지 말 것. Source-only fixture 속 필드만 추가해서 'authenticated' 또는 실제 실행 PASS라 주장하지 말 것. 기존 duplicate probe ID, strict numerics, time skew, 64hex upstream container binding을 재구현하지 말 것.
+3. 재현 가능한 fail-open 결함이 있을 경우 최소 코드 수정 + 긍정/부정 CPU 사례. Wizard/Manifest/P7 기존 안전 계약의 회귀 영향도 확인. 실행 가능 환경이 없다면 `NOT_RUN` 표기하고 **실제 코드 미실행**을 숨기지 말 것; 실행 로그가 필요한 경우 한 번에 실행 가능한 CPU-only 명령 제공.
+4. GitHub feature 브랜치에만 커밋, 새 HEAD/blob 재확인, exact-SHA Actions/check 상태 읽기 전용 조회. 없으면 `CI_UNVERIFIED` 유지. Evidence Ledger, Next Actions, Decisions, 이 문서, 관련 P7 계약을 영구 갱신하고 필요시 PR 설명을 정합화하되 PR Draft/Open/Unmerged 상태 유지.
+5. **운영자 명시 승인 없는 작업 금지**: 모델 전환/다운로드/삭제, Docker/GPU/inference/benchmark, 실행 중 서비스/Portainer restart, 운영 Journal/Nonce 기록·수정·삭제, sudo/ptrace/procfs 권한 승격, firewall/NAT 변경, HF cache cleanup, CI dispatch/rerun/합성 trigger 시험, main 수정, PR merge. `ONE_ACTIVE_MODEL_ONLY`, API :8000, vLLM **0.32.0 고정**, SGLang 금지, OpenWebUI와 Ollama :11434 유지.
+
+## 완료 보고 방식
+마지막에는 **실제 수정한 코드/테스트/문서와 커밋**, **실제 실행된 테스트 SHA·건수·RC**, **CI Run ID 또는 UNVERIFIED**, **독립 운영 수용 미달 조건**, **다음 실행 작업**을 분리하고 URL 링크를 남기세요. 단순 분석/계획만으로 완료 처리하지 말고 승인된 source-only 개발을 진행하세요.
+
+
+---
+
 ## 2026-11-21 KST — Manifest operator CPU 77/77 PASS (exact source SHA)
 - DGX operator at `dcf73332e8ffc8d729b9cbf4b35d08c52643421b`: Python syntax `ast.parse` **2/2 OK**, Cleanup **12/12 OK / CLEANUP_CPU_RC=0 / 0.003s**, full Manifest **77/77 OK / MANIFEST_CPU_RC=0 / 0.141s**. Cleanup 12 are included in Manifest 77, not additive. GitHub compare confirmed the tested HEAD matched feature branch before this documentation update. `git status --short` output not separately shown; clean worktree not independently verified.
 - Source path shadowing fix `84352446` and test backslash repair `9f891f85` now have operator-reported exact-SHA CPU results; previous `CPU_NOT_RUN` entries describe history and are superseded **at `dcf73332e8ffc8d729b9cbf4b35d08c52643421b` only**. Wizard 126/126 at `a4bd913`, P7 13/13 at `77fe76a8`, and P6-E 37/37 at `4c86b799` remain separate receipts.
