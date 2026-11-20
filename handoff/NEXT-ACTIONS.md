@@ -1,3 +1,10 @@
+## 2026-11-20 — P6-E Journal v2 terminal/failed attempt-boundary fail-closed (SOURCE ONLY)
+- Found a V1-to-V2 phase contract gap: `COMMITTED/RESTORED/CANCELLED/RECOVERY_FAILED → OBSERVED` and `FAILED → OBSERVED` were legal under the generic V1 phase graph but would extend a V2 draft with its **same plan/nonce** across a new attempt. `draft_v2_event` now rejects with `V2_DRAFT_ATTEMPT_BOUNDARY_REUSE`; `audit_v2_draft` catches even self-rehashed chains (`V2_JOURNAL_ATTEMPT_BOUNDARY_REUSE`). Repair `FAILED → ROLLBACK_STARTING` remains allowed.
+- Git source blob `15acbe53a725a1161ce9f355fcf0cf912b9bf544`, tests `14379ea97d564d65179bb3e89048b69ca10165d8`; two new negative unittest methods added (Journal/P5-D–P6-E module expected **22**, Fake Nonce stays **15**). Isolated mirror CPU **4/4 PASS**, **not actual repository tests**. New source full CPU/CI **NOT_RUN/UNVERIFIED**. Operator 35/35 applies solely to older `25bf012...`.
+- Real P5-D PLE/NAT, P6-E operating nonce/Journal and restart, P7 actual integration, P8 recovery and Production remain BLOCKED. No DGX service, journal, GPU/Docker, permissions, Actions or main changes. [P6-E new boundary contract](../docs/P6-E-JOURNAL-V2-ATTEMPT-BOUNDARY-20261120.md).
+
+---
+
 ## 2026-11-20 KST — P6-E post-fsync content-readback operator 35/35 CPU OK (SHA-bound)
 
 - **Evidence origin:** operator-provided terminal transcript and explicitly printed checkout SHA `25bf012a4a76d30508743d751d5693aaff33b943`, **not** GitHub Actions. Two executed unittest summaries: `test_mock_nonce_fence_v2_cpu.py` **Ran 15 tests in 0.085s / OK**, and `test_p5d_p6e_cpu.py` **Ran 20 tests in 0.014s / OK**. Combined **35/35 OK**. Direct GitHub file inspection at this exact SHA confirms the test modules contain **15** and **20** `test_*` methods. This supersedes earlier **NOT_RUN** for these two test modules **at this source SHA only**.

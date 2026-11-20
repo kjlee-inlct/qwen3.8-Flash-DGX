@@ -225,6 +225,68 @@ class P6ECPU(unittest.TestCase):
                         source_id="a" * 64, target_id="b" * 64,
                         plan_id="c" * 64, prior=previous, phase="PLANNED")
 
+
+    def test_v2_completed_cancelled_and_failed_attempts_do_not_reenter(self):
+        args = dict(source_id="a" * 64, target_id="b" * 64,
+                    plan_id="c" * 64, nonce="d" * 64)
+        paths = (
+            ("CANCELLED", ("OBSERVED", "PLANNED", "CANCELLED")),
+            ("RESTORED", ("OBSERVED", "PLANNED", "OLD_STOPPING",
+                          "FAILED", "ROLLBACK_STARTING", "RESTORED")),
+            ("COMMITTED", ("OBSERVED", "PLANNED", "OLD_STOPPING",
+                           "OLD_STOPPED", "NEW_STARTING",
+                           "NEW_VERIFYING", "COMMITTED")),
+            ("RECOVERY_FAILED", ("OBSERVED", "PLANNED", "OLD_STOPPING",
+                                 "FAILED", "ROLLBACK_STARTING", "RECOVERY_FAILED")),
+            ("FAILED", ("OBSERVED", "PLANNED", "OLD_STOPPING", "FAILED")),
+        )
+        for ending, phases in paths:
+            with self.subTest(ending=ending):
+                chain, prior = [], None
+                for phase in phases:
+                    prior = draft_v2_event(
+                        "27b", "flash-next", **args, prior=prior, phase=phase)
+                    chain.append(prior)
+                self.assertEqual(
+                    audit_v2_draft(chain)["status"], "PASS_V2_DRAFT_CONSISTENCY")
+                with self.assertRaisesRegex(
+                        ValueError, "V2_DRAFT_ATTEMPT_BOUNDARY_REUSE"):
+                    draft_v2_event("27b", "flash-next", **args, prior=prior,
+                                   phase="OBSERVED")
+
+    def test_v2_self_rehashed_attempt_reentry_chain_fails_closed(self):
+        args = dict(source_id="a" * 64, target_id="b" * 64,
+                    plan_id="c" * 64, nonce="d" * 64)
+        first = draft_v2_event("27b", "flash-next", **args)
+        planned = draft_v2_event("27b", "flash-next", **args,
+                                 prior=first, phase="PLANNED")
+        cancelled = draft_v2_event("27b", "flash-next", **args,
+                                   prior=planned, phase="CANCELLED")
+        forged = dict(cancelled, phase="OBSERVED", event_index=3,
+                      previous_hash=cancelled["event_hash"])
+        body = {key: value for key, value in forged.items()
+                if key != "event_hash"}
+        forged["event_hash"] = hashlib.sha256(json.dumps(
+            body, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+        chain = [first, planned, cancelled, forged]
+        report = audit_v2_draft(chain)
+        self.assertEqual(report["status"], "BLOCKED_V2_DRAFT")
+        self.assertIn("V2_JOURNAL_ATTEMPT_BOUNDARY_REUSE", report["issues"])
+        self.assertNotIn("V2_EVENT_HASH_MISMATCH", report["issues"])
+        fields = ("schema_version", "phase", "event_hash", "source_model",
+                  "target_model", "source_container_id", "target_container_id",
+                  "plan_id", "nonce")
+        review = restart_fence_review(
+            "27b", "flash-next",
+            {"events": chain, "snapshot": {k: forged[k] for k in fields},
+             "consumed_nonces": []})
+        self.assertFalse(review["structural_fields_consistent"])
+        self.assertIn("V2_JOURNAL_ATTEMPT_BOUNDARY_REUSE", review["issues"])
+        self.assertIn("V2_RESTART_JOURNAL_UNTRUSTED_OR_CORRUPT",
+                      review["issues"])
+        self.assertFalse(review["resume_eligible"])
+        self.assertFalse(review["automatic_recovery_authorized"])
+
     def test_v2_exact_nonce_binding_is_structural_only(self):
         kwargs = dict(source_id="a" * 64, target_id="b" * 64,
                       plan_id="c" * 64, nonce="d" * 64)

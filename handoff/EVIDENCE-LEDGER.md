@@ -1,3 +1,10 @@
+## 2026-11-20 — P6-E Journal v2 attempt-boundary source-only development evidence (NEW SOURCE)
+- Historical operator **35/35 CPU OK** is linked only to source SHA `25bf012a4a76d30508743d751d5693aaff33b943`; documentation-only HEAD `5ea5e6bc730684d45ea551356df4944b2854d0a1` inherited no new CPU execution.
+- Subsequent source patch `15acbe53a725a1161ce9f355fcf0cf912b9bf544` and test patch `14379ea97d564d65179bb3e89048b69ca10165d8`: fail-closed on same-nonce V2 terminal/failed reentry; **two new repository CPU test methods added**, not yet executed. Isolated mirrored phase/nonce chain CPU **4/4 PASS** from a local standalone file, **not the GitHub module**. Full new-source CPU NOT_RUN, CI UNVERIFIED.
+- The source status does not authenticate prior event origins or a real persistent nonce ledger, and grants no real P6-E restart, P5-D PLE/NAT, P7 independent component, P8 recovery or production acceptance. [Technical record](../docs/P6-E-JOURNAL-V2-ATTEMPT-BOUNDARY-20261120.md).
+
+---
+
 ## 2026-11-20 KST — P6-E post-fsync content-readback operator 35/35 CPU OK (SHA-bound)
 
 - **Evidence origin:** operator-provided terminal transcript and explicitly printed checkout SHA `25bf012a4a76d30508743d751d5693aaff33b943`, **not** GitHub Actions. Two executed unittest summaries: `test_mock_nonce_fence_v2_cpu.py` **Ran 15 tests in 0.085s / OK**, and `test_p5d_p6e_cpu.py` **Ran 20 tests in 0.014s / OK**. Combined **35/35 OK**. Direct GitHub file inspection at this exact SHA confirms the test modules contain **15** and **20** `test_*` methods. This supersedes earlier **NOT_RUN** for these two test modules **at this source SHA only**.

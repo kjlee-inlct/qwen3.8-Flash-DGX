@@ -1,3 +1,8 @@
+## 2026-11-20 — P6-E Journal v2 single-attempt replay isolation (new source-only)
+- Reused V1 `PHASES` permitted terminal V2 chain reopening with unchanged nonce/plan; reject the four closed phases and `FAILED → OBSERVED` at draft generation and hash-chain audit, including self-rehashed injected events. Rollback repair transitions remain available.
+- Two negative CPU methods added; new source expects **22 P5-D/P6-E + 15 Mock Nonce** methods. **Local mirror 4/4 PASS**, full new-source repository CPU NOT_RUN, Actions CI UNVERIFIED. Operator 35/35 is evidence for `25bf012...` only. [Details](P6-E-JOURNAL-V2-ATTEMPT-BOUNDARY-20261120.md).
+- No change to P5-D permission/PLE/NAT, P6-E actual durable operating ledger, P7 real integration, P8 real restore or Production Release acceptance gates.
+
 ## 2026-11-20 KST — P6-E 35/35 CPU evidence supersession
 - Operator supplied source SHA `25bf012a4a76d30508743d751d5693aaff33b943`, `test_mock_nonce_fence_v2_cpu.py` **15/15 OK** and `test_p5d_p6e_cpu.py` **20/20 OK**, combined **35/35**. `P6E_JOURNAL_TEST_RC=0` printed; nonce RC and clean-tree status not supplied. GitHub directly confirmed test method counts **15+20**.
 - Matching Actions runs/checks/status entries all **0**, `CI_UNVERIFIED`. This closes only the two-module source CPU gap for this SHA; the post-fsync readback patch remains **fake-only** and operating P6-E Journal/replay/approved restart is still BLOCKED. P5-D PLE/NAT, P7 independent integration, P8 actual recovery and production remain unaccepted. Later documentation HEAD has no newly executed tests. [Ledger](../handoff/EVIDENCE-LEDGER.md).

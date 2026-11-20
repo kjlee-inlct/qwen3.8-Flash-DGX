@@ -15,6 +15,19 @@ from scripts.manager.service_journal import PHASES
 
 _ID = re.compile(r"^[0-9a-f]{64}$")
 PHASE_LABELS = tuple(sorted(x for x in PHASES if x is not None))
+# V1 may reopen a terminal transaction with OBSERVED, but V2 events bind
+# one plan and nonce for one draft attempt. Re-entry must start a new
+# independently reviewed draft, never extend the current hash chain.
+ATTEMPT_CLOSED_PHASES = frozenset((
+    "COMMITTED", "RESTORED", "CANCELLED", "RECOVERY_FAILED",
+))
+
+
+def _attempt_boundary_reuse(previous_phase: str | None, phase: str) -> bool:
+    return (previous_phase in ATTEMPT_CLOSED_PHASES
+            or (previous_phase == "FAILED" and phase == "OBSERVED"))
+
+
 REQUIRED_V2 = frozenset((
     "schema_version", "record_origin", "phase", "source_model",
     "target_model", "source_container_id", "target_container_id",
@@ -110,6 +123,8 @@ def draft_v2_event(source: str, target: str, *,
     previous_phase = prior["phase"] if prior is not None else None
     if phase not in PHASES.get(previous_phase, set()):
         raise ValueError("V2_DRAFT_ILLEGAL_PHASE_TRANSITION")
+    if _attempt_boundary_reuse(previous_phase, phase):
+        raise ValueError("V2_DRAFT_ATTEMPT_BOUNDARY_REUSE")
     if prior is not None and (prior.get("schema_version") != 2
                               or prior.get("source_model") != source
                               or prior.get("target_model") != target
@@ -159,8 +174,11 @@ def audit_v2_draft(events: object) -> dict:
         if (event["event_index"] != index or
                 event["previous_hash"] != (previous["event_hash"] if previous else None)):
             issues.append("V2_EVENT_SEQUENCE_MISMATCH")
-        if event["phase"] not in PHASES.get(previous["phase"] if previous else None, set()):
+        prior_phase = previous["phase"] if previous else None
+        if event["phase"] not in PHASES.get(prior_phase, set()):
             issues.append("V2_PHASE_ILLEGAL")
+        if _attempt_boundary_reuse(prior_phase, event["phase"]):
+            issues.append("V2_JOURNAL_ATTEMPT_BOUNDARY_REUSE")
         if (event["api_host_port"] != 8000 or event["max_active_gpu_models"] != 1
                 or event["live_revalidation_required"] is not True
                 or event["approval_authentication_required"] is not True

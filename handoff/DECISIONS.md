@@ -1,3 +1,10 @@
+## 2026-11-20 — V2 draft attempt boundary must not inherit V1 terminal reopening
+- **Decision:** prevent V2 single-plan/single-nonce event chains from starting a second attempt via V1 phase reopening (`COMMITTED`, `RESTORED`, `CANCELLED`, `RECOVERY_FAILED` or `FAILED → OBSERVED`). Do not forbid legitimate `FAILED → ROLLBACK_STARTING` recovery within the original attempt. Always block live restart irrespective of source consistency.
+- Two new CPU negative test methods added, expected 22 V2/P5-D + 15 Fake Nonce methods. Local isolated mirrored 4/4 PASS only; **full repository tests new SHA NOT_RUN and CI UNVERIFIED**. Prior operator 35/35 at `25bf012...` must remain SHA-bound. Source `15acbe53a725a1161ce9f355fcf0cf912b9bf544`; tests `14379ea97d564d65179bb3e89048b69ca10165d8`.
+- This is structural reject-only logic, not a trusted fresh nonce, independent approval, live executor or durable operating Journal. P5-D/P7/P8 operating and production gates unchanged. [Boundary analysis](../docs/P6-E-JOURNAL-V2-ATTEMPT-BOUNDARY-20261120.md).
+
+---
+
 ## 2026-11-20 KST — accept operator 35/35 P6-E CPU evidence at exact prior source SHA
 
 - **Decision:** accept operator-provided `Ran 15 tests / OK` plus `Ran 20 tests / OK` as **35/35 CPU OK** at `25bf012a4a76d30508743d751d5693aaff33b943`, matching two GitHub source modules' method counts. `P6E_JOURNAL_TEST_RC=0` explicitly observed; nonce shell RC and clean-tree status not separately captured.
