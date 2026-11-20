@@ -1,3 +1,10 @@
+## 2026-11-20 — 새 세션 인수인계 기준 확정 (2026-11-20 KST, documentation-only)
+
+- Canonical resumable prompt: [SESSION-HANDOFF-P5D-20261120.md](SESSION-HANDOFF-P5D-20261120.md). 반드시 PR #1 latest HEAD를 재조회하고, 문서 커밋이 새 CPU/CI PASS를 의미하지 않는다는 점을 유지한다.
+- P5-D source tests 138/138 at `7c11d0d`; new permission tests 7/7 at `045947f`, each operator-provided exact-SHA stdout. At non-elevated EUID 1001, process UID0 three smaps EACCES errno13 and FD EACCES; pinned directories 2/2 EACCES. Full live audit intentionally skipped. Root cause's specific LSM/ptrace mechanism unconfirmed, namespace `UNQUALIFIED` not drift.
+- Manifest and Wizard source binding PASS, but PLE RSS/PSS/inode/FD-to-PID/NAT and GPU-exclusive operations UNVERIFIED. Actions no-run incident documented/parked; P6-E durable Journal, P7 integration, P8 real recovery and Production all blocked. No sudo, Docker/GPU, model switch, operating Journal writes, CI dispatch, main changes or merge without explicit approval.
+
+---
 ## 2026-11-20 — operator one-turn P5-D permission diagnosis COMPLETE (exact SHA, non-elevated)
 
 - DGX operator transcript at `045947fccd33952ef4911c908ffb480d62b3d82b`: **7/7 new P5-D permission CPU PASS**, Manifest graph PASS, Wizard PLE source binding PASS. Do not pool with historical 138/138 selected suites at `7c11d0d` as if one SHA/test run.

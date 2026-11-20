@@ -1,3 +1,7 @@
+> **2026-11-20 최신 세션 진입점:** [새 세션 P5-D/P5–P8 인수인계 및 실행 프롬프트](SESSION-HANDOFF-P5D-20261120.md). 
+> 이 링크는 P5-D 138/138 PASS (`7c11d0d`), 신규 비승격 permission CPU 7/7 PASS (`045947f`), 실제 UID 1001→UID 0 / EACCES 3/3 관측과 남은 승인 게이트를 **최신으로 요약**합니다. 본 문서 하단의 오래된 `NOT RUN` 문구는 기록 당시의 역사적 상태이며 최신 수용 판정이 아닙니다. GitHub CI UNVERIFIED, PR #1 Draft/Open/Unmerged, production BLOCKED.
+
+---
 ## 2026-11-19 KST — operator authenticated Actions audit COMPLETE, 9/9 CPU PASS at 178a328
 
 **2026-11-19 connector read-only cross-check:** newest repository run is PR `43108072440` (Nov 12 KST, old SHA `8b118c8`), paired with push `43107837772`; newer feature HEAD `8a12c96` has zero Check Runs and zero Commit Status entries. Authored/committed by the same user and unsigned as the last successful commit, but that does not identify the event credential. Root cause `UNVERIFIED`. Diagnostic now fails closed on HTTP 200 malformed runs/checks arrays (three new CPU fixtures, **assistant-local exact-blobs CPU 12/12 PASS at `6442c97` (0.004s, RC0) / CI NOT OBSERVED**). Existing 9/9 at `178a328` and P5-D 50/50 at `08d03b1` remain historical. Production `BLOCKED`; PR Draft/Open/Unmerged. See [Actions audit](../docs/GITHUB-ACTIONS-TRIGGER-AUDIT-20261119.md).

@@ -1,5 +1,15 @@
 # Blazux DGX Spark — P1–P8 execution roadmap (2026-11-19 KST)
 
+## 2026-11-20 KST — 최신 P5-D/Wizard/Manifest 수용 게이트 (기존 기록 상위)
+
+- Operator SHA `7c11d0d1a0921ef7b0f4134bd3d3c0d8ac4e5795`: **138/138 selected CPU PASS** (Manifest/P5-D/Wizard); SHA `045947fccd33952ef4911c908ffb480d62b3d82b`: 신규 **7/7 P5-D permission CPU PASS** 및 source manifest graph PASS. 서로 다른 테스트 집합·실행 SHA임.
+- Latest non-elevated DGX permission audit at `045947f`: EUID 1001 versus all 3 model process UIDs 0; `/proc/PID/smaps` EACCES **3/3**, FD EACCES **3/3**, pinned snapshot 2/2 denied, procfs namespace links UNQUALIFIED; `BLOCKED_PERMISSION_PREFLIGHT/RC3`, **full expensive live audit SKIPPED**. 정확한 ptrace/LSM 원인은 단정 금지. PLE bytes are **NOT OBSERVED**, not zero.
+- P5-D live RSS/PSS/inode/socket-FD/NAT ownership, P6-E operating Journal, P7 proxy/gateway/storage, P8 actual recovery and production remain BLOCKED/NOT QUALIFIED. GitHub Actions latest CI **UNVERIFIED** and no-run investigation parked. PR #1 Draft/Open/Unmerged. Source-only follow-up allowed within granted scope; privileged reads and all real service/GPU operations require separate approval.
+- New concise session handoff: [SESSION-HANDOFF-P5D-20261120.md](../handoff/SESSION-HANDOFF-P5D-20261120.md); raw details: [one-shot permission diagnosis](P5-D-ONE-TURN-PERMISSION-DIAGNOSIS-20261120.md), [Actions push comparison](GITHUB-ACTIONS-OPERATOR-PUSH-COMPARISON-20261120.md).
+
+---
+
+
 ## 2026-11-19 KST — P5-D CPU gate updated to operator 50/50 (source-bound)
 
 Operator reported `08d03b182c3a1be78a698312d1abcb5b2cef571e` and `22/22 + 9/9 + 19/19 = 50/50` CPU unit tests `OK` (respectively 0.013s, 0.000s, 0.012s). This supports **CPU_TESTED_OPERATOR_REPORTED_50_OF_50**, not a GitHub Actions PASS and not PLE/NAT live acceptance. The previous 40/40 selected CPU PASS was bound to the older actual DGX audit source `4366f3b`; never combine or silently backfill execution evidence. GitHub workflow runs/statuses for the new tested SHA were empty on recheck; CI is **UNVERIFIED**.
