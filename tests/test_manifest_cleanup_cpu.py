@@ -189,6 +189,24 @@ class ManifestContainerCleanupCPU(unittest.TestCase):
             self.assertEqual(result["target_count"], 0)
             self.assertFalse(any(c[:2] == ("docker", "rm") for c in d.calls))
 
+    def test_completed_manifest_rechecks_status_before_any_new_plan(self):
+        # Regression for local variable shadowing of the module's status().
+        with patch.object(m, "_load", return_value=(
+                {"completion": {"state": "untrusted"}}, "f" * 64)), \\
+             patch.object(m, "status", return_value={
+                 "status": m.DONE, "issues": [],
+                 "verified_result_receipt": "result-confirmed.json",
+             }) as read_status:
+            result = m.make_plan(
+                run=lambda *_a, **_kw: self.fail("unexpected Docker call"),
+                active_status=lambda: self.fail("unexpected active preflight"),
+                inspect=lambda *_a, **_kw: self.fail("unexpected inspect"),
+            )
+        self.assertEqual(result["status"], "ALREADY_CLEANED")
+        self.assertEqual(result["target_count"], 0)
+        self.assertEqual(result["verified_result_receipt"], "result-confirmed.json")
+        read_status.assert_called_once()
+
     def test_completed_retirement_matches_exact_manifest_receipt_and_live_api(self):
         d = FakeDocker()
         d.names = [m.SOURCE_CONTAINER, m.FALLBACK_CONTAINER]
