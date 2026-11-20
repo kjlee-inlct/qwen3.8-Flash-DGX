@@ -1,3 +1,8 @@
+## 2026-11-20 KST — Wizard PASS / Manifest two-error remediation (CPU pending)
+- Operator at `a4bd913267f688129477415fd7d15c6842122acb`: **Wizard 126/126 OK RC0 (61.070s)**, **Manifest 76 tests, 2 ERROR RC1 (0.147s)**. Both completed-cleanup tests reached `make_plan()` and raised `UnboundLocalError`: local `status = active_status()` shadows module read-only `status()` in earlier completion branch. No claim of all-Wizard/Manifest PASS at this SHA.
+- Feature source correction `84352446dfcdafd9002a16f05b67fc0300318aa1`, test `6a76c425a7b4916c8fcec9d0c98cfb124d361200`: rename only the local to `active_report`, preserve completion drift fail-closed semantics; add targeted no-Docker completed-manifest regression. Manifest CPU expected **77 methods**, **NOT_RUN for new SHA**. Next operator: run selected `test_manifest_cleanup_cpu.py`, then full `test_*manifest*cpu.py` with exact SHA + RC and clean status. Wizard 126/126 historical at `a4bd913` does not transfer to newer HEAD.
+- P7 source-only 13/13 PASS at `77fe76a8` remains separate. All live operating gates and CI release remain blocked/unverified. This document update creates no CPU pass.
+
 ## 2026-11-20 KST — operator P7 13/13 CPU validation receipt
 - Latest **tested** SHA: `77fe76a839d85930533536ec2db5af3c1f4c7293`. Operator transcript: `Ran 13 tests in 0.005s`, `OK`, `P7_CPU_RC=0`, with preceding `git pull` reporting `7 files changed, 84 insertions(+)`. GitHub direct comparison: branch HEAD **identical** at time of verification. Clean worktree not shown; keep **UNVERIFIED**.
 - This supersedes earlier **CPU NOT_RUN** for the specific upstream-identity source change only **at tested SHA**. Previous 11/11 result at `73fe7c84` and P6-E 37/37 at `4c86b799` are separate prior receipts.
