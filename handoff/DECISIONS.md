@@ -1,3 +1,10 @@
+## 2026-11-20 — fake marker same-inode content drift fails closed
+- **Decision:** a post-`fsync` identity/size check is insufficient even in the fake nonce ledger; matching raw bytes must be reread with a bounded no-follow private-directory descriptor before a synthetic PASS. Deny a same-length in-place rewrite without clearing the marker.
+- Code `a8a7099e9a2040d3be2230d2dfccebd683eae5c0` / test `7c3d001dc0c1bd0625611d8561ddc635c8239e23`; one new negative test added, **NOT_RUN in full repository**. Local isolated mirrored primitive 4/4 PASS only. Existing operator 34/34 at earlier `f0e48a5...` is historical, not new-HEAD CPU.
+- Keep all operating Journal/approval/replay, P5-D/P7/P8, Actions and production gates blocked. [Detailed decision](../docs/P6-E-FAKE-NONCE-POST-FSYNC-CONTENT-READBACK-20261120.md).
+
+---
+
 ## 2026-11-20 — accept SHA-specific operator CPU evidence, not CI or runtime
 - Accept **34/34 operator-reported unittest OK** for source `f0e48a5a43824468618aa494ad03cc06f09c10c7`, consisting of 14 mock nonce + 20 P5-D/P6-E methods. GitHub directly confirms these source test-method counts. No explicit RC or clean worktree status was provided; do not infer either.
 - GitHub exact-SHA Actions runs/checks/statuses are all 0, **CI_UNVERIFIED**. This does not establish production nonce durability, authentication, real PLE/NAT attribution, P7/P8 or approval to operate.

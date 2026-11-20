@@ -178,6 +178,38 @@ def fake_nonce_claim(folder: Path, source: str, target: str,
                     or stat.S_IMODE(named.st_mode) != 0o600
                     or named.st_nlink != 1 or named.st_size != len(raw)):
                 raise OSError("FAKE_NONCE_MARKER_CHANGED_AFTER_WRITE")
+            # A same-inode, same-size rewrite can evade a name/inode check.
+            # Reopen the fake marker without following symlinks and compare
+            # the bounded bytes with the exact contents that were fsynced.
+            check_flags = (os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
+                           | getattr(os, "O_NONBLOCK", 0))
+            check_fd = os.open(filename, check_flags, dir_fd=directory_fd)
+            try:
+                observed = os.fstat(check_fd)
+                observed_raw = os.read(check_fd, len(raw) + 1)
+                after_read = os.fstat(check_fd)
+            finally:
+                os.close(check_fd)
+            final_named = os.stat(filename, dir_fd=directory_fd,
+                                  follow_symlinks=False)
+            if (not stat.S_ISREG(observed.st_mode)
+                    or (created.st_dev, created.st_ino)
+                    != (observed.st_dev, observed.st_ino)
+                    or observed.st_uid != os.getuid()
+                    or stat.S_IMODE(observed.st_mode) != 0o600
+                    or observed.st_nlink != 1 or observed.st_size != len(raw)
+                    or observed_raw != raw
+                    or (created.st_size, created.st_mtime_ns, created.st_ctime_ns)
+                    != (observed.st_size, observed.st_mtime_ns,
+                        observed.st_ctime_ns)
+                    or (observed.st_size, observed.st_mtime_ns,
+                        observed.st_ctime_ns)
+                    != (after_read.st_size, after_read.st_mtime_ns,
+                        after_read.st_ctime_ns)
+                    or (final_named.st_dev, final_named.st_ino)
+                    != (created.st_dev, created.st_ino)
+                    or final_named.st_size != len(raw)):
+                raise OSError("FAKE_NONCE_POST_FSYNC_READBACK_DRIFT")
             if not _same_private_root(root, directory_fd):
                 raise OSError("FAKE_DIRECTORY_CHANGED_AFTER_WRITE")
         except (OSError, ValueError):

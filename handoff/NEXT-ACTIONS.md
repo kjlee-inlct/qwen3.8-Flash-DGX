@@ -1,3 +1,11 @@
+## 2026-11-20 — P6-E Fake nonce post-fsync content readback (new source, full CPU pending)
+- Previous operator **34/34 OK at `f0e48a5...`** (14 mock nonce + 20 journal/P5-D) recorded in GitHub evidence docs; exact source SHA is *not* this new source. RC and clean worktree unspecified, Actions CI UNVERIFIED.
+- Fixed a further mock-only gap: after `fsync`, an equal-length rewrite of the *same inode* previously evaded name/inode/size checks. Read the fixture back via pinned private dir FD with `O_NOFOLLOW`, match exact raw bytes, metadata and final inode; ambiguous case BLOCKED without deletion. Code blob `a8a7099e9a2040d3be2230d2dfccebd683eae5c0`, test blob `7c3d001dc0c1bd0625611d8561ddc635c8239e23`; **one new unittest method** (new total mock nonce 15) covers in-place content swap.
+- Isolated mirrored filesystem primitive **4/4 PASS (0.003s)**; exact new repository unittest, second P6-E module, CI **NOT_RUN/UNVERIFIED**. Next operator exact-SHA CPU 15+20, do not repeat P5-D EACCES host audit. [Technical note](../docs/P6-E-FAKE-NONCE-POST-FSYNC-CONTENT-READBACK-20261120.md).
+- P5-D live PLE/NAT, P6-E operating nonce/Journal, P7 live integration, P8 real recovery, PR merge and Production BLOCKED. No operating service/Journals modified.
+
+---
+
 ## 2026-11-20 14:04 KST — operator P6-E CPU 34/34 PASS (SHA-bound, NOT Actions)
 - **Operator-supplied DGX terminal stdout**, source SHA `f0e48a5a43824468618aa494ad03cc06f09c10c7`: `test_mock_nonce_fence_v2_cpu.py` **Ran 14 tests in 0.077s / OK**; `test_p5d_p6e_cpu.py` **Ran 20 tests in 0.014s / OK**; total **34/34 PASS**. Source files retrieved directly from GitHub at this exact SHA contain 14 and 20 `test_*` methods, respectively.
 - The snippet ends at the shell prompt, but does **not** contain an explicit shell exit-code printout or `git status --short`; do **not** claim independent RC0 or clean worktree authentication. Evidence class: `OPERATOR_REPORTED_EXACT_SHA_CPU_34_OF_34_OK_RC_NOT_CAPTURED`.

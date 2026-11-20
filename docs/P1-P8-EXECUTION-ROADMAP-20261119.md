@@ -1,3 +1,7 @@
+## 2026-11-20 — P6-E mock post-fsync raw marker readback
+- Follow-up source-only fix: `fake_nonce_claim` rereads the marker's exact bytes via a no-follow, pinned, bounded temporary fixture descriptor and rejects equal-length in-place contents drift despite stable inode. New negative CPU method added; isolated mirror 4/4 PASS, **new-source full CPU NOT_RUN/CI UNVERIFIED**.
+- Operator 34/34 CPU OK belongs only to exact prior `f0e48a5...`; no automatic PASS carry-over. Real P5-D PLE/NAT, P6-E durable operating Journal/nonce, P7 live integration, P8 recovery, production blocked. See [P6-E readback](P6-E-FAKE-NONCE-POST-FSYNC-CONTENT-READBACK-20261120.md).
+
 ## 2026-11-20 — P6-E fake marker post-fsync continuity
 - Source-only `fake_nonce_claim` now rejects a marker whose named inode, file type, owner/mode/link or size changes between file `fsync` and post-directory-`fsync` check. Synthetic negative test cases for symlink and identical-byte inode replacement added. Isolated mirror-harness **4/4 PASS**; full repo tests NOT_RUN, Actions exact-HEAD CI UNVERIFIED. Production and P5-D/P6-E/P7/P8 operating gates unchanged. See [technical record](P6-E-FAKE-NONCE-POST-FSYNC-INODE-CONTINUITY-20261120.md).
 
