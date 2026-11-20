@@ -1,3 +1,8 @@
+## 2026-11-20 — P7 operator CPU gate completed, next Wizard/Manifest regression
+- Verified operator receipt at SHA `77fe76a839d85930533536ec2db5af3c1f4c7293`: **P7 integration 13/13 OK (0.005s), P7_CPU_RC=0**; GitHub feature HEAD identical when checked. Worktree cleanliness not evidenced; GitHub PR-filtered workflow runs 0 and commit statuses 0 => CI_UNVERIFIED. Preserve SHA binding; later docs-only HEAD is not CPU-tested.
+- Next source-only test target: existing Wizard/Manifest contract and model registry regression on a clean full checkout. Capture exact SHA, method counts, exit codes, and `git status --short` explicitly. Review independent/authenticated P7 observation source boundaries without promoting self-asserted JSON fields or matching container IDs to live operations authorization.
+- P5-D PLE/NAT ownership, P6-E operating Journal/Nonce and P8 real recovery remain blocked; P7 independent live probes pending; Production blocked. No Docker/GPU/operating Journal, sudo, CI dispatch/settings, main writes or PR merge.
+
 ## 2026-11-20 P7 next CPU gate after container identity patch
 - `bbc32e71` source + `34aad3f6` tests: required proxy/gateway upstream container IDs bound to valid service ID; structural only, not live-authenticated. Expected P7 **13 methods, NOT_RUN** at new source SHA; previous operator **11/11 RC0 at 73fe7c84** is historical.
 - Run the 13-method P7 module in a clean feature checkout, record exact HEAD, `git status --short`, test count, shell RC. Then test wider Wizard/manifest CPU; only independently authenticated component probes could advance the live P7 gate, subject to separate authorization. CI manual run prohibited without new approval.
