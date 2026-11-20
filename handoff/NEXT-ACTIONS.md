@@ -1,3 +1,7 @@
+## 2026-11-20 P7 next CPU gate after container identity patch
+- `bbc32e71` source + `34aad3f6` tests: required proxy/gateway upstream container IDs bound to valid service ID; structural only, not live-authenticated. Expected P7 **13 methods, NOT_RUN** at new source SHA; previous operator **11/11 RC0 at 73fe7c84** is historical.
+- Run the 13-method P7 module in a clean feature checkout, record exact HEAD, `git status --short`, test count, shell RC. Then test wider Wizard/manifest CPU; only independently authenticated component probes could advance the live P7 gate, subject to separate authorization. CI manual run prohibited without new approval.
+
 ## 2026-11-20 P7 CPU receipt and next scoped tasks
 - Source SHA `73fe7c841762adbaf5135261d8dba96c27591060` has operator-reported **P7 integration CPU 11/11 OK, RC0 (0.004s)**, GitHub branch HEAD identical at inspection. Worktree cleanliness not reported; CI not verified. See EVIDENCE-LEDGER.md. Subsequent docs commits do not shift this SHA-bound proof.
 - Next source-only: audit whether service.container_id, canonical container, served_id, root model, proxy/gateway observed_served_id and storage checkpoint/recipe have adequate cross-component binding without claiming source JSON is independently authenticated. Preserve existing strict numerics, future skew and duplicate probe-ID checks; add negative cases only on demonstrated defects.
