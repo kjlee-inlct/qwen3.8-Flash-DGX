@@ -1,3 +1,5 @@
+> **2026-11-20 KST operator CPU supersession:** The new Fake Nonce post-fsync byte-readback source at `25bf012a4a76d30508743d751d5693aaff33b943` was tested on the operator terminal: **15/15 OK (0.085s)** in `test_mock_nonce_fence_v2_cpu.py`, **20/20 OK (0.014s)** in `test_p5d_p6e_cpu.py`, total **35/35**. GitHub source method counts confirm 15+20. `P6E_JOURNAL_TEST_RC=0` shown, Nonce RC and worktree cleanliness not captured. GitHub Actions runs/checks/statuses on this SHA **0/0/0**; CI **UNVERIFIED**, operating acceptance still BLOCKED. Previous `NOT_RUN` text below is superseded **for this tested SHA only**.
+
 # P6-E — Post-fsync bounded content readback for Fake Nonce marker (2026-11-20 KST)
 
 ## Existing provenance checkpoint

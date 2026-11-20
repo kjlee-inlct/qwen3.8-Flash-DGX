@@ -1,3 +1,11 @@
+## 2026-11-20 KST — accept operator 35/35 P6-E CPU evidence at exact prior source SHA
+
+- **Decision:** accept operator-provided `Ran 15 tests / OK` plus `Ran 20 tests / OK` as **35/35 CPU OK** at `25bf012a4a76d30508743d751d5693aaff33b943`, matching two GitHub source modules' method counts. `P6E_JOURNAL_TEST_RC=0` explicitly observed; nonce shell RC and clean-tree status not separately captured.
+- **Scope:** source-only Fake Nonce `fsync` / inode / byte-readback negative gates and P5-D/P6-E contract tests; **not** CI or operating acceptance. At exact SHA, Actions runs 0, checks 0, commit statuses 0 => **CI_UNVERIFIED**. No transfer of 35/35 to subsequent documentation/source HEAD.
+- **Unchanged:** P5-D PLE/NAT provenance BLOCKED, P6-E operating Journal/Nonce/approved restart BLOCKED, P7 independent live integration PENDING, P8 recovery BLOCKED, production BLOCKED, PR #1 Draft/Open/Unmerged. [SHA-bound evidence](EVIDENCE-LEDGER.md).
+
+---
+
 ## 2026-11-20 — fake marker same-inode content drift fails closed
 - **Decision:** a post-`fsync` identity/size check is insufficient even in the fake nonce ledger; matching raw bytes must be reread with a bounded no-follow private-directory descriptor before a synthetic PASS. Deny a same-length in-place rewrite without clearing the marker.
 - Code `a8a7099e9a2040d3be2230d2dfccebd683eae5c0` / test `7c3d001dc0c1bd0625611d8561ddc635c8239e23`; one new negative test added, **NOT_RUN in full repository**. Local isolated mirrored primitive 4/4 PASS only. Existing operator 34/34 at earlier `f0e48a5...` is historical, not new-HEAD CPU.

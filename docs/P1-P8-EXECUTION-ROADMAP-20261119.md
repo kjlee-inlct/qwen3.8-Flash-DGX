@@ -1,3 +1,7 @@
+## 2026-11-20 KST — P6-E 35/35 CPU evidence supersession
+- Operator supplied source SHA `25bf012a4a76d30508743d751d5693aaff33b943`, `test_mock_nonce_fence_v2_cpu.py` **15/15 OK** and `test_p5d_p6e_cpu.py` **20/20 OK**, combined **35/35**. `P6E_JOURNAL_TEST_RC=0` printed; nonce RC and clean-tree status not supplied. GitHub directly confirmed test method counts **15+20**.
+- Matching Actions runs/checks/status entries all **0**, `CI_UNVERIFIED`. This closes only the two-module source CPU gap for this SHA; the post-fsync readback patch remains **fake-only** and operating P6-E Journal/replay/approved restart is still BLOCKED. P5-D PLE/NAT, P7 independent integration, P8 actual recovery and production remain unaccepted. Later documentation HEAD has no newly executed tests. [Ledger](../handoff/EVIDENCE-LEDGER.md).
+
 ## 2026-11-20 — P6-E mock post-fsync raw marker readback
 - Follow-up source-only fix: `fake_nonce_claim` rereads the marker's exact bytes via a no-follow, pinned, bounded temporary fixture descriptor and rejects equal-length in-place contents drift despite stable inode. New negative CPU method added; isolated mirror 4/4 PASS, **new-source full CPU NOT_RUN/CI UNVERIFIED**.
 - Operator 34/34 CPU OK belongs only to exact prior `f0e48a5...`; no automatic PASS carry-over. Real P5-D PLE/NAT, P6-E durable operating Journal/nonce, P7 live integration, P8 recovery, production blocked. See [P6-E readback](P6-E-FAKE-NONCE-POST-FSYNC-CONTENT-READBACK-20261120.md).
