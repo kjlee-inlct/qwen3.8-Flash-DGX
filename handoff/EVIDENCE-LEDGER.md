@@ -1,3 +1,11 @@
+## 2026-11-20 KST — P7 upstream identity binding operator CPU 13/13 PASS (exact SHA)
+- **Operator-reported terminal evidence** at source SHA `77fe76a839d85930533536ec2db5af3c1f4c7293`: `Ran 13 tests in 0.005s / OK`, `P7_CPU_RC=0`; `git pull --ff-only` output reported `7 files changed, 84 insertions(+)`. GitHub compared that SHA with feature HEAD and returned `identical` (ahead=0, behind=0). This is **P7 13/13 CPU PASS at that exact SHA**, not independently run GitHub CI. `git status --short` output was not included; clean tree UNVERIFIED.
+- Tested source covers proxy/gateway `upstream_container_id` equality to service `container_id`, missing/malformed/mismatched IDs and service-side drift, plus the previous P7 source-only fields and CLI fixture. Historical 11/11 at `73fe7c84` remains a separate receipt; no cross-SHA merging or docs-only CPU PASS.
+- GitHub direct read-only lookup for exact SHA: PR-filtered workflow runs **0**; commit status entries **0**; independent check-run inventory not established => **CI_UNVERIFIED**. P7 independently authenticated live provenance **PENDING**; P5-D real PLE/NAT, P6-E real operating Journal/Nonce, P8 real restore and Production **BLOCKED**.
+- Next safe scope: broader Wizard/Manifest CPU regression and review of authenticated capture provenance. No DGX operations, Actions dispatch, main mutation or PR merge.
+
+---
+
 ## 2026-11-20 — P7 model/service upstream identity binding patch (NEW SOURCE; CPU NOT_RUN)
 - Source `bbc32e710d500b7d8029594a682097561e5b588e`, test `34aad3f6a3b855491c155ed50af059291f5890f1`: proxy/gateway `upstream_container_id` must have valid lowercase 64-hex syntax and exactly equal service's valid `container_id`. Mismatch/absence/unusable ID => component `NOT_OBSERVED`, `*_UPSTREAM_CONTAINER_ID_UNBOUND`, global `BLOCKED`. This closes a structural mixed-container source-document gap, **not** an authenticated Docker identity boundary.
 - P7 test fixture and CLI updated; two negative test methods added, expected **13 methods**. **New-source CPU NOT_RUN / CI_UNVERIFIED**. Prior operator **11/11 RC0 at 73fe7c841762adbaf5135261d8dba96c27591060** remains recorded and must not be transferred to the new source commit or docs-only HEAD.
