@@ -1,3 +1,12 @@
+## 2026-11-20 — P6-E Journal v2 attempt boundary operator CPU 37/37 PASS (exact-SHA)
+- **Evidence:** operator-supplied DGX terminal transcript, source SHA `4c86b7990ea865a31bb78a346ca92867ed5e9e83`; `test_p5d_p6e_cpu.py` **22/22 OK, 0.018 s, P6E_JOURNAL_TEST_RC=0**; `test_mock_nonce_fence_v2_cpu.py` **15/15 OK, 0.075 s, P6E_NONCE_TEST_RC=0**. Combined **37/37 CPU PASS**, both exit codes explicitly printed. GitHub directly confirms 22 and 15 unittest methods at this exact SHA.
+- **Boundary:** operator-provided source SHA and terminal results are not independently captured GitHub CI. `git status --short` output absent, so clean worktree is **UNVERIFIED**. GitHub read-only exact-SHA Actions runs **0**, Check Runs **0**, Commit Statuses **0** => **CI_UNVERIFIED** (not CI PASS), root cause of no-run parked.
+- **Acceptance:** P6-E in-memory Journal v2 attempt-boundary and Fake-DGX nonce contracts have a SHA-bound CPU receipt. Real independently authenticated durable operating Journal v2, nonce/approval ledger, live service/restart/executor, P5-D PLE RSS/PSS/inode/PID and kernel NAT ownership, P7 independent gateway/storage, P8 actual recovery and Production remain **BLOCKED/UNQUALIFIED**. No operation or merge authorization implied; no repeated unprivileged P5-D audit.
+
+**Evidence class:** `OPERATOR_REPORTED_EXACT_SHA_P6E_CPU_37_OF_37_OK_RC0_BOTH_MODULES / CI_UNVERIFIED / LIVE_GATES_BLOCKED`. Previous operator 35/35 at `25bf012...` remains independently preserved; no combining historical suites or transferring PASS to a later documentation HEAD.
+
+---
+
 ## 2026-11-20 — P6-E Journal v2 attempt-boundary source-only development evidence (NEW SOURCE)
 - Historical operator **35/35 CPU OK** is linked only to source SHA `25bf012a4a76d30508743d751d5693aaff33b943`; documentation-only HEAD `5ea5e6bc730684d45ea551356df4944b2854d0a1` inherited no new CPU execution.
 - Subsequent source patch `15acbe53a725a1161ce9f355fcf0cf912b9bf544` and test patch `14379ea97d564d65179bb3e89048b69ca10165d8`: fail-closed on same-nonce V2 terminal/failed reentry; **two new repository CPU test methods added**, not yet executed. Isolated mirrored phase/nonce chain CPU **4/4 PASS** from a local standalone file, **not the GitHub module**. Full new-source CPU NOT_RUN, CI UNVERIFIED.

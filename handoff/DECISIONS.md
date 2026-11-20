@@ -1,3 +1,9 @@
+## 2026-11-20 — P6-E Journal v2 attempt boundary operator CPU 37/37 PASS (exact-SHA)
+- **Decision:** accept operator **37/37 OK with both RC0** as CPU-only evidence for source `4c86b7990ea865a31bb78a346ca92867ed5e9e83` (22 P5-D/P6-E Journal and 15 Fake Nonce). Direct GitHub files at that SHA show 22 and 15 methods. Worktree cleanliness not documented, so do not claim a clean checkout.
+- GitHub read-only workflow runs/checks/statuses **0/0/0** at that SHA; Actions CI **UNVERIFIED**. The evidence qualifies in-memory negative-path contract tests only and does not authorize operating Journal, real nonce ledger, restart, P5-D provenance, P7 live integration, P8 restore or production. Preserve previous SHA-specific receipts separately. Next source-only priority P7.
+
+---
+
 ## 2026-11-20 — V2 draft attempt boundary must not inherit V1 terminal reopening
 - **Decision:** prevent V2 single-plan/single-nonce event chains from starting a second attempt via V1 phase reopening (`COMMITTED`, `RESTORED`, `CANCELLED`, `RECOVERY_FAILED` or `FAILED → OBSERVED`). Do not forbid legitimate `FAILED → ROLLBACK_STARTING` recovery within the original attempt. Always block live restart irrespective of source consistency.
 - Two new CPU negative test methods added, expected 22 V2/P5-D + 15 Fake Nonce methods. Local isolated mirrored 4/4 PASS only; **full repository tests new SHA NOT_RUN and CI UNVERIFIED**. Prior operator 35/35 at `25bf012...` must remain SHA-bound. Source `15acbe53a725a1161ce9f355fcf0cf912b9bf544`; tests `14379ea97d564d65179bb3e89048b69ca10165d8`.

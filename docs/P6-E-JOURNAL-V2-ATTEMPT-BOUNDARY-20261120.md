@@ -1,3 +1,5 @@
+> **2026-11-20 operator execution supersedes new-source NOT_RUN for `4c86b7990ea865a31bb78a346ca92867ed5e9e83`:** `test_p5d_p6e_cpu.py` **22/22 OK (0.018s, P6E_JOURNAL_TEST_RC=0)** and `test_mock_nonce_fence_v2_cpu.py` **15/15 OK (0.075s, P6E_NONCE_TEST_RC=0)**; total **37/37 CPU PASS**. GitHub source method counts match. Worktree cleanliness not captured. GitHub Actions runs/checks/statuses on tested SHA: **0/0/0, CI_UNVERIFIED**. This is source/Fake-DGX evidence, not production Journal authentication, real replay prevention or restart qualification.
+
 # P6-E Journal v2 — Attempt Boundary Replay and Terminal Re-entry (2026-11-20 KST)
 
 ## Observed source-contract gap

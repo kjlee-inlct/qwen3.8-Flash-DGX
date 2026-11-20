@@ -1,3 +1,7 @@
+## 2026-11-20 — P6-E Journal v2 attempt boundary operator CPU 37/37 PASS (exact-SHA)
+- **Operator CPU evidence on exact `4c86b7990ea865a31bb78a346ca92867ed5e9e83`:** 22 P5-D/P6-E Journal tests **OK, RC0**, plus 15 Fake Nonce tests **OK, RC0** = **37/37 PASS**. Verified test-method counts against GitHub source; worktree status not supplied. Prior 35/35 is a separate earlier SHA, not pooled.
+- Exact tested SHA Actions runs/checks/statuses **0/0/0**, **CI_UNVERIFIED**. P5-D live PLE/NAT remains BLOCKED, P6-E real durable Journal/nonce approval blocked, P7 independent live proxy/gateway/storage PENDING, P8 real recovery and release BLOCKED. Future docs-only commits do not inherit new CPU execution. Next source-only P7 hardening; no operational or PR merge authorization.
+
 ## 2026-11-20 — P6-E Journal v2 single-attempt replay isolation (new source-only)
 - Reused V1 `PHASES` permitted terminal V2 chain reopening with unchanged nonce/plan; reject the four closed phases and `FAILED → OBSERVED` at draft generation and hash-chain audit, including self-rehashed injected events. Rollback repair transitions remain available.
 - Two negative CPU methods added; new source expects **22 P5-D/P6-E + 15 Mock Nonce** methods. **Local mirror 4/4 PASS**, full new-source repository CPU NOT_RUN, Actions CI UNVERIFIED. Operator 35/35 is evidence for `25bf012...` only. [Details](P6-E-JOURNAL-V2-ATTEMPT-BOUNDARY-20261120.md).
