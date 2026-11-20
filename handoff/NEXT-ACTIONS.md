@@ -1,3 +1,7 @@
+## 2026-11-21 — Manifest tests: retry after SyntaxError correction
+- GitHub `9f891f85` fixes one excess backslash in new cleanup test line 195. Previous operator at `6a0bf716`: targeted import error RC1; full manifest 66 discovery entries with import error RC1; neither validates completed cleanup. Source implementation untouched.
+- Re-run **12 targeted** and **77 manifest** tests with exact HEAD, clean-tree status and two explicit RCs. Keep `CPU_NOT_RUN` for the repaired SHA until operator receipts arrive. GitHub CI, all live P5-D/P6-E/P7/P8, production gates remain independently unaccepted.
+
 ## 2026-11-20 — Manifest cleanup completed-status regression fix: CPU verification next
 - Operator at `a4bd913267f688129477415fd7d15c6842122acb`: Wizard **126/126 PASS RC0**, Manifest **76 tests, 2 ERROR RC1** at cleanup completion path only. Root cause Python local variable shadowing of `status()`. Fixed source `84352446` and added negative/positive no-Docker regression at `6a76c425`; new Manifest expected **77 tests, NOT_RUN**.
 - CPU-only follow-up on clean checkout: `git pull --ff-only`, print HEAD and `git status --short`; run `python3 -B -m unittest discover -s tests -p 'test_manifest_cleanup_cpu.py' -v` then `python3 -B -m unittest discover -s tests -p 'test_*manifest*cpu.py' -v` with distinct shell RC. Do not claim full manifest PASS before receipts. Runtime cleanup execution remains prohibited.
