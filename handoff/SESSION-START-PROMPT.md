@@ -1,3 +1,7 @@
+> **2026-11-21 최신 진입점:** [SESSION-HANDOFF-P7-20261120.md](SESSION-HANDOFF-P7-20261120.md) — 새 세션 전용 상세 실행 프롬프트와 P7 독립 provenance 후속 개발 작업. 문서 작성 직전 feature HEAD `4c28ee8778a4837a0b7f4452a0195af460acd038`; 인수인계 커밋 후 최신 HEAD는 재조회해야 함. CPU 증거는 P6-E 37/37 at 4c86b799, P7 13/13 at 77fe76a8, Wizard 126/126 at a4bd913, Manifest 77/77 (Cleanup 12 included) at dcf73332 — **서로 다른 테스트 SHA**. 운영 수용 P5-D/P6-E/P7/P8/Production 차단, CI UNVERIFIED. 기존 아래 기록은 작성 당시 상태로 보존.
+
+---
+
 > **2026-11-20 P7 새 세션 최우선 진입점:** [SESSION-HANDOFF-P7-20261120.md](SESSION-HANDOFF-P7-20261120.md). 최신 P6-E 운영자 정확한 소스 SHA `4c86b7990ea865a31bb78a346ca92867ed5e9e83`에서 **22 Journal + 15 Fake Nonce = 37/37 CPU PASS (양쪽 RC0)**; 이후 PR HEAD `f70a2a6b5652806e0867f8eb7d63b561f292f676`은 문서 커밋(작성 당시)이며 이 인수인계 커밋 후 HEAD는 다시 바뀝니다. P7 독립 Proxy/Gateway/Storage source-only 후속 개발 우선; P5-D 실제 PLE/NAT·P6-E 운영 Journal/replay·P7 실증·P8/Production BLOCKED, GitHub CI UNVERIFIED, PR #1 Draft/Open/Unmerged. 과거 아래 기록을 최신 기준으로 오인하지 마세요.
 
 ---
