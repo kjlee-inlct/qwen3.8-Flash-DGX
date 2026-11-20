@@ -100,6 +100,19 @@ def integration_reconcile(model: str, evidence: dict | None,
         elif component in ("proxy", "gateway"):
             if entry.get("observed_served_id") != expected["served_id"]:
                 reasons.append("UPSTREAM_MODEL_MISMATCH")
+            # Binding is syntactic only: both upstream records must name the
+            # same valid service container ID, not merely a matching model ID.
+            # It does NOT independently authenticate Docker identity.
+            service_entry = data.get("service")
+            service_id = (service_entry.get("container_id")
+                          if isinstance(service_entry, dict) else None)
+            upstream_id = entry.get("upstream_container_id")
+            if (not isinstance(service_id, str)
+                    or not _SHA.fullmatch(service_id)
+                    or not isinstance(upstream_id, str)
+                    or not _SHA.fullmatch(upstream_id)
+                    or upstream_id != service_id):
+                reasons.append("UPSTREAM_CONTAINER_ID_UNBOUND")
             if (not _exact_int(entry.get("upstream_port"), 8000)
                     or not _exact_int(entry.get("http_status"), 200)):
                 reasons.append("UPSTREAM_PROBE_MISSING")
