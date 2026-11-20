@@ -5,13 +5,19 @@ probe IDs are never sufficient for a live service/proxy/gateway/storage PASS.
 """
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 import re
 
 from scripts.manager.generic_operations import model_catalog
 
 _SHA = re.compile(r"^[0-9a-f]{64}$")
 _COMPONENTS = ("service", "proxy", "gateway", "storage")
+_FUTURE_CLOCK_SKEW = timedelta(seconds=120)
+
+
+def _exact_int(value, expected):
+    # bool is an int subclass, and JSON floats must not pass integer checks.
+    return type(value) is int and value == expected
 
 
 def _timestamp(value):
@@ -36,12 +42,13 @@ def integration_reconcile(model: str, evidence: dict | None,
     issues = []
     details = {}
     stamps = []
+    now_utc = datetime.now(timezone.utc)
 
     if data.get("model") != model:
         issues.append("P7_ROOT_MODEL_UNBOUND")
     if data.get("active_gpu_models") != [model]:
         issues.append("ONE_ACTIVE_MODEL_NOT_INDEPENDENTLY_EVIDENCED")
-    if data.get("api_port") != 8000:
+    if not _exact_int(data.get("api_port"), 8000):
         issues.append("FIXED_API_PORT_NOT_EVIDENCED")
 
     # Reused component IDs cannot even support a structural claim of
@@ -66,6 +73,8 @@ def integration_reconcile(model: str, evidence: dict | None,
         observed_at = _timestamp(entry.get("observed_at_utc"))
         if observed_at is None:
             reasons.append("OBSERVATION_TIME_MISSING")
+        elif observed_at > now_utc + _FUTURE_CLOCK_SKEW:
+            reasons.append("OBSERVATION_TIME_IN_FUTURE")
         else:
             stamps.append(observed_at)
         probe_id = entry.get("probe_id")
@@ -85,12 +94,14 @@ def integration_reconcile(model: str, evidence: dict | None,
                 reasons.append("CONTAINER_ID_MISSING")
             if entry.get("served_id") != expected["served_id"]:
                 reasons.append("SERVED_ID_MISMATCH")
-            if entry.get("port") != 8000 or entry.get("http_status") != 200:
+            if (not _exact_int(entry.get("port"), 8000)
+                    or not _exact_int(entry.get("http_status"), 200)):
                 reasons.append("DIRECT_API_HEALTH_MISSING")
         elif component in ("proxy", "gateway"):
             if entry.get("observed_served_id") != expected["served_id"]:
                 reasons.append("UPSTREAM_MODEL_MISMATCH")
-            if entry.get("upstream_port") != 8000 or entry.get("http_status") != 200:
+            if (not _exact_int(entry.get("upstream_port"), 8000)
+                    or not _exact_int(entry.get("http_status"), 200)):
                 reasons.append("UPSTREAM_PROBE_MISSING")
         else:
             if entry.get("checkpoint") != expected["checkpoint"]:
