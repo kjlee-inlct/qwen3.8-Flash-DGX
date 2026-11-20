@@ -6,6 +6,7 @@ import copy
 import io
 import json
 import tempfile
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 import unittest
 from unittest.mock import patch
@@ -95,6 +96,53 @@ class P7IntegrationContractCPU(unittest.TestCase):
         self.assertEqual(report["status"], "BLOCKED")
         self.assertIn("SERVICE_PROBE_ID_REUSED_ACROSS_COMPONENTS", report["issues"])
         self.assertIn("STORAGE_PROBE_ID_REUSED_ACROSS_COMPONENTS", report["issues"])
+
+
+    def test_numeric_evidence_must_use_json_integer_types(self):
+        fields = (
+            (None, "api_port", "FIXED_API_PORT_NOT_EVIDENCED"),
+            ("service", "port", "SERVICE_DIRECT_API_HEALTH_MISSING"),
+            ("service", "http_status", "SERVICE_DIRECT_API_HEALTH_MISSING"),
+            ("proxy", "upstream_port", "PROXY_UPSTREAM_PROBE_MISSING"),
+            ("proxy", "http_status", "PROXY_UPSTREAM_PROBE_MISSING"),
+            ("gateway", "upstream_port", "GATEWAY_UPSTREAM_PROBE_MISSING"),
+            ("gateway", "http_status", "GATEWAY_UPSTREAM_PROBE_MISSING"),
+        )
+        for component, field, issue in fields:
+            for bad_value in (8000.0 if "port" in field else 200.0, True,
+                              str(8000 if "port" in field else 200)):
+                with self.subTest(component=component, field=field, value=bad_value):
+                    doc = copy.deepcopy(self.doc)
+                    target = doc if component is None else doc[component]
+                    target[field] = bad_value
+                    report = integration_reconcile(self.model, doc)
+                    self.assertEqual(report["status"], "BLOCKED")
+                    self.assertIn(issue, report["issues"])
+                    self.assertFalse(report["real_dgx_verified"])
+                    self.assertFalse(report["operations_enabled"])
+
+    def test_all_future_observations_fail_even_with_zero_spread(self):
+        doc = copy.deepcopy(self.doc)
+        future = (datetime.now(timezone.utc) + timedelta(days=1)).isoformat()
+        for component in ("service", "proxy", "gateway", "storage"):
+            doc[component]["observed_at_utc"] = future
+        report = integration_reconcile(self.model, doc)
+        self.assertEqual(report["status"], "BLOCKED")
+        for component in ("service", "proxy", "gateway", "storage"):
+            self.assertIn(component.upper() + "_OBSERVATION_TIME_IN_FUTURE",
+                          report["issues"])
+            self.assertEqual(report["component_checks"][component]["status"],
+                             "NOT_OBSERVED")
+        self.assertFalse(report["production_released"])
+
+    def test_historical_valid_timestamps_and_utc_offset_remain_compatible(self):
+        doc = copy.deepcopy(self.doc)
+        for component in ("service", "proxy", "gateway", "storage"):
+            doc[component]["observed_at_utc"] = "2026-11-09T09:00:00+09:00"
+        result = integration_reconcile(self.model, doc)
+        self.assertEqual(result["status"],
+                         "SOURCE_COMPONENT_FIELDS_CONSISTENT_NOT_LIVE_VERIFIED")
+        self.assertFalse(result["real_dgx_verified"])
 
     def test_future_model_registry_is_automatically_supported(self):
         from scripts.manager.service_manifest import policy
