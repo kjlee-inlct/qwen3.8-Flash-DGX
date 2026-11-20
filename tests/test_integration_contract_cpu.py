@@ -33,8 +33,10 @@ class P7IntegrationContractCPU(unittest.TestCase):
                              served_id=identity["served_id"],
                              port=8000, http_status=200),
             "proxy": entry("proxy", observed_served_id=identity["served_id"],
+                           upstream_container_id="a" * 64,
                            upstream_port=8000, http_status=200),
             "gateway": entry("gateway", observed_served_id=identity["served_id"],
+                             upstream_container_id="a" * 64,
                              upstream_port=8000, http_status=200),
             "storage": entry("storage", checkpoint=identity["checkpoint"],
                              recipe_path=identity["recipe_path"],
@@ -143,6 +145,33 @@ class P7IntegrationContractCPU(unittest.TestCase):
         self.assertEqual(result["status"],
                          "SOURCE_COMPONENT_FIELDS_CONSISTENT_NOT_LIVE_VERIFIED")
         self.assertFalse(result["real_dgx_verified"])
+
+    def test_upstream_container_identity_missing_or_changed_fails_closed(self):
+        for component in ("proxy", "gateway"):
+            for bad_id in (None, "b" * 64, "a" * 63, True, "A" * 64):
+                with self.subTest(component=component, upstream_id=bad_id):
+                    doc = copy.deepcopy(self.doc)
+                    if bad_id is None:
+                        del doc[component]["upstream_container_id"]
+                    else:
+                        doc[component]["upstream_container_id"] = bad_id
+                    report = integration_reconcile(self.model, doc)
+                    self.assertEqual(report["status"], "BLOCKED")
+                    self.assertIn(component.upper() + "_UPSTREAM_CONTAINER_ID_UNBOUND",
+                                  report["issues"])
+                    self.assertFalse(report["real_dgx_verified"])
+                    self.assertFalse(report["operations_enabled"])
+
+    def test_service_container_changed_without_upstreams_fails_closed(self):
+        doc = copy.deepcopy(self.doc)
+        doc["service"]["container_id"] = "b" * 64
+        report = integration_reconcile(self.model, doc)
+        self.assertEqual(report["status"], "BLOCKED")
+        for component in ("proxy", "gateway"):
+            self.assertIn(component.upper() + "_UPSTREAM_CONTAINER_ID_UNBOUND",
+                          report["issues"])
+        self.assertFalse(report["proxy_gateway_verified"])
+        self.assertFalse(report["production_released"])
 
     def test_future_model_registry_is_automatically_supported(self):
         from scripts.manager.service_manifest import policy
