@@ -192,7 +192,7 @@ class ManifestContainerCleanupCPU(unittest.TestCase):
     def test_completed_manifest_rechecks_status_before_any_new_plan(self):
         # Regression for local variable shadowing of the module's status().
         with patch.object(m, "_load", return_value=(
-                {"completion": {"state": "untrusted"}}, "f" * 64)), \\
+                {"completion": {"state": "untrusted"}}, "f" * 64)), \
              patch.object(m, "status", return_value={
                  "status": m.DONE, "issues": [],
                  "verified_result_receipt": "result-confirmed.json",
