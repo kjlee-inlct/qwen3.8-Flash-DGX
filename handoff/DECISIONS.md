@@ -1,3 +1,10 @@
+## 2026-11-20 — accept SHA-specific operator CPU evidence, not CI or runtime
+- Accept **34/34 operator-reported unittest OK** for source `f0e48a5a43824468618aa494ad03cc06f09c10c7`, consisting of 14 mock nonce + 20 P5-D/P6-E methods. GitHub directly confirms these source test-method counts. No explicit RC or clean worktree status was provided; do not infer either.
+- GitHub exact-SHA Actions runs/checks/statuses are all 0, **CI_UNVERIFIED**. This does not establish production nonce durability, authentication, real PLE/NAT attribution, P7/P8 or approval to operate.
+- Source-only follow-up may proceed, but any new commit requires a new SHA-specific test receipt; do not transfer this 34/34 PASS to a modified code SHA.
+
+---
+
 ## 2026-11-20 — P6-E fake marker must retain inode identity after fsync
 - **Decision:** `fsync(file)` plus `fsync(directory)` and a stable **directory** identity are insufficient to claim even fake marker consistency when the named file may be replaced. Add best-effort post-fsync `stat(..., follow_symlinks=False)` tied to the originally written `fstat` inode and private regular-file metadata. Fail closed without deleting uncertain markers.
 - Local isolated filesystem harness **4/4 PASS**, new repository negative swap tests added **NOT_RUN**. Blob SHA source `0c015922e4d24d4e4df2a0b8f946d49198f42ae9`, tests `a671dbb2088a4f1f124b436d3a539d889588d4c6`. Real operating nonce/Journal, full suite and GitHub CI still unverified/blocked.

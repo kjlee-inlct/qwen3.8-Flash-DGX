@@ -1,3 +1,5 @@
+> **2026-11-20 14:04 KST operator CPU supersession:** Actual operator terminal summary at source `f0e48a5a43824468618aa494ad03cc06f09c10c7`: `test_mock_nonce_fence_v2_cpu.py` **14/14 OK (0.077s)**, `test_p5d_p6e_cpu.py` **20/20 OK (0.014s)**, combined **34/34**. GitHub source test counts match. Shell exit code and clean tree not separately printed; Actions runs/checks/statuses **0**, CI **UNVERIFIED**. These tests supersede earlier `NOT_RUN` for this source SHA, not real operating nonce/Journal acceptance.
+
 # P6-E — Fake nonce post-fsync path/inode continuity (2026-11-20 KST)
 
 ## Prior gap and scoped behavior

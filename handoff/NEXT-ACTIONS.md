@@ -1,3 +1,12 @@
+## 2026-11-20 14:04 KST — operator P6-E CPU 34/34 PASS (SHA-bound, NOT Actions)
+- **Operator-supplied DGX terminal stdout**, source SHA `f0e48a5a43824468618aa494ad03cc06f09c10c7`: `test_mock_nonce_fence_v2_cpu.py` **Ran 14 tests in 0.077s / OK**; `test_p5d_p6e_cpu.py` **Ran 20 tests in 0.014s / OK**; total **34/34 PASS**. Source files retrieved directly from GitHub at this exact SHA contain 14 and 20 `test_*` methods, respectively.
+- The snippet ends at the shell prompt, but does **not** contain an explicit shell exit-code printout or `git status --short`; do **not** claim independent RC0 or clean worktree authentication. Evidence class: `OPERATOR_REPORTED_EXACT_SHA_CPU_34_OF_34_OK_RC_NOT_CAPTURED`.
+- Direct read-only GitHub lookup on the same SHA: Actions runs **0**, check-runs **0**, commit-status entries **0**. Therefore **CI_UNVERIFIED**, not CI PASS; no manual dispatch or trigger testing.
+- This closes the previous `NOT_RUN` gap for these **two exact-source test modules only** and supersedes earlier local isolated-only tests **for this SHA**; it does not authorize P6-E real persistent operating Journal/Nonce replay, P5-D PLE/NAT, P7 independent live integration, P8 recovery, PR merge or Production.
+- Next: keep this 34/34 acceptance anchored strictly to `f0e48a5a43824468618aa494ad03cc06f09c10c7`, review additional fake-only contract edge cases separately. No DGX Docker/GPU/port/services, sudo, operating Journal writes, `main` changes or PR merge.
+
+---
+
 ## 2026-11-20 — P6-E fake nonce marker post-fsync inode check (source-only)
 - In `mock_nonce_fence_v2.fake_nonce_claim`, pin created marker `fstat` identity and compare to non-following `stat` after directory `fsync`. Detect symlink replacement, same-bytes new-inode swap, mode/owner/link/size drift before reporting a fake marker created. Do not unlink or retry ambiguous markers.
 - Added **one** CPU unittest method with **two** injected file-swap negatives to `test_mock_nonce_fence_v2_cpu.py`. New source/test blobs `0c015922e4d24d4e4df2a0b8f946d49198f42ae9` / `a671dbb2088a4f1f124b436d3a539d889588d4c6`. **Separate isolated filesystem reproducer 4/4 PASS (0.020s), full repository unittest NOT_RUN, CI UNVERIFIED.** See [P6-E inode continuity note](../docs/P6-E-FAKE-NONCE-POST-FSYNC-INODE-CONTINUITY-20261120.md).

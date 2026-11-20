@@ -1,3 +1,12 @@
+## 2026-11-20 14:04 KST — operator P6-E CPU 34/34 PASS (SHA-bound, NOT Actions)
+- **Operator-supplied DGX terminal stdout**, source SHA `f0e48a5a43824468618aa494ad03cc06f09c10c7`: `test_mock_nonce_fence_v2_cpu.py` **Ran 14 tests in 0.077s / OK**; `test_p5d_p6e_cpu.py` **Ran 20 tests in 0.014s / OK**; total **34/34 PASS**. Source files retrieved directly from GitHub at this exact SHA contain 14 and 20 `test_*` methods, respectively.
+- The snippet ends at the shell prompt, but does **not** contain an explicit shell exit-code printout or `git status --short`; do **not** claim independent RC0 or clean worktree authentication. Evidence class: `OPERATOR_REPORTED_EXACT_SHA_CPU_34_OF_34_OK_RC_NOT_CAPTURED`.
+- Direct read-only GitHub lookup on the same SHA: Actions runs **0**, check-runs **0**, commit-status entries **0**. Therefore **CI_UNVERIFIED**, not CI PASS; no manual dispatch or trigger testing.
+- This closes the previous `NOT_RUN` gap for these **two exact-source test modules only** and supersedes earlier local isolated-only tests **for this SHA**; it does not authorize P6-E real persistent operating Journal/Nonce replay, P5-D PLE/NAT, P7 independent live integration, P8 recovery, PR merge or Production.
+- Next: keep this 34/34 acceptance anchored strictly to `f0e48a5a43824468618aa494ad03cc06f09c10c7`, review additional fake-only contract edge cases separately. No DGX Docker/GPU/port/services, sudo, operating Journal writes, `main` changes or PR merge.
+
+---
+
 ## 2026-11-19 KST — operator authenticated Actions audit COMPLETE, 9/9 CPU PASS at 178a328
 
 **2026-11-19 connector read-only cross-check:** newest repository run is PR `43108072440` (Nov 12 KST, old SHA `8b118c8`), paired with push `43107837772`; newer feature HEAD `8a12c96` has zero Check Runs and zero Commit Status entries. Authored/committed by the same user and unsigned as the last successful commit, but that does not identify the event credential. Root cause `UNVERIFIED`. Diagnostic now fails closed on HTTP 200 malformed runs/checks arrays (three new CPU fixtures, **assistant-local exact-blobs CPU 12/12 PASS at `6442c97` (0.004s, RC0) / CI NOT OBSERVED**). Existing 9/9 at `178a328` and P5-D 50/50 at `08d03b1` remain historical. Production `BLOCKED`; PR Draft/Open/Unmerged. See [Actions audit](../docs/GITHUB-ACTIONS-TRIGGER-AUDIT-20261119.md).
