@@ -1,3 +1,10 @@
+## 2026-11-20 KST — P7 new-session canonical handoff and evidence boundary
+- Adopt [SESSION-HANDOFF-P7-20261120.md](SESSION-HANDOFF-P7-20261120.md) as **new-session authoritative workflow pointer** while retaining all older handoff/evidence/decision records. Documentation-only commit does not create new CPU/CI evidence.
+- Operator `4c86b7990ea865a31bb78a346ca92867ed5e9e83` **37/37 CPU PASS, both RC0**, remains pinned to that tested source SHA; P7 actual independent source authentication, P5-D PLE/NAT, P6-E operating Journal/nonce, P8 live recovery and production **NOT ACCEPTED**. Latest GitHub CI at baseline `f70a2a6b5652806e0867f8eb7d63b561f292f676`: Runs/Checks/Statuses **0/0/0** (UNVERIFIED).
+- Preserve P7 `probe_id` cross-component uniqueness work; next examine potential source-only numeric type/time/provenance weaknesses. Actual source verification and negatively focused tests before claiming fixes; never invent CI or operating authority. PR #1 Draft/Open/Unmerged; no main merge.
+
+---
+
 ## 2026-11-20 — P6-E Journal v2 attempt boundary operator CPU 37/37 PASS (exact-SHA)
 - **Decision:** accept operator **37/37 OK with both RC0** as CPU-only evidence for source `4c86b7990ea865a31bb78a346ca92867ed5e9e83` (22 P5-D/P6-E Journal and 15 Fake Nonce). Direct GitHub files at that SHA show 22 and 15 methods. Worktree cleanliness not documented, so do not claim a clean checkout.
 - GitHub read-only workflow runs/checks/statuses **0/0/0** at that SHA; Actions CI **UNVERIFIED**. The evidence qualifies in-memory negative-path contract tests only and does not authorize operating Journal, real nonce ledger, restart, P5-D provenance, P7 live integration, P8 restore or production. Preserve previous SHA-specific receipts separately. Next source-only priority P7.

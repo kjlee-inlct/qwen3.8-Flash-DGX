@@ -1,3 +1,7 @@
+> **2026-11-20 P7 새 세션 최우선 진입점:** [SESSION-HANDOFF-P7-20261120.md](SESSION-HANDOFF-P7-20261120.md). 최신 P6-E 운영자 정확한 소스 SHA `4c86b7990ea865a31bb78a346ca92867ed5e9e83`에서 **22 Journal + 15 Fake Nonce = 37/37 CPU PASS (양쪽 RC0)**; 이후 PR HEAD `f70a2a6b5652806e0867f8eb7d63b561f292f676`은 문서 커밋(작성 당시)이며 이 인수인계 커밋 후 HEAD는 다시 바뀝니다. P7 독립 Proxy/Gateway/Storage source-only 후속 개발 우선; P5-D 실제 PLE/NAT·P6-E 운영 Journal/replay·P7 실증·P8/Production BLOCKED, GitHub CI UNVERIFIED, PR #1 Draft/Open/Unmerged. 과거 아래 기록을 최신 기준으로 오인하지 마세요.
+
+---
+
 > **2026-11-20 최신 세션 진입점:** [새 세션 P5-D/P5–P8 인수인계 및 실행 프롬프트](SESSION-HANDOFF-P5D-20261120.md). 
 > 이 링크는 P5-D 138/138 PASS (`7c11d0d`), 신규 비승격 permission CPU 7/7 PASS (`045947f`), 실제 UID 1001→UID 0 / EACCES 3/3 관측과 남은 승인 게이트를 **최신으로 요약**합니다. 본 문서 하단의 오래된 `NOT RUN` 문구는 기록 당시의 역사적 상태이며 최신 수용 판정이 아닙니다. GitHub CI UNVERIFIED, PR #1 Draft/Open/Unmerged, production BLOCKED.
 

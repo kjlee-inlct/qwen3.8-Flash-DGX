@@ -1,0 +1,129 @@
+# Blazux DGX Spark — P7 재개용 정식 세션 인수인계 및 실행 프롬프트 (2026-11-20 KST)
+
+> **새 세션의 가장 우선되는 참조 문서.** 기준 GitHub PR #1 HEAD: `f70a2a6b5652806e0867f8eb7d63b561f292f676` (작성 직전 직접 조회; 이 문서를 커밋하면 HEAD가 바뀜). 개발 branch `feature/recipe-wizard-handoff`, base `main`, **Draft / Open / Unmerged**. 먼저 최신 PR HEAD를 재조회하고 본 문서·관련 소스와 비교하라. 문서 커밋을 새 SHA의 CPU/CI PASS로 해석하지 않는다.
+
+## 0. 이번 세션의 목표 (실행 우선)
+
+**P7 Proxy/Gateway/Storage 독립 증거 계약의 source-only/Fake-DGX 개선**을 이어서 수행한다. 단순 분석이나 계획서로 끝내지 말 것. GitHub 도구로 실제 최신 파일을 조사하고, 이미 구현된 경로를 재사용하며, 명확한 결함을 찾을 경우 **좁은 코드 수정 → 부정 조건 CPU 테스트 추가 → 실행 가능한 범위의 실제 검증(실행 못 했다면 NOT_RUN 표기) → feature 브랜치 커밋 → SHA/PR/Actions 재조회 → 이 문서 및 영구 인수인계 갱신**까지 진행한다. **승인 없는 실운영 검증, 작업 재시작, CI 임의 트리거, PR 머지는 절대 하지 않는다.**
+
+## 1. Repository 및 운영 환경
+
+| 항목 | 값 |
+|---|---|
+| Development | https://github.com/kjlee-inlct/qwen3.8-Flash-DGX |
+| Upstream | https://github.com/blazux/qwen3.8-Flash-DGX |
+| Feature branch | `feature/recipe-wizard-handoff` |
+| PR | https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/pull/1 — Draft/Open/Unmerged, base main |
+| 문서 작업 전 HEAD | `f70a2a6b5652806e0867f8eb7d63b561f292f676` — **latest 여부는 다음 세션에서 재확인** |
+| DGX operator workspace | `~/Workspace/llm/blazux-orcarouter` |
+| Hardware/OS | NVIDIA DGX Spark GB10 / Ubuntu ARM64 |
+| Runtime policy | vLLM **0.32.0 고정**, **SGLang 금지**, `ONE_ACTIVE_MODEL_ONLY`, OpenAI-compatible API 포트 **8000** |
+| 기존 연동 | OpenWebUI 유지, Ollama :11434 유지, HF 캐시 보호 |
+| 최근 기록상 개발 trial | `qwen38-orcarouter-qsa62318-lmhead-v3` / served API ID `qwen3.8-flash-next-orca-uncensored-bf16`; **현재 실시간 상태로 추정하지 말 것** |
+
+Manifest registry에 등록된 모델을 범용 지원하되 임의 모델 전환 또는 컨테이너 승격은 금지한다. 과거 운영 trial 컨테이너와 canonical container는 같은 개념이 아니며, source `served_id` 문자열이 실제 API 응답을 인증하지 않는다.
+
+## 2. 2026-11-20 최신 확정 CPU 증거와 서로 다른 SHA의 분리
+
+| Evidence source SHA | 근거/검증 | 판정·한계 |
+|---|---|---|
+| `7c11d0d1a0921ef7b0f4134bd3d3c0d8ac4e5795` | 운영자 제공 P5-D/Manifest/Wizard 선택 CPU **138/138 PASS** | 당시 SHA 기준 선언/코드 PASS; 운영 PLE/NAT 미검증 |
+| `fd338efa549a8c3bb54e65e5e033d2334d9e96e1` | P5-D 읽기 전용 프로세스 감사: `smaps` **3/3 EACCES(13)**, FD/root 및 namespace 귀속 불충분, `BLOCKED_PARTIAL_PROVENANCE / RC3` | 실운영 RSS/PSS·inode·NAT ownership **BLOCKED**. RC3는 서비스 장애가 아님 |
+| `045947fccd33952ef4911c908ffb480d62b3d82b` | P5-D permission CPU **7/7 PASS**, 운영자 비승격 preflight `BLOCKED_PERMISSION_PREFLIGHT/RC3` | UID 1001 observer vs UID 0 process; 불필요한 재실행 금지 |
+| `f0e48a5a43824468618aa494ad03cc06f09c10c7` | 운영자 P6-E CPU **14+20=34/34 OK** | 당시에만 유효, RC/clean status 기록 없음 |
+| `25bf012a4a76d30508743d751d5693aaff33b943` | 운영자 P6-E CPU **15+20=35/35 OK**. Journal RC0, Nonce RC 미출력 | 당시에만 유효 |
+| **`4c86b7990ea865a31bb78a346ca92867ed5e9e83`** | **운영자 제공 P6-E Journal 22/22 OK (0.018 s, RC0) + Fake Nonce 15/15 OK (0.075 s, RC0) = 합계 37/37 PASS**; GitHub 테스트 메서드 수 직접 대조 | **현재 가장 최근 검증된 P6-E source SHA**, `git status --short` 미제공, CI/실운영 인증 아님 |
+| `f70a2a6b5652806e0867f8eb7d63b561f292f676` | GitHub 문서 전용 커밋; 위 37/37 CPU 증거를 영구 기록 | 새 소스 테스트를 실행한 SHA가 **아님** |
+
+위 값은 서로 다른 시점/커밋의 근거이다. 합산해서 단일 HEAD의 전체 CPU PASS로 취급하지 않는다. 이후 **이번 인수인계 문서 커밋**도 문서-only 변경이며 신규 CPU 수용 근거가 아니다.
+
+GitHub REST read-only 재조회에서 37/37 원본 SHA와 문서 작업 전 HEAD 각각의 Actions runs **0**, Check runs **0**, Commit status **0**. **GitHub CI = UNVERIFIED**, Actions 자동 트리거 미발생 원인 미확정. 과거 성공 run, `GITHUB_TOKEN`/GitHub App 가설 등으로 원인을 단정하지 않는다. CI dispatch/워크플로 수정/트리거 재시험은 별도 명시 승인 전까지 보류.
+
+## 3. 이미 구현된 P6-E와 P7 코드 — 중복 구현 방지
+
+### P6-E — CPU 검증 기록은 완료, 운영 수용은 미완료
+
+- `scripts/manager/mock_nonce_fence_v2.py`: 0700로 제한된 임시 `blazux-p6e-fake-*` 디렉터리의 Fake nonce marker. `O_EXCL`, `O_NOFOLLOW`, 0600 소유/모드/링크 검증, JSON 타입 엄격 비교, duplicate keys 및 비정상 상수 거부, `fsync` 후 inode/path 검증, 동일 inode·동일 길이 byte 변조 readback 거부. 불확실한 marker 삭제/재사용 없음. **실제 운영 nonce 장부 아님**.
+- `scripts/manager/generic_journal_v2.py`: V2 in-memory event/hash/phase audit, V1 migration preview, untrusted restart snapshot 리뷰. V1 전이 규칙을 V2에 재사용할 때 발생하는 **종결(COMMITTED/RESTORED/CANCELLED/RECOVERY_FAILED) 이후 동일 plan/nonce 재진입** 및 **FAILED → OBSERVED** 차단. **FAILED → ROLLBACK_STARTING**은 정상 경로로 유지. 영속 operating Journal/replay ledger, operator approval, live restart 모두 아직 BLOCKED.
+- `tests/test_p5d_p6e_cpu.py`: **22** methods, `tests/test_mock_nonce_fence_v2_cpu.py`: **15** methods, 합 37은 `4c86b7990ea865a31bb78a346ca92867ed5e9e83`에서 실제 운영자가 **RC0**로 검증.
+- 세부: `docs/P6-E-JOURNAL-V2-ATTEMPT-BOUNDARY-20261120.md`, `docs/P6-E-FAKE-NONCE-POST-FSYNC-CONTENT-READBACK-20261120.md`, `handoff/EVIDENCE-LEDGER.md`.
+
+### P7 — 다음 우선순위
+
+- `scripts/manager/integration_contract.py`: `integration_reconcile(model, evidence, config=None)`, `service/proxy/gateway/storage`의 source-only 구조적 일관성 검토. registered model의 canonical container, served ID, checkpoint/recipe, :8000, single-active-model, 시각 120초 범위 등을 검사.
+- 동일한 `probe_id`를 두 component가 공유하거나 공백만 달리 재사용하는 경우 양측 `NOT_OBSERVED` 및 `*_PROBE_ID_REUSED_ACROSS_COMPONENTS`으로 차단하는 구현은 **이미 있음**. 이를 다시 만들지 말 것. 고유 `probe_id`와 `probe_mode='DIRECT_OBSERVATION'`도 사용자가 쓴 JSON 문자열에 불과해 독립 검증을 인증하지 않는다.
+- `tests/test_integration_contract_cpu.py`: 현재 GitHub 소스에서 **8 unittest methods**. 기존 P7 patch 당시 **독립 fixture 8/8 PASS + stubbed registry 7/7 PASS**, **실제 전체 Wizard CLI/full source suite/Actions CI는 미확인**. 37/37 P6-E 검증은 이 P7 module을 포함하지 않는다.
+- `wizard.main`의 `operations generic integration-reconcile --model <name> --component-evidence <file> --json` 명령은 source 문서 평가에 한정한다. source `SOURCE_COMPONENT_FIELDS_CONSISTENT_NOT_LIVE_VERIFIED`는 **운영 PASS가 아님**, 실제 gateway/API/storage 인증 아님.
+- 참조: `docs/P7-PROBE-ID-INDEPENDENCE-CONTRACT-20261120.md`, `docs/WIZARD-CLI-CONTRACT.md`, `docs/P1-P8-EXECUTION-ROADMAP-20261119.md`.
+- **후속 코드 리뷰 후보**: status/port를 비교할 때 Python 숫자 `8000 == 8000.0` 등 유형 차이가 source-only 일관성을 부당하게 통과시키는지 확인; ISO timestamp가 시간대-aware만 요구하고 미래 날짜/증거 생성 시각의 fresh upper-bound를 검증하지 않는지 검토; root/component 모델 및 시계 skew, 추출된 경로의 진위, `http_status` 유형, 공통 identity binding, 중복 capture ID 처리를 검증. **실제 새 결함인지 재현부터 확인하고 기존 단위 테스트와 구현 중복은 피할 것.** 어느 경우든 origin spoofing을 source 필드 몇 개만으로 인증할 수 없다.
+
+## 4. P5–P8 및 릴리스 게이트
+
+| Stage | 현 시점 판정 |
+|---|---|
+| P5-D Manifest/Wizard source CPU | 과거 SHA에서 PASS; 새 HEAD의 전체 테스트는 별도 검증 |
+| **P5-D 실제 PLE RSS/PSS·inode·PID 및 Docker NAT 커널 소유권** | **BLOCKED** — non-privileged `/proc/PID/smaps`, `fd`, `root` 접근 불가, UID mismatch. 반복 조사 금지 |
+| P5 실부하 Benchmark/session | 전면 운영 수용 아님; 별도 명시 승인 필요 |
+| **P6-E Fake-Journal/Nonce CPU** | **37/37 OK, RC0 at `4c86b7990ea8`** |
+| **P6-E 실제 operating Journal v2·Nonce/Replay/승인 인증** | **BLOCKED** — CPU fixture/hash consistency는 운영 권한 아님 |
+| **P7 Proxy/Gateway/Storage 실독립 관측·증빙** | **PENDING/NOT ACCEPTED** — source-only 계약 보강 가능 |
+| **P8 실제 장애·재시작·원상복구** | **BLOCKED**; Fake-DGX 통과는 실제 복구 인증이 아님 |
+| GitHub Actions 최신 exact-SHA CI | **UNVERIFIED** |
+| PR #1 merge / Production Release | **BLOCKED** — PR Draft/Open/Unmerged 유지 |
+
+`0` 관측 RSS/PSS와 `UNREADABLE`/permission-denied는 다르다. `RC3`는 증거 부족이지 서비스 장애 판정이 아니다. Docker port declaration 일치만으로 kernel NAT·프로세스 포트 귀속을 증명하지 않는다.
+
+## 5. 절대 변경하지 않을 운영 범위
+
+- **명시적 새 운영자 승인 없이 금지**: 실제 모델 전환/다운로드/삭제, Docker/GPU/inference/벤치마크, 서비스 재시작, Portainer 변경, 운영 Journal/nonce ledger 읽기·쓰기, P8 실복구, sudo, ptrace, sysctl, firewall/NAT, procfs 권한 승격, HF 캐시 cleanup, :8000/OpenWebUI/Ollama 영향 작업.
+- **명시 승인 전 GitHub CI 수동 dispatch/rerun, Actions settings/workflow permissions 변경 또는 합성 trigger 비교 시험 금지.**
+- `main` 쓰기와 PR #1 merge 금지; feature 브랜치에만 필요 최소 변경을 커밋. 강제 push 금지, 선행 HEAD 검사 후 `expected_sha`로 fast-forward 업데이트.
+- GitHub 코드 수정과 DGX 실운영은 별개 승인 범주이다. 터미널에 제시하는 CPU-only 명령은 실제 Docker/모델 파일/Journal을 건드리지 않는 것으로 검증할 것.
+- 모델 일반화 지향; hardcoded `27b`/`flash-next` 전제 회피. 한 시점에 활성 LLM은 하나; vLLM 0.32.0, SGLang 금지.
+
+## 6. 새 세션 즉시 수행 순서
+
+1. GitHub connector로 PR #1 **최신 HEAD**와 base/main, Draft/Open/Unmerged 상태 확인. 역사적 `f70a2a6b5652806e0867f8eb7d63b561f292f676`을 현재 HEAD라고 단정하지 말 것.
+2. 우선 `handoff/SESSION-HANDOFF-P7-20261120.md`와 `handoff/EVIDENCE-LEDGER.md`, `handoff/NEXT-ACTIONS.md`, `handoff/DECISIONS.md`, 로드맵 및 P7 코드·테스트를 최신 HEAD에서 읽는다. 기존 메서드/테스트·Wizard·Manifest 구현을 열람하고 patch 중복을 방지.
+3. P7 source-only fail-closed 누락을 **재현 가능한 단 하나 이상의 구체적 사례**로 먼저 확인. 확인된 결함만 최소 수정, 정상 플로우·등록된 3개 모델/미래 모델·120초 창·포트 8000 보호. 유저 작성 `PASS`와 사실상 독립 관측의 차이는 보존.
+4. CPU/Fake-DGX **부정 조건 테스트**와 정상 회귀 추가. 실행 환경이 있으면 Git 원본과 일치하는 코드로 실제 실행하고 결과 SHA/건수/RC 기록. 도구에 runner가 없으면 명시적으로 **NOT_RUN**; 격리 mirroring/stub은 실제 전체 저장소 PASS로 서술 금지. 필요 시 CPU-only operator 실행 명령 1회 제시하고 로그를 받고 계속.
+5. Source patch → GitHub commit (feature branch) → PR HEAD/변경파일 blob 재조회 → **해당 SHA** GitHub Actions Run ID, Check Run 조회. 0개면 `CI_UNVERIFIED` 그대로. prior CPU PASS를 신규 SHA에 이관하지 말 것.
+6. `handoff/EVIDENCE-LEDGER.md`, `handoff/NEXT-ACTIONS.md`, `handoff/DECISIONS.md`, 이 세션 인수인계와 적절한 `docs/P7-...` 문서에 SHA·확정 결과·미수용 게이트·다음 행동을 영구 기록. 필요 시 PR 설명은 맞춤 갱신하되 PR 자체는 Draft/Open/Unmerged 유지.
+7. 작업 결과를 사용자에게 **무엇을 실제 구현·커밋·검증했는지** / **미검증 무엇인지** / **운영 승인 경계**로 분리 보고. 막힌 것은 실제 원인, 재현에 필요한 최소 권한/테스트만 제시.
+
+## 7. 필독 영구 참조 (모두 최신 feature ref로 다시 조회)
+
+- `handoff/SESSION-HANDOFF-P7-20261120.md` (이 문서; 가장 우선되는 세션 진입점)
+- `handoff/SESSION-START-PROMPT.md`, `handoff/EVIDENCE-LEDGER.md`, `handoff/NEXT-ACTIONS.md`, `handoff/DECISIONS.md`
+- `handoff/SESSION-HANDOFF-P5D-20261120.md` (P5-D procfs/permissions 역사적 세부)
+- `docs/P1-P8-EXECUTION-ROADMAP-20261119.md`
+- `docs/P7-PROBE-ID-INDEPENDENCE-CONTRACT-20261120.md`, `docs/WIZARD-CLI-CONTRACT.md`
+- `docs/P6-E-JOURNAL-V2-ATTEMPT-BOUNDARY-20261120.md`
+- `docs/GITHUB-ACTIONS-OPERATOR-PUSH-COMPARISON-20261120.md`
+- `docs/P5-D-PROCFS-PERMISSION-BLOCKER-20261120.md`
+- Source: `scripts/manager/integration_contract.py`, `tests/test_integration_contract_cpu.py`, `scripts/manager/generic_journal_v2.py`, `scripts/manager/mock_nonce_fence_v2.py`, `wizard/main.py`, `runtimes/manifest-registry.json`.
+
+## 8. 새 대화 붙여넣기용 작업 지시문
+
+```text
+이전 Blazux DGX Spark / vLLM 0.32.0 / P5–P8 개발을 그대로 이어주세요.
+
+GitHub: https://github.com/kjlee-inlct/qwen3.8-Flash-DGX
+Branch: feature/recipe-wizard-handoff
+PR #1: Draft/Open/Unmerged, base main
+가장 최신 기준 문서: handoff/SESSION-HANDOFF-P7-20261120.md
+이전 문서 작업 시작 HEAD: f70a2a6b5652806e0867f8eb7d63b561f292f676 (현재 HEAD라고 가정하지 말고 GitHub에서 다시 확인할 것)
+
+우선 GitHub 연결 도구로 최신 PR HEAD, 위 인수인계 문서, Evidence Ledger, Next Actions, Decisions, 로드맵, scripts/manager/integration_contract.py 및 tests/test_integration_contract_cpu.py의 최신 파일을 실제 확인하세요.
+
+확정된 CPU 증거: 운영자 제공 소스 SHA 4c86b7990ea865a31bb78a346ca92867ed5e9e83에서 P6-E Journal 22/22 OK/RC0 + Fake Nonce 15/15 OK/RC0 = 37/37 PASS. 이후 문서 커밋은 새 CPU 통과가 아닙니다. 최신 CI는 해당 SHA에서 runs/checks/statuses 0/0/0, UNVERIFIED입니다.
+실제 P5-D PLE RSS/PSS/inode/PID·kernel NAT 소유권은 /proc EACCES/권한 경계 때문에 BLOCKED. P6-E 실운영 Journal/nonce/replay/approval과 P7 실독립 Proxy/Gateway/Storage, P8 실제 복구, Production Release도 미수용입니다.
+
+이번 진행 목표는 P7 source-only/Fake-DGX 계약 보강입니다. 이미 구현된 duplicate probe_id/whitespace 검증을 중복 구현하지 마세요. 먼저 최신 코드/테스트로 결함을 입증한 뒤 필요한 최소 소스 수정, 부정 조건 CPU 회귀, 실제 가능한 테스트 실행, feature 브랜치 GitHub 커밋, 새 SHA의 CI 확인, 영구 문서 갱신까지 수행하세요. 테스트를 실제 실행하지 않았다면 NOT_RUN이라고 쓰고, 이전 SHA의 PASS를 새 SHA에 승격하지 마세요.
+
+새로운 명시 승인 없이 sudo/ptrace, Docker/GPU/모델 전환·실부하, 서비스 restart, 운영 Journal 기록/삭제, procfs 권한 승격, CI manual dispatch/trigger 실험, main 수정 또는 PR 머지는 금지합니다. vLLM 0.32.0/SGLang 금지, ONE_ACTIVE_MODEL_ONLY, API :8000 및 기존 OpenWebUI/Ollama를 유지하세요. P5-D EACCES를 반복 확인하지 마세요.
+
+단순 계획서로 끝내지 말고 실제 GitHub 구현 가능한 범위를 한 세션에서 수행한 다음 테스트/CI/운영 수용 여부와 정확한 SHA를 구분해 보고하세요.
+```
+
+> **마지막 주의:** 이 문서는 작성 당시 증거와 안전 경계를 정리한 **문서 전용 인수인계**이다. PR HEAD, 운영 환경, 최신 CI, 모델 service 여부는 새 세션에서 반드시 독립 재검증한다.

@@ -1,3 +1,10 @@
+## 2026-11-20 KST — P7 session handoff baseline committed (documentation-only)
+- Canonical continuation: [SESSION-HANDOFF-P7-20261120.md](SESSION-HANDOFF-P7-20261120.md). PR #1 confirmed Draft/Open/Unmerged at baseline HEAD `f70a2a6b5652806e0867f8eb7d63b561f292f676`; subsequent doc-only commit changes the HEAD and is **NOT** new CPU/CI PASS.
+- Latest operator source receipt P6-E `4c86b7990ea865a31bb78a346ca92867ed5e9e83`: Journal 22/22 RC0 + Fake Nonce 15/15 RC0 = **37/37 CPU PASS**. P7 `integration_contract.py` duplicate normalized `probe_id` blocking already implemented; current P7 tests 8 methods but full module/Wizard/CI unverified.
+- **Next approved source-only action:** investigate P7 untrusted numeric types, timestamps, and source-to-component binding; reproduce defects, add targeted negative regressions, commit only feature branch, check new SHA Actions, update evidence. Do not repeat known P5-D UID/procfs EACCES; no DGX/Docker/GPU/Journals/CI dispatch, main edit, PR merge or production.
+
+---
+
 ## 2026-11-20 — P6-E Journal v2 attempt boundary operator CPU 37/37 PASS (exact-SHA)
 - **Evidence:** operator-supplied DGX terminal transcript, source SHA `4c86b7990ea865a31bb78a346ca92867ed5e9e83`; `test_p5d_p6e_cpu.py` **22/22 OK, 0.018 s, P6E_JOURNAL_TEST_RC=0**; `test_mock_nonce_fence_v2_cpu.py` **15/15 OK, 0.075 s, P6E_NONCE_TEST_RC=0**. Combined **37/37 CPU PASS**, both exit codes explicitly printed. GitHub directly confirms 22 and 15 unittest methods at this exact SHA.
 - **Boundary:** operator-provided source SHA and terminal results are not independently captured GitHub CI. `git status --short` output absent, so clean worktree is **UNVERIFIED**. GitHub read-only exact-SHA Actions runs **0**, Check Runs **0**, Commit Statuses **0** => **CI_UNVERIFIED** (not CI PASS), root cause of no-run parked.

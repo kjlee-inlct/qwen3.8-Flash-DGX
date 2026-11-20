@@ -1,3 +1,8 @@
+## 2026-11-20 KST — Canonical next-session entry P7 (documentation-only)
+- [New P7 handoff and copy-ready execution prompt](../handoff/SESSION-HANDOFF-P7-20261120.md). Historical CPU evidence: P6-E tested at `4c86b7990ea865a31bb78a346ca92867ed5e9e83` **22+15=37/37 PASS/RC0**; later documents are not newly CPU/CI tested.
+- P7 next source-only focus: independently assess typed port/HTTP status fields, untrusted source capture times and provenance with reproducible negative tests. Existing duplicate normalized probe IDs already blocked. Full P7 Wizard/CI and actual Proxy/Gateway/Storage service probes still NOT ACCEPTED.
+- P5-D actual PLE/NAT, P6-E operating Journal/nonce/approval, P8 real recovery, release remain BLOCKED; GitHub Actions latest exact HEAD UNVERIFIED; PR #1 Draft/Open/Unmerged. No runtime privilege or deployment changes.
+
 ## 2026-11-20 — P6-E Journal v2 attempt boundary operator CPU 37/37 PASS (exact-SHA)
 - **Operator CPU evidence on exact `4c86b7990ea865a31bb78a346ca92867ed5e9e83`:** 22 P5-D/P6-E Journal tests **OK, RC0**, plus 15 Fake Nonce tests **OK, RC0** = **37/37 PASS**. Verified test-method counts against GitHub source; worktree status not supplied. Prior 35/35 is a separate earlier SHA, not pooled.
 - Exact tested SHA Actions runs/checks/statuses **0/0/0**, **CI_UNVERIFIED**. P5-D live PLE/NAT remains BLOCKED, P6-E real durable Journal/nonce approval blocked, P7 independent live proxy/gateway/storage PENDING, P8 real recovery and release BLOCKED. Future docs-only commits do not inherit new CPU execution. Next source-only P7 hardening; no operational or PR merge authorization.
