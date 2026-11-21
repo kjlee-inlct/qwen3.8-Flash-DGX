@@ -1,3 +1,5 @@
+> **2026-11-21 P7 evidence update:** [latest P7 session handoff](SESSION-HANDOFF-P7-20261120.md): operator-run P7 integration **16/16 PASS, `P7_CPU_RC=0` at exact source SHA `c36b2bf9124b1237606d2d1d138929bfd138485c`**. This supersedes earlier P7 16-method NOT_RUN only at that SHA. GitHub CI UNVERIFIED; Wizard and Manifest still require separate latest-source CPU reruns, while live P5-D/P6-E/P7/P8 and Production remain blocked. **Any later documentation-only HEAD does not itself have a fresh CPU PASS.** Check current HEAD/PR when starting.
+
 > **2026-11-21 최신 진입점:** [SESSION-HANDOFF-P7-20261120.md](SESSION-HANDOFF-P7-20261120.md) — 새 세션 전용 상세 실행 프롬프트와 P7 독립 provenance 후속 개발 작업. 문서 작성 직전 feature HEAD `4c28ee8778a4837a0b7f4452a0195af460acd038`; 인수인계 커밋 후 최신 HEAD는 재조회해야 함. CPU 증거는 P6-E 37/37 at 4c86b799, P7 13/13 at 77fe76a8, Wizard 126/126 at a4bd913, Manifest 77/77 (Cleanup 12 included) at dcf73332 — **서로 다른 테스트 SHA**. 운영 수용 P5-D/P6-E/P7/P8/Production 차단, CI UNVERIFIED. 기존 아래 기록은 작성 당시 상태로 보존.
 
 ---
