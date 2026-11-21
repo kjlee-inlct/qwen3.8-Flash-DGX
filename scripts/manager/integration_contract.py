@@ -51,6 +51,16 @@ def integration_reconcile(model: str, evidence: dict | None,
     if not _exact_int(data.get("api_port"), 8000):
         issues.append("FIXED_API_PORT_NOT_EVIDENCED")
 
+    # Fail closed on accidentally spliced captures from different sessions.
+    # All of these labels are editable and DO NOT authenticate provenance or
+    # prevent a malicious author from replaying an entire document.
+    session_id = data.get("capture_session_id")
+    nonce = data.get("capture_nonce")
+    if not isinstance(session_id, str) or not session_id.strip():
+        issues.append("CAPTURE_SESSION_ID_MISSING")
+    if not isinstance(nonce, str) or not nonce.strip():
+        issues.append("CAPTURE_NONCE_MISSING")
+
     # Reused component IDs cannot even support a structural claim of
     # independent captures. This is a syntactic fence, not authentication.
     probe_id_owners = {}
@@ -82,6 +92,15 @@ def integration_reconcile(model: str, evidence: dict | None,
             reasons.append("PROBE_ID_MISSING")
         elif probe_id.strip() in reused_probe_ids:
             reasons.append("PROBE_ID_REUSED_ACROSS_COMPONENTS")
+        if (not isinstance(session_id, str) or not session_id.strip()
+                or entry.get("capture_session_id") != session_id):
+            reasons.append("CAPTURE_SESSION_UNBOUND")
+        if (not isinstance(nonce, str) or not nonce.strip()
+                or entry.get("capture_nonce") != nonce):
+            reasons.append("CAPTURE_NONCE_UNBOUND")
+        collector_id = entry.get("collector_id")
+        if not isinstance(collector_id, str) or not collector_id.strip():
+            reasons.append("COLLECTOR_ID_MISSING")
         if entry.get("model") != model:
             reasons.append("MODEL_MISMATCH")
         if entry.get("probe_mode") != "DIRECT_OBSERVATION":
@@ -145,5 +164,7 @@ def integration_reconcile(model: str, evidence: dict | None,
         "executed": False, "real_dgx_verified": False,
         "proxy_gateway_verified": False, "operations_enabled": False,
         "production_released": False,
-        "note": "Live component state and source provenance require independent read-only probes.",
+        "capture_provenance_authenticated": False,
+        "replay_prevention_verified": False,
+        "note": "Capture session/nonce/collector fields are untrusted labels; live origin authentication and durable replay fencing require independent trusted probes.",
     }
