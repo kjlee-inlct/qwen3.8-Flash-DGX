@@ -22,12 +22,17 @@ class P7IntegrationContractCPU(unittest.TestCase):
         identity = model_catalog()["models"][self.model]
         time = "2026-11-09T00:00:00+00:00"
         shared = {"model": self.model, "observed_at_utc": time,
-                  "probe_mode": "DIRECT_OBSERVATION"}
+                  "probe_mode": "DIRECT_OBSERVATION",
+                  "capture_session_id": "session-001",
+                  "capture_nonce": "nonce-001",
+                  "collector_id": "collector-001"}
         def entry(tag, **extra):
             return dict(shared, probe_id=tag, **extra)
         self.doc = {
             "model": self.model, "api_port": 8000,
             "active_gpu_models": [self.model],
+            "capture_session_id": "session-001",
+            "capture_nonce": "nonce-001",
             "service": entry("service", container_name=identity["container"],
                              container_id="a" * 64,
                              served_id=identity["served_id"],
@@ -172,6 +177,56 @@ class P7IntegrationContractCPU(unittest.TestCase):
                           report["issues"])
         self.assertFalse(report["proxy_gateway_verified"])
         self.assertFalse(report["production_released"])
+
+
+    def test_cross_session_collage_and_nonce_mismatch_fail_closed(self):
+        for component, field, bad in (
+            ("service", "capture_session_id", "session-other"),
+            ("proxy", "capture_nonce", "nonce-replayed"),
+            ("gateway", "capture_session_id", None),
+            ("storage", "capture_nonce", None),
+        ):
+            with self.subTest(component=component, field=field):
+                doc = copy.deepcopy(self.doc)
+                if bad is None:
+                    del doc[component][field]
+                else:
+                    doc[component][field] = bad
+                report = integration_reconcile(self.model, doc)
+                self.assertEqual(report["status"], "BLOCKED")
+                expected = ("CAPTURE_SESSION_UNBOUND"
+                            if field == "capture_session_id" else "CAPTURE_NONCE_UNBOUND")
+                self.assertIn(component.upper() + "_" + expected, report["issues"])
+                self.assertEqual(report["component_checks"][component]["status"],
+                                 "NOT_OBSERVED")
+
+    def test_missing_capture_root_or_collector_identity_fails_closed(self):
+        for field, issue in (
+            ("capture_session_id", "CAPTURE_SESSION_ID_MISSING"),
+            ("capture_nonce", "CAPTURE_NONCE_MISSING"),
+        ):
+            with self.subTest(field=field):
+                doc = copy.deepcopy(self.doc)
+                del doc[field]
+                report = integration_reconcile(self.model, doc)
+                self.assertIn(issue, report["issues"])
+                self.assertEqual(report["status"], "BLOCKED")
+        doc = copy.deepcopy(self.doc)
+        doc["storage"]["collector_id"] = ""
+        report = integration_reconcile(self.model, doc)
+        self.assertIn("STORAGE_COLLECTOR_ID_MISSING", report["issues"])
+        self.assertEqual(report["status"], "BLOCKED")
+
+    def test_matching_capture_labels_never_authenticate_origin_or_replay(self):
+        # A forger can copy every label; this is only a collage-prevention
+        # structural check, never proof that a collector ran on a live DGX.
+        report = integration_reconcile(self.model, copy.deepcopy(self.doc))
+        self.assertEqual(report["status"],
+                         "SOURCE_COMPONENT_FIELDS_CONSISTENT_NOT_LIVE_VERIFIED")
+        self.assertFalse(report["capture_provenance_authenticated"])
+        self.assertFalse(report["replay_prevention_verified"])
+        self.assertFalse(report["real_dgx_verified"])
+        self.assertFalse(report["operations_enabled"])
 
     def test_future_model_registry_is_automatically_supported(self):
         from scripts.manager.service_manifest import policy
