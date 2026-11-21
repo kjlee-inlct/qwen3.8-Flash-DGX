@@ -1,0 +1,184 @@
+{
+  "schema_version": 1,
+  "recipe_id": "qwen38-orcarouter-bf16ple-p5",
+  "qualification": "SOURCE_ADAPTER_UNQUALIFIED_DGX_GPU_NOT_RUN",
+  "engine": "vllm",
+  "vllm_version": "0.32.0",
+  "launch_allowed": false,
+  "register_as_runtime_recipe": false,
+  "reference": {
+    "repository": "YSLAB-ai/Qwen3.8-Flash-Next-NVFP4-BF16PLE-DGX-Spark",
+    "commit": "9492b78c6bc04638587b42f2ffeb0680b0fcb3ef",
+    "vllm_version": "0.1.dev20073+g8e685d198",
+    "port": 18300,
+    "production_image_allowed": false
+  },
+  "model": {
+    "repo_id": "orcarouter/Qwen3.8-Flash-Next-Uncensored-NVFP4",
+    "revision": "3a3b63161c0745390e5270179af42e46efc70799",
+    "quantization": "compressed-tensors",
+    "gated": true,
+    "checkpoint_immutable": true,
+    "expected_ple": {
+      "dtype": "BF16",
+      "tensor_count": 128,
+      "total_rows": 320001536,
+      "width": 160,
+      "split_parts": 128,
+      "layer_id": 1,
+      "weight_scale_present": false,
+      "mmap_bytes": 102400491520
+    },
+    "ple_asset_id": "orcarouter-bf16-ple"
+  },
+  "mtp_donor": {
+    "repo_id": "RadixArk/Qwen3.8-Flash-Next-NVFP4",
+    "revision": "7b719225242aacd3dbd3f9407468c2ee9a9d2594",
+    "tensor_count": 31,
+    "dtype": "BF16",
+    "shards": [
+      {
+        "filename": "model-bf16-00010.safetensors",
+        "size": 323564201,
+        "sha256": "0c2c3ef0030f5134edca0f3bbffc111cfa5da4b39b839cb8248ec762009be0aa"
+      },
+      {
+        "filename": "model-bf16-00011.safetensors",
+        "size": 10727387912,
+        "sha256": "d18b0db2e27fa066b3f8f86913686f572ee29406d971c8f5b0ec2902e3419ad9"
+      },
+      {
+        "filename": "model-bf16-00012.safetensors",
+        "size": 3683689888,
+        "sha256": "6c7c599218f8be53472c7b9ab0a9683b753cc187c5b7a49223e22348470b80e2"
+      }
+    ]
+  },
+  "runtime": {
+    "image_id": null,
+    "host_port": 8000,
+    "one_active_model_only": true,
+    "container_name": "qwen38-orcarouter",
+    "hf_cache_read_only": true,
+    "enable_tools": true,
+    "source_patch_required": "SCOPED_QSA62318_AND_LM_HEAD_QUANT_BACKPORT_ISOLATED_IMAGE",
+    "preparation_requires_separate_approval": true,
+    "service_downtime_requires_separate_approval": true,
+    "gpu_trial_released": false,
+    "rollback_release": false,
+    "ple_loader_profile": "blazux-vllm032-orcarouter-bf16",
+    "dtype": "bfloat16",
+    "load_format": "safetensors"
+  },
+  "profiles": {
+    "mtp0": {
+      "served_id": "qwen3.8-flash-next-orca-uncensored-bf16",
+      "num_speculative_tokens": 0,
+      "max_model_len_candidate": 8192,
+      "max_num_seqs_candidate": 1,
+      "gpu_memory_utilization_candidate": 0.7,
+      "ple_mmap": true,
+      "ple_prewarm": false,
+      "kv_cache_dtype": "bfloat16",
+      "cuda_graph": "PIECEWISE",
+      "splitting_op_candidates": [
+        "vllm::ple_mmap_lookup_ids"
+      ],
+      "checkpoint_view": "PINNED_SOURCE_SNAPSHOT",
+      "qualification": "NOT_RUN",
+      "enforce_eager": true,
+      "enable_native_tools": true,
+      "tool_call_parser": "qwen3_coder",
+      "reasoning_parser": "qwen3"
+    },
+    "mtp2": {
+      "served_id": "qwen3.8-flash-next-orca-uncensored-bf16-mtp",
+      "num_speculative_tokens": 2,
+      "max_model_len_candidate": 8192,
+      "max_num_seqs_candidate": 1,
+      "gpu_memory_utilization_candidate": 0.7,
+      "ple_mmap": true,
+      "ple_prewarm": false,
+      "kv_cache_dtype": "bfloat16",
+      "cuda_graph": "PIECEWISE",
+      "splitting_op_candidates": [
+        "vllm::ple_mmap_lookup_ids",
+        "vllm::qwen3_8_flash_next_qsa_with_output"
+      ],
+      "checkpoint_view": "IMMUTABLE_DERIVED_OVERLAY",
+      "qualification": "NOT_RUN"
+    }
+  },
+  "numerical_gate": {
+    "strict_first_token_logprob_abs_max": 0.0001,
+    "release_override_allowed": false
+  },
+  "safety": {
+    "preserve_active_27b": true,
+    "preserve_all_source_snapshots_and_donor": true,
+    "forbid_prune": true,
+    "forbid_unapproved_docker_mutations": true,
+    "forbid_p3_replay": true,
+    "forbid_p8_fault_trials": true,
+    "merge_requires_separate_approval": true
+  },
+  "trial": {
+    "profile": "mtp0",
+    "mode": "ONE_SHOT_DEVELOPMENT_GPU_NO_ROLLBACK",
+    "start_interface": "./wizard.sh p5 trial",
+    "requires_exact_plan": true,
+    "automatic_restore_on_failure": false,
+    "preserve_source_container_and_image": true,
+    "derived_overlay_required": false,
+    "production_launch_allowed": false,
+    "source_immutable": true,
+    "runtime_strategy": "RECIPE_PINNED_QSA62318_LMHEAD_V3_DERIVED_IMAGE_FROM_EXISTING_VLLM032",
+    "require_image_build": true,
+    "allow_source_patch": false,
+    "read_only_image_capability_probe": true,
+    "image_source": "VERIFIED_STOPPED_OR_RUNNING_27B_IMAGE_ID",
+    "on_incompatible_loader": "FAIL_NO_ROLLBACK_PRESERVE_LOG_AND_CHECKPOINT",
+    "p5_env": {
+      "HF_HOME": "/hf",
+      "HF_HUB_OFFLINE": "1",
+      "VLLM_PLE_MMAP": "1",
+      "VLLM_PLE_MMAP_WORKERS": "16",
+      "VLLM_PLE_MMAP_PREWARM": "0"
+    },
+    "container_name": "qwen38-orcarouter-qsa62318-lmhead-v3",
+    "adapter": "qwen4exp-qsa62318-lmhead-v032-v3",
+    "image_tag": "blazux-p5-orcarouter:qsa62318-lmhead-v3-v032",
+    "allow_isolated_derived_image_source_backport": true,
+    "preserve_previous_failed_trial_container": true,
+    "allow_idle_source_after_failed_p5": true
+  },
+  "compatibility_adapter": {
+    "id": "qwen4exp-qsa62318-lmhead-v032-v3",
+    "scope": "P5_ORCAROUTER_MTP0_ONLY",
+    "upstream_issue": "https://github.com/vllm-project/vllm/issues/62308",
+    "upstream_pr": "https://github.com/vllm-project/vllm/pull/62318",
+    "upstream_commit": "fe833b1",
+    "dockerfile": "Dockerfile.p5.qsa62318-lmhead-v3",
+    "patch_script": "src/p5_qsa_quant_backport_v032.py",
+    "allowed_vllm_version": "0.32.0",
+    "apply_only_in_derived_image": true,
+    "preserve_original_27b_image": true,
+    "launch_profile": "mtp0",
+    "gpu_qualified": false,
+    "adapter_qualified": false,
+    "lm_head_patch_script": "src/p5_lm_head_quant_backport_v032_v3.py"
+  },
+  "resource_policy": {
+    "schema_version": 1,
+    "mode": "OBSERVE_ONLY",
+    "min_mem_available_gib_for_start": null,
+    "max_memory_psi_some_avg10_pct_warn": null,
+    "max_swap_used_gib_warn": null,
+    "cpu_frequency_setting": "OPERATOR_APPROVAL_ONLY",
+    "cgroup_memory_setting": "OPERATOR_APPROVAL_ONLY",
+    "startup_gate_enabled": false,
+    "do_not_copy_yslab_100gib_without_measurement": true,
+    "observation_samples_max": 5,
+    "observation_interval_seconds_max": 30
+  }
+}

@@ -1,0 +1,30 @@
+# Deliberately INVALID until exact checkpoint/runtime and architecture are source-verified.
+# Model revision is source-verified; image digest / architecture remain blocked.
+# A schema failure is expected. Do NOT treat this as a runnable recipe.
+schema_version: 1
+recipe_id: qwen38-27b-candidate
+engine: vllm
+runtime:
+  vllm_version: 0.32.0
+  platform: linux/arm64
+  source_git_sha: REPLACE_WITH_PINNED_VLLM_SOURCE_SHA
+  image_ref: REPLACE_WITH_VERIFIED_IMAGE_REF_AND_DIGEST
+  image_digest: REPLACE_WITH_VERIFIED_IMAGE_DIGEST
+model:
+  repo_id: nvidia/Qwen3.8-27B-NVFP4
+  revision: 482ca0f3832238542f8f5295dde86b5f22711d80
+  architecture: UNVERIFIED_27B_VLLM032
+  quantization: nvfp4
+  ple: {mode: UNVERIFIED_FOR_27B}
+  mtp: {enabled: false, num_speculative_tokens: 0}
+service:
+  served_model_name: qwen3.8-27b
+  container_name: qwen38-27b
+  port: 8000
+checks:
+  require_exact_revision: true
+  require_ready_health: true
+  allow_launch_without_gpu_approval: false
+lifecycle:
+  protected: false
+  allow_delete_without_approval: false

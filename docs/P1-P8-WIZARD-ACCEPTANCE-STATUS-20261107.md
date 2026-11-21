@@ -1,0 +1,411 @@
+## 2026-11-19 KST — actual P5-D one-turn RC3 source-bound; diagnosis and safe source fixes
+
+Operator ran `scripts/temporary/p5d-readonly-once.sh` on clean source SHA `4366f3b1476105c6f556e0e93c4f5e1da64f68fa`: P5-D live audit CPU **14/14 PASS**, P5 attribution CPU **7/7 PASS**, P5-D/P6-E CPU **19/19 PASS**, **40/40 selected PASS**. `P5D_SERVICE_PREFLIGHT_PASS`, `service_api_model_id_confirmed=true`, Docker ID and PID-set continuity confirmed; **actual live P5-D `BLOCKED_PARTIAL_PROVENANCE` / RC3**. Container netns returned empty `""`; one container-side :8000 socket inode found but no matching FD host PID. Docker declared/effective port 8000 both present but strict compare `DOCKER_DECLARATION_MISMATCH`. `iptables-save` unavailable; `SMAPS_UNREADABLE`, pinned snapshot directory unreadable, mapped candidate files 0; PLE RSS/PSS and unique residency remain unobserved. One passing CPU test emitted `ResourceWarning` from unclosed scandir iterator (not an operator runtime service failure).
+
+**After this operator run**, source-only patches close scandir; distinguish empty/unqualified namespace from actual mismatch, check nonempty identity; classify smaps read errors; accept only Docker's exact IPv4 wildcard + IPv6 `::` extension while rejecting unexpected bindings; probe pinned cache mount already ending in `/hub`; emit per-PID summary issues and add negative CPU fixtures. **No new source SHA CI, CPU execution or repeat real DGX read-only test is verified.** The earlier RC3 is preserved and not retroactively converted to PASS. New source is not a production gate.
+
+Already-saved full JSON (not yet provided here): `/home/inlc/.local/state/blazux-wizard/model-measurements/orcarouter--20261119T004619880648Z--bd848453cb4f.json`. **Next:** upload/read the existing receipt first; no GPU inference or service mutation needed, do not rerun automatically. [Detailed evidence and subsequent source changes](../docs/P5-D-READONLY-ONE-TURN-RESULT-20261119.md). PR #1 Draft/Open/Unmerged; PLE/NAT ownership, P6-E/P7/P8 and production blocked.
+
+---
+
+## 2026-11-19 KST — uploaded full P5 resource JSON REVIEWED (supersedes resource-review pending)
+
+Reviewed original `orcarouter--20261118T214659097604Z--86b3752c0029.json`: 4 snapshots spanning **42.008s** and `OBSERVED_INTERVAL`, stable Docker ID at clean trial SHA `bc0a9ea`, prior nonthinking 3/3 TTFC/TPS recorded separately. Sampled GPU utilization **0→66→74→75%**, GPU power **9.86→20.43→20.98→21.22W**, GPU temperature **34→38→40→41°C**; peak *observed system zone* 46.6°C. Host CPU busy **5.11%**. Host minimum MemAvailable **28.729GiB**; host used swap stable **1.307GiB** and **zero swap-in/swap-out** observed, memory PSI some avg10 **0%**, cgroup high/max/oom/kill event deltas all zero. Container cgroup `memory.current` **22.914→22.581GiB**, file cache `file` **17.863→17.525GiB**, anon near **4.60GiB**. Cgroup major-fault count rose **2004** in first measured segment only, with `workingset_refault_file_delta=0`. NVMe mean read/write over the window **195401 / 316600 bytes/s** from host cumulative counters, not PLE-specific. Docker CLI `MemUsage~7.18GiB` uses different accounting from cgroup `memory.current~22.58GiB`; do not merge or call either VRAM. `PLE-specific RSS=null` and `smaps_rollup=null`, no independent port/NAT process, GPU exclusivity or throttling proof. Four GPU values are **after-case point samples**, not in-flight peak utilization. Production and CI remain blocked.
+
+[Full resource review](../docs/P5-VISIBLE-GPU-ONE-SHOT-20261119.md).
+
+---
+
+## 2026-11-19 06:46 KST — P5 visible-answer TTFC measured 1K/4K/7K (latest supersession)
+
+**New real DGX outcome, user-supplied stdout at clean SHA `bc0a9ea2346b85fa9f8e6ef132b765078b6385db`:** P5 visible-output 1K/4K/7K 256-token request-local `enable_thinking=false` one-shot **3/3 `MEASURED_VISIBLE`**; TTFT=TTFC **0.52051 / 1.59565 / 2.80664 s**, post-first TPS **21.961 / 22.943 / 22.948**, E2E **12.13219 / 12.71006 / 13.91874 s**. All SSE usage and visible deltas observed; reasoning deltas zero; Docker ID continuous. Selected CPU 8/8 + 23/23 = **31/31 PASS** at the guarded source checkout. `COLLECTED_UNQUALIFIED`; `finish_reason=length` all 3, so full answer completion and real runtime release not established. Saved private receipt and exclusive consumed marker; **do not rerun without another explicit approval**.
+
+Older default-thinking 256-token test remains 1K/4K **REASONING_ONLY**, TTFC null; the new nonthinking test *only* closes visible TTFC observability for its own workload, not a controlled performance comparison. P5 private resource snapshot details not included in summary stdout; PLE RSS, PID/NAT port ownership, GPU exclusivity, Actions at current HEAD, P6-E/P7/P8 and production remain unqualified. Historical P1-P4 accepted scopes preserved. See [P5 one-shot live record](P5-VISIBLE-GPU-ONE-SHOT-20261119.md).
+
+---
+
+## 2026-11-19 KST — P5 256-token live SSE measurement completed, visible TTFC still blocked
+
+- Actual approved DGX MTP0 1K/4K `benchmark-execute` **executed** at exact clean source `17ebc7f7ba2dcfc27c6dca265952dc99cb85e3ee`. Two of two cases `MEASURED_REASONING_ONLY`: 1K `TTFT=0.52965s` and `TPS=22.405`; 4K `TTFT=1.70999s` and `TPS=22.604`. Server usage 256 output tokens each, both streams complete, `delta.reasoning` observed. Saved local measurement receipt, Docker ID continuous.
+- Both `TTFC=null`, `visible_characters=0`, `finish_reason=length`; consequently **visible-answer latency not measured** and runtime/performance remains `COLLECTED_UNQUALIFIED`, not production-qualified. Historical 128-token run remains unchanged.
+- Prior explicit one-shot approval is **consumed**. No further inference, retries, increased output caps, MTP2, switching or release without new approval.
+- P1–P4 historical scoped results maintained. P5 NAT host process, PLE residency, GPU exclusivity and current GitHub Actions CI remain unqualified; P6/P7/P8 operational release blocked. PR #1 Draft/Open/Unmerged. See [scoped closeout](P3-P5-ONE-TURN-CLOSEOUT-20261118.md).
+
+---
+
+## 2026-11-19 KST P5 targeted CPU update — SHA unbound, CI/live gaps remain
+
+- Operator-supplied DGX stdout **65/65 targeted CPU tests PASS** in four groups (P5 NAT/PLE 7; P5-D/P6-E 19; P5 resources 16; P5 measurements/SSE 23), all exit code zero. The pasted log does not show git HEAD/clean status: **cannot pin PASS to an exact new HEAD**. This is not entire-repository regression, GitHub Actions CI or GPU qualification.
+- Read-only MTP0 local history contained `count=2`: historical 128-token benchmark `COLLECTED_UNQUALIFIED` (TTFT/TTFC/TPS null; 8K skipped) and older `READ_ONLY_PARTIAL` inventory. **No 256-token recorded benchmark**; unsaved independent run cannot be ruled out.
+- P3/P4 scoped historical acceptance preserved. P5 actual timing/port/PLE/CI not qualified. P6/P7/P8 production executor/operational verification blocked. PR #1 remains Draft/Open/Unmerged; no approved operational mutation or merge.
+- See [P3-P5 scoped closeout](P3-P5-ONE-TURN-CLOSEOUT-20261118.md).
+
+---
+
+## 2026-11-18 P5-D NAT/PLE source-only improvement — no acceptance promotion
+
+- **P1–P4 historical scope unchanged.** No new DGX release or operational validation is claimed.
+- **P5:** source code adds Docker port-8000 published configuration comparison and conservative one-PID exact PLE-file smaps mapping RSS/PSS reviewer; owner authentication, GPU exclusivity, unique PLE residency, all-worker mapping and loaded MTP0 256-token TTFT/TPS remain **NOT VERIFIED**. Historical read-only P5-D RC3 / NAT-host-listener-PID absence is preserved.
+- **CPU:** isolated source copy of the new helper and synthetic fixture **7/7 PASS**, with exact Git blob match; repository-wide regression and current GitHub Actions **NOT VERIFIED**.
+- **P6/P7/P8:** unchanged source contracts, no operating Journal, real executor, privileged host alterations, auto recovery or production release authorized.
+- **CI:** path-qualified workflow exists in feature branch, while checked default `main` did not expose a workflows directory; missing latest-HEAD Actions is investigated but not fully explained.
+- **Controls:** PR #1 Draft/Open/Unmerged; vLLM 0.32.0, :8000, ONE_ACTIVE_MODEL_ONLY, HF cache preservation, no SGLang. See [dated P3-P5 scoped closeout](P3-P5-ONE-TURN-CLOSEOUT-20261118.md).
+
+---
+
+## 2026-11-18 P5 approved MTP0 loaded benchmark — executed 2/3, TTFT/TPS NULL
+
+At `2cb426f8346024267f3b361fe23cc0eaa477964b`, operator ran allowed active-model MTP0 1K/4K/8K one-shot inference with exact acknowledgement, saved evidence, observed 1K and 4K SSE usage **128 generated tokens each**, end-to-end **6.45791s / 7.49535s**; 8K safely skipped due 8192 maximum context. `COLLECTED_UNQUALIFIED`, `benchmark_verified=false`, `production_released=false`, container ID stable. **All TTFT, TTFC, generation TPS and visible output were unobserved**; `finish_reason=length`. API docs for vLLM 0.32.0 explicitly use `delta.reasoning`, but source parser had read only `delta.reasoning_content`: source-only fix and 5 new CPU unit cases added; **no new-head CPU or CI result yet**. PLE-specific RSS, active port PID & GPU ownership, independent resource interval, MTP2 remain unresolved. Prior 152/152 CPU PASS is bound to 8ec6bc2, **not this new source**. No second inference replay authorized; PR Draft/Open and production blocked. [Actual observation and contract](P3-P5-ONE-TURN-CLOSEOUT-20261118.md).
+
+`P5_LIVE_BOUND_2_OF_3 / P5_SSE_FIX_CPU_PENDING / P5_REAL_METRICS_INCOMPLETE / CI_UNVERIFIED / PRODUCTION_BLOCKED`.
+
+---
+
+## 2026-11-18 current operator supersession — P3–P5 selected CPU PASS at clean 8ec6bc2
+
+**Operator supplied exact SHA `8ec6bc2f148cf77bf0ed6e9ce0d54a91d1baf569` and clean tree.** Fixed P5 document-integrity **8/8 PASS RC0**, fixed closeout unit suite **11/11 PASS RC0**, all P5 CPU/Fake-DGX **152/152 PASS RC0**, combined `p3_p5_closeout --cpu-only` **`CPU_SELECTED_PASS_NOT_CI` / RC0 / all 6 tasks accepted**, plus P4-A **9/9**, P4-B/C **13/13**, P5 measurements **18/18**, P5 session **8/8** (nested/overlapping tests, do not sum as independent total). **Earlier CPU errors resolved for tested SHA**, not GitHub CI.
+
+P3 previously accepted real A/B/C/G transfers and P4 real read-only A/B/C acceptance remain **historical scoped PASS**. No new read-only verification was provided here; prior five valid 8b8f5a0 receipts retain `READ_ONLY_COLLECTED_WITH_GAPS` RC3, with current active API/port/Docker/PID identity and P4-A inventory incomplete. P5 v3 MTP0 remains DEVELOPMENT_TRIAL; loaded benchmark TTFT/TTFC/TPS, file-specific PLE RSS, P5-D independent GPU/port owner, MTP2 and production admission remain NOT VERIFIED. GitHub Actions latest workflow success remains 2026-11-11, count 1640, **CI_UNVERIFIED**. PR #1 still Draft/Open; no actual model switch, inference, deletion, Docker action, Journal mutation, automatic recovery or deployment occurred during CPU evidence collection. [Full evidence](P3-P5-ONE-TURN-CLOSEOUT-20261118.md).
+
+`P3_P4_P5_SELECTED_CPU_PASS_AT_8EC6BC2 / P3_P4_HISTORIC_SCOPED_CLOSED / P5_REAL_WORKLOAD_PENDING / CI_UNVERIFIED / PRODUCTION_BLOCKED`
+
+---
+
+## 2026-11-18 operator 8b8f5a0 P3–P5 source regression receipt (supersedes older pending-only claim)
+
+Operator on clean `8b8f5a0132e8b1f27f9ec4b1cd53c5e82c7f1aea` reported P5 doc integrity **5/6 PASS**, all P5 source CPU **149/150 PASS**, and P3–P5 closeout mock CPU **5/11 PASS**, all RC1; combined P3–P5 CPU `INCOMPLETE_OR_BLOCKED` RC3. Root causes identified from line-numbered traces: the source document test's recursive filesystem scan accidentally picked up **10 private P3 historical operator transition JSON receipts** in `reports/transitions/flash-next--to--27b`; mock command matching erroneously expected bare `p3_dg_acceptance` instead of `scripts.manager.p3_dg_acceptance`. Fixes now committed: Git-index tracked-document-only audit (including Markdown links), isolated private-file and unsafe-path tests, fully-qualified fake runner matching. No operator post-fix CPU/CI PASS yet.
+
+Read-only collector returned `READ_ONLY_COLLECTED_WITH_GAPS` RC3 **with all 5 receipts captured**: current P3 D/G API/container/port/PID/GPU owner evidence blocked (different current runtime is not historical 27B/Flash), P4-A current inventory partial, P3-E Flash reinstall not qualified, P5 MTP0 source plan expected blocked, P5 inventory partial. Historical P3 A/B/C/G switch and P4 A/B/C read-only PASS stay dated/historical; no inference, switching, deletion, operating Journal mutation or production release. [Exact findings and safe retry](P3-P5-ONE-TURN-CLOSEOUT-20261118.md). `NEW_SOURCE_CPU_PENDING / CI_UNVERIFIED / PRODUCTION_BLOCKED`.
+
+---
+
+## 2026-11-18 P3–P5 operator 9a79c8 CPU and read-only follow-up — supersedes "new suite unexecuted" for tested SHA
+
+The operator ran `p3_p5_closeout` on clean source `9a79c8df4240c99836b0b0cf54ec3a88003686c6`. **CPU returned RC3 / INCOMPLETE_OR_BLOCKED**: P3-D~G CPU summary RC0, P4-A 9/9 PASS, P4-B/C 13/13 PASS, P5 source **FAIL RC3 P5_CPU_TESTS_FAILED**, P5 measurements 18/18 PASS, P5 benchmark/session 8/8 PASS. The same SHA's **read-only returned RC3**: P3-D and P3-G BLOCKED, P4-B+C READ_ONLY_DRY_RUN_BLOCKED, P5 launch source plan expected BLOCKED, Orcarouter inventory READ_ONLY_PARTIAL and benchmark plan only. **No actual live inference was performed by the collector.** Previous P3 A/B/C/G real PASS and P4 historical read-only PASS remain valid for their original scope/timestamps, not as a current DGX read-only signoff.
+
+GitHub source comparison found the P5 document inventory test's exact set was stale: five added documentation paths were unregistered, and historical section-header offsets drifted when new handoff entries were prepended. New code fixes explicit inventory registration and header checks, corrects integration `collected` vs `accepted` semantics, handles valid `RC=3` P4 block truthfully, and adds bounded P5 per-test diagnostics and P5 runner parser issue classifications. **These post-9a79c8 changes have no operator CPU/CI execution receipt yet.** Preserve `NEW_SOURCE_CPU_PENDING / CI_UNVERIFIED / PRODUCTION_BLOCKED`. [Detailed receipt and safe rerun](P3-P5-ONE-TURN-CLOSEOUT-20261118.md).
+
+---
+
+## 2026-11-18 P3–P5 one-turn source consolidation (current supersession)
+
+New read-only/CPU-only combined collector and 9 unexecuted CPU safety tests: `scripts/manager/p3_p5_closeout.py`, `tests/test_p3_p5_closeout_cpu.py`; workflow configured for Push and PR. **SOURCE UPDATED, NEW-HEAD CPU/CI PENDING**, because Actions stopped generating fresh runs after 2026-11-11. Existing P3 A/B/C/G approved live transfers and D observation remain historical PASS/CLOSED. P3-E host metadata/F CPU handoff does **not** mean canonical Flash reinstall or general lifecycle release; those are P8. P4-A/B/C historical DGX read-only acceptance is CLOSED; deleting actual HF/Docker resources is optional, never authorized here. P5 v3 BF16PLE MTP0 remains a DEVELOPMENT_TRIAL, and P5 loaded TTFT/TTFC/TPS, independent GPU/port PID attribution, file-specific PLE RSS and MTP2 are not accepted. No live DGX mutation, actual benchmark, PR merge or production signoff was performed.
+
+[New integrated runbook](P3-P5-ONE-TURN-CLOSEOUT-20261118.md) · [P5-D/P6-E provenance limitations](P5-D-P6-E-READ-ONLY-PROVENANCE-JOURNAL-V2-20261110.md).
+
+---
+
+## 2026-11-18 P6-E operator CPU result supersession — 29/29 PASS, RC0, SHA unbound
+
+**2026-11-18 P6-E operator CPU test PASS supersession (new receipt):** The operator supplied final output for `test_mock_nonce_fence_v2_cpu.py`: `Ran 10 tests in 0.051s`, `OK`, `NONCE_RC=0`; and `test_p5d_p6e_cpu.py`: `Ran 19 tests in 0.012s`, `OK`, `P6E_RC=0`. **29/29 CPU unittest methods PASS, 0 failures** with explicitly reported zero process exit codes. This **supersedes the prior `FINAL_OK_NOT_SHOWN` status**; the earlier partial terminal receipt is preserved historically. Source code at upstream `beba71925214bf10f42adeb8813a96eca4499f06` contained the five new restart tests, and `0a732fc3bdb8786dfcef1b59938bfbe0de3206e3` is the subsequent docs-only evidence update. However, no new `git rev-parse HEAD` / `git status --short` accompanied the operator's latest transcript. Accordingly **the exact test checkout SHA and clean-tree condition remain unverified**; record evidence class `OPERATOR_SUPPLIED_P6E_29_OF_29_PASS_RC0_SHA_UNBOUND`, never `GITHUB_ACTIONS_VERIFIED`.
+
+**Read-only restart CLI is independently documented in the immediately preceding operator JSON:** `BLOCKED_V2_RESTART_NOT_AUTHORIZED`; `approval_accepted=false`, `executed=false`, `automatic_recovery_authorized=false`, `resume_eligible=false`, `v1_journal_modified=false`, `v2_journal_written=false`. Without a supplied evidence bundle, `V2_RESTART_BUNDLE_SCHEMA_INVALID` is expected fail-closed behavior, not a runtime service fault or journal damage.
+
+**Unchanged acceptance gates:** source-level P6-E CPU tests PASS (operator-reported); full exact-HEAD GitHub Actions workflow and independent execution unverified; real durable operating Journal/nonce authority, independent downtime approval, P5 loaded inference, P7 independent integration, P8 actual fault/restore and production release remain unaccepted. Preserve historical distinct 24/66/48/21 Fake-DGX matrices, vLLM 0.32.0, ONE_ACTIVE_MODEL_ONLY, :8000, no SGLang. No DGX operational changes, no PR merge.
+
+---
+
+## 2026-11-18 P6-E operator follow-up — 10 + 19 tests reported, restart fail-closed
+
+**2026-11-18 operator-provided follow-up, new P6-E restart review:** The user supplied snippets `Ran 10 tests in 0.061s` for `test_mock_nonce_fence_v2_cpu.py`, `Ran 19 tests in 0.012s` for `test_p5d_p6e_cpu.py`, and JSON from `journal-v2-restart-review` for source model `orcarouter` → target `27b`. This is **29 tests reported as executed**, but the supplied snippets **omit `OK`, any final shell exit codes, and the checkout SHA / `git status`**: classify as `OPERATOR_SUPPLIED_P6E_29_TESTS_REPORTED_SHA_UNBOUND_FINAL_OK_NOT_SHOWN` rather than a fully authenticated 29/29 CI PASS. The prior independently SHA-bound operator receipt for 10+14 remains valid at `3033eda1`, not reused as proof of the new 19-test revision.
+
+**CLI outcome grounded in the JSON:** `status=BLOCKED_V2_RESTART_NOT_AUTHORIZED`, `structural_fields_consistent=false`, `last_phase=null`, with `V2_RESTART_BUNDLE_SCHEMA_INVALID` (no supplied evidence bundle) and four always-required independent-authentication/nonce/live-state/approval blockers. `approval_accepted=false`, `automatic_recovery_authorized=false`, `executed=false`, `resume_eligible=false`, `v1_journal_modified=false`, `v2_journal_written=false`, `production_released=false`. This is the **expected non-authorizing fail-closed response**, NOT an operating Journal fault or a live-service outage; the user did not run any actual recovery operation through this command.
+
+**Remaining verification:** Capture the exact checkout SHA and clean-tree state for these new-test snippets, retain complete `unittest` summaries including `OK` and shell exit status, and run the full GitHub Actions CPU workflow separately. No code/CI execution was performed by this documentation recording. Preserve Draft/Open/Unmerged PR #1, no operating Journal modification, Docker actions, inference load, asset cleanup, P5 benchmark, P7 independent verification or P8 real recovery.
+
+---
+
+## 2026-11-18 latest P6-E restart safety contract — SOURCE ONLY / CI PENDING
+
+**2026-11-18 P6-E source-only refinement:** New source commits `b1b48c7beb13d0109e2f3c8b45e948483cfa96e7` and `a1e9be95d953f0eccaaefc279de5e7a5fb75f5f6` introduce `restart_fence_review()`, its read-only Wizard CLI and five new CPU test methods plus a negative CI command. The supplied untrusted V2 event chain is audited without accessing the actual operating Journal; nonterminal phases, snapshot identity drift, nonce reuse reported by supplied evidence, malformed/non-scalar input and hash/plan drift fail closed. Even an internally consistent terminal chain is **ALWAYS BLOCKED** from live resume or automatic recovery. Real nonce ledger, independently authenticated state and approval, actual Docker executor remain UNIMPLEMENTED / UNQUALIFIED.
+
+**CI investigation:** `.github/workflows/recipe-manifest-cpu.yml` exists at `feature/recipe-wizard-handoff`, but fetching that path from default branch `main` returned 404. This is a blocker for `workflow_dispatch` discovery from the default branch; it is not a proven explanation for missing Push/PR workflow runs. No GitHub connection action to dispatch a new run is available; no branch merge or default-branch mutation authorized. **No new-head CI PASS or new CPU test execution is claimed.** Previous operator CPU test **24/24 PASS** remains tightly bound to code SHA `3033eda1f46942ab76ef3c87d54e8c5fc65012ce` with clean working tree; **it does not validate this new functionality**.
+
+**Invariants:** preserve P1/P2 backend, P3 A/B/C/G, P4 read-only real acceptance, P5 Orcarouter v3 trial and P5-D partial PID evidence, P6-A/B/C/D/E previous scope, P7/P8 source-only status and distinct 24/66/48/21 historical scenario totals. No actual DGX service/port/GPU, inference, model switch, operating Journal migration, recovery, caches, PLE assets, PR merge or production release. vLLM 0.32.0, SGLang forbidden, :8000, ONE_ACTIVE_MODEL_ONLY.
+
+
+**Next safe verification:** `python3 -m unittest discover -s tests -p "test_p5d_p6e_cpu.py" -v` and `python3 -m unittest discover -s tests -p "test_mock_nonce_fence_v2_cpu.py" -v`, then `python3 -m wizard operations generic journal-v2-restart-review --from-model 27b --to-model flash-next --json` (exit 3 expected). Record exact checked-out SHA and working-tree status. The new P5-D/P6-E module has five additional test methods (prior 14 → **expected 19** if the unchanged prior 14 still pass), and the existing nonce module has 10; **expected 29 tests total, not an actual PASS**. Obtain a fresh source-only Actions run when the workflow trigger problem is resolved; do not infer actions from workflow YAML alone.
+
+
+---
+
+## 2026-11-18 P6-E CPU acceptance evidence supersession — SHA-bound operator receipt
+
+**2026-11-18 follow-up provenance correction (operator-supplied terminal evidence):** The operator ran `git rev-parse HEAD` and `git status --short` in `~/Workspace/llm/blazux-orcarouter` and reported HEAD **`3033eda1f46942ab76ef3c87d54e8c5fc65012ce`**, with **no output from `git status --short` (clean tracked/untracked working tree per Git status)**. This binds the previously supplied terminal transcript of `test_mock_nonce_fence_v2_cpu.py` **10/10 OK** and `test_p5d_p6e_cpu.py` **14/14 OK** to the exact checked-out source SHA: **24/24 source-level CPU unit tests PASS, 0 failures**. These are two unittest module counts, **not** the historical P8 24-case Fake-DGX matrix.
+
+**Evidence confidence:** Operator-reported test transcript and subsequent SHA/clean-tree commands, not an independently authenticated CI provenance receipt. GitHub verified `0f97de4b7c1f3d69d5a526c4b9b7774096bd2083` is a **documentation-only direct child** of tested code commit `3033eda1f46942ab76ef3c87d54e8c5fc65012ce`. Hence this observation validates the operator's tested code revision, but does not establish entire workflow success or a run of later docs-only commits. The earlier note `OPERATOR_SUPPLIED_CPU_TWO_MODULES_PASS_SHA_UNBOUND` remains preserved as the *then-current historical classification* and is **superseded** by `OPERATOR_SUPPLIED_CPU_TWO_MODULES_PASS_SHA_BOUND_CLEAN_TREE`. No change to actual P1–P8 DGX acceptance, journal authority, model service, P5 load test, P7 integration, P8 recovery, or production release. GitHub Actions overall CI for the updated branch remains separately unverified.
+
+**Remaining gates:** Full GitHub Actions source-only CPU workflow not verified; live operating journal migration, independently authenticated nonce/approval, service switching and recovery remain blocked. PR #1 stays Draft/Open/Unmerged.
+
+
+---
+
+## 2026-11-18 operator-provided CPU regression evidence (SHA unbound)
+
+**2026-11-18 operator-supplied CPU test result (not a GitHub Actions or independently rerun result):** On `inlc@lc-gx10-pc`, workspace `~/Workspace/llm/blazux-orcarouter`, the operator pasted terminal output for `python3 -m unittest discover -s tests -p 'test_mock_nonce_fence_v2_cpu.py' -v`: **10 run, 10 OK, 0 failures** (0.047 s); and `python3 -m unittest discover -s tests -p 'test_p5d_p6e_cpu.py' -v`: **14 run, 14 OK, 0 failures** (0.005 s). Combined **24/24 PASS** for these two modules. Hardlink denial, outside-symlink swap denial, cross-process duplicate claim, nonce/model/plan replay, Journal v2 explicit nonce drift and V1 migration blocking were among the passing checks. **This 24 is a per-file regression count, NOT the historical P8 24-case Fake-DGX scenario matrix.**
+
+**Evidence provenance:** user/operator-provided terminal transcript; precise Git HEAD, working-tree cleanliness and remote synchronization **not contained in pasted output**. The repository code branch was observed at `3033eda1f46942ab76ef3c87d54e8c5fc65012ce` immediately before this documentation-only change, but this does **not establish** that the operator ran the exact SHA or a clean tree. No independently authenticated run receipt, hash of terminal transcript, full workflow CI run, DGX GPU/inference/transition, operating Journal write or actual recovery has been established. Classification: `OPERATOR_SUPPLIED_CPU_TWO_MODULES_PASS_SHA_UNBOUND`; source qualification for those modules only, **not Production/Operating acceptance**. Exact-head GitHub Actions for `3033eda1f46942ab76ef3c87d54e8c5fc65012ce`: no run/check observed in this session; older `8b118c8` SUCCESS remains historical. Next request: `git rev-parse HEAD`, `git status --short` from the testing workspace, plus fresh source-only CPU workflow CI when available.
+
+No stage-level P1–P8 real DGX acceptance or prior 24/66/48/21 synthetic scenario count changes. P6-E source gate remains non-authorizing. The operator's CPU module results are recorded, without asserting GitHub Actions or verified source-tree binding.
+
+---
+
+## 2026-11-18 P6-E source safety supersession (newest)
+
+P6-E **source-only** refinement after verified baseline `258372fe046b55a1ccf78718b92ecea5f8365527`: isolate the fake nonce claim/audit to an inode-pinned, owner-checked private directory and no-follow bounded marker reads; reject hardlink/path swap. In-memory Journal v2 proposal now exact-binds a **synthetic** nonce across phases and rejects nonce drift even if a new event hash was recomputed. Neither a synthetic nonce nor a consistent Fake record authenticates an operating approval or enables the real executor. P1–P4 historic DGX acceptance, P5 v3 development trial and partial PID evidence, P7 source-only integration, P8 source-only simulation, and 24/66/48/21 synthetic inventory remain unchanged. Exact-new-HEAD CI is **NOT VERIFIED at authoring time**; never inherit `8b118c8` SUCCESS. No DGX mutation or PR merge.
+
+---
+
+## 2026-11-18 current P5 v2 supersession — P1–P8 integrated acceptance (historical baseline)
+
+**Supersession and provenance:** The historical `qwen4exp-qsa62318-lmhead-v032-v2` adapter was superseded by **v3** (`qwen4exp-qsa62318-lmhead-v032-v3`, resolved `lm_head.weight_scale`). This 2026-11-18 table replaces older **current-status** claims such as P5 entirely `NOT_RUN`, P3-C pending or Flash-Next currently active; it does **not** rewrite historical receipts or reclassify past outcomes. Baseline GitHub branch `feature/recipe-wizard-handoff` at `af49f7be53ca283ced01f0c7ecee2a8014cb58c1` (before this documentation-only commit), Draft/Open/unmerged PR #1. **Last operator-supplied DGX evidence:** 2026-11-12, not a fresh GitHub-side host observation. Latest confirmed older CI: push [43107837772](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/43107837772) / PR [43108072440](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/43108072440) SUCCESS at `8b118c8`; newer code/HEAD CI **NOT VERIFIED** at this update, never inherit old CI results.
+
+| Phase | Source / Wizard implementation | Actual DGX evidence / acceptance level | Remaining / explicitly NOT accepted |
+| --- | --- | --- | --- |
+| **P1 — NVIDIA Flash-Next** | Pinned recipe, install/serve, verify, bounded benchmark backend and source tests implemented | **REAL DGX BACKEND PASS:** completion/chat, Tools/Vision, benchmarks and post-P3-B re-verification | Model-first full lifecycle menu and repeated operator UX acceptance still separate; do not re-run prior P1 validation just for status |
+| **P2 — NVIDIA 27B** | Pinned runtime recipe, download/serve, benchmark and management backend implemented | **REAL DGX BACKEND PASS:** pinned assets, GPU/API and 3-run bounded benchmark; historical trial restore verified | Ordinary unified Wizard end-to-end UX acceptance remains distinct from backend success |
+| **P3 — Flash ↔ 27B** | Guarded A/B/C transfer backend; D/E host inspection and F CPU/Fake-DGX closeout; generic lifecycle source remains separately gated | **REAL DGX A/B/C/G PASS/CLOSED**, D read-only evidence; E host-asset metadata and F CPU accepted in their own scopes | Repeated generic all-model transition, new approval/nonce/Journal, integrated cancel/recovery UI, live reinstall and automatic rollback **NOT RELEASED**; historical A/B/C stages must not be replayed |
+| **P4 — Storage** | Read-only capacity inventory, candidate review and safe dry-run implemented | **REAL DGX P4-A inventory PASS** and **P4-B/C read-only dry-run PASS/CLOSED** | Actual P4 asset deletion not executed or generally authorized. Historical separately approved P5 failed-trial-container cleanup is a different, narrowly scoped event |
+| **P5 — Orcarouter / observations** | vLLM 0.32.0 BF16PLE v3 adapter; MTP0 trial; P5-B synthetic benchmark/session, P5-C service/resource correlation, P5-D bounded PID/host evidence; measurements Workspace and opt-in bounded benchmark code | **REAL DGX PARTIAL:** Orcarouter v3 MTP0 text/API `PASS_LIVE_INFERENCE` (DEVELOPMENT_TRIAL), idle-only resources; P5-C correlated; P5-D actually run 2026-11-12 and **`BLOCKED_PARTIAL_PROCESS_EVIDENCE`** (no host :8000 listener PID; Docker/GPU PID subset consistent). Not a service failure | Loaded synchronized resource/benchmark session, TTFT/TPS/long-context/PLE-specific RSS, Tools/Vision, MTP2, resource thresholds, authenticated port/GPU ownership, canonical promotion **NOT QUALIFIED** |
+| **P6 — Generic transaction / Journal** | A in-memory transactions, B distinct source/target Docker ID binding, C fake-disk fsync/snapshot contract, D always-blocked operating gate, E read-only v2 proposal + separate ephemeral `O_EXCL`/fsync fake nonce-replay test; Wizard read-only/fixture menu | **SOURCE / FAKE-DGX only** (not real source↔target switch). P6-D `BLOCKED_LIVE_EXECUTOR_NOT_QUALIFIED`; P6-E `BLOCKED_V2_MIGRATION_NOT_AUTHORIZED` | Independently authenticated fresh approval, durable **operating** nonce/replay fence, atomic live identity/Journal gate, qualified generic executor, actual bidirectional transfer and recovery **NOT IMPLEMENTED/NOT ACCEPTED** |
+| **P7 — Integration** | Model-bound source-only service/proxy/gateway/storage reconciliation and Wizard review paths | **SOURCE CONTRACT ONLY**; self-reported component PASS is not independent real verification | Independently measured Proxy/Gateway/Storage/OpenWebUI state, exact model/API/port continuity, deployment acceptance and release **NOT VERIFIED** |
+| **P8 — Fault/recovery/final release** | Existing generic fault matrices, fake transaction/restore invariants, recovery/signoff source gates | **FAKE-DGX/CPU ONLY**; no deliberate real faults, automatic restoration or final operator Go/No-Go | Approved live fault injection, crash/journal reconciliation, recovery/rollback outcome, evidence completeness, real operating signoff and production release **NOT RUN** |
+
+### Distinct synthetic CPU scenarios — do not conflate with live DGX
+- **24**: registered 3 models × 6 directed pairs × 4 baseline Fake-DGX fault types.
+- **66**: 6 directed pairs × 11 extended in-memory transition fault types.
+- **48**: 6 directed pairs × 8 fake-disk persistence/fault types.
+- **21**: 3 registered models × 7 mock benchmark/resource-session scenarios.
+- P6-E ephemeral fake nonce/replay regression and two-process local contention are **additional** source-only checks, not additions to those historical matrix counts, and not independent operating approval.
+
+### Current evidence and safety boundary
+- The last operator-observed DGX runtime is **Orcarouter v3** `qwen38-orcarouter-qsa62318-lmhead-v3`, `DEVELOPMENT_TRIAL` on host `:8000`; served ID `qwen3.8-flash-next-orca-uncensored-bf16`. This is **last observed**, not a statement that GitHub independently queried its live state now.
+- On P5-D, `docker_identity_match=true`, `gpu_pid_subset_of_container=true`, host-port listener PID set empty, `port_process_ownership_verified=false` and `gpu_exclusivity_verified=false`. `BLOCKED_PARTIAL_PROCESS_EVIDENCE` / exit code 3 is an evidence-admission outcome, **not an inferred service outage**.
+- Keep **Blazux vLLM 0.32.0**, **no SGLang**, **ONE_ACTIVE_MODEL_ONLY**, **:8000**; preserve running/stopped containers, OpenWebUI/Portainer, HF/model/PLE caches, Docker images, private receipts, operating Journal and every past signoff. No unauthorized inference load, service interruption, model switch, GPU/CPU/cgroup actuation, deletion, journal migration, fault injection, PR merge or production promotion.
+
+### Next safe order and acceptance rule
+1. Verify **new HEAD CPU GitHub Actions** (not observed as of this section); source-only CI can establish repository regression status, never real DGX acceptance.
+2. Qualify P6-E operating **design and CPU/Fake-DGX** contracts (durable nonce fence, independent approval authentication, atomic current-state/Journal binding) before enabling any real executor; current preview remains blocked.
+3. Obtain fresh, specific operator approval separately before any P5 **loaded inference benchmark**, then correlate resource samples, Docker/API identity and workload in a verifiable session.
+4. Perform independent P7 proxy/gateway/storage evidence qualification, then only with separately scoped approval undertake P8 real fault/restore/Go-No-Go and measurement-completeness acceptance.
+
+The full historical per-stage results below remain evidence, not a current-state operator instruction. See [P5–P8 common contract](P5-P8-MODEL-AGNOSTIC-OPERATIONS-20261109.md) and [P5-D/P6-E actual evidence and Journal boundary](P5-D-P6-E-READ-ONLY-PROVENANCE-JOURNAL-V2-20261110.md).
+
+---
+
+## 2026-11-09 current P5 v2 supersession — archived adapter compatibility marker
+
+Historical adapter `qwen4exp-qsa62318-lmhead-v032-v2` was superseded by v3, which resolved `lm_head.weight_scale`; neither legacy adapter nor source-only P5–P8 updates grant production release. Latest 10:15 KST operator idle observation and common source status appear below.
+
+[Latest common model-independent operations](P5-P8-MODEL-AGNOSTIC-OPERATIONS-20261109.md) · [Complete P5 document audit](HANDOFF-DOCUMENT-AUDIT-FULL-P5-20261108.md)
+
+---
+
+## 2026-11-09 latest P5–P8 source-vs-real supersession
+
+**P5:** read-only common benchmark session plan/review module and monotonic snapshot stamps SOURCE IMPLEMENTED; 10:15 KST Orcarouter v3 operator idle resource sample REAL DGX OBSERVED (**idle-only**). Real loaded benchmark/TTFT/TPS, PLE-specific RSS, concurrent/long-context test, safe threshold and sampler/workload coordination NOT RUN. **P6:** model-agnostic in-memory transactional faults SOURCE IMPLEMENTED and CPU/Fake-DGX tested; approved live generic switch executor and actual three-model pair acceptance NOT RUN/NOT RELEASED. **P7:** strict model-bound four-component source reconciliation and read-only TTY options implemented; independent Proxy/Gateway/OpenWebUI API health NOT VERIFIED. **P8:** preserve original 24 general Fake-DGX cases plus 66 extended in-memory cases; live fault injection, real rollback and final operator release NOT RUN. Do not merge historical P3-G roundtrip or P5 trial MTP0 verification into later generic release claims. [Common contract](P5-P8-MODEL-AGNOSTIC-OPERATIONS-20261109.md).
+
+---
+
+## 2026-11-09 current P5 v2 supersession — historical adapter now replaced by v3 runtime observation
+
+[Current P5 audit](HANDOFF-DOCUMENT-AUDIT-FULL-P5-20261108.md) · [Active P5 technical record](P5-ORCAROUTER-BF16PLE-VLLM032-ADOPTION-20261108.md)
+
+Historical `qwen4exp-qsa62318-lmhead-v032-v2` and its failed GPU trial remain unchanged below; the **latest actual operator DGX observation** is v3 adapter `qwen4exp-qsa62318-lmhead-v032-v3` with corrected `lm_head.weight_scale`, container `qwen38-orcarouter-qsa62318-lmhead-v3`, :8000 API `qwen3.8-flash-next-orca-uncensored-bf16`, `LIVE_P5_TRIAL_API_VERIFIED` and MTP0 text `PASS_LIVE_INFERENCE` (READY). Only `DEVELOPMENT_TRIAL`; do not promote canonical `qwen38-orcarouter` without a separately approved lifecycle.
+
+**2026-11-09 00:54–00:55 KST resource evidence (idle-only):** MemAvailable 30.18 GiB/121.63 GiB total, host swap 1.31 GiB, Orcarouter swap 0 GiB; Docker usage 7.157 GiB versus cgroup memory.current 25.54 GiB and peak 37.02 GiB, inactive_file 18.38 GiB, anon 4.58 GiB; memory PSI avg10 0, OOM/OOMKill 0, swap I/O, major fault and file-refault deltas 0; CPU busy ~0.18% over 45s, performance governor, CPU split 2808/3900 MHz, system ~34.7 C/GPU ~33 C. Inactive file cache largely accounts for memory reporting differences, NOT proof of PLE RSS/memory leak. P5 recipe remains OBSERVE_ONLY, startup gate disabled and BLOCKED_UNCALIBRATED expected. No arbitrary YSLAB 100 GiB, CPU governor, clock or hard memory limit.
+
+**Current acceptance:** P5 MTP0 text/API and idle telemetry observed; P5 Tools, Vision, MTP2, under-load benchmarks, long stability and canonical promotion NOT_QUALIFIED. P6 read-only Orcarouter↔27B preflight and source-only two-way in-memory Fake-DGX matrix implemented at `21aa6c9`; P5 same-container cgroup fault/oom deltas implemented at `5acf0b1`, both Push/PR CI SUCCESS. Actual P6 switching remains NOT_RUN. P7 Wizard source route present; Proxy/Gateway/OpenWebUI integration acceptance still NOT_RUN. P8 Fake-DGX faults are NOT real automatic recovery; real injection/signoff NOT_RUN/NOT_RELEASED. Preserve vLLM 0.32.0, no SGLang, ONE_ACTIVE_MODEL_ONLY and port 8000; no service mutation, no PR merge.
+
+**Wizard read-only / simulation routes:** `./wizard.sh switch orcarouter-27b preflight --to-model 27b --json`, `./wizard.sh switch orcarouter-27b simulate --from-model orcarouter --to-model 27b --json`, `./wizard.sh operations recovery-acceptance fault-matrix --fake-dgx --json`. None can perform a real switch or release.
+
+[Full documentation audit](HANDOFF-DOCUMENT-AUDIT-FULL-P5-20261108.md) · [P5 technical record](P5-ORCAROUTER-BF16PLE-VLLM032-ADOPTION-20261108.md)
+
+---
+
+## 2026-11-08 current P5 v2 supersession (document-wide audit)
+
+The complete [document inventory and consistency audit](HANDOFF-DOCUMENT-AUDIT-FULL-P5-20261108.md) and [current **P5 QSA+LM-head v2** DGX trial runbook](P5-LMHEAD-V2-DGX-GPU-TRIAL-RUNBOOK-20261108.md) supersede earlier P5 source-only / GPU NOT_RUN descriptions and older QSA-only commands. Latest actual DGX **QSA-only** trial failed after 15/17 safetensors shards with missing `lm_head.weight_scale`; the candidate v2 source/CPU CI passed but **v2 GPU load is not proven**. Current v2 adapter is `qwen4exp-qsa62318-lmhead-v032-v2` and its **new** target is `qwen38-orcarouter-qsa62318-lmhead`. Actual current :8000 service state remains unobserved since that failed trial. Previous 27B and failed candidate images/containers are preserved. Never copy the earlier QSA-only `execute` commands without revalidation. vLLM=0.32.0, one active model, :8000; P6/P8 live operations and PR #1 merge remain out of scope. Older sections below remain historical.
+
+---
+
+## 2026-11-08 — P5 source implementation and acceptance update (not GPU released)
+
+P5 source was committed to the existing feature branch and Draft PR #1 as [33adec1](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/commit/33adec182e97a8eac0d5584bdf73f1448bdd84f2), with [GitHub Actions 42429745463](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42429745463) **SUCCESS** including the new 20/20 CPU/Fake-DGX tests and `--cpu-only --json` PASS. Additional detailed per-case JSON and profile inspection enhancements require independent follow-up CI.
+
+Implemented source: `recipes/qwen38-orcarouter.runtime.json` (pinned, **unqualified**, launch forbidden), imported YSLAB safetensors/manifest/BF16 PLE audit and immutable MTP overlay code under `scripts/p5_vendor`, donor 3-shard SHA256 / 31 BF16 name audit when local files exist, distinct MTP0/MTP2 candidate recipes, Wizard `p5` and `model orcarouter-flash-next` routes, `scripts/temporary/p5-one-shot-acceptance.sh`. The vendor overlay builder is **not** executable via CLI and no HF asset changes were authorized. Prior Blazux BF16 PLE source markers pass static inspection only; compressed-tensors and MTP2 runtime ABI/quantized lm_head/CUDA graph compatibility in actual vLLM 0.32 remain unqualified.
+
+No DGX command/active-state reread or GPU/API/benchmark/rollback was performed in this session. All live P5 stages are NOT_RUN, `--gpu-trial` permanently BLOCKED until a separate operator approval and verified image/rollback implementation. Preserve 27B and :8000/ONE_ACTIVE_MODEL_ONLY, other models/caches, P3 historical receipts, no P4 deletion/P6 switch/P8 tests or Draft PR merge. New source/runbook: `docs/P5-SOURCE-ACCEPTANCE-AND-DGX-READONLY-RUNBOOK-20261108.md`.
+
+---
+
+## 2026-11-08 — P5 next-session planning clarified (NO P5 implementation yet)
+
+Operator's confirmed next stage: **P5 Orcarouter Uncensored NVFP4 with direct BF16 PLE / optional 31-tensor BF16 MTP overlay, adapted to Blazux vLLM 0.32 on one DGX Spark**. YSLAB repo is a source reference (vLLM custom 0.1.dev image, default port 18300), not a replacement for the Blazux engine/Wizard/port :8000. New plan `docs/P5-ORCAROUTER-BF16PLE-VLLM032-ADOPTION-20261108.md`, audit `docs/HANDOFF-DOCUMENT-AUDIT-P5-20261108.md`, next-chat prompt `handoff/START-NEXT-P5-20261108.md`. Proposed deliverable is one coherent source implementation with a single temporary staged automatic judge; **P5 source implementation and real DGX model/API/benchmark NOT_RUN** at this documentation-only checkpoint. Prior P4-B/C actual DGX read-only PASS/CLOSED stands, real deletion deferred to new P5 incident or P8 consent. P6 actual Orcarouter↔27B switch and P8 release NOT_RUN. P3 closed tests remain closed; do not infer YSLAB benchmark is our runtime measurement.
+
+---
+
+## 2026-11-08 — P4-B/C REAL DGX combined dry-run PASS (source + observation only)
+
+Operator-provided actual DGX terminal: 13 local Fake-DGX tests PASS; `inventory_status=READ_ONLY_INVENTORY_COMPLETE`; `candidate_review.status=READ_ONLY_REVIEW_COMPLETE` / 9 reviewed resources (2 managed containers, 3 HF repos, 4 Docker categories), zero deletion candidates selected; `cleanup_rehearsal.status=DRY_RUN_COMPLETE_RELEASE_GATED` with 2 PASS, 2 DEFERRED_P5_OR_P8, 1 NOT_RELEASED, 1 NOT_EXECUTED; overall `READ_ONLY_DRY_RUN_PASS`. Source CI 902/902 in 41 groups is **independent source-only evidence**. **P4-B/C dry-run acceptance PASS/CLOSED; actual cleanup NOT_RUN, no production release or adapter.** No active model switch, no deletion, no verified reclaimable bytes or approved plan. Detailed [DGX evidence](P4-BC-DGX-READONLY-DRY-RUN-EVIDENCE-20261108.md). P5 actual work and P8 real fault/restore/final acceptance remain not run and require independent authorization.
+
+---
+
+## 2026-11-08 — P4-B/C read-only source implementation and one-shot dry-run
+
+P4-B candidate/reference review + P4-C deletion transaction rehearsal are available from `./wizard.sh storage flash-next dry-run --json` and `bash scripts/temporary/p4-bc-dry-run.sh --json`. 13 Fake-DGX tests integrated into CI: [42403828742](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42403828742) **SUCCESS 902/902 CPU/Fake-DGX across 41 groups**. No new actual DGX P4-B/C result yet. Previous actual P4-A PASS remains established. No live deletion adapter exists (`P4_C_LIVE_EXECUTION_RELEASED=False`); P5 operational issue or P8 acceptance requires separate authorization and an exact-resource adapter/test before real cleanup. Never infer safe reclaim bytes. Reference: `docs/P4-BC-ONE-SHOT-DRY-RUN-20261108.md`.
+
+---
+## 2026-11-08 — P4-A actual DGX capacity inventory: READ_ONLY PASS / COMPLETE
+
+Operator ran `./wizard.sh storage flash-next inventory --json` at checkout `a29cd6e`: `READ_ONLY_INVENTORY_COMPLETE`, `issues=[]`, `active_api_verified=true`, 27B active, stopped Flash preserved, Orcarouter model cache present without a container, one GPU and one port-8000 owner, all four Docker capacity categories. File-system total **982,819,848,192 bytes**, free **324,880,961,536 bytes** (~**33.06% free**); both HF cache roots returned the *same* filesystem total/free, so never add those values. Root allocated bytes **267,995,971,584** and **192,507,006,976**; known model-repository allocated sizes: Flash **75,967,504,384**, 27B **21,932,584,960**, Orcarouter **177,686,446,080**. Docker displayed reclaimable: containers **182.7MB**, build cache **2.088MB**, images/volumes **0B**; **not** verified safe reclaimable bytes. See `docs/P4-A-DGX-READONLY-CAPACITY-EVIDENCE-20261108.md` for bounded source, units, and non-additivity caveats. No deletion or service mutation; **P4-B/C NOT_STARTED/NOT_APPROVED**, **P8 NOT_RUN/NOT_RELEASED**. Do not repeat P3-A/B/C/G.
+
+---
+
+## 2026-11-08 — Actual DGX P3-E/F read-only closeout complete; P4-A inventory NEXT
+
+**Observed on actual DGX after fast-forward to `0421b46`:** P3-E `flash_host_assets` status `LOCAL_ASSET_METADATA_OBSERVED_REINSTALL_UNQUALIFIED`, issues=[], 31,907,813-byte index, 299,845 weight-map entries (400,000 cap), **11 shards** total apparent size **129,771,270,410 bytes**, metadata hashes and mounted template SHA-256 observed. Checkpoint weights not hashed (`large_shard_hashes_verified=false`), pinned published revision bytes not independently verified (`verified_model_revision=false`), reinstall not qualified. P3-F real DGX **168/168 CPU PASS (7 suites)**, `PRODUCTION_LIFECYCLE_RELEASED=false`. Current `qwen38-27b` API `qwen3.8-27b`, host :8000, 8/8 service checks true and `LIVE_SERVICE_VERIFIED`; service-status command does not independently validate GPU/PID ownership. All commands read-only and no service mutation.
+
+**P3 disposition:** A/B/C/G historical actual operator-approved PASS/CLOSED; D independent read-only PASS historically; E source/host-asset metadata handoff COMPLETED but **not** real reinstall; F source/CPU handoff COMPLETED but **not** production lifecycle. **P8 remains owner** of full Flash recipe/install validation, actual reinstall/rollback, deliberately induced failure/automatic recovery and final release (all real work NOT_RUN). No replay, no automatic source launch.
+
+**New operator instruction supersedes prior P4 hold ONLY for read-only P4-A:** implement capacity and current-state inventory via Wizard *before* considering any deletion. P4-B candidates and P4-C cleanup remain not started and unauthorized. Read `docs/P4-A-STORAGE-CAPACITY-AND-ASSET-INVENTORY-20261108.md`. P4-A is SOURCE IMPLEMENTED, DGX CAPACITY OBSERVATION NOT_RUN. Latest P4-A CPU/Fake-DGX CI [42395243458](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42395243458): **887/887 PASS, 40 groups**; no real disk capacities have been measured by the new Wizard in the conversation.
+
+---
+
+## 2026-11-08 — P3 CLOSEOUT ONLY; P4 operator hold; P8 owns live reinstall and recovery
+
+**Operator decision:** Do not start P4. Earlier P4 module/test/workflow code was reverted ([1110681](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/commit/1110681f451bc72470454bbbee1e1d79d6406a1d), [CI 42393129150](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42393129150) SUCCESS). **P4 = NOT_STARTED / OPERATOR_HOLD**. No P4 inventories/cleanup/source implementations.
+
+**P3-E:** Flash FP8 hybrid command/source draft and 299,845-key weight-map observed at DGX; source cap now 400,000 with 128 MiB byte cap and all path/shard safeguards retained ([1a05eb2](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/commit/1a05eb2dfacda960527ba94da544e5f545d8793f), [CI 42392758148](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42392758148) **880/880 CPU PASS, 39 groups**). P3 closeout still needs a current **read-only DGX host-asset rerun** for index/shards/template evidence. Not qualified for canonical reinstall.
+
+**P3-F:** Source Fake-DGX lifecycle/rollback tests pass, `PRODUCTION_LIFECYCLE_RELEASED=False`. P3 closeout asks **read-only `p3_dg_acceptance --cpu-only` 7-suite** local result; last DGX six-suite PASS was 153/153 before added host-asset suite. Actual generic Docker install/recreate/rollback production release is transferred to P8, not declared done. P3-A/B/C/G real PASS/CLOSED, D READ_ONLY_PASS; no replay.
+
+**P8:** Full canonical Flash runtime/env/image/security spec, explicit-approval fresh reinstall, API/benchmark/idempotence/journal, controlled failure/automatic recovery and final Wizard go-live after integration gates. P8 real fault/release NOT_RUN. **Detailed closeout checklist**: `docs/P3-CLOSEOUT-AND-P8-HANDOFF-20261108.md`.
+
+---
+
+## 2026-11-08 — P3-E actual DGX 30.43 MiB index parsed, weight_map condition under investigation
+
+**Operator read-only evidence:** `python3 -m scripts.manager.flash_host_assets --json` on DGX observed `model.safetensors.index.json` size **31,907,813 bytes (~30.43 MiB)**, below the 128 MiB cap (134,217,728 bytes). The tool reached `PARSE_SHARD_INDEX` and returned `FLASH_SHARD_INDEX_UNQUALIFIED`. Source code combined three cases into one: a missing/non-dict `weight_map`, an empty map, or a map with **more than 100,000 entries**. No count was in that output; **cause within these three cases not yet resolved**. `indexed_shard_count=0` means no shard enumeration, not model damage or missing shards. Pinned command and prepared `-fp8hybrid` view observed; last actual active service remains 27B :8000.
+
+**New source-only diagnosis:** [135f75c](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/commit/135f75c8cc652ed63b8508d10fcf5f079dff24ef) adds redacted `index_weight_map_structure` (OBJECT or MISSING_OR_WRONG_TYPE), `index_weight_map_entry_count_observed`, `index_weight_map_entry_limit` and three distinct bounded errors. **100,000 count cap unchanged** until a real count and intended NVFP4/ModelOpt profile are evidenced; no automatic relaxing, downloading, cache modification or Docker operations. GitHub Actions [42392277467](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42392277467) **878/878 CPU/Fake-DGX PASS, 39 groups**, 2 new tests. No hardware run of this new code yet.
+
+**Next DGX read-only action:** `git pull --ff-only origin feature/recipe-wizard-handoff` then `python3 -m scripts.manager.flash_host_assets --json`; evaluate `index_weight_map_entry_count_observed`, `index_weight_map_structure`, `failure_reason_code`. If entry count is above limit, review bounded parser memory and stable ModelOpt index before targeted policy change. Do not assume 31MB index is corrupt or change HF cache. Flash canonical reinstall remains `false`, launch disabled, generic lifecycle unreleased, historical real P3-G PASS/CLOSED, P8 deliberate fault/auto-recovery/final acceptance NOT_RUN.
+
+---
+
+## 2026-11-08 — Actual DGX Flash shard-index cap identified; bounded source fix
+
+**Actual DGX read-only result:** `python3 -m scripts.manager.flash_host_assets --json` returned `BLOCKED`, `failed_stage=READ_SHARD_INDEX`, `failure_reason_code=FILE_EXCEEDS_BOUNDED_READ`. The pinned command identity and `-fp8hybrid` prepared view matched; no model shard contents were examined because `model.safetensors.index.json` exceeded the generic 8 MiB metadata cap. **Actual index byte size is still unknown** and zero recorded shards means unchecked, not missing/corrupt. No DGX GPU or Docker mutation, 27B service remains the last observed active :8000.
+
+**GitHub SOURCE fix:** [56d39e4](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/commit/56d39e4acb5d4e69777372283fe5f8839a16fc7c) uses separate **128 MiB hard cap for index only**, 8 MiB config/tokenizer_config cap, 256 KiB template cap; files are bounded at read time (`read(limit+1)`) to prevent stat/read growth bypass. Adds sanitized numeric `index_file_size_bytes_observed`/`index_file_size_limit_bytes`. Tests cover >8 MiB valid JSON and exceeding index cap. GitHub Actions [42391564016](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42391564016) **SUCCESS 876/876 CPU/Fake-DGX, 39 groups** (874 previous + 2 new). This is *not* new DGX asset or GPU validation.
+
+**Next read-only operator step:** `git pull --ff-only origin feature/recipe-wizard-handoff` followed by `python3 -m scripts.manager.flash_host_assets --json`. Observe numeric index size and full staged status. If blocked again, investigate actual `failed_stage` and `failure_reason_code` before altering limits or files. Do **not** change HF caches, start/stop/reinstall/switch models, or inject failures without new explicit consent. Flash canonical reinstall NOT QUALIFIED; P3-F lifecycle release OFF, P3-G real bidirectional PASS historically CLOSED, P8 NOT_RUN.
+
+---
+
+## 2026-11-08 — P3-E real DGX Flash host asset preflight blocked; diagnostic patch/source CI
+
+**Actual operator DGX evidence, no Docker mutation:** `python3 -m scripts.manager.flash_host_assets --json` returned `status=BLOCKED`, issue `FLASH_HOST_ASSET_PREFLIGHT:ValueError`, `legacy_hf_bind_writable=true`, `indexed_shard_count=0`, `metadata_sha256={}`, `template_sha256=null`, `verified_model_revision=true`. This only establishes that the **old observer** advanced past pinned command/env/cache bind, then raised a ValueError during an unidentified local-file validation step. Neither zero shards nor `verified_model_revision=true` proves a missing model or verified revision bytes. **No user-provided evidence of broken inference or failed reinstall.**
+
+**Source fix, not live DGX proof:** [9beb1d3](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/commit/9beb1d3f73675ac4a22daedfc2167b380742305c) adds allowlisted `failed_stage`, `failure_reason_code`, `pinned_command_identity_matched`, `prepared_view_path_observed`, and stops falsely setting `verified_model_revision=true` from a directory name alone. Private exception messages/path/env values are never emitted. Tests cover metadata cap, malformed index, empty/missing/escaped marker, secret exception redaction. GitHub Actions [42391221418](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42391221418) **SUCCESS: 874/874 CPU/Fake-DGX tests across 39 groups** (previous 870 + 4). Real DGX did not run this patch yet.
+
+**Next safe operator command:** `git pull --ff-only origin feature/recipe-wizard-handoff`; then `python3 -m scripts.manager.flash_host_assets --json`. Inspect only redacted `failed_stage` and `failure_reason_code`. No cache repairs, container recreation, GPU activity or permissions escalation should follow from this result without separate evidence/approval. Flash canonical reinstall remains unqualified, lifecycle release disabled, historic P3-G real PASS/CLOSED and P8 NOT_RUN; preserve 27B at :8000.
+
+---
+
+## 2026-11-08 — P3-D latest current PID proof and P3-E/F source follow-up
+
+Operator's latest DGX read-only `--sudo-ss` P3-D/E/F/G output: **P3-D READ_ONLY_PASS**, independently attributed docker-proxy IPv4 PID `2560693` and IPv6 PID `2560708`, GPU PID `2560905`, no detected GPU ownership conflict. **P3-E DRAFT_REVIEW_REQUIRED** despite `cmd_normalized=true` using `FLASH_FP8HYBRID_READ_ONLY_V1`, `cmd_normalization_error=null`, draft-field `issues=[]`, because canonical reinstall remains unqualified. **P3-F 153/153 DGX-local CPU PASS**. P3-G preview in this particular runner does not invalidate previously completed real bidirectional G. `blocked_stages=[]` with total `DRAFT_PARTIAL_ACCEPTANCE_NOT_RELEASED` is expected.
+
+GitHub source: [03cbe4c](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/commit/03cbe4cc45a750322c4f99616c85f1061f7b2288), [2b44ccc](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/commit/2b44ccc0237fa34742e28608ad089cb3ca90fe55), and [8e8fcec](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/commit/8e8fcec5acb280e01445a2bd773fc9f4ecedf2f6). Source-only CI [42390619936](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42390619936): **870/870 PASS, 39 groups**, including 5 new Flash host asset tests. **No acceptance promotion**: P3-D latest READ_ONLY_PASS on real DGX, P3-E still source draft/no canonical reinstall, P3-F local 153 CPU test PASS but production executor blocked; P3-G prior independent real both-direction transfer PASS/CLOSED. P8 deliberate fault/recovery and final go-live NOT_RUN. The new host asset command has not yet been run on DGX and must not mark E as qualified from CI alone.
+
+---
+
+## Source-only addendum — 2026-11-08 (P3-E/F hardening)
+
+Source change: [d68106a](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/commit/d68106a24c4c6071acff7a4d98d74e04c6ecbfe1). Actual GitHub Actions [42386939625](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42386939625): **862/862 PASS in 38 CPU/Fake-DGX groups** (856 baseline + 6 new). This is **SOURCE-ONLY**; no fresh DGX test or service change. Full scope: `docs/P3-E-F-SOURCE-HARDENING-20261108.md`.
+
+Acceptance milestones **unchanged**: P3-E `DRAFT_REVIEW_REQUIRED`, no qualified Flash canonical reinstall; P3-F `SOURCE_CPU_PASS_NOT_RELEASED`, generic lifecycle execution blocked; P3-G `REAL BIDIRECTIONAL PASS / CLOSED` from original operator DGX receipts; P8 `NOT_RUN / NOT_RELEASED`. No new DGX runtime/rollback/benchmark measurement or production release.
+
+---
+
+## 2026-11-07 — AUDITED P3-A–G; G CLOSED, FAILURE/FINAL RELEASE REASSIGNED TO P8
+
+**Latest acceptance audit:** `docs/P3-A-G-EVIDENCE-AUDIT-20261107.md`. Historical **A/B/C REAL PASS/CLOSED** (Flash→27B, 27B→Flash, Flash→27B; immutable original receipts); **D REAL READ_ONLY_PASS** for single GPU and independently attributed IPv4/IPv6 host :8000 process ownership (measured before most recent roundtrip); **E DRAFT_REVIEW_REQUIRED** despite confirmed NVIDIA Flash `-fp8hybrid` source variant and source-draft documented-field match because **canonical reinstall-qualified Flash recipe is NOT registered or real tested**; **F 144/144 local Fake-DGX/CPU PASS** with production lifecycle release still OFF; **G REAL BIDIRECTIONAL PASS/CLOSED**, two separately authorized 27B→Flash→27B live transfers, current last observed 27B API `qwen3.8-27b`, `diff=[]`, journal `VERIFIED/COMMITTED` 28 events. **P3-A~G aggregate is NOT fully complete because E remains OPEN and F is only source-qualified.** Don't replay A/B/C/G. The operator reclassified deliberate fault injection, automatic source restoration and final production/UX signoff exclusively as **P8**, which is `NOT_RUN/NOT_RELEASED` and does not block G's closed successful-transfer scope. P7 remains component integration only. Source-only CI after P8 registration: [42384120480](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42384120480) SUCCESS, **856/856 CPU tests / 38 groups**; that does not evidence new DGX runtime results.
+
+P3-E remains the sole currently open *canonical reinstall qualification* among A-G; P3-F CPU suite accepted as source-only scope but generic lifecycle remains locked pending distinct operational authorization. P8 final Go/No-Go and recovery must not be backfilled from G.
+
+---
+
+# P1–P8 Wizard acceptance status — canonical milestone scope (2026-11-07)
+
+> This document supersedes phase **scope** and status headings in the older historical `docs/P1-P7-WIZARD-ACCEPTANCE-STATUS-20261107.md`; it does **not** alter immutable execution receipts or rewrite historical evidence. All live statuses below reflect the last **operator-provided** DGX output, not a new probe from GitHub.
+
+## Scope and current status
+
+| Phase | Acceptance objective | Current evidence classification |
+| --- | --- | --- |
+| P1 | NVIDIA Flash-Next source/runtime/API/benchmark | Prior real DGX P1 checks passed; refer to prior immutable records |
+| P2 | NVIDIA 27B pinned download/start/API/native tool calling/benchmark | Prior real DGX P2 checks passed; canonical 27B recipe SHA preserved |
+| P3-A/B/C | Original one-off stage sequence; exact receipts | **REAL PASS / CLOSED** |
+| P3-D | Exclusive GPU process and host port-8000 PID provenance | **READ_ONLY_PASS** on real DGX with explicitly opted-in `sudo -n ss` |
+| P3-E | Flash runtime provenance, canonical reinstall-ready recipe | **DRAFT_REVIEW_REQUIRED**: pinned `-fp8hybrid` snapshot and documented draft fields matched, but canonical reinstall unqualified |
+| P3-F | Generic lifecycle operations' CPU/Fake-DGX source gates | **SOURCE_CPU_PASS_NOT_RELEASED**; last supplied local batch 144/144 PASS |
+| **P3-G** | **Real 27B↔Flash-Next successful independent bidirectional operating transfers, API/journal and canonical recipe postchecks** | **REAL PASS / CLOSED** — two separate DGX TTY-authorized switches and reverse 27B `diff=[]` |
+| P4 | Optional Flash storage cleanup/reinstall disposition | Optional; NOT_APPLICABLE may be chosen if no need for deletion |
+| P5 | Orcarouter deployment/API/bench | PENDING |
+| P6 | Orcarouter↔27B real transfer | PENDING |
+| **P7** | **Service/proxy/gateway integration and numerical/CI qualification** | PENDING; **does not include final signoff** |
+| **P8** | **Deliberate controlled fault injection, automatic source restoration real verification, final operating UX/security/production release signoff** | **NOT_RUN / NOT_RELEASED** |
+
+## Real P3-G bidirectional evidence
+
+1. `27b → flash-next`: independent execution SHA `365099fea62bc06bb78006bbf66ef93670cf3ec72d7d50202afe23395c8a3654`, operator `PASS`, Flash served API `qwen3.8-flash-next`, journal `VERIFIED/COMMITTED`, 21 events.
+2. `flash-next → 27b`: independent execution SHA `a909a1470760613b3d8e1f588dada06a41205ceac7e07c5ff464eac01884ed8b`, operator `PASS`, 27B served API `qwen3.8-27b`, journal `VERIFIED/COMMITTED`, 28 events. 27B canonical recipe diff `[]`, issues `[]`. Source: `docs/P3-G-LIVE-BIDIRECTIONAL-SWITCH-PASS-20261107.md`.
+
+**Current last-observed running model**: NVIDIA 27B, host port 8000; one managed model according to manifest-led service check. The `gpu_exclusivity_verified=false` and `port_process_ownership_verified=false` of the basic status command mean that command doesn't independently audit those properties, not that collisions were observed.
+
+**P3-G completion is limited to successful two-way transfers**, not claim of fault-tolerance under injected failure. P3-E Flash reinstall recipe qualification, P3-F general lifecycle/production dispatch and P8 release remain independently pending. No forced error, deletion, image/cache purge or irreversible service change is authorized by phase renumbering.
+
+## P8 safety contract
+
+P8-A fault matrix and live bounds; P8-B Fake-DGX recovery/journal and negative tests; P8-C independently approved DGX bounded failure and verified **automatic source restoration**; P8-D full Wizard final integrated operations/UX/security and go-live signoff. Details `docs/P8-FAULT-RECOVERY-FINAL-OPERATIONS-ACCEPTANCE-PLAN-20261107.md`.
+
+A successful *source-only* P8 plan or Fake-DGX tests **cannot** mark P8-C or P8-D PASS, cannot set `production_released=true`, and cannot dispatch Docker/GPU fault injection. The new Wizard P8 menu is deliberately `INTERFACE_ONLY / BLOCKED`.
+
+## Handoff rule
+
+Future work on P4–P7 may proceed without reopening P3-G. P8 remains the dedicated safety/end-to-end acceptance milestone. Preserve old DGX switch receipts, preserve model files/HF cache and vLLM 0.32/API 8000/ONE_ACTIVE_MODEL_ONLY rules; do not use SGLang. PR #1 stays Draft/unmerged until a separate release decision.
+
+## 2026-11-09 P5-B / P6-A source-only mock additions
+
+P5 `./wizard.sh operations generic session-mock --model orcarouter --json`, `session-matrix --summary-only --json` exercise the mock pre-sample/workload/post-sample clock and failure correlation (3 registered models × 7 faults = 21). P6 `pipeline-mock --from-model orcarouter --to-model 27b --json` exercises in-memory transition plus hash-linked mock journal and phase audit. Hashes cannot authenticate source evidence, and there is no real benchmark, service write, approval or durable recovery. New tests are explicitly in `.github/workflows/recipe-manifest-cpu.yml`; verified Actions outcome must be recorded separately after commit. All live P5/P6/P7/P8 acceptance remains NOT RUN; PR #1 Draft, no merge.
+
+## P6-B / P6-C — distinct fake container IDs and temp-file Journal acceptance (2026-11-09)
+
+All claims below are **CPU/Fake-DGX source contracts only**; no DGX, Docker, GPU, inference, live port release, real switch, production-approved journal, or operator approval.
+
+- `transition_safety.InMemoryBackend` binds two different synthetic SHA-256 container IDs; `mock_transaction_pipeline` exports each model's ID and the currently active/host-port-owner container ID per phase. Audit enforces exact phase-owner-ID correspondence, hash, sequence, single model and :8000. The legacy `docker_id` key retains its SOURCE-only meaning for existing consumers, not current active container identity.
+- `mock_persistent_contract.py` tests OS-level O_EXCL, 0600 file permissions, log fsync, atomic snapshot rename+fsync, orphaned log, forged snapshot, unresolved phase, duplicate write, fake TTL expiry, ticket identity drift and replay. **Only auto-deleted private temporary directories** are created. This is an exercise of the write/read contract, *not* authorization or verified production durability; existing `service_journal.py` and `operational_audit.py` still apply to their historical, separately qualified operating domain and are not modified.
+- New commands: `./wizard.sh operations generic fake-disk-contract --from-model orcarouter --to-model 27b --json`; `./wizard.sh operations generic fake-disk-contract --from-model 27b --to-model flash-next --mock-disk-scenario interrupted-snapshot --json`; `./wizard.sh operations generic fake-disk-matrix --summary-only --json`. Three models = 6 directed pairs × 8 scenarios = 48. Existing P5 21, P8 extended 66, legacy 24 cases remain separate.
+- Acceptance: SOURCE IMPLEMENTED / 4369bb1 Push+PR CI SUCCESS (new P6-B/C 11 tests PASS, fake disk 48 PASS); docs-only changes are not live acceptance; REAL DGX runtime/provenance/loaded benchmark, real approval, durable operating rollback, P7 independent proxy/gateway and P8 live fault/release **NOT RUN**. Do not remove or rename the operating Orcarouter v3 container or change governor/cgroup/port 8000.
+
+
+## P5-C and P6-D SOURCE implementation (2026-11-10)
+
+CI verified on source commit `37f3a1b8417a777206fea63965e6fcd7acef0ada`: Push [42720683321](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42720683321) SUCCESS and PR [42720691856](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42720691856) SUCCESS. All 9 new P5-C/P6-D CPU tests PASS. No actual DGX observation or operating transition occurred; the source code is not production qualified.
+
+P5 read-only paired service/resource binding: `observation-capture --model orcarouter --json` is strictly sequential and calls existing non-mutating Docker/API/host-metric probes. Resource Docker ID is a single-probe observation; service status currently does not independently expose a full Docker ID or verify the process binding for :8000. Any role/API/checkpoint/name/image mismatch produces BLOCKED; a source-correlated report never qualifies a live benchmark or production. To avoid even a read-only host probe, use `observation-review --model orcarouter --service-evidence /absolute/service.json --resource-evidence /absolute/resource.json --json`.
+
+P6 operating-gate-review never returns READY/APPROVED. Its input evidence is untrusted, including fake approval, declared independent GPU exclusivity, journal VERIFIED flags, and synthetic clock. It always reports `BLOCKED_LIVE_EXECUTOR_NOT_QUALIFIED` and preserves the existing two-model `service_journal.py`/operational_audit behavior. Orcarouter live switching is still prohibited without future qualified schema, real approval and verified executor.
+
+New dedicated CPU tests in workflow, plus existing legacy suites. CI success must be checked on this new commit. No DGX service change, no inference, no live switching or auto restore. This is not P5 loaded performance or P6 production executor acceptance.
+
+
+## 2026-11-10 P5-D / P6-E source-only implementation
+
+P5-D/P6-E SOURCE CI VERIFIED: implementation commit `61effbd25a856a1736bb01098f2f87742b0248e0` (initial failed only because document inventory excluded new runbook); inventory correction commit `c697c7474550e1703f4f68daf857582e66292eec` passed **9/9 new CPU tests**, full Push [42739085075](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42739085075) and PR [42739090964](https://github.com/kjlee-inlct/qwen3.8-Flash-DGX/actions/runs/42739090964) both **SUCCESS**. DGX P5-D command has **NOT** been run; P6-E migration is source-only, not a production write.
+
+Read-only process inventory P5-D and generic Journal v2 proposal P6-E are implemented in `process_ownership.py` and `generic_journal_v2.py`. See `docs/P5-D-P6-E-READ-ONLY-PROVENANCE-JOURNAL-V2-20261110.md`. This is NOT loaded GPU benchmark, independently authenticated host-port-PID binding, GPU exclusivity, authenticated operator approval, or durable v2 operating Journal. P5-D `ownership-capture --model orcarouter --json` queries Docker/ss/nvidia-smi without mutation; unsupported data fail closed and ownership/exclusivity flags are always false. P6-E `journal-v2-preview --from-model orcarouter --to-model 27b --json` returns deliberately BLOCKED; original two-model v1 service journal is unchanged. CI verification pending on source commit; no DGX live mutation.
+

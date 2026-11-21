@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "registry_kind": "PLE_LOADER_CAPABILITIES",
+  "purpose": "Capability matrix by pinned runtime, GB10, storage dtype/scale/placement; not deployment approval",
+  "profiles": {
+    "blazux-vllm032-orcarouter-bf16": {
+      "owner_model": "orcarouter",
+      "ple_asset_id": "orcarouter-bf16-ple",
+      "engine": "vllm",
+      "runtime_version": "0.32.0",
+      "hardware": "NVIDIA_GB10_SM121A",
+      "architecture": "linux/arm64",
+      "storage_dtype": "BF16",
+      "scale_mode": "NONE",
+      "table_memory": "DISK_MMAP",
+      "mtp_profile_candidates": [
+        "mtp0",
+        "mtp2"
+      ],
+      "container_image_digest": null,
+      "source_adapter_state": "SCOPED_QSA62318_LMHEAD_V3_IMAGE_CANDIDATE_UNQUALIFIED",
+      "cuda_loader_verified": false,
+      "tp1_offload_worker_verified": false,
+      "mmap_gpu_verified": false,
+      "api_model_identity_verified": false,
+      "tool_calls_verified": false,
+      "benchmark_verified": false,
+      "rollback_verified": false,
+      "autostart_released": false,
+      "explicit_gpu_trial_requires_new_guarded_plan": true,
+      "runtime_strategy": "RECIPE_PINNED_QSA62318_LMHEAD_V3_DERIVED_IMAGE_FROM_EXISTING_VLLM032",
+      "cpu_image_abi_audit_required": true,
+      "compatibility_adapter_id": "qwen4exp-qsa62318-lmhead-v032-v3",
+      "original_engine_image_patched": false,
+      "qsa_upstream_fix": "vllm-project/vllm#62318"
+    }
+  },
+  "external_references": [
+    {
+      "id": "dolf3131-vllm-nvfp4-observation",
+      "repo": "dolf3131/dgx-spark-llm-serving",
+      "commit": "45e3d47771577dabab0998e9013e85dd0915ae4f",
+      "url": "https://github.com/dolf3131/dgx-spark-llm-serving/blob/45e3d47771577dabab0998e9013e85dd0915ae4f/lanes/vllm-nvfp4/README.md",
+      "source_checkpoint": "nvidia/Qwen3.8-Flash-Next-NVFP4",
+      "storage_dtype": "F8_E4M3",
+      "scale_mode": "PER_TABLE",
+      "scale_dtype": "BF16",
+      "table_memory": "DISK_MMAP",
+      "tp1_multiproc_workaround": "--distributed-executor-backend mp",
+      "verified_in_blazux_032": false,
+      "import_as_runtime": false
+    },
+    {
+      "id": "nvidia-fp4-local-public-card",
+      "url": "https://huggingface.co/nvidia/Qwen3.8-Flash-Next-FP4-Local",
+      "forum_url": "https://forums.developer.nvidia.com/t/nvidia-official-qwen3-8-flash-next-checkpoint-for-single-dgx-spark/385994",
+      "source_checkpoint": "nvidia/Qwen3.8-Flash-Next-FP4-Local",
+      "runtime_family": "spark-vllm-b12x (separate from Blazux vLLM 0.32)",
+      "storage_dtype": "UNVERIFIED_FROM_CARD",
+      "scale_mode": "UNVERIFIED_FROM_CARD",
+      "scale_dtype": null,
+      "table_memory": "DISK_MMAP",
+      "disk_backend_reference": "io_uring",
+      "verified_in_blazux_032": false,
+      "import_as_runtime": false
+    }
+  ],
+  "policy": {
+    "do_not_copy_external_runtime_flags_without_abi_audit": true,
+    "model_body_quantization_does_not_define_ple_dtype": true,
+    "mtp_donor_dtype_is_separate": true,
+    "never_reuse_ple_mmap_across_model_transitions": true,
+    "require_fresh_runtime_qualified_image_and_rollback": true,
+    "port": 8000,
+    "max_active_gpu_models": 1
+  }
+}

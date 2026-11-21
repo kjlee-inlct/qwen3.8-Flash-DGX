@@ -1,0 +1,151 @@
+"""TTY model-agnostic P5-P8 UX remains read-only and fail-closed."""
+from __future__ import annotations
+
+import contextlib
+import io
+import unittest
+from unittest.mock import patch
+
+from wizard import console
+
+
+class CommonUXCPU(unittest.TestCase):
+    def test_generic_menu_fault_matrix_does_not_call_docker(self):
+        with patch.object(console, "_input", side_effect=["3", "0"]), \
+             patch("subprocess.run", side_effect=AssertionError("No live operations")), \
+             contextlib.redirect_stdout(io.StringIO()) as output:
+            console._generic_qualification_menu("27b")
+        self.assertIn("pairs: 6 | cases: 24", output.getvalue())
+
+    def test_model_common_new_reviews_are_non_mutating(self):
+        for option, phrase in (("5", "P5 benchmark session:"),
+                               ("6", "Extended Fake-DGX:"),
+                               ("7", "P7 strict reconciliation:")):
+            with self.subTest(option=option), \
+                 patch.object(console, "_input", side_effect=[option, "0"]), \
+                 patch("subprocess.run", side_effect=AssertionError("no live operation")), \
+                 contextlib.redirect_stdout(io.StringIO()) as output:
+                console._generic_qualification_menu("27b")
+            self.assertIn(phrase, output.getvalue())
+
+    def test_registered_unqualified_target_is_previewed_not_switched(self):
+        live = {
+            "status": "LIVE_SERVICE_VERIFIED", "observed_model": "27b",
+            "expected_served_id": "qwen3.8-27b",
+            "active_container": {"name": "qwen38-27b"},
+            "gpu_exclusivity_verified": True,
+            "port_process_ownership_verified": True}
+        with patch.object(console, "_input", return_value="3"), \
+             patch("scripts.manager.service_status.inspect_live_status",
+                   return_value=live), \
+             patch.object(console, "_switch_guided",
+                          side_effect=AssertionError("must not trigger guided live switch")), \
+             contextlib.redirect_stdout(io.StringIO()) as out:
+            console._switch_selector()
+        self.assertIn("Model-agnostic preflight: BLOCKED", out.getvalue())
+        self.assertIn("TARGET_CANONICAL_RUNTIME_NOT_QUALIFIED", out.getvalue())
+
+    def test_p5c_p5d_model_menu_only_runs_readonly_probes(self):
+        for item, module_path, expected in (
+            ("8", "scripts.manager.observation_binding.observation_capture",
+             "SOURCE_OBSERVATIONS_CORRELATED_NOT_LIVE_ACCEPTANCE"),
+            ("9", "scripts.manager.process_ownership.ownership_capture",
+             "BLOCKED_PARTIAL_PROCESS_EVIDENCE"),
+        ):
+            with self.subTest(item=item), \
+                 patch.object(console, "_input", side_effect=[item, "0"]), \
+                 patch(module_path, return_value={
+                     "status": expected, "runtime_role": "DEVELOPMENT_TRIAL",
+                     "issues": [], "executed": False}), \
+                 patch("subprocess.run", side_effect=AssertionError("No runtime")), \
+                 contextlib.redirect_stdout(io.StringIO()) as output:
+                console._generic_qualification_menu("orcarouter")
+            self.assertIn(expected, output.getvalue())
+            self.assertIn("No inference", output.getvalue())
+
+    def test_p6d_p6e_model_menu_is_never_operating_approval(self):
+        for item, status in (
+            ("10", "BLOCKED_LIVE_EXECUTOR_NOT_QUALIFIED"),
+            ("11", "BLOCKED_V2_MIGRATION_NOT_AUTHORIZED"),
+        ):
+            with self.subTest(item=item), \
+                 patch.object(console, "_input", side_effect=[item, "1", "0"]), \
+                 patch("subprocess.run", side_effect=AssertionError("No runtime")), \
+                 contextlib.redirect_stdout(io.StringIO()) as output:
+                console._generic_qualification_menu("27b")
+            self.assertIn(status, output.getvalue())
+            self.assertIn("No approval accepted", output.getvalue())
+
+    def test_measurements_menu_option_12_is_reachable(self):
+        with patch.object(console, "_input", side_effect=["12", "0"]), \
+             patch.object(console, "_show_measurement_dashboard") as show, \
+             contextlib.redirect_stdout(io.StringIO()):
+            console._generic_qualification_menu("27b")
+        show.assert_called_once_with("27b")
+
+    def test_nonce_menu_option_13_is_fake_only(self):
+        with patch.object(console, "_input", side_effect=["13", "1", "0"]), \
+             patch("subprocess.run", side_effect=AssertionError("no runtime")), \
+             contextlib.redirect_stdout(io.StringIO()) as out:
+            console._generic_qualification_menu("27b")
+        self.assertIn("PASS_FAKE_NONCE_REPLAY_FENCE_EXPECTATIONS", out.getvalue())
+        self.assertIn("no approval", out.getvalue())
+
+    def test_p5d_menu_option_14_is_manifest_only(self):
+        with patch.object(console, "_input", side_effect=["14", "0"]), \
+             patch("subprocess.run", side_effect=AssertionError("No runtime")), \
+             contextlib.redirect_stdout(io.StringIO()) as out:
+            console._generic_qualification_menu("orcarouter")
+        self.assertIn("P5-D manifest binding: DECLARATIVE_P5D_SOURCE_BOUND", out.getvalue())
+        self.assertIn("No host probe", out.getvalue())
+
+    def test_p5d_menu_option_15_is_non_authorizing(self):
+        with patch.object(console, "_input", side_effect=["15", "0"]), \
+             patch("scripts.manager.p5d_permission_preflight.permission_preflight",
+                   return_value={"status": "BLOCKED_PERMISSION_PREFLIGHT",
+                                 "issues": ["SMAPS_ACCESS_DENIED"]}), \
+             contextlib.redirect_stdout(io.StringIO()) as output:
+            console._generic_qualification_menu("orcarouter")
+        self.assertIn("P5-D procfs permission preflight: BLOCKED", output.getvalue())
+        self.assertIn("No privilege escalation", output.getvalue())
+
+    def test_new_registry_model_exposes_only_common_readonly_menu(self):
+        registry = {"models": {
+            "flash-next": {}, "27b": {}, "orcarouter": {},
+            "experimental": {},
+        }}
+        with patch("scripts.manager.generic_operations.model_catalog",
+                   return_value=registry), \
+             patch.object(console, "_input", return_value="4"), \
+             patch.object(console, "_generic_qualification_menu") as common, \
+             patch.object(console, "_model_screen",
+                          side_effect=AssertionError("No legacy lifecycle")), \
+             patch("subprocess.run", side_effect=AssertionError("No runtime")), \
+             contextlib.redirect_stdout(io.StringIO()) as out:
+            console._model_selector()
+        common.assert_called_once_with("experimental")
+        self.assertIn("experimental (registered; source-only)", out.getvalue())
+        self.assertIn("No dedicated lifecycle", out.getvalue())
+
+    def test_invalid_registry_blocks_model_selector(self):
+        with patch("scripts.manager.generic_operations.model_catalog",
+                   side_effect=ValueError("invalid")), \
+             patch.object(console, "_model_screen",
+                          side_effect=AssertionError("Must fail closed")), \
+             contextlib.redirect_stdout(io.StringIO()) as out:
+            console._model_selector()
+        self.assertIn("BLOCKED_MODEL_REGISTRY_UNQUALIFIED", out.getvalue())
+
+    def test_unknown_live_identity_blocks_without_starting_anything(self):
+        with patch.object(console, "_input", return_value="1"), \
+             patch("scripts.manager.service_status.inspect_live_status",
+                   return_value={"status": "BLOCKED", "observed_model": None}), \
+             patch.object(console, "_switch_guided",
+                          side_effect=AssertionError("no guided action")), \
+             contextlib.redirect_stdout(io.StringIO()) as out:
+            console._switch_selector()
+        self.assertIn("current API model identity is unverified", out.getvalue())
+
+
+if __name__ == "__main__":
+    unittest.main()
