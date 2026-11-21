@@ -1,3 +1,7 @@
+> **2026-11-21 최신 실행 기준:** [P1–P8 Current Roadmap — CPU/출처 인증/운영 수용 분리](P1-P8-CURRENT-ROADMAP-20261121.md). 이 문서는 날짜별 **역사적 실행/수용 기록**으로 보존한다. 아래 2026-11-19~20의 `NOT_RUN`, P5 최초 단계 및 과거 milestone 주장은 기록 당시 상태이며 최신 상태가 아니다. 현재 운영자 CPU 증거는 **P7 16/16 RC0 at c36b2bf**, **Wizard 126/126 RC0 + Manifest 77/77 RC0 at 8e4eb923**, **P6-E 37/37 RC0 at 4c86b799**로 **서로 다른 테스트 SHA**를 유지한다. 최신 GitHub CI **UNVERIFIED**, P5-D live PLE/NAT·P6-E operating Journal/Nonce·P7 independent provenance·P8 real recovery·Production 모두 **미수용**. 새 로드맵 작성은 문서 작업일 뿐 새 CPU/CI/운영 검증이 아니다.
+
+---
+
 ## 2026-11-20 KST — P7 strict numeric types and future timestamps (SOURCE-ONLY, CPU NOT_RUN)
 - Source commit `dcbe9e63f5103e75472c64fdfb801bdcfeef8831`; tests commit `5ec3a81a5cde065819812323c2283a993748f452`. `integration_contract.py` now requires exact JSON integer types for root `api_port`, service `port/http_status`, and proxy/gateway `upstream_port/http_status` (rejecting float, bool, string lookalikes); future component observations beyond UTC current time +120 seconds fail with `*_OBSERVATION_TIME_IN_FUTURE`. Existing 120-second inter-component window and time-zone-aware ISO parsing remain.
 - Three methods added to `test_integration_contract_cpu.py`: negative numeric combinations (root/service/proxy/gateway), all-future zero-spread rejection, and historical UTC+09:00 positive regression. Expected module method count **11**. Existing normalized duplicate probe-ID handling reused.
