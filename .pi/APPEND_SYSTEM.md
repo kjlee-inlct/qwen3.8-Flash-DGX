@@ -26,10 +26,43 @@
 
 ## 커밋 메시지 규칙
 
-- Conventional Commits 형식: `<type>(<scope>): <imperative summary>`.
-- 허용 type: `feat`, `fix`, `test`, `docs`, `refactor`, `build`, `chore`. 문서·인수인계는 보통 `docs`, 테스트만은 `test`, 동작 결함은 `fix`, 새 기능은 `feat`를 사용한다.
-- scope는 변경 영역을 소문자 단일 토큰으로 우선 사용한다: `p7`, `p6-e`, `p5d`, `manifest`, `handoff`, `roadmap`, `wizard`, `ci`. 기존 기록에 대문자 scope가 있어도 신규 메시지는 소문자를 우선한다.
-- summary는 영어 imperative, 짧고 구체적으로 작성하며 마침표를 붙이지 않는다. 예: `docs(roadmap): restore unfinished P1-P8 gates`.
+### 정식 헤더 문법
+
+모든 신규 커밋의 첫 줄은 다음 형식을 **정확히** 따른다.
+
+```text
+<type>(<scope>)!: <imperative subject>
+```
+
+- `!`는 선택 사항이며 호환성·운영 계약을 깨는 변경에만 사용한다.
+- 정규식으로 표현하면 다음과 같다: `^(feat|fix|test|docs|refactor|build|chore)\([a-z0-9-]+\)(!)?: [a-z].{0,71}$`
+- `type`, `scope`, subject는 영어로 작성한다. subject는 소문자로 시작하고 imperative 동사를 사용하며 마침표·줄바꿈을 넣지 않는다. 헤더는 100자 이내를 목표로 한다.
+- 허용 `type`: `feat` 새 기능, `fix` 동작 결함, `test` 테스트만, `docs` 문서/인수인계, `refactor` 동작 불변 구조 개선, `build` 빌드/의존성, `chore` 설정/유지보수.
+- 허용 scope는 변경의 주된 영역을 소문자 kebab-case로 쓴다. 예: `p7`, `p6-e`, `p5d`, `manifest`, `handoff`, `roadmap`, `wizard`, `ci`, `pi`.
+- scope가 여러 개여도 임의 목록을 나열하지 말고 가장 중요한 하나를 선택한다. 범위가 정말 넓으면 `repo`를 사용한다.
+
+### 본문·footer 규칙
+
+- 본문이 필요하면 헤더 다음에 빈 줄 하나를 두고, **무엇을·왜·검증 범위**를 기록한다.
+- 본문은 한 줄 100자 안팎으로 감싸며 명령형 대신 설명형 문장도 허용한다.
+- 호환성을 깨는 변경은 헤더의 `!`와 본문의 `BREAKING CHANGE: <migration>`, 두 방식 중 하나 이상으로 명시한다. 운영 계약 변경은 둘 다 권장한다.
+- 테스트·CI·실측 증거는 본문에 정확한 SHA, 테스트 수/RC, CI Run ID 또는 `CI_UNVERIFIED`를 기록한다. 서로 다른 SHA의 결과를 합산하지 않는다.
+
+### 허용·금지 예시
+
+```text
+허용: docs(roadmap): restore unfinished P1-P8 gates
+허용: fix(p7): reject mixed collector evidence
+허용: test(manifest): cover cleanup status drift
+허용: chore(pi): formalize commit message grammar
+허용: feat(wizard)!: require signed transition receipts
+
+금지: Update stuff                 # type/scope 없음
+금지: docs: update roadmap         # scope 없음
+금지: docs(P7): Fix issue.         # scope 대문자, subject 대문자/마침표
+금지: feat(wizard): added support  # imperative가 아님
+```
+
 - 한 커밋에는 하나의 논리적 목적만 담는다. 코드/테스트/필수 문서는 함께 커밋할 수 있지만 unrelated cleanup은 분리한다.
 - 커밋 전에 `git diff --check`와 관련 CPU 테스트를 실행한다. 커밋 후 `git rev-parse HEAD`, `git status --short --branch`, 원격 HEAD를 재확인한다.
 - push는 현재 feature 브랜치에만 한다. push 전 원격 HEAD가 예상한 값인지 확인하고, 강제 push는 하지 않는다.
