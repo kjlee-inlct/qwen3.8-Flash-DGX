@@ -1,4 +1,6 @@
 # Blazux DGX Spark — P1–P8 current execution roadmap
+
+> **실행 진입점 변경:** [P1–P8 미완료 작업·upstream 변경 감사·MTP2·종료 게이트](P1-P8-UNFINISHED-WORK-ROADMAP-20261121.md)가 후속 정식 실행 기준이다. 아래 G0–G8은 P5-D/P6-E/P7 증거 신뢰 작업의 보조 계획으로 보존한다. 아래의 “P1–P4 확보”, “다음 G1 P7 우선”은 **W1/W2 Wizard, P3→P8 Flash 재설치, P5 MTP2, P6 실제 전환이 끝났다는 뜻이 아니다**.
 **기준일:** 2026-11-21 KST · **기준 GitHub HEAD:** `629eedede29987b346313d855aa9cbb14226873b` (문서 생성 이전)  
 **대상:** `kjlee-inlct/qwen3.8-Flash-DGX`, `feature/recipe-wizard-handoff`, PR #1 **Draft/Open/Unmerged**, base `main`  
 **성격:** 실행 우선순위와 수용 게이트의 최신 진입점. 아래 SHA는 *테스트 실행 대상 SHA*이며 향후 문서 전용 커밋 SHA와 구분한다. GitHub 최신 HEAD·운영 상태·CI는 매 세션 재확인한다.
