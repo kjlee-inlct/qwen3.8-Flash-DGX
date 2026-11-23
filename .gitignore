@@ -10,3 +10,6 @@ results/
 
 # Local, append-only model execution evidence. Never commit operator receipts.
 /reports/
+
+# Pi local Pendant goal/session state; project instructions remain tracked.
+.pi/pendant-goals.json
