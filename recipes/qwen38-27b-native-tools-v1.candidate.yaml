@@ -1,0 +1,33 @@
+# P2-FINAL Native Tools V1 — intentionally schema-INCOMPLETE, never runnable.
+# A distinct service identity protects the immutable original qwen38-27b.
+# This file is NOT registered in runtimes/service-policy.json. Do not run it.
+# Parser: --enable-auto-tool-choice --tool-call-parser qwen3_coder --reasoning-parser qwen3
+# Startup/runtime remains blocked until actual image/parser and rollback approval.
+schema_version: 1
+recipe_id: qwen38-27b-native-tools-v1-candidate
+engine: vllm
+runtime:
+  vllm_version: 0.32.0
+  platform: linux/arm64
+  source_git_sha: MUST_AUDIT_EXACT_VLLM032_SOURCE_SHA
+  image_ref: MUST_PIN_VERIFIED_IMAGE_REGISTRY_DIGEST
+  image_digest: MUST_CONFIRM_PROTECTED_IMAGE_SHA256
+model:
+  repo_id: nvidia/Qwen3.8-27B-NVFP4
+  revision: 482ca0f3832238542f8f5295dde86b5f22711d80
+  architecture: Qwen3_5ForConditionalGeneration
+  # Source checkpoint NVFP4/FP8 mixed; loader must use modelopt_mixed.
+  quantization: nvfp4
+  ple: {mode: none}
+  mtp: {enabled: false, num_speculative_tokens: 0}
+service:
+  served_model_name: qwen3.8-27b
+  container_name: qwen38-27b-native-tools-v1
+  port: 8000
+checks:
+  require_exact_revision: true
+  require_ready_health: true
+  allow_launch_without_gpu_approval: false
+lifecycle:
+  protected: true
+  allow_delete_without_approval: false

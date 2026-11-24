@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "recipe_id": "qwen38-27b",
+  "qualification": "REAL_DGX_NATIVE_TOOLS_ONESHOT_PASS_RESTORED",
+  "engine": "vllm",
+  "vllm_version": "0.32.0",
+  "model": {
+    "repo_id": "nvidia/Qwen3.8-27B-NVFP4",
+    "revision": "482ca0f3832238542f8f5295dde86b5f22711d80",
+    "served_id": "qwen3.8-27b",
+    "quantization": "modelopt_mixed"
+  },
+  "runtime": {
+    "local_image_id": "sha256:9479fc92a9244fcf137afb36ed778e07495e29663a81db193736fcaa1f15e137",
+    "load_format": "safetensors",
+    "dtype": "bfloat16",
+    "max_model_len": 8192,
+    "max_num_seqs": 1,
+    "gpu_memory_utilization": "0.70",
+    "enforce_eager": true,
+    "shm_size": "16g",
+    "gpus": "all",
+    "port": 8000
+  },
+  "service": {
+    "container_name": "qwen38-27b",
+    "backup_prefix": "qwen38-27b-pre-native",
+    "api_port": 8000,
+    "one_active_model_only": true,
+    "keep_existing_images_and_models": true
+  },
+  "native_tools": {
+    "enabled": true,
+    "tool_call_parser": "qwen3_coder",
+    "reasoning_parser": "qwen3",
+    "chat_template": "/hf/hub/models--nvidia--Qwen3.8-27B-NVFP4/snapshots/482ca0f3832238542f8f5295dde86b5f22711d80/chat_template.jinja",
+    "chat_template_sha256": "c3cf9e34abf4f9e36c2d72165aa9c132d3e2a725b6c2586aaa3a8af9d7a81041"
+  },
+  "acceptance": {
+    "normal_chat": true,
+    "structured_tool_calls": true,
+    "tool_result_continuation": true,
+    "streaming_tool_calls": true,
+    "fresh_benchmark_required": true,
+    "benchmark_requests": 3,
+    "backup_deletion_only_after_all_pass": true,
+    "preserve_old_benchmark_receipts": true,
+    "replace_current_benchmark_pointer": true
+  },
+  "safety": {
+    "require_fresh_tty_approval": true,
+    "stop_old_before_new": true,
+    "do_not_replay_p3": true,
+    "do_not_modify_hf_cache": true,
+    "rollback_on_failure": true,
+    "delete_only_verified_backup_container_after_success": true
+  },
+  "benchmark": {
+    "version": "p2-27b-native-tools-canonical-benchmark-v2",
+    "model": "qwen3.8-27b",
+    "requests": 3,
+    "concurrency": 1,
+    "max_tokens": 128,
+    "seed": 1234,
+    "temperature": 0,
+    "stream": true,
+    "stream_options": {
+      "include_usage": true
+    },
+    "chat_template_kwargs": {
+      "enable_thinking": false
+    },
+    "require": [
+      "HTTP_200",
+      "SSE_DONE",
+      "NONEMPTY_CONTENT_OR_REASONING",
+      "PROMPT_AND_COMPLETION_USAGE",
+      "OBSERVED_TTFT",
+      "POSITIVE_E2E_TOKENS_PER_SEC"
+    ],
+    "note": "Short-answer 3-request acceptance and TTFT/throughput. v2 is distinct from historical 64-token v1 and must not be compared directly. Production reasoning behavior remains request-controlled."
+  }
+}
